@@ -1,14 +1,19 @@
+import type { Metadata } from 'next'
+import { QRDisplay } from '@/components/buyer/QRDisplay'
+
 interface QRPageProps {
   params: Promise<{ eventId: string; orderId: string }>
 }
 
+export const metadata: Metadata = {
+  title: 'QR de retiro — Nubapay',
+}
+
 export default async function QRPage({ params }: QRPageProps) {
   const { orderId } = await params
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-      <h1 className="text-2xl font-bold">Retirá tu pedido</h1>
-      <p className="mt-1 text-sm text-gray-500">#{orderId}</p>
+    <main className="min-h-screen flex flex-col items-center justify-center p-4">
+      <QRDisplay orderId={orderId} />
     </main>
   )
 }
