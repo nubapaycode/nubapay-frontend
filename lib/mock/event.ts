@@ -1,0 +1,112 @@
+// lib/mock/event.ts
+import type { Event } from '@/types'
+
+export const mockEvent: Event = {
+  id: 'demo-event',
+  name: 'Festival de Verano 2026',
+  description: 'El mejor festival del año',
+  date: '2026-04-17T20:00:00Z',
+  venue: 'Estadio Único, La Plata',
+  products: [
+    {
+      id: 'p1',
+      name: 'Hamburguesa Clásica',
+      description: 'Medallón de carne, lechuga, tomate y mayonesa en pan brioche',
+      price: 3500,
+      category: 'Comidas',
+      available: true,
+    },
+    {
+      id: 'p2',
+      name: 'Pizza de Muzzarella',
+      description: 'Porción de pizza con salsa de tomate y muzzarella',
+      price: 2800,
+      category: 'Comidas',
+      available: true,
+    },
+    {
+      id: 'p3',
+      name: 'Empanadas x3',
+      description: 'Tres empanadas de carne cortada a cuchillo',
+      price: 2200,
+      category: 'Comidas',
+      available: true,
+    },
+    {
+      id: 'p4',
+      name: 'Gaseosa 500ml',
+      description: 'Lata de gaseosa fría a elección',
+      price: 1200,
+      category: 'Bebidas',
+      available: true,
+    },
+    {
+      id: 'p5',
+      name: 'Agua Mineral 500ml',
+      description: 'Botella de agua mineral sin gas',
+      price: 800,
+      category: 'Bebidas',
+      available: true,
+    },
+  ],
+  combos: [
+    {
+      id: 'c1',
+      name: 'Combo Clásico',
+      description: 'Hamburguesa + Gaseosa. Ahorrás $500.',
+      price: 4200,
+      available: true,
+      products: [
+        {
+          id: 'p1',
+          name: 'Hamburguesa Clásica',
+          description: 'Medallón de carne, lechuga, tomate y mayonesa en pan brioche',
+          price: 3500,
+          category: 'Comidas',
+          available: true,
+        },
+        {
+          id: 'p4',
+          name: 'Gaseosa 500ml',
+          description: 'Lata de gaseosa fría a elección',
+          price: 1200,
+          category: 'Bebidas',
+          available: true,
+        },
+      ],
+    },
+    {
+      id: 'c2',
+      name: 'Combo Familiar',
+      description: 'Pizza + 2 Gaseosas. Ahorrás $800.',
+      price: 4400,
+      available: true,
+      products: [
+        {
+          id: 'p2',
+          name: 'Pizza de Muzzarella',
+          description: 'Porción de pizza con salsa de tomate y muzzarella',
+          price: 2800,
+          category: 'Comidas',
+          available: true,
+        },
+        {
+          id: 'p4a',
+          name: 'Gaseosa 500ml',
+          description: 'Lata de gaseosa fría a elección',
+          price: 1200,
+          category: 'Bebidas',
+          available: true,
+        },
+        {
+          id: 'p4b',
+          name: 'Gaseosa 500ml',
+          description: 'Lata de gaseosa fría a elección',
+          price: 1200,
+          category: 'Bebidas',
+          available: true,
+        },
+      ],
+    },
+  ],
+}
