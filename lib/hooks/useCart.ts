@@ -11,6 +11,7 @@ interface UseCart {
   addItem: (item: Product | Combo) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
+  clearCart: () => void
   total: number
   count: number
 }
@@ -66,8 +67,12 @@ export function useCart(): UseCart {
     )
   }
 
+  const clearCart = () => {
+    setItems([])
+  }
+
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const count = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  return { items, addItem, removeItem, updateQuantity, total, count }
+  return { items, addItem, removeItem, updateQuantity, clearCart, total, count }
 }

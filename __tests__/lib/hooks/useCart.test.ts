@@ -79,4 +79,14 @@ describe('useCart', () => {
     act(() => { result.current.addItem(mockProduct2) })
     expect(result.current.count).toBe(3)
   })
+
+  it('clearCart vacía todos los items', () => {
+    const { result } = renderHook(() => useCart())
+    act(() => { result.current.addItem(mockProduct) })
+    act(() => { result.current.addItem(mockProduct2) })
+    act(() => { result.current.clearCart() })
+    expect(result.current.items).toHaveLength(0)
+    expect(result.current.total).toBe(0)
+    expect(result.current.count).toBe(0)
+  })
 })
