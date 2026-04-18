@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function OrganizerDashboardPage() {
   return (
-    <main className="min-h-screen p-6">
+    <main className="p-6">
       <DashboardView />
     </main>
   )

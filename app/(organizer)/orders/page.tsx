@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function OrganizerOrdersPage() {
   return (
-    <main className="min-h-screen p-6">
+    <main className="p-6">
       <OrdersView />
     </main>
   )
