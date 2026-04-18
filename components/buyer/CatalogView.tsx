@@ -30,7 +30,7 @@ export function CatalogView({ event }: CatalogViewProps) {
   return (
     <>
       {/* Hero */}
-      <div className="relative h-[272px] md:h-[336px] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 overflow-hidden">
+      <div className="relative h-[300px] md:h-[364px] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 overflow-hidden">
         <div className="absolute inset-0 opacity-20"
           style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #ffffff 0%, transparent 50%), radial-gradient(circle at 80% 20%, #facc15 0%, transparent 40%)' }}
         />
