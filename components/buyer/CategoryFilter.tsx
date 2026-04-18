@@ -9,7 +9,7 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ categories, active, onChange }: CategoryFilterProps) {
-  const all = ['all', ...categories]
+  const all = ['all', ...categories, 'combos']
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -24,7 +24,7 @@ export function CategoryFilter({ categories, active, onChange }: CategoryFilterP
               : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
           )}
         >
-          {category === 'all' ? 'Todos' : category}
+          {category === 'all' ? 'Todos' : category === 'combos' ? 'Combos' : category}
         </button>
       ))}
     </div>

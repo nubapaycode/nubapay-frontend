@@ -57,7 +57,7 @@ export function CatalogView({ event }: CatalogViewProps) {
         />
 
         <div className="mt-4">
-          {filteredProducts.length > 0 && (
+          {activeCategory !== 'combos' && filteredProducts.length > 0 && (
             <CatalogSection title="Productos">
               {filteredProducts.map(product => (
                 <ProductCard
@@ -71,7 +71,7 @@ export function CatalogView({ event }: CatalogViewProps) {
             </CatalogSection>
           )}
 
-          {activeCategory === 'all' && event.combos.length > 0 && (
+          {(activeCategory === 'all' || activeCategory === 'combos') && event.combos.length > 0 && (
             <CatalogSection title="Combos">
               {event.combos.map(combo => (
                 <ComboCard
