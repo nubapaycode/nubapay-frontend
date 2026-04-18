@@ -9,30 +9,6 @@ export const mockEvent: Event = {
   venue: 'Estadio Único, La Plata',
   products: [
     {
-      id: 'p1',
-      name: 'Hamburguesa Clásica',
-      description: 'Medallón de carne, lechuga, tomate y mayonesa en pan brioche',
-      price: 3500,
-      category: 'Comidas',
-      available: true,
-    },
-    {
-      id: 'p2',
-      name: 'Pizza de Muzzarella',
-      description: 'Porción de pizza con salsa de tomate y muzzarella',
-      price: 2800,
-      category: 'Comidas',
-      available: true,
-    },
-    {
-      id: 'p3',
-      name: 'Empanadas x3',
-      description: 'Tres empanadas de carne cortada a cuchillo',
-      price: 2200,
-      category: 'Comidas',
-      available: true,
-    },
-    {
       id: 'p4',
       name: 'Gaseosa 500ml',
       description: 'Lata de gaseosa fría a elección',
