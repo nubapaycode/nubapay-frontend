@@ -41,7 +41,7 @@ export function CatalogView({ event }: CatalogViewProps) {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="relative h-full flex flex-col justify-end p-5 md:p-8 max-w-5xl mx-auto pb-[92px] md:pb-[30px]">
+        <div className="relative h-full flex flex-col justify-end p-5 md:p-8 max-w-5xl mx-auto pb-[12px] md:pb-[30px]">
           <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">{event.name}</h1>
           <p className="hidden md:block text-sm text-gray-300 mt-1">{event.venue}</p>
         </div>
