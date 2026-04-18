@@ -31,12 +31,13 @@ export function CatalogView({ event }: CatalogViewProps) {
   return (
     <>
       {/* Hero */}
-      <div className="relative h-[300px] md:h-[364px] overflow-hidden">
+      <div className="relative h-[300px] sm:h-[340px] md:h-[364px] lg:h-[420px] overflow-hidden">
         <Image
           src="/images/Frame.jpg"
           alt={event.name}
           fill
-          className="object-cover"
+          className="object-cover object-center"
+          sizes="100vw"
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
