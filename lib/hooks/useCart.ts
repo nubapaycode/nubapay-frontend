@@ -1,7 +1,7 @@
 // lib/hooks/useCart.ts
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { CartItem, Product, Combo } from '@/types'
 
 const CART_KEY = 'nubapay_cart'
@@ -18,6 +18,7 @@ interface UseCart {
 
 export function useCart(): UseCart {
   const [items, setItems] = useState<CartItem[]>([])
+  const loaded = useRef(false)
 
   useEffect(() => {
     try {
@@ -26,9 +27,11 @@ export function useCart(): UseCart {
     } catch {
       // ignore malformed data
     }
+    loaded.current = true
   }, [])
 
   useEffect(() => {
+    if (!loaded.current) return
     localStorage.setItem(CART_KEY, JSON.stringify(items))
   }, [items])
 
