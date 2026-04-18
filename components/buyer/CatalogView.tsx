@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useCart } from '@/lib/hooks/useCart'
 import { CategoryFilter } from './CategoryFilter'
 import { CatalogSection } from './CatalogSection'
@@ -30,10 +31,15 @@ export function CatalogView({ event }: CatalogViewProps) {
   return (
     <>
       {/* Hero */}
-      <div className="relative h-[300px] md:h-[364px] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 overflow-hidden">
-        <div className="absolute inset-0 opacity-20"
-          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #ffffff 0%, transparent 50%), radial-gradient(circle at 80% 20%, #facc15 0%, transparent 40%)' }}
+      <div className="relative h-[300px] md:h-[364px] overflow-hidden">
+        <Image
+          src="/images/Frame.jpg"
+          alt={event.name}
+          fill
+          className="object-cover"
+          priority
         />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="relative h-full flex flex-col justify-end p-5 md:p-8 max-w-5xl mx-auto">
           <p className="text-xs font-medium text-yellow-400 uppercase tracking-widest mb-1">{event.date ? new Date(event.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</p>
           <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">{event.name}</h1>
