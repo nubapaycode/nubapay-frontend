@@ -22,7 +22,7 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
         <h3 className="font-semibold text-xs leading-tight line-clamp-1">{product.name}</h3>
         <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 flex-1">{product.description}</p>
         <span className="font-bold text-xs mt-2 block">{formatPrice(product.price)}</span>
-        <div className="mt-1.5">
+        <div className="mt-5">
           {quantity === 0 ? (
             <Button size="sm" className="w-full" onClick={() => onAdd(product)}>
               Agregar
