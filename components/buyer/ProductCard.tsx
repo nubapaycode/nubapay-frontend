@@ -15,15 +15,14 @@ interface ProductCardProps {
 export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: ProductCardProps) {
   return (
     <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-      <div className="aspect-square bg-gray-100 flex items-center justify-center">
-        <span className="text-4xl">🍽️</span>
+      <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
+        <span className="text-3xl">🍽️</span>
       </div>
-      <div className="p-3 flex flex-col flex-1">
-        <Badge variant="default" className="mb-1 self-start">{product.category}</Badge>
-        <h3 className="font-semibold text-sm leading-tight line-clamp-2">{product.name}</h3>
-        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 flex-1">{product.description}</p>
+      <div className="p-2.5 flex flex-col flex-1">
+        <h3 className="font-semibold text-xs leading-tight line-clamp-1">{product.name}</h3>
+        <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 flex-1">{product.description}</p>
         <div className="flex items-center justify-between mt-2">
-          <span className="font-bold text-sm">{formatPrice(product.price)}</span>
+          <span className="font-bold text-xs">{formatPrice(product.price)}</span>
           {quantity === 0 ? (
             <Button size="sm" onClick={() => onAdd(product)}>
               Agregar
@@ -37,7 +36,7 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
               >
                 −
               </Button>
-              <span className="w-6 text-center text-sm font-medium">{quantity}</span>
+              <span className="w-5 text-center text-xs font-medium">{quantity}</span>
               <Button
                 size="sm"
                 onClick={() => onUpdateQuantity(product.id, quantity + 1)}

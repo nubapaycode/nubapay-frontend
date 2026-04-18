@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: CatalogPageProps): Promise<Me
 
 export default function CatalogPage() {
   return (
-    <main className="min-h-screen p-4 pb-32">
+    <main className="min-h-screen pb-32">
       <CatalogView event={mockEvent} />
     </main>
   )

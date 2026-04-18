@@ -29,45 +29,55 @@ export function CatalogView({ event }: CatalogViewProps) {
 
   return (
     <>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">{event.name}</h1>
-        <p className="text-sm text-gray-500">{event.venue}</p>
+      {/* Hero */}
+      <div className="relative h-48 md:h-64 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 overflow-hidden">
+        <div className="absolute inset-0 opacity-20"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #ffffff 0%, transparent 50%), radial-gradient(circle at 80% 20%, #facc15 0%, transparent 40%)' }}
+        />
+        <div className="relative h-full flex flex-col justify-end p-5 md:p-8 max-w-5xl mx-auto">
+          <p className="text-xs font-medium text-yellow-400 uppercase tracking-widest mb-1">{event.date ? new Date(event.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</p>
+          <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">{event.name}</h1>
+          <p className="text-sm text-gray-300 mt-1">{event.venue}</p>
+        </div>
       </div>
 
-      <CategoryFilter
-        categories={categories}
-        active={activeCategory}
-        onChange={setActiveCategory}
-      />
+      {/* Contenido */}
+      <div className="p-4 md:p-8 max-w-5xl mx-auto">
+        <CategoryFilter
+          categories={categories}
+          active={activeCategory}
+          onChange={setActiveCategory}
+        />
 
-      <div className="mt-4">
-        {filteredProducts.length > 0 && (
-          <CatalogSection title="Productos">
-            {filteredProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                quantity={getQuantity(product.id)}
-                onAdd={addItem}
-                onUpdateQuantity={updateQuantity}
-              />
-            ))}
-          </CatalogSection>
-        )}
+        <div className="mt-4">
+          {filteredProducts.length > 0 && (
+            <CatalogSection title="Productos">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  quantity={getQuantity(product.id)}
+                  onAdd={addItem}
+                  onUpdateQuantity={updateQuantity}
+                />
+              ))}
+            </CatalogSection>
+          )}
 
-        {activeCategory === 'all' && event.combos.length > 0 && (
-          <CatalogSection title="Combos">
-            {event.combos.map(combo => (
-              <ComboCard
-                key={combo.id}
-                combo={combo}
-                quantity={getQuantity(combo.id)}
-                onAdd={addItem}
-                onUpdateQuantity={updateQuantity}
-              />
-            ))}
-          </CatalogSection>
-        )}
+          {activeCategory === 'all' && event.combos.length > 0 && (
+            <CatalogSection title="Combos">
+              {event.combos.map(combo => (
+                <ComboCard
+                  key={combo.id}
+                  combo={combo}
+                  quantity={getQuantity(combo.id)}
+                  onAdd={addItem}
+                  onUpdateQuantity={updateQuantity}
+                />
+              ))}
+            </CatalogSection>
+          )}
+        </div>
       </div>
 
       <FloatingCart count={count} total={total} eventId={event.id} />
