@@ -5,8 +5,8 @@ import { ProductsView } from '@/components/organizer/ProductsView'
 describe('ProductsView', () => {
   it('muestra los nombres de los productos mock', () => {
     render(<ProductsView />)
-    expect(screen.getByText('Hamburguesa Clásica')).toBeInTheDocument()
     expect(screen.getByText('Gaseosa 500ml')).toBeInTheDocument()
+    expect(screen.getByText('Agua Mineral 500ml')).toBeInTheDocument()
   })
 
   it('muestra los combos mock', () => {
