@@ -18,7 +18,7 @@ export function CategoryFilter({ categories, active, onChange }: CategoryFilterP
           key={category}
           onClick={() => onChange(category)}
           className={cn(
-            'flex-shrink-0 rounded-full px-3 py-1 text-xs md:px-4 md:py-1.5 md:text-sm font-medium transition-colors',
+            'flex-shrink-0 rounded-full px-4 py-1.5 text-sm md:px-5 md:py-2 md:text-sm font-medium transition-colors',
             active === category
               ? 'bg-gray-900 text-white'
               : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
