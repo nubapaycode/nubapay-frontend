@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/orders', label: 'Pedidos' },
   { href: '/products', label: 'Productos' },
+  { href: '/events', label: 'Eventos' },
 ]
 
 export function OrganizerSidebar() {
