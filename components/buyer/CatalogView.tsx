@@ -83,6 +83,36 @@ export function CatalogView({ event }: CatalogViewProps) {
               ))}
             </CatalogSection>
           )}
+
+          {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && (
+            <div className="flex flex-col items-center py-16 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="10" cy="10" r="6" stroke="#9ca3af" strokeWidth="1.5"/><path d="M15 15l4 4" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
+              <p className="text-sm font-medium text-gray-900">Sin productos en esta categoría</p>
+              <p className="text-xs text-gray-400 mt-1">Probá con otra categoría</p>
+            </div>
+          )}
+
+          {activeCategory === 'combos' && event.combos.length === 0 && (
+            <div className="flex flex-col items-center py-16 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" stroke="#9ca3af" strokeWidth="1.5"/><rect x="12" y="2" width="8" height="8" rx="1.5" stroke="#9ca3af" strokeWidth="1.5"/><rect x="2" y="12" width="8" height="8" rx="1.5" stroke="#9ca3af" strokeWidth="1.5"/><rect x="12" y="12" width="8" height="8" rx="1.5" stroke="#9ca3af" strokeWidth="1.5"/></svg>
+              </div>
+              <p className="text-sm font-medium text-gray-900">Sin combos disponibles</p>
+              <p className="text-xs text-gray-400 mt-1">Este evento todavía no tiene combos</p>
+            </div>
+          )}
+
+          {activeCategory === 'all' && filteredProducts.length === 0 && event.combos.length === 0 && (
+            <div className="flex flex-col items-center py-16 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L3 6v8l8 4 8-4V6l-8-4z" stroke="#9ca3af" strokeWidth="1.5" strokeLinejoin="round"/><path d="M3 6l8 4 8-4" stroke="#9ca3af" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+              </div>
+              <p className="text-sm font-medium text-gray-900">Sin productos disponibles</p>
+              <p className="text-xs text-gray-400 mt-1">El organizador todavía no cargó productos</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -64,18 +64,19 @@ describe('CartView — con items', () => {
 
   it('muestra el total formateado', () => {
     render(<CartView eventId="demo" />)
-    expect(screen.getByText(/8.200/)).toBeInTheDocument()
+    expect(screen.getAllByText(/8.200/).length).toBeGreaterThan(0)
   })
 
   it('botón checkout navega a checkout', async () => {
     render(<CartView eventId="demo" />)
-    await userEvent.click(screen.getByRole('button', { name: /Ir al checkout/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Confirmar pedido/ }))
     expect(mockPush).toHaveBeenCalledWith('/demo/checkout')
   })
 
-  it('botón seguir comprando navega al catálogo', async () => {
+  it('botón volver navega al catálogo', async () => {
     render(<CartView eventId="demo" />)
-    await userEvent.click(screen.getByRole('button', { name: /Seguir comprando/ }))
+    const backButton = screen.getAllByRole('button')[0]
+    await userEvent.click(backButton)
     expect(mockPush).toHaveBeenCalledWith('/demo')
   })
 })

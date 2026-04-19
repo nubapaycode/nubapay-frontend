@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
-import { OrdersView } from '@/components/organizer/OrdersView'
+import { ScannerView } from '@/components/organizer/ScannerView'
 
 export const metadata: Metadata = {
-  title: 'Pedidos — Nubapay',
+  title: 'Scanner — Nubapay',
 }
 
-export default function OrganizerOrdersPage() {
+export default function ScannerPage() {
   return (
     <main className="p-4 pt-6 md:p-6 md:pl-[35px] md:pt-[64px]">
-      <OrdersView />
+      <ScannerView />
     </main>
   )
 }

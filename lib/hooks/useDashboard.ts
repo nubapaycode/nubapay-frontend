@@ -14,6 +14,8 @@ const RANDOM_ITEMS = [
   { productId: 'c2', name: 'Combo Familiar', price: 4400, quantity: 1 },
 ]
 
+const PAYMENT_METHODS = ['mp', 'cash', 'transfer'] as const
+
 function generateOrder(): Order {
   const item = RANDOM_ITEMS[Math.floor(Math.random() * RANDOM_ITEMS.length)]
   const now = new Date().toISOString()
@@ -24,6 +26,7 @@ function generateOrder(): Order {
     total: item.price,
     status: 'pending',
     qrToken: crypto.randomUUID(),
+    paymentMethod: PAYMENT_METHODS[Math.floor(Math.random() * PAYMENT_METHODS.length)],
     createdAt: now,
     updatedAt: now,
   }

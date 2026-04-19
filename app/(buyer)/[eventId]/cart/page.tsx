@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function CartPage({ params }: CartPageProps) {
   const { eventId } = await params
   return (
-    <main className="min-h-screen p-4 pb-24">
+    <main className="min-h-screen bg-white">
       <CartView eventId={eventId} />
     </main>
   )

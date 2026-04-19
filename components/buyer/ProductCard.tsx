@@ -1,8 +1,7 @@
 'use client'
 
+import Image from 'next/image'
 import type { Product } from '@/types'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { formatPrice } from '@/lib/utils'
 
 interface ProductCardProps {
@@ -14,38 +13,55 @@ interface ProductCardProps {
 
 export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: ProductCardProps) {
   return (
-    <div className="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-      <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
-        <span className="text-3xl">🍽️</span>
-      </div>
-      <div className="p-2.5 flex flex-col flex-1">
-        <h3 className="font-semibold text-xs leading-tight line-clamp-1">{product.name}</h3>
-        <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 flex-1">{product.description}</p>
-        <span className="font-bold text-xs mt-2 block">{formatPrice(product.price)}</span>
-        <div className="mt-5">
+    <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden flex flex-col gap-0">
+      {/* Imagen */}
+      <div className="aspect-[8/7] bg-gray-50 relative overflow-hidden rounded-b-2xl">
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 50vw, 25vw"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl">🍽️</div>
+        )}
+
+        {/* Botón + / contador en esquina */}
+        <div className="absolute bottom-2 right-2">
           {quantity === 0 ? (
-            <Button size="sm" className="w-full" onClick={() => onAdd(product)}>
-              Agregar
-            </Button>
+            <button
+              onClick={() => onAdd(product)}
+              className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shadow-md hover:bg-gray-50 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            </button>
           ) : (
-            <div className="flex items-center justify-between gap-1">
-              <Button
-                size="sm"
-                variant="secondary"
+            <div className="flex items-center gap-2 bg-white rounded-full px-2.5 py-1.5 shadow-md">
+              <button
                 onClick={() => onUpdateQuantity(product.id, quantity - 1)}
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 text-sm font-bold"
               >
                 −
-              </Button>
-              <span className="text-xs font-medium">{quantity}</span>
-              <Button
-                size="sm"
+              </button>
+              <span className="text-gray-900 text-sm font-bold min-w-[14px] text-center">{quantity}</span>
+              <button
                 onClick={() => onUpdateQuantity(product.id, quantity + 1)}
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 text-sm font-bold"
               >
                 +
-              </Button>
+              </button>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3 border-t border-gray-100">
+        <h3 className="font-semibold text-sm leading-tight line-clamp-1 text-gray-900">{product.name}</h3>
+        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{product.description}</p>
+        <span className="font-bold text-sm text-gray-900 mt-2 block">{formatPrice(product.price)}</span>
       </div>
     </div>
   )

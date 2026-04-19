@@ -40,6 +40,7 @@ export interface Order {
   createdAt: string
   updatedAt: string
   pickupPoint?: string
+  paymentMethod?: 'mp' | 'cash' | 'transfer'
 }
 
 export interface Event {

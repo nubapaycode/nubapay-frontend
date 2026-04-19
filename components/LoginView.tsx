@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
 
 const DEMO_EMAIL = 'demo@nubapay.com'
 const DEMO_PASSWORD = 'demo123'
 const AUTH_KEY = 'nubapay_auth'
+
+const inputClass = "w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
 
 export function LoginView() {
   const router = useRouter()
@@ -24,39 +25,64 @@ export function LoginView() {
     }
   }
 
+  const fillDemo = () => {
+    setEmail(DEMO_EMAIL)
+    setPassword(DEMO_PASSWORD)
+    setError('')
+  }
+
   return (
     <div className="w-full max-w-sm">
+
+      {/* Logo */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Nubapay</h1>
-        <p className="text-sm text-gray-500 mt-1">Panel del organizador</p>
+        <div className="inline-flex items-baseline">
+          <span className="text-xl font-medium text-gray-900 tracking-tight">nubapay</span>
+          <span className="ml-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest">organizer</span>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="email"
-          value={email}
-          onChange={e => { setEmail(e.target.value); setError('') }}
-          placeholder="Email"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={e => { setPassword(e.target.value); setError('') }}
-          placeholder="Contraseña"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-        />
-        {error && (
-          <p className="text-red-500 text-xs">{error}</p>
-        )}
-        <Button size="lg" className="w-full mt-1">
-          Ingresar
-        </Button>
-      </form>
+      {/* Card */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="mb-5">
+          <h1 className="text-lg font-medium text-gray-900">Iniciar sesión</h1>
+          <p className="text-sm text-gray-400 mt-1">Accedé al panel del organizador</p>
+        </div>
 
-      <p className="text-center text-xs text-gray-400 mt-6">
-        Demo: demo@nubapay.com / demo123
-      </p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError('') }}
+            placeholder="Email"
+            className={inputClass}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => { setPassword(e.target.value); setError('') }}
+            placeholder="Contraseña"
+            className={inputClass}
+          />
+          {error && <p className="text-red-500 text-xs">{error}</p>}
+          <button
+            type="submit"
+            className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3 hover:bg-gray-700 transition-colors mt-2"
+          >
+            Ingresar
+          </button>
+        </form>
+      </div>
+
+      {/* Demo hint */}
+      <button
+        onClick={fillDemo}
+        type="button"
+        className="w-full text-center text-xs text-gray-400 mt-6 hover:text-gray-600 transition-colors"
+      >
+        Usar credenciales demo · demo@nubapay.com / demo123
+      </button>
+
     </div>
   )
 }

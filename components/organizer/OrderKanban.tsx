@@ -1,18 +1,17 @@
 import type { Order, OrderStatus } from '@/types'
-import { cn } from '@/lib/utils'
 import { OrderCard } from './OrderCard'
 
 interface Column {
   key: OrderStatus
   label: string
-  headerClass: string
+  dot: string
 }
 
 const COLUMNS: Column[] = [
-  { key: 'pending', label: 'Pendiente', headerClass: 'bg-gray-100' },
-  { key: 'preparing', label: 'En preparación', headerClass: 'bg-yellow-50' },
-  { key: 'ready', label: 'Listo', headerClass: 'bg-green-50' },
-  { key: 'delivered', label: 'Entregado', headerClass: 'bg-gray-50' },
+  { key: 'pending', label: 'Pendiente', dot: 'bg-amber-400' },
+  { key: 'preparing', label: 'En preparación', dot: 'bg-blue-400' },
+  { key: 'ready', label: 'Listo', dot: 'bg-green-400' },
+  { key: 'delivered', label: 'Entregado', dot: 'bg-gray-300' },
 ]
 
 interface OrderKanbanProps {
@@ -28,11 +27,10 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
         const colOrders = orders.filter(o => o.status === col.key)
         return (
           <div key={col.key} className="flex flex-col gap-3">
-            <div className={cn('rounded-lg px-3 py-2', col.headerClass)}>
-              <h2 className="font-semibold text-sm">{col.label}</h2>
-              <p className="text-xs text-gray-500">
-                {colOrders.length} {colOrders.length === 1 ? 'pedido' : 'pedidos'}
-              </p>
+            <div className="flex items-center gap-2 px-1">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${col.dot}`} />
+              <h2 className="text-sm font-medium text-gray-700">{col.label}</h2>
+              <span className="ml-auto text-xs text-gray-400">{colOrders.length}</span>
             </div>
             <div className="flex flex-col gap-2">
               {colOrders.map(order => (
@@ -49,6 +47,11 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
                   }
                 />
               ))}
+              {colOrders.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-gray-100 p-4 text-center">
+                  <p className="text-xs text-gray-300">Sin pedidos</p>
+                </div>
+              )}
             </div>
           </div>
         )

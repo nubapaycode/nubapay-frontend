@@ -16,9 +16,14 @@ export function CartView({ eventId }: CartViewProps) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <span className="text-6xl">🛒</span>
-        <p className="text-lg font-medium text-gray-700">Tu carrito está vacío</p>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-4 text-center">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-4xl">
+          🛒
+        </div>
+        <div>
+          <p className="text-lg font-semibold text-gray-800">Tu carrito está vacío</p>
+          <p className="text-sm text-gray-400 mt-1">Agregá productos para continuar</p>
+        </div>
         <Button variant="secondary" onClick={() => router.push(`/${eventId}`)}>
           ← Volver al catálogo
         </Button>
@@ -27,10 +32,22 @@ export function CartView({ eventId }: CartViewProps) {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Tu pedido</h1>
+    <div className="flex flex-col min-h-screen">
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[76px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <button
+          onClick={() => router.push(`/${eventId}`)}
+          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
+        >
+          ←
+        </button>
+        <h1 className="text-[20px] font-semibold absolute left-1/2 -translate-x-1/2">Tu carrito</h1>
+      </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+      <div className="flex flex-col flex-1 p-4">
+
+      {/* Items */}
+      <div className="bg-white rounded-2xl border border-gray-100  px-4 mb-4">
         {items.map(item => (
           <CartItemRow
             key={item.productId}
@@ -40,20 +57,29 @@ export function CartView({ eventId }: CartViewProps) {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-gray-700">Total</span>
-          <span className="text-xl font-bold">{formatPrice(total)}</span>
+      {/* Resumen */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resumen</h2>
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span className="text-gray-500">Subtotal</span>
+          <span className="font-medium text-gray-900">{formatPrice(total)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm pb-3 border-b border-gray-100">
+          <span className="text-gray-500">Servicio</span>
+          <span className="font-medium text-green-600">Gratis</span>
+        </div>
+        <div className="flex items-center justify-between mt-3">
+          <span className="font-semibold text-gray-900">Total</span>
+          <span className="text-xl font-bold text-gray-900">{formatPrice(total)}</span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <Button size="lg" onClick={() => router.push(`/${eventId}/checkout`)}>
-          Ir al checkout →
+      {/* CTA */}
+      <div className="mt-auto">
+        <Button size="lg" className="w-full rounded-full" onClick={() => router.push(`/${eventId}/checkout`)}>
+          Ir a pagar
         </Button>
-        <Button variant="ghost" onClick={() => router.push(`/${eventId}`)}>
-          ← Seguir comprando
-        </Button>
+      </div>
       </div>
     </div>
   )

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 }
 
 export default async function QRPage({ params }: QRPageProps) {
-  const { orderId } = await params
+  const { eventId, orderId } = await params
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4">
-      <QRDisplay orderId={orderId} />
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-white">
+      <QRDisplay orderId={orderId} eventId={eventId} />
     </main>
   )
 }

@@ -9,20 +9,16 @@ export function OrdersView() {
   const [orders, setOrders] = useState<Order[]>(mockOrders)
 
   const handleMarkReady = (id: string) => {
-    setOrders(prev =>
-      prev.map(o => (o.id === id ? { ...o, status: 'ready' as const } : o))
-    )
+    setOrders(prev => prev.map(o => (o.id === id ? { ...o, status: 'ready' as const } : o)))
   }
 
   const handleMarkDelivered = (id: string) => {
-    setOrders(prev =>
-      prev.map(o => (o.id === id ? { ...o, status: 'delivered' as const } : o))
-    )
+    setOrders(prev => prev.map(o => (o.id === id ? { ...o, status: 'delivered' as const } : o)))
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Pedidos</h1>
+    <div className="max-w-6xl">
+      <h1 className="text-xl font-medium text-gray-900 mb-6 md:-mt-5">Pedidos</h1>
       <OrderKanban
         orders={orders}
         onMarkReady={handleMarkReady}
