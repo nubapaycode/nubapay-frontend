@@ -1,15 +1,16 @@
-import { OrganizerSidebar } from '@/components/organizer/OrganizerSidebar'
+import type { Metadata } from 'next'
+
 import { OrganizerGuard } from '@/components/organizer/OrganizerGuard'
+import { ORGANIZER_ROBOTS } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  robots: ORGANIZER_ROBOTS,
+}
 
 export default function OrganizerLayout({ children }: { children: React.ReactNode }) {
   return (
     <OrganizerGuard>
-      <div className="flex min-h-screen bg-gray-100">
-        <OrganizerSidebar />
-        <div className="flex-1 bg-white overflow-hidden md:rounded-tl-3xl md:rounded-bl-3xl">
-          <div className="pb-20 md:pb-0">{children}</div>
-        </div>
-      </div>
+      {children}
     </OrganizerGuard>
   )
 }

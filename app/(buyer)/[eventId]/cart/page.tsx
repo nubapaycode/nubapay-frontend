@@ -1,12 +1,18 @@
 import type { Metadata } from 'next'
+
 import { CartView } from '@/components/buyer/CartView'
+import { BUYER_PRIVATE_ROBOTS, pageMeta } from '@/lib/seo'
 
 interface CartPageProps {
   params: Promise<{ eventId: string }>
 }
 
-export const metadata: Metadata = {
-  title: 'Tu pedido — Nubapay',
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMeta({
+    title: 'Tu carrito',
+    description: 'Revisá productos y cantidades antes de confirmar el pago con Nubapay.',
+    robots: BUYER_PRIVATE_ROBOTS,
+  })
 }
 
 export default async function CartPage({ params }: CartPageProps) {

@@ -1,14 +1,5 @@
-import type { Metadata } from 'next'
-import { OrdersView } from '@/components/organizer/OrdersView'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Pedidos — Nubapay',
-}
-
-export default function OrganizerOrdersPage() {
-  return (
-    <main className="p-4 pt-6 md:p-6 md:pl-[35px] md:pt-[64px]">
-      <OrdersView />
-    </main>
-  )
+export default function LegacyOrganizerRedirectPage() {
+  redirect('/events')
 }

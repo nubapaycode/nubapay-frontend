@@ -8,10 +8,12 @@ interface ModalProps {
   onClose: () => void
   title?: string
   className?: string
+  /** Capa por encima de otros overlays (ej. drawer z-50). */
+  containerClassName?: string
   children: React.ReactNode
 }
 
-export function Modal({ isOpen, onClose, title, className, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, className, containerClassName, children }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
@@ -26,7 +28,10 @@ export function Modal({ isOpen, onClose, title, className, children }: ModalProp
   return (
     <div
       data-testid="modal-overlay"
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      className={cn(
+        'fixed inset-0 z-50 flex items-end justify-center sm:items-center',
+        containerClassName,
+      )}
       onClick={onClose}
     >
       <div className="fixed inset-0 bg-black/50" />

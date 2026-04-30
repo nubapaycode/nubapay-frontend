@@ -1,6 +1,10 @@
 'use client'
 
-import { useDashboard } from '@/lib/hooks/useDashboard'
+import { useCallback, useEffect, useState } from 'react'
+
+import { Spinner } from '@/components/ui/Spinner'
+import type { DashboardSummary } from '@/lib/organizerWorkspace'
+import { fetchEventDashboard } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 
@@ -24,7 +28,7 @@ function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
   const maxVal = Math.max(...data.map(d => d.revenue), 1)
 
   const pts = data.map((d, i) => {
-    const x = pad.left + (i / (data.length - 1)) * (W - pad.left - pad.right)
+    const x = pad.left + (i / Math.max(data.length - 1, 1)) * (W - pad.left - pad.right)
     const y = pad.top + (1 - d.revenue / maxVal) * (H - pad.top - pad.bottom)
     return { x, y, ...d }
   })
@@ -49,85 +53,105 @@ function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
   )
 }
 
-export function DashboardView() {
-  const { orders } = useDashboard()
+export function DashboardView({ eventId }: { eventId: string }) {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0)
-  const activeOrders = orders.filter(o => o.status !== 'delivered').length
-  const deliveredOrders = orders.filter(o => o.status === 'delivered').length
+  const load = useCallback(async () => {
+    setLoadError('')
+    const res = await fetchEventDashboard(eventId)
+    if (!res.ok) {
+      setLoadError(res.error)
+      setSummary(null)
+    } else {
+      setSummary(res.data)
+    }
+    setLoading(false)
+  }, [eventId])
 
-  // Ventas por hora — últimas 8 horas
-  const hourlyData = Array.from({ length: 8 }, (_, i) => {
-    const h = new Date()
-    h.setHours(h.getHours() - (7 - i), 0, 0, 0)
-    const label = h.getHours().toString().padStart(2, '0') + 'h'
-    const revenue = orders
-      .filter(o => {
-        const d = new Date(o.createdAt)
-        return d.getHours() === h.getHours()
-      })
-      .reduce((s, o) => s + o.total, 0)
-    return { hour: label, revenue }
-  })
+  useEffect(() => {
+    setLoading(true)
+    load()
+  }, [load])
 
-  const topProducts = Object.values(
-    orders.flatMap(o => o.items).reduce<Record<string, { name: string; quantity: number; revenue: number }>>(
-      (acc, item) => {
-        if (acc[item.name]) {
-          acc[item.name].quantity += item.quantity
-          acc[item.name].revenue += item.price * item.quantity
-        } else {
-          acc[item.name] = { name: item.name, quantity: item.quantity, revenue: item.price * item.quantity }
-        }
-        return acc
-      },
-      {}
-    )
-  ).sort((a, b) => b.quantity - a.quantity).slice(0, 5)
+  const ordersLen = summary?.order_count ?? 0
+  const byStatus = (k: OrderStatus) => summary?.by_status?.[k] ?? 0
 
+  const paymentRow = (key: 'mp' | 'cash' | 'transfer') =>
+    summary?.payment_breakdown?.find(p => p.key === key) ?? { key, count: 0, revenue: 0 }
+
+  const topProducts = summary?.top_products ?? []
   const maxQty = topProducts[0]?.quantity ?? 1
+  const hourlyData = summary?.hourly ?? []
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl flex flex-col items-center justify-center py-24 gap-3">
+        <Spinner size="lg" className="text-gray-900" />
+        <p className="text-sm text-gray-400">Cargando métricas…</p>
+      </div>
+    )
+  }
+
+  if (loadError || !summary) {
+    return (
+      <div className="max-w-6xl space-y-4">
+        <div className="mb-6 md:-mt-5">
+          <h1 className="text-xl font-medium text-gray-900">Dashboard del evento</h1>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-red-600">{loadError || 'Sin datos'}</div>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true)
+            load()
+          }}
+          className="rounded-full border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl space-y-4">
 
-      {/* Header */}
       <div className="mb-6 md:-mt-5">
-        <h1 className="text-xl font-medium text-gray-900">Dashboard</h1>
+        <h1 className="text-xl font-medium text-gray-900">Dashboard del evento</h1>
+        <p className="text-xs text-gray-400 mt-1">Métricas y pedidos solo para este evento.</p>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Recaudado</p>
-          <p className="text-lg font-medium text-gray-900">{formatPrice(totalRevenue)}</p>
+          <p className="text-lg font-medium text-gray-900">{formatPrice(summary.total_revenue)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Pedidos</p>
-          <p className="text-lg font-medium text-gray-900">{orders.length}</p>
+          <p className="text-lg font-medium text-gray-900">{summary.order_count}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Activos</p>
-          <p className="text-lg font-medium text-gray-900">{activeOrders}</p>
+          <p className="text-lg font-medium text-gray-900">{summary.active_orders}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Entregados</p>
-          <p className="text-lg font-medium text-gray-900">{deliveredOrders}</p>
+          <p className="text-lg font-medium text-gray-900">{summary.delivered_orders}</p>
         </div>
       </div>
 
-      {/* Fila inferior */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-        {/* Columna izquierda: estado + gráfico por hora */}
         <div className="lg:col-span-2 flex flex-col gap-4">
 
-          {/* Por estado */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Por estado</p>
             <div className="flex flex-col gap-3">
               {STATUS_CONFIG.map(({ key, label, dot }) => {
-                const count = orders.filter(o => o.status === key).length
-                const pct = orders.length ? Math.round((count / orders.length) * 100) : 0
+                const count = byStatus(key)
+                const pct = ordersLen ? Math.round((count / ordersLen) * 100) : 0
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">
@@ -149,15 +173,14 @@ export function DashboardView() {
             </div>
           </div>
 
-          {/* Ventas por hora */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Ventas por hora</p>
               <span className="text-xs text-gray-400">últimas 8h</span>
             </div>
-            <LineChart data={hourlyData} />
+            <LineChart data={hourlyData.length ? hourlyData : Array.from({ length: 8 }, (_, i) => ({ hour: `${i}h`, revenue: 0 }))} />
             <div className="flex justify-between mt-2">
-              {hourlyData.map(d => (
+              {(hourlyData.length ? hourlyData : []).map(d => (
                 <span key={d.hour} className="text-[10px] text-gray-300">{d.hour}</span>
               ))}
             </div>
@@ -165,17 +188,16 @@ export function DashboardView() {
 
         </div>
 
-        {/* Columna derecha: pagos + top productos */}
         <div className="lg:col-span-3 flex flex-col gap-4">
 
-          {/* Métodos de pago */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Métodos de pago</p>
             <div className="flex flex-col gap-3">
               {PAYMENT_CONFIG.map(({ key, label, dot }) => {
-                const count = orders.filter(o => o.paymentMethod === key).length
-                const pct = orders.length ? Math.round((count / orders.length) * 100) : 0
-                const revenue = orders.filter(o => o.paymentMethod === key).reduce((s, o) => s + o.total, 0)
+                const row = paymentRow(key)
+                const count = row.count
+                const pct = ordersLen ? Math.round((count / ordersLen) * 100) : 0
+                const revenue = row.revenue
                 return (
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">
@@ -197,7 +219,6 @@ export function DashboardView() {
             </div>
           </div>
 
-          {/* Top productos */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Más vendidos</p>
             {topProducts.length === 0 ? (

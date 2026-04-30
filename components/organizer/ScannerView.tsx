@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
+import { QrCode } from 'lucide-react'
 import { getOrder } from '@/lib/hooks/useOrderStore'
 import { formatPrice } from '@/lib/utils'
 
@@ -18,7 +19,7 @@ const paymentLabels: Record<string, string> = {
   mp: 'Mercado Pago', cash: 'Efectivo', transfer: 'Transferencia',
 }
 
-export function ScannerView() {
+export function ScannerView({ eventId: _eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
@@ -110,9 +111,17 @@ export function ScannerView() {
   useEffect(() => () => stopCamera(), [stopCamera])
 
   return (
-    <div className="max-w-md mx-auto md:mx-0">
+    <div className="w-full max-w-md mx-auto">
       <div className="flex items-center justify-between mb-6 md:-mt-5">
-        <h1 className="text-xl font-medium text-gray-900">Scanner</h1>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 rounded-xl bg-gray-100 p-2 text-gray-900 shrink-0" aria-hidden>
+            <QrCode size={22} strokeWidth={1.75} />
+          </span>
+          <div>
+            <h1 className="text-xl font-medium text-gray-900">Scanner</h1>
+            <p className="text-xs text-gray-400 mt-1">Validá el código QR del comprador</p>
+          </div>
+        </div>
         {state !== 'idle' && (
           <button onClick={reset} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
             Resetear
@@ -123,13 +132,8 @@ export function ScannerView() {
       {/* Idle */}
       {state === 'idle' && (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-5 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect x="2" y="2" width="10" height="10" rx="2" stroke="#111" strokeWidth="2"/>
-              <rect x="20" y="2" width="10" height="10" rx="2" stroke="#111" strokeWidth="2"/>
-              <rect x="2" y="20" width="10" height="10" rx="2" stroke="#111" strokeWidth="2"/>
-              <path d="M20 20h4v4h-4zM26 20h4M26 26h4v4M20 26v4" stroke="#111" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
+          <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900">
+            <QrCode size={32} strokeWidth={1.75} aria-hidden />
           </div>
           <div>
             <p className="text-base font-medium text-gray-900">Escanear QR de retiro</p>
@@ -173,7 +177,6 @@ export function ScannerView() {
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Pedido encontrado</p>
-              <span className="text-xs font-mono text-gray-400">#{scannedOrder.orderId.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="flex flex-col gap-2 mb-4">
               {scannedOrder.items.map(item => (

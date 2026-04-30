@@ -1,14 +1,20 @@
 import type { Metadata } from 'next'
-import { mockEvent } from '@/lib/mock/event'
+
 import { CatalogView } from '@/components/buyer/CatalogView'
+import { mockEvent } from '@/lib/mock/event'
+import { pageMeta } from '@/lib/seo'
 
 interface CatalogPageProps {
   params: Promise<{ eventId: string }>
 }
 
 export async function generateMetadata({ params }: CatalogPageProps): Promise<Metadata> {
-  const { eventId } = await params
-  return { title: `Catálogo — ${eventId}` }
+  await params
+  return pageMeta({
+    title: 'Menú y pedidos',
+    description:
+      'Explorá productos y combos, armá tu pedido y pagá desde el celular. Retiro ágil con código QR.',
+  })
 }
 
 export default function CatalogPage() {

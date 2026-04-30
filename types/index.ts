@@ -1,6 +1,6 @@
 // types/index.ts
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered'
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
 
 export interface Product {
   id: string

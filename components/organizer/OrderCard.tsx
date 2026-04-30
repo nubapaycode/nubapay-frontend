@@ -24,8 +24,8 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
       </div>
 
       <div className="flex flex-col gap-1">
-        {order.items.map(item => (
-          <div key={item.productId} className="flex items-center justify-between">
+        {order.items.map((item, idx) => (
+          <div key={`${order.id}-${idx}`} className="flex items-center justify-between">
             <p className="text-xs text-gray-700">{item.name}</p>
             <span className="text-[10px] text-gray-400">×{item.quantity}</span>
           </div>
