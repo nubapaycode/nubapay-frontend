@@ -14,6 +14,18 @@ export const authPaths = {
   me: () => apiUrl('/auth/me'),
 }
 
+export const catalogPaths = {
+  bySlug: (slug: string) => {
+    const s = encodeURIComponent(slug)
+    return apiUrl(`/catalog/by-slug/${s}`)
+  },
+  /** Catálogo comprador (productos + combos) por slug público. */
+  storefrontBySlug: (slug: string) => {
+    const s = encodeURIComponent(slug)
+    return apiUrl(`/catalog/storefront/${s}`)
+  },
+}
+
 export const eventsPaths = {
   list: (opts?: { page?: number; page_size?: number }) => {
     const base = apiUrl('/events')
@@ -25,7 +37,7 @@ export const eventsPaths = {
     return s ? `${base}?${s}` : base
   },
   detail: (eventId: string) => apiUrl(`/events/${eventId}`),
-  /** Subrecursos bajo `/api/events/:id/…` (panel organizador, `event_workspace`). */
+  /** Subrecursos bajo `/api/events/:id/…` (panel organizador), ej. `orders`, `cover`. */
   workspace: (eventId: string, segment: string) => {
     const s = segment.startsWith('/') ? segment.slice(1) : segment
     return apiUrl(`/events/${eventId}/${s}`)

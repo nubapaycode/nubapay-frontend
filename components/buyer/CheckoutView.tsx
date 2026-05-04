@@ -6,9 +6,11 @@ import { useCart } from '@/lib/hooks/useCart'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import { saveOrder } from '@/lib/hooks/useOrderStore'
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 
 interface CheckoutViewProps {
   eventId: string
+  catalogSlug?: string
 }
 
 const paymentMethods = [
@@ -17,7 +19,7 @@ const paymentMethods = [
   { id: 'transfer', label: 'Transferencia', icon: '🏦' },
 ]
 
-export function CheckoutView({ eventId }: CheckoutViewProps) {
+export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
@@ -36,15 +38,17 @@ export function CheckoutView({ eventId }: CheckoutViewProps) {
     const orderId = crypto.randomUUID()
     saveOrder({ orderId, items, total, paymentMethod, createdAt: new Date().toISOString() })
     clearCart()
-    router.push(`/${eventId}/order/${orderId}`)
+    router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${orderId}` }))
   }
+
+  const toCart = () => router.push(buyerFlowPath(eventId, { catalogSlug, path: 'cart' }))
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top bar */}
       <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[76px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <button
-          onClick={() => router.push(`/${eventId}/cart`)}
+          onClick={toCart}
           className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
         >
           ←

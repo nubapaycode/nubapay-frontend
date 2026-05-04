@@ -49,6 +49,8 @@ export interface Event {
   description: string
   date: string
   venue: string
+  /** Portada pública (p. ej. Supabase Storage); si no hay, el hero usa imagen por defecto. */
+  coverImageUrl?: string
   products: Product[]
   combos: Combo[]
 }

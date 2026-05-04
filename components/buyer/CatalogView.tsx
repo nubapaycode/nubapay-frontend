@@ -12,11 +12,16 @@ import type { Event } from '@/types'
 
 interface CatalogViewProps {
   event: Event
+  /** Presente cuando el comprador entró por `/catalogo/:slug` (evita navegar a URLs con UUID). */
+  catalogSlug?: string
 }
 
-export function CatalogView({ event }: CatalogViewProps) {
+export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [activeCategory, setActiveCategory] = useState('all')
   const { items, addItem, updateQuantity, total, count } = useCart()
+
+  const heroSrc = event.coverImageUrl && event.coverImageUrl.trim() !== '' ? event.coverImageUrl : '/images/Frame.jpg'
+  const heroRemote = heroSrc.startsWith('http')
 
   const categories = [...new Set(event.products.map(p => p.category))]
 
@@ -33,17 +38,22 @@ export function CatalogView({ event }: CatalogViewProps) {
       {/* Hero */}
       <div className="relative h-[200px] sm:h-[340px] md:h-[364px] lg:h-[420px] overflow-hidden">
         <Image
-          src="/images/Frame.jpg"
+          src={heroSrc}
           alt={event.name}
           fill
           className="object-cover object-center"
           sizes="100vw"
           priority
+          unoptimized={heroRemote}
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative h-full flex flex-col justify-end p-5 md:p-8 max-w-5xl mx-auto pb-[22px] md:pb-[30px]">
           <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">{event.name}</h1>
-          <p className="hidden md:block text-sm text-gray-300 mt-1">{event.venue}</p>
+          {(event.venue?.trim() || event.description?.trim()) && (
+            <p className="hidden md:block text-sm text-gray-300 mt-1 line-clamp-2">
+              {event.venue?.trim() || event.description?.trim()}
+            </p>
+          )}
         </div>
       </div>
 
@@ -116,7 +126,7 @@ export function CatalogView({ event }: CatalogViewProps) {
         </div>
       </div>
 
-      <FloatingCart count={count} total={total} eventId={event.id} />
+      <FloatingCart count={count} total={total} eventId={event.id} catalogSlug={catalogSlug} />
     </>
   )
 }

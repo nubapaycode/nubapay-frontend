@@ -1,16 +1,24 @@
 'use client'
 
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { useRouter } from 'next/navigation'
+import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
 
 interface FloatingCartProps {
   count: number
   total: number
   eventId: string
+  /** Si el usuario entró por `/catalogo/:slug`, el carrito sigue bajo esa ruta (sin UUID en la URL). */
+  catalogSlug?: string
 }
 
-export function FloatingCart({ count, total, eventId }: FloatingCartProps) {
+export function FloatingCart({ count, total, eventId, catalogSlug }: FloatingCartProps) {
   const router = useRouter()
+
+  const goCart = () => {
+    router.push(buyerFlowPath(eventId, { catalogSlug, path: 'cart' }))
+  }
 
   if (count === 0) return null
 
@@ -25,7 +33,7 @@ export function FloatingCart({ count, total, eventId }: FloatingCartProps) {
           <p className="text-base font-semibold text-gray-900">{formatPrice(total)}</p>
         </div>
         <button
-          onClick={() => router.push(`/${eventId}/cart`)}
+          onClick={goCart}
           className="rounded-full bg-gray-900 px-6 py-3 text-base font-semibold text-white hover:bg-gray-800 transition-colors"
         >
           Ver carrito
@@ -34,7 +42,7 @@ export function FloatingCart({ count, total, eventId }: FloatingCartProps) {
 
       {/* Desktop: floating pill */}
       <button
-        onClick={() => router.push(`/${eventId}/cart`)}
+        onClick={goCart}
         className="hidden md:flex fixed bottom-6 right-6 z-40 items-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-white shadow-lg hover:bg-gray-800 transition-colors"
       >
         <span className="text-sm font-medium">

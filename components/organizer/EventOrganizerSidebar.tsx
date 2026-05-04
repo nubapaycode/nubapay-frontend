@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { QrCode } from 'lucide-react'
+import { Link2, QrCode } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { getAuthUser } from '@/lib/authSession'
@@ -64,6 +64,8 @@ function navItems(basePath: string): NavItem[] {
   )
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
 
+  const linkPublicIcon = <Link2 size={16} className="shrink-0" strokeWidth={1.75} aria-hidden />
+
   return [
     {
       href: `${basePath}/dashboard`,
@@ -71,6 +73,12 @@ function navItems(basePath: string): NavItem[] {
       icon: dashIcon,
       showDesktop: true,
       mobileTabOrder: 0,
+    },
+    {
+      href: `${basePath}/storefront`,
+      label: 'Link del catálogo',
+      icon: linkPublicIcon,
+      showDesktop: true,
     },
     {
       href: `${basePath}/products`,
@@ -179,6 +187,7 @@ export function EventOrganizerSidebar({
     pathname.startsWith(`${basePath}/customers`)
     || pathname.startsWith(`${basePath}/payments`)
     || pathname.startsWith(`${basePath}/pickup-points`)
+    || pathname.startsWith(`${basePath}/storefront`)
 
   const title = eventTitle ?? 'Evento'
 

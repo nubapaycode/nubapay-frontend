@@ -12,6 +12,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: ProductCardProps) {
+  const remote = Boolean(product.imageUrl && product.imageUrl.startsWith('http'))
+
   return (
     <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden flex flex-col gap-0">
       {/* Imagen */}
@@ -23,6 +25,7 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
             fill
             className="object-cover"
             sizes="(max-width: 768px) 50vw, 25vw"
+            unoptimized={remote}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl">🍽️</div>

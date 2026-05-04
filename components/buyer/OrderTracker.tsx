@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useOrderStatus } from '@/lib/hooks/useOrderStatus'
 import { getOrder } from '@/lib/hooks/useOrderStore'
 import { formatPrice } from '@/lib/utils'
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 import type { OrderStatus, CartItem } from '@/types'
 
 interface OrderTrackerProps {
   orderId: string
   eventId: string
+  catalogSlug?: string
 }
 
 const steps: { key: OrderStatus; label: string; description: string }[] = [
@@ -35,7 +37,7 @@ function getStepState(stepKey: OrderStatus, currentStatus: OrderStatus): 'comple
   return 'pending'
 }
 
-export function OrderTracker({ orderId, eventId }: OrderTrackerProps) {
+export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProps) {
   const router = useRouter()
   const { status } = useOrderStatus(orderId)
   const [items, setItems] = useState<CartItem[]>([])
@@ -157,7 +159,9 @@ export function OrderTracker({ orderId, eventId }: OrderTrackerProps) {
         {status === 'ready' && (
           <div className="mt-auto">
             <button
-              onClick={() => router.push(`/${eventId}/qr/${orderId}`)}
+              onClick={() =>
+                router.push(buyerFlowPath(eventId, { catalogSlug, path: `qr/${orderId}` }))
+              }
               className="w-full rounded-full bg-gray-900 text-white text-sm font-semibold py-4 hover:bg-gray-700 transition-colors"
             >
               Ver QR de retiro

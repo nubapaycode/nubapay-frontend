@@ -117,15 +117,28 @@ export async function fetchEventDashboard(eventId: string): Promise<
   return { ok: true, data: body as DashboardSummary }
 }
 
+export type WorkspaceOrdersFilters = {
+  /** Texto en ID, nº de pedido, cliente, ítems */
+  q?: string
+  /** Estado en UI del panel; si se omite, el API excluye cancelados. */
+  status?: string
+}
+
 export async function fetchWorkspaceOrders(
   eventId: string,
-  opts?: { page?: number; pageSize?: number },
+  opts?: { page?: number; pageSize?: number } & WorkspaceOrdersFilters,
 ): Promise<
   { ok: true; orders: Order[]; pagination: PaginationMeta } | { ok: false; error: string }
 > {
   const page = opts?.page ?? 1
   const pageSize = opts?.pageSize ?? 40
-  const res = await browserFetch(workspacePath(eventId, 'orders', { page, page_size: pageSize }), {
+  const query: Record<string, string | number | boolean | undefined> = { page, page_size: pageSize }
+  const trimmedQ = opts?.q?.trim()
+  if (trimmedQ) query.q = trimmedQ
+  const st = opts?.status?.trim()
+  if (st) query.status = st
+
+  const res = await browserFetch(workspacePath(eventId, 'orders', query), {
     headers: authHeadersJson(),
   })
   const body = (await res.json()) as { orders?: Order[]; pagination?: Partial<PaginationMeta>; error?: string }

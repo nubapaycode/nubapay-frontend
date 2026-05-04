@@ -5,14 +5,19 @@ import { useCart } from '@/lib/hooks/useCart'
 import { CartItemRow } from './CartItemRow'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 
 interface CartViewProps {
   eventId: string
+  catalogSlug?: string
 }
 
-export function CartView({ eventId }: CartViewProps) {
+export function CartView({ eventId, catalogSlug }: CartViewProps) {
   const router = useRouter()
   const { items, updateQuantity, total } = useCart()
+
+  const toCatalog = () => router.push(buyerFlowPath(eventId, { catalogSlug }))
+  const toCheckout = () => router.push(buyerFlowPath(eventId, { catalogSlug, path: 'checkout' }))
 
   if (items.length === 0) {
     return (
@@ -24,7 +29,7 @@ export function CartView({ eventId }: CartViewProps) {
           <p className="text-lg font-semibold text-gray-800">Tu carrito está vacío</p>
           <p className="text-sm text-gray-400 mt-1">Agregá productos para continuar</p>
         </div>
-        <Button variant="secondary" onClick={() => router.push(`/${eventId}`)}>
+        <Button variant="secondary" onClick={toCatalog}>
           ← Volver al catálogo
         </Button>
       </div>
@@ -36,7 +41,7 @@ export function CartView({ eventId }: CartViewProps) {
       {/* Top bar */}
       <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[76px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <button
-          onClick={() => router.push(`/${eventId}`)}
+          onClick={toCatalog}
           className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
         >
           ←
@@ -76,7 +81,7 @@ export function CartView({ eventId }: CartViewProps) {
 
       {/* CTA */}
       <div className="mt-auto">
-        <Button size="lg" className="w-full rounded-full" onClick={() => router.push(`/${eventId}/checkout`)}>
+        <Button size="lg" className="w-full rounded-full" onClick={toCheckout}>
           Ir a pagar
         </Button>
       </div>

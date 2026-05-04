@@ -24,6 +24,7 @@ const row = {
   name: 'Festival de Verano 2026',
   slug: 'festival-verano-2026',
   description: 'Parque\n\nShow principal',
+  cover_image_url: null as string | null,
   starts_at: '2026-01-15T00:00:00',
   ends_at: null as string | null,
   status: 'draft',
