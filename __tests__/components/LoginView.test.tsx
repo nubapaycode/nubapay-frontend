@@ -94,14 +94,25 @@ describe('LoginView', () => {
     expect(getAuthToken()).toBe('test-jwt')
   })
 
-  it('registro crea sesión y va a eventos', async () => {
-    render(<LoginView />)
+  it('modo login: el botón de cambio navega a /register', async () => {
+    render(<LoginView initialMode="login" />)
     await userEvent.click(screen.getByRole('button', { name: /Registrate/i }))
+    expect(mockPush).toHaveBeenCalledWith('/register')
+  })
+
+  it('registro crea sesión y va a eventos', async () => {
+    render(<LoginView initialMode="register" />)
     await userEvent.type(screen.getByPlaceholderText('Nombre completo'), 'Nuevo Usuario')
     await userEvent.type(screen.getByPlaceholderText('Email'), 'new@test.com')
     await userEvent.type(screen.getByPlaceholderText(/mín\. 8/), 'password12')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta y entrar/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))
     expect(getAuthToken()).toBe('reg-jwt')
+  })
+
+  it('modo register: el botón de cambio navega a /login', async () => {
+    render(<LoginView initialMode="register" />)
+    await userEvent.click(screen.getByRole('button', { name: /Iniciá sesión/i }))
+    expect(mockPush).toHaveBeenCalledWith('/login')
   })
 })

@@ -1,5 +1,6 @@
 'use client'
 
+import { Store } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Modal } from '@/components/ui/Modal'
@@ -28,15 +29,16 @@ function ToggleSwitch({ checked, disabled, onChange }: { checked: boolean; disab
       aria-busy={disabled ?? false}
       disabled={disabled}
       onClick={onChange}
-      className={`w-11 h-6 rounded-full shrink-0 relative overflow-hidden transition-colors duration-200 ease-out ${
-        checked ? 'bg-gray-900' : 'bg-gray-200'
-      } ${disabled ? 'opacity-55 cursor-not-allowed' : ''}`}
+      className={`rounded-full shrink-0 relative overflow-hidden transition-colors duration-200 ease-out ${
+        disabled ? 'opacity-55 cursor-not-allowed' : ''
+      }`}
+      style={{ width: '40px', height: '22px', background: checked ? '#C6FF00' : '#E5E7EB' }}
     >
       <span
-        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md ring-1 ring-black/5 ease-out ${
+        className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-md ring-1 ring-black/10 ease-out ${
           disabled ? '' : 'transition-[left] duration-200 ease-out'
         }`}
-        style={{ left: checked ? '23px' : '4px' }}
+        style={{ left: checked ? '20px' : '3px' }}
       />
     </button>
   )
@@ -67,6 +69,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | null>(null)
+  const [drawerVisible, setDrawerVisible] = useState<'create' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const [formName, setFormName] = useState('')
@@ -105,6 +108,19 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
     setLoading(true)
     loadAll()
   }, [loadAll])
+
+  useEffect(() => {
+    if (drawerMode) { setDrawerVisible(drawerMode); return }
+    const t = window.setTimeout(() => setDrawerVisible(null), 300)
+    return () => window.clearTimeout(t)
+  }, [drawerMode])
+
+  useEffect(() => {
+    if (!drawerMode) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDrawer() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [drawerMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeDrawer = () => {
     setDrawerMode(null)
@@ -316,83 +332,126 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="w-full min-w-0 max-w-none">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 md:-mt-5">
+    <div className="w-full min-w-0 max-w-none" style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+      <style>{`
+        .nb-input:focus { border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+        .nb-pp-card { transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+        .nb-pp-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
+      `}</style>
+
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8" style={{ marginTop: '-20px' }}>
         <div>
-          <h1 className="text-xl font-medium text-gray-900">Puntos de retiro</h1>
-          <p className="text-xs text-gray-400 mt-1">Definí dónde se entrega cada producto del catálogo.</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.03em', color: '#0A0A0F', margin: '0 0 6px 0' }}>Puntos de retiro</h1>
+          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
+            Definí dónde se entrega cada producto del catálogo.
+          </p>
         </div>
         <button
           type="button"
           onClick={openCreate}
-          className="shrink-0 rounded-full bg-gray-900 text-white border border-gray-900 text-sm font-medium px-4 py-2 hover:bg-gray-700 transition-colors"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
         >
-          + Nuevo punto
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+          Nuevo punto
         </button>
       </div>
 
-      {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
+      {error && (
+        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
+          {error}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {points.length === 0 ? (
-          <div className="col-span-full bg-white rounded-2xl border border-gray-100 py-14 px-6 text-center">
-            <p className="text-sm font-medium text-gray-900">Sin puntos de retiro</p>
-            <p className="text-xs text-gray-400 mt-1">Creá el primero para asignar productos por ubicación.</p>
+          <div className="col-span-full" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Store size={22} strokeWidth={1.5} color="#C8C8D0" />
+            </div>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin puntos de retiro</p>
+            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero para asignar productos por ubicación.</p>
+            <button
+              type="button"
+              onClick={openCreate}
+              style={{ background: '#C6FF00', color: '#0A0F00', border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Crear punto
+            </button>
           </div>
         ) : (
-          points.map(p => (
-            <div
-              key={p.id}
-              className={`bg-white rounded-2xl border p-4 flex flex-col gap-3 ${p.is_active ? 'border-gray-100' : 'border-gray-100 opacity-70'}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className={`text-sm font-semibold truncate ${p.is_active ? 'text-gray-900' : 'text-gray-400'}`}>{p.name}</p>
-                  {p.description ? (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{p.description}</p>
+          points.map(p => {
+            const activeProducts = p.products.filter(x => x.is_active)
+            return (
+              <div
+                key={p.id}
+                className="nb-pp-card"
+                style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', opacity: p.is_active ? 1 : 0.6 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{p.name}</p>
+                      {!p.is_active && (
+                        <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(0,0,0,0.06)', color: '#9A9AA8', padding: '2px 8px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Pausado</span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '12px', color: p.description ? '#9A9AA8' : '#D1D5DB', margin: 0, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {p.description || 'Sin descripción'}
+                    </p>
+                  </div>
+                  <ToggleSwitch checked={p.is_active} disabled={togglePending.has(p.id)} onChange={() => togglePointActive(p)} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
+                    {activeProducts.length === 0 ? 'Sin productos asignados' : `${activeProducts.length} producto${activeProducts.length === 1 ? '' : 's'}`}
+                  </p>
+                  {activeProducts.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: '#C8C8D0', margin: 0 }}>Asigná desde "Editar".</p>
                   ) : (
-                    <p className="text-xs text-gray-300 mt-1">Sin descripción</p>
+                    <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', listStyle: 'none', padding: 0, margin: 0 }}>
+                      {activeProducts.slice(0, 6).map(x => (
+                        <li
+                          key={x.product_id}
+                          title={x.name}
+                          style={{ fontSize: '11px', color: '#0A0A0F', background: '#F5F5F7', padding: '3px 9px', borderRadius: '100px', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        >
+                          {x.name}
+                          {x.type === 'combo' && <span style={{ color: '#9A9AA8', marginLeft: '4px' }}>· combo</span>}
+                        </li>
+                      ))}
+                      {activeProducts.length > 6 && (
+                        <li style={{ fontSize: '11px', color: '#9A9AA8', background: 'transparent', padding: '3px 6px' }}>
+                          +{activeProducts.length - 6}
+                        </li>
+                      )}
+                    </ul>
                   )}
                 </div>
-                <ToggleSwitch checked={p.is_active} disabled={togglePending.has(p.id)} onChange={() => togglePointActive(p)} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0', fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(p)}
+                    aria-label={`Eliminar ${p.name}`}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#C8C8D0', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C8C8D0' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Productos en este punto</p>
-                {p.products.length === 0 ? (
-                  <p className="text-xs text-gray-400">Ninguno asignado</p>
-                ) : (
-                  <ul className="flex flex-wrap gap-1">
-                    {p.products.filter(x => x.is_active).map(x => (
-                      <li
-                        key={x.product_id}
-                        className="text-[11px] rounded-full bg-gray-100 px-2 py-0.5 text-gray-700 max-w-full truncate"
-                        title={x.name}
-                      >
-                        {x.name}
-                        {x.type === 'combo' ? <span className="text-gray-400"> · combo</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="flex gap-2 mt-auto pt-1">
-                <button
-                  type="button"
-                  onClick={() => openEdit(p)}
-                  className="text-xs font-medium text-gray-600 hover:text-gray-900"
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(p)}
-                  className="text-xs font-medium text-gray-400 hover:text-red-600 ml-auto"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -410,154 +469,194 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
       <div
         role="presentation"
         onClick={closeDrawer}
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${drawerMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-40 transition-opacity duration-300 ${drawerMode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        style={{ background: 'rgba(10,10,15,0.55)' }}
       />
 
       <div
-        className={`fixed top-0 right-0 h-full z-50 w-[min(100vw,26rem)] bg-white rounded-l-3xl shadow-2xl transition-transform duration-300 ease-out ${drawerMode ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed top-0 right-0 h-full z-50 w-[min(100vw,28rem)] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${drawerMode ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)', borderTopLeftRadius: '24px', borderBottomLeftRadius: '24px', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}
       >
-        {drawerMode && (
-          <div className="p-6 overflow-y-auto max-h-full flex flex-col gap-4 pb-28">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-medium text-gray-900">{drawerMode === 'create' ? 'Nuevo punto de retiro' : 'Editar punto'}</h2>
-              <button type="button" onClick={closeDrawer} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 text-sm">
-                ✕
+        {drawerVisible && (
+          <>
+            {/* Header */}
+            <div style={{ padding: '24px 24px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexShrink: 0 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.02em', margin: 0 }}>
+                  {drawerVisible === 'create' ? 'Nuevo punto de retiro' : 'Editar punto'}
+                </h2>
+                <p style={{ fontSize: '12px', color: '#9A9AA8', margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                  Definí qué productos se entregan en este punto.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDrawer}
+                aria-label="Cerrar"
+                style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6B7280', flexShrink: 0, transition: 'background 0.15s, color 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#E5E7EB'; e.currentTarget.style.color = '#0A0A0F' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#6B7280' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
               </button>
             </div>
-            <input
-              type="text"
-              value={formName}
-              onChange={e => { setFormName(e.target.value); setFormError('') }}
-              placeholder="Nombre (ej. Barra Principal)"
-              className={inputClass}
-              disabled={saving}
-            />
-            <textarea
-              value={formDesc}
-              onChange={e => setFormDesc(e.target.value)}
-              placeholder="Descripción opcional"
-              rows={3}
-              className={`${inputClass} resize-none`}
-              disabled={saving}
-            />
-            <div>
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1">Productos que se entregan acá</p>
-              <p className="text-[11px] text-gray-400 mb-2 leading-snug">
-                Por categoría: marcá todos o refiná por producto cuando lo necesites.
-              </p>
-              <input
-                type="text"
-                value={productSearch}
-                onChange={e => setProductSearch(e.target.value)}
-                placeholder="Buscar categoría o producto…"
-                className={inputClass}
-                disabled={saving}
-              />
-              <div className="mt-2 max-h-[45vh] overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50">
-                {catalog.length === 0 ? (
-                  <p className="px-3 py-4 text-xs text-gray-400 text-center">No hay productos en el catálogo.</p>
-                ) : catalogGroups.length === 0 ? (
-                  <p className="px-3 py-4 text-xs text-gray-400 text-center">Sin coincidencias.</p>
-                ) : (
-                  catalogGroups.map(group => {
-                    const total = group.fullProducts.length
-                    const selectedCount = group.fullProducts.reduce((n, p) => n + (selectedProductIds.has(p.id) ? 1 : 0), 0)
-                    const expanded = detailExpandedKeys.has(group.key)
-                    return (
-                      <div key={group.key} className="bg-white">
-                        <div className="flex flex-col gap-2 px-3 py-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-gray-900 truncate">{group.label}</p>
-                              <p className="text-[11px] text-gray-400 mt-0.5">
-                                {selectedCount === total && total > 0 ? (
-                                  <span className="text-gray-700">Todos ({total})</span>
-                                ) : selectedCount > 0 ? (
-                                  <span>
-                                    {selectedCount} de {total} seleccionados
-                                  </span>
-                                ) : (
-                                  <span>Ninguno · {total} producto{total !== 1 ? 's' : ''}</span>
-                                )}
-                              </p>
-                            </div>
-                            <div className="flex shrink-0 gap-1">
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Nombre</label>
+                <input
+                  type="text"
+                  value={formName}
+                  onChange={e => { setFormName(e.target.value); setFormError('') }}
+                  placeholder="Ej: Barra Principal"
+                  className="nb-input"
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                  disabled={saving}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Descripción <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional</span>
+                </label>
+                <textarea
+                  value={formDesc}
+                  onChange={e => setFormDesc(e.target.value)}
+                  placeholder="Detalle visible para el cliente"
+                  rows={2}
+                  className="nb-input"
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  disabled={saving}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Productos que se entregan acá</label>
+                <div style={{ position: 'relative', marginBottom: '10px' }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#C8C8D0', pointerEvents: 'none' }}>
+                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={e => setProductSearch(e.target.value)}
+                    placeholder="Buscar categoría o producto…"
+                    className="nb-input"
+                    style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px 11px 38px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                    disabled={saving}
+                  />
+                </div>
+                <div style={{ borderRadius: '14px', border: '1px solid rgba(0,0,0,0.07)', background: '#FAFAFA', overflow: 'hidden' }}>
+                  {catalog.length === 0 ? (
+                    <p style={{ padding: '20px', fontSize: '12px', color: '#9A9AA8', textAlign: 'center', margin: 0 }}>No hay productos en el catálogo.</p>
+                  ) : catalogGroups.length === 0 ? (
+                    <p style={{ padding: '20px', fontSize: '12px', color: '#9A9AA8', textAlign: 'center', margin: 0 }}>Sin coincidencias.</p>
+                  ) : (
+                    catalogGroups.map((group, gi) => {
+                      const total = group.fullProducts.length
+                      const selectedCount = group.fullProducts.reduce((n, p) => n + (selectedProductIds.has(p.id) ? 1 : 0), 0)
+                      const expanded = detailExpandedKeys.has(group.key)
+                      const allChecked = selectedCount === total && total > 0
+                      return (
+                        <div key={group.key} style={{ background: '#FFFFFF', borderTop: gi === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)' }}>
+                          <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                               <button
                                 type="button"
                                 disabled={saving || total === 0}
-                                onClick={() => toggleCategoryProducts(group.fullProducts, true)}
-                                className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+                                onClick={() => toggleCategoryProducts(group.fullProducts, !allChecked)}
+                                aria-checked={allChecked}
+                                role="checkbox"
+                                style={{ width: '18px', height: '18px', borderRadius: '5px', border: allChecked ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: allChecked ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
                               >
-                                Todos
+                                {allChecked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                               </button>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{group.label}</p>
+                                <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0' }}>
+                                  {allChecked ? (
+                                    <>Todos · {total}</>
+                                  ) : selectedCount > 0 ? (
+                                    <>{selectedCount} de {total} seleccionados</>
+                                  ) : (
+                                    <>{total} producto{total !== 1 ? 's' : ''}</>
+                                  )}
+                                </p>
+                              </div>
                               <button
                                 type="button"
-                                disabled={saving || selectedCount === 0}
-                                onClick={() => toggleCategoryProducts(group.fullProducts, false)}
-                                className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                                disabled={saving}
+                                onClick={() => toggleDetailExpanded(group.key)}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', flexShrink: 0, transition: 'transform 0.15s' }}
+                                aria-label={expanded ? 'Ocultar productos' : 'Mostrar productos'}
+                                aria-expanded={expanded}
                               >
-                                Ninguno
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
                               </button>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            disabled={saving}
-                            onClick={() => toggleDetailExpanded(group.key)}
-                            className="text-left text-[11px] font-medium text-gray-600 hover:text-gray-900 py-0.5"
-                          >
-                            {expanded ? '↑ Ocultar lista por producto' : '↓ Elegir productos individuales'}
-                          </button>
-                        </div>
-                        {expanded ? (
-                          group.displayProducts.length === 0 ? (
-                            <p className="px-3 pb-3 pt-0 text-[11px] text-gray-400 border-t border-gray-50 bg-gray-50/60">
-                              No hay coincidencias en esta categoría con la búsqueda actual. Probá limpiar el filtro o usá «Todos» arriba.
-                            </p>
-                          ) : (
-                            <ul className="border-t border-gray-50 bg-gray-50/40 divide-y divide-gray-100/80">
-                              {group.displayProducts.map(prod => {
-                                const checked = selectedProductIds.has(prod.id)
-                                return (
-                                  <li key={prod.id}>
-                                    <label className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/80">
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        disabled={saving}
-                                        onChange={() => toggleProductSelected(prod.id)}
-                                        className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                                      />
-                                      <span className="flex-1 min-w-0">
-                                        <span className="block text-sm text-gray-900 truncate">{prod.name}</span>
-                                        <span className="block text-[11px] text-gray-400 truncate">
-                                          {prod.type === 'combo' ? 'Combo' : 'Producto'}
-                                          {!prod.is_active ? ' · inactivo en catálogo' : ''}
+                          {expanded && (
+                            group.displayProducts.length === 0 ? (
+                              <p style={{ padding: '12px 14px', fontSize: '11px', color: '#9A9AA8', borderTop: '1px solid rgba(0,0,0,0.05)', background: '#FAFAFA', margin: 0 }}>
+                                Sin coincidencias con la búsqueda.
+                              </p>
+                            ) : (
+                              <ul style={{ borderTop: '1px solid rgba(0,0,0,0.05)', background: '#FAFAFA', listStyle: 'none', padding: 0, margin: 0 }}>
+                                {group.displayProducts.map((prod, pi) => {
+                                  const checked = selectedProductIds.has(prod.id)
+                                  return (
+                                    <li key={prod.id} style={{ borderTop: pi === 0 ? 'none' : '1px solid rgba(0,0,0,0.04)' }}>
+                                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px 10px 32px', cursor: 'pointer' }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleProductSelected(prod.id)}
+                                          aria-checked={checked}
+                                          role="checkbox"
+                                          style={{ width: '16px', height: '16px', borderRadius: '4px', border: checked ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: checked ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+                                        >
+                                          {checked && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                        </button>
+                                        <span style={{ flex: 1, minWidth: 0 }}>
+                                          <span style={{ display: 'block', fontSize: '13px', color: '#0A0A0F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prod.name}</span>
+                                          <span style={{ display: 'block', fontSize: '11px', color: '#9A9AA8', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {prod.type === 'combo' ? 'Combo' : 'Producto'}
+                                            {!prod.is_active && ' · inactivo'}
+                                          </span>
                                         </span>
-                                      </span>
-                                    </label>
-                                  </li>
-                                )
-                              })}
-                            </ul>
-                          )
-                        ) : null}
-                      </div>
-                    )
-                  })
-                )}
+                                      </label>
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            )
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
               </div>
+              {formError && (
+                <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>
+                  {formError}
+                </div>
+              )}
             </div>
-            {formError && <p className="text-red-500 text-xs">{formError}</p>}
-            <button
-              type="button"
-              disabled={saving}
-              onClick={handleSave}
-              className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-2.5 hover:bg-gray-700 disabled:opacity-60"
-            >
-              {saving ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.06)', flexShrink: 0, background: '#FFFFFF' }}>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleSave}
+                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
+              >
+                {saving ? 'Guardando…' : drawerVisible === 'create' ? 'Crear punto' : 'Guardar cambios'}
+              </button>
+            </div>
+          </>
         )}
       </div>
 

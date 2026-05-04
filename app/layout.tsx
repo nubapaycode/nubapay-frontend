@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { DM_Sans, Inter } from 'next/font/google'
 import './globals.css'
 import { SITE_DESCRIPTION, SITE_NAME, resolveMetadataBase } from '@/lib/seo'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+})
 
 const metadataBase = resolveMetadataBase()
 
@@ -38,7 +44,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" className={dmSans.variable}>
       <body className={`${inter.className} bg-gray-50 text-gray-900`} style={{ fontFamily: "-apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter', sans-serif" }}>
         {children}
       </body>
