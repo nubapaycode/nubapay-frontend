@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import type { Product } from '@/types'
+import { BUYER_COLORS } from '@/lib/buyerUi'
 import { formatPrice } from '@/lib/utils'
 
 interface ProductCardProps {
@@ -11,13 +12,33 @@ interface ProductCardProps {
   onUpdateQuantity: (productId: string, quantity: number) => void
 }
 
+function PlaceholderIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden>
+      <path
+        d="M8 14h24v18a2 2 0 01-2 2H10a2 2 0 01-2-2V14z"
+        stroke={BUYER_COLORS.iconMuted}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M8 18h24" stroke={BUYER_COLORS.iconMuted} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M14 26h4M22 26h8" stroke={BUYER_COLORS.iconMuted} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: ProductCardProps) {
   const remote = Boolean(product.imageUrl && product.imageUrl.startsWith('http'))
 
+  const btnBase =
+    'flex items-center justify-center rounded-full transition-colors active:opacity-90'
+
   return (
-    <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden flex flex-col gap-0">
-      {/* Imagen */}
-      <div className="aspect-[8/7] bg-gray-50 relative overflow-hidden rounded-b-2xl">
+    <div
+      className="flex flex-col overflow-hidden rounded-[18px] bg-white"
+      style={{ border: `1px solid ${BUYER_COLORS.border}` }}
+    >
+      <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -28,30 +49,47 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
             unoptimized={remote}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">🍽️</div>
+          <div className="flex h-full w-full items-center justify-center">
+            <PlaceholderIcon />
+          </div>
         )}
 
-        {/* Botón + / contador en esquina */}
         <div className="absolute bottom-2 right-2">
           {quantity === 0 ? (
             <button
+              type="button"
               onClick={() => onAdd(product)}
-              className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-900 shadow-md hover:bg-gray-50 transition-colors"
+              className={`${btnBase} h-9 w-9 bg-white shadow-md`}
+              style={{ border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`, color: BUYER_COLORS.text }}
+              aria-label={`Agregar ${product.name}`}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-white rounded-full px-2.5 py-1.5 shadow-md">
+            <div
+              className="flex items-center gap-2 rounded-full px-2 py-1.5 shadow-md"
+              style={{ background: BUYER_COLORS.surface, border: `1px solid ${BUYER_COLORS.border}` }}
+            >
               <button
+                type="button"
                 onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 text-sm font-bold"
+                className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                aria-label="Quitar uno"
               >
                 −
               </button>
-              <span className="text-gray-900 text-sm font-bold min-w-[14px] text-center">{quantity}</span>
+              <span className="min-w-[18px] text-center text-sm font-extrabold" style={{ color: BUYER_COLORS.text }}>
+                {quantity}
+              </span>
               <button
+                type="button"
                 onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 text-sm font-bold"
+                className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                aria-label="Agregar uno"
               >
                 +
               </button>
@@ -60,11 +98,18 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
         </div>
       </div>
 
-      {/* Info */}
-      <div className="p-3 border-t border-gray-100">
-        <h3 className="font-semibold text-sm leading-tight line-clamp-1 text-gray-900">{product.name}</h3>
-        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">{product.description}</p>
-        <span className="font-bold text-sm text-gray-900 mt-2 block">{formatPrice(product.price)}</span>
+      <div className="border-t p-3" style={{ borderColor: BUYER_COLORS.border }}>
+        <h3 className="line-clamp-1 text-sm font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
+          {product.name}
+        </h3>
+        {product.description?.trim() ? (
+          <p className="mt-0.5 line-clamp-2 text-xs leading-snug" style={{ color: BUYER_COLORS.muted }}>
+            {product.description}
+          </p>
+        ) : null}
+        <span className="mt-2 block text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          {formatPrice(product.price)}
+        </span>
       </div>
     </div>
   )

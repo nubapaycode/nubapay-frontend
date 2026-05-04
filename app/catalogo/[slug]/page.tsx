@@ -43,7 +43,7 @@ export default async function CatalogoSlugPage({ params }: Props) {
   const event = mapStorefrontToEvent(data)
 
   return (
-    <main className="min-h-screen pb-32">
+    <main className="min-h-screen bg-[#F7F7FA] pb-32">
       <CatalogView event={event} catalogSlug={slug} />
     </main>
   )

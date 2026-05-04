@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { QrCode } from 'lucide-react'
+
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { getOrder } from '@/lib/hooks/useOrderStore'
 import { formatPrice } from '@/lib/utils'
 
@@ -112,22 +114,22 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="flex items-center justify-between mb-6 md:-mt-5">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 rounded-xl bg-gray-100 p-2 text-gray-900 shrink-0" aria-hidden>
+      <OrganizerToolHeading
+        title="Escáner"
+        description="Validá el código QR del comprador."
+        prefix={
+          <span className="mt-0.5 rounded-xl bg-gray-100 p-2 text-gray-900" aria-hidden>
             <QrCode size={22} strokeWidth={1.75} />
           </span>
-          <div>
-            <h1 className="text-xl font-medium text-gray-900">Scanner</h1>
-            <p className="text-xs text-gray-400 mt-1">Validá el código QR del comprador</p>
-          </div>
-        </div>
-        {state !== 'idle' && (
-          <button onClick={reset} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
-            Resetear
-          </button>
-        )}
-      </div>
+        }
+        actions={
+          state !== 'idle' ? (
+            <button type="button" onClick={reset} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
+              Resetear
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Idle */}
       {state === 'idle' && (

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
 import { fetchWorkspaceCustomers, type WorkspaceCustomer } from '@/lib/organizerWorkspace'
@@ -43,10 +44,10 @@ export function CustomersView({ eventId }: { eventId: string }) {
 
   return (
     <div className="max-w-6xl">
-      <div className="mb-6 md:-mt-5">
-        <h1 className="text-xl font-medium text-gray-900">Clientes</h1>
-        <p className="text-xs text-gray-400 mt-1">Quienes compraron en este evento (según datos de pedidos).</p>
-      </div>
+      <OrganizerToolHeading
+        title="Clientes"
+        description="Quienes compraron en este evento (según datos de pedidos)."
+      />
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">

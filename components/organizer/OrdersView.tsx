@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { OrderKanban } from '@/components/organizer/OrderKanban'
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { fetchWorkspaceOrders, patchOrderStatus } from '@/lib/organizerWorkspace'
 import type { PaginationMeta } from '@/lib/organizerWorkspace'
 import type { Order } from '@/types'
@@ -70,22 +71,18 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
   return (
     <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 4px 0', letterSpacing: '-0.03em' }}>
-            Pedidos
-          </h1>
+      <OrganizerToolHeading
+        title="Pedidos"
+        description={
           <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Actualizacion automática cada 15 s
+            Actualización automática cada 15 s
             {lastRefresh && (
               <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>· última: {fmt(lastRefresh)}</span>
             )}
           </p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Live pill */}
+        }
+        actions={
+          <>
           {(pending + preparing) > 0 && (
             <div style={{
               display: 'flex',
@@ -142,8 +139,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
             </svg>
             Actualizar
           </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {error && (
         <div style={{

@@ -5,9 +5,14 @@ interface CatalogSectionProps {
 
 export function CatalogSection({ title, children }: CatalogSectionProps) {
   return (
-    <section className="mb-8">
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{title}</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{children}</div>
+    <section className="mb-10">
+      <h2
+        className="mb-3 text-[15px] font-bold tracking-tight text-[#0A0A0F]"
+        style={{ letterSpacing: '-0.02em' }}
+      >
+        {title}
+      </h2>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{children}</div>
     </section>
   )
 }

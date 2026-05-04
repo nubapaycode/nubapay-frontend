@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { PaginationBar } from '@/components/ui/PaginationBar'
+import { Spinner } from '@/components/ui/Spinner'
 import { fetchWorkspacePayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 
@@ -11,20 +14,37 @@ const channelLabels: Record<string, string> = {
   transfer: 'Transferencia',
 }
 
-const channelColors: Record<string, string> = {
-  mp: '#009EE3',
-  cash: '#22C55E',
-  transfer: '#8B5CF6',
+const channelClass: Record<string, string> = {
+  mp: 'bg-sky-50 text-sky-700',
+  cash: 'bg-green-50 text-green-700',
+  transfer: 'bg-violet-50 text-violet-700',
 }
 
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  approved: { label: 'Aprobado',  color: '#16A34A', bg: 'rgba(22,163,74,0.08)'   },
-  pending:  { label: 'Pendiente', color: '#B45309', bg: 'rgba(245,158,11,0.08)'  },
-  rejected: { label: 'Rechazado', color: '#DC2626', bg: 'rgba(239,68,68,0.08)'   },
-  refunded: { label: 'Reembolso', color: '#6B7280', bg: 'rgba(107,114,128,0.08)' },
+const statusLabels: Record<string, string> = {
+  approved: 'Aprobado',
+  pending: 'Pendiente',
+  rejected: 'Rechazado',
+  refunded: 'Reembolso',
+}
+
+const statusClass: Record<string, string> = {
+  approved: 'bg-green-50 text-green-700',
+  pending: 'bg-amber-50 text-amber-800',
+  rejected: 'bg-red-50 text-red-700',
+  refunded: 'bg-gray-100 text-gray-600',
 }
 
 const PAGE_SIZE = 20
+
+function fmtDate(s: string | null | undefined) {
+  if (!s) return '—'
+  const d = new Date(s)
+  return (
+    d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+    + ' '
+    + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  )
+}
 
 export function PaymentsView({ eventId }: { eventId: string }) {
   const [rows, setRows] = useState<WorkspacePayment[]>([])
@@ -34,146 +54,112 @@ export function PaymentsView({ eventId }: { eventId: string }) {
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
+    setLoading(true)
     setError('')
     const res = await fetchWorkspacePayments(eventId, { page, pageSize: PAGE_SIZE })
-    if (!res.ok) { setError(res.error); setRows([]) }
-    else { setRows(res.payments); setPagination(res.pagination) }
+    if (!res.ok) {
+      setError(res.error)
+      setRows([])
+    } else {
+      setRows(res.payments)
+      setPagination(res.pagination)
+    }
     setLoading(false)
   }, [eventId, page])
 
-  useEffect(() => { setLoading(true); load() }, [load])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch helper owns loading/error; intentional on mount/page change
+    void load()
+  }, [load])
 
-  const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
-  const totalPages = Math.ceil(pagination.total / PAGE_SIZE)
-
-  const fmtDate = (s: string | null | undefined) => {
-    if (!s) return '—'
-    const d = new Date(s)
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  if (loading) {
+    return (
+      <div className="max-w-6xl flex flex-col items-center justify-center py-24 gap-3">
+        <Spinner size="lg" className="text-gray-900" />
+        <p className="text-sm text-gray-400">Cargando pagos…</p>
+      </div>
+    )
   }
 
   return (
-    <div style={{ fontFamily: font, maxWidth: '1000px' }}>
+    <div className="max-w-6xl">
+      <OrganizerToolHeading
+        title="Pagos"
+        description="Registros de cobro asociados a pedidos del evento."
+      />
 
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 4px 0', letterSpacing: '-0.03em' }}>Pagos</h1>
-        <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Registros de cobro asociados a pedidos del evento.</p>
+      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        {rows.length === 0 ? (
+          <div className="py-14 text-center px-4">
+            <p className="text-sm font-medium text-gray-900 mb-1">Sin pagos registrados</p>
+            <p className="text-xs text-gray-400">Los cobros del evento aparecerán acá.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3">Proveedor</th>
+                  <th className="px-4 py-3">Canal</th>
+                  <th className="px-4 py-3">Pedido</th>
+                  <th className="px-4 py-3 text-right">Monto</th>
+                  <th className="px-4 py-3 text-right">Fecha</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {rows.map(row => {
+                  const st = row.status
+                  const stCls = statusClass[st] ?? 'bg-gray-100 text-gray-600'
+                  const ch = row.channel ?? ''
+                  const chCls = channelClass[ch] ?? 'bg-gray-100 text-gray-600'
+                  return (
+                    <tr key={row.id} className="text-gray-900 hover:bg-gray-50/80">
+                      <td className="px-4 py-3 align-middle">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${stCls}`}>
+                          {statusLabels[st] ?? st}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{row.provider ?? '—'}</td>
+                      <td className="px-4 py-3 align-middle">
+                        {ch ? (
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${chCls}`}>
+                            {channelLabels[ch] ?? ch}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-500 tracking-wide">
+                        #{row.order_id.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-900">
+                        {formatPrice(row.amount)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-gray-500 tabular-nums whitespace-nowrap">
+                        {fmtDate(row.paid_at || row.created_at)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
+      {pagination.total > 0 && (
+        <div className="mt-4">
+          <PaginationBar
+            page={pagination.page}
+            pageSize={pagination.page_size}
+            total={pagination.total}
+            onPageChange={setPage}
+          />
         </div>
       )}
-
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: '12px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ animation: 'nb-spin 0.7s linear infinite' }}>
-            <circle cx="12" cy="12" r="10" stroke="#0A0A0F" strokeWidth="2" opacity="0.15"/>
-            <path d="M12 2a10 10 0 0110 10" stroke="#0A0A0F" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Cargando pagos…</p>
-        </div>
-      ) : rows.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', padding: '64px 24px', textAlign: 'center' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#F7F7FA', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="12" rx="2" stroke="#C4C4CF" strokeWidth="1.5"/><path d="M2 9h16" stroke="#C4C4CF" strokeWidth="1.5" strokeLinecap="round"/><path d="M6 13h2" stroke="#C4C4CF" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          </div>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin pagos registrados</p>
-          <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0 }}>Los cobros del evento aparecerán acá</p>
-        </div>
-      ) : (
-        <>
-          <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
-            {/* Table header */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '100px 130px 140px 1fr 110px 120px',
-              padding: '10px 20px',
-              borderBottom: '1px solid rgba(0,0,0,0.06)',
-              background: '#FAFAFA',
-            }}>
-              {['Estado', 'Proveedor', 'Canal', 'Pedido', 'Monto', 'Fecha'].map((h, i) => (
-                <span key={h} style={{ fontSize: '10px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: i >= 4 ? 'right' : 'left' }}>
-                  {h}
-                </span>
-              ))}
-            </div>
-
-            {/* Rows */}
-            {rows.map((row, idx) => {
-              const st = statusConfig[row.status] ?? { label: row.status, color: '#6B7280', bg: 'rgba(107,114,128,0.08)' }
-              const ch = row.channel ?? ''
-              return (
-                <div
-                  key={row.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '100px 130px 140px 1fr 110px 120px',
-                    padding: '12px 20px',
-                    borderBottom: idx < rows.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
-                    alignItems: 'center',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAFAFA' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
-                >
-                  <div>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, borderRadius: '100px', padding: '2px 8px' }}>
-                      {st.label}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#4B4B5A' }}>{row.provider ?? '—'}</span>
-                  <div>
-                    {ch ? (
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: channelColors[ch] ?? '#6B7280', background: `${channelColors[ch] ?? '#6B7280'}14`, borderRadius: '100px', padding: '2px 8px' }}>
-                        {channelLabels[ch] ?? ch}
-                      </span>
-                    ) : <span style={{ fontSize: '12px', color: '#C4C4CF' }}>—</span>}
-                  </div>
-                  <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#9A9AA8', letterSpacing: '0.04em' }}>
-                    #{row.order_id.slice(0, 8).toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0A0A0F', textAlign: 'right', letterSpacing: '-0.02em' }}>
-                    {formatPrice(row.amount)}
-                  </span>
-                  <span style={{ fontSize: '11px', color: '#9A9AA8', textAlign: 'right' }}>
-                    {fmtDate(row.paid_at || row.created_at)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
-              <span style={{ fontSize: '12px', color: '#9A9AA8' }}>
-                {pagination.total} registros · Página {page} de {totalPages}
-              </span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, color: page === 1 ? '#C4C4CF' : '#0A0A0F', cursor: page === 1 ? 'not-allowed' : 'pointer', fontFamily: font }}
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: 600, color: page === totalPages ? '#C4C4CF' : '#0A0A0F', cursor: page === totalPages ? 'not-allowed' : 'pointer', fontFamily: font }}
-                >
-                  →
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      <style>{`@keyframes nb-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

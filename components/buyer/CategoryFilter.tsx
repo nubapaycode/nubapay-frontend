@@ -1,5 +1,6 @@
 'use client'
 
+import { BUYER_COLORS } from '@/lib/buyerUi'
 import { cn } from '@/lib/utils'
 
 interface CategoryFilterProps {
@@ -12,17 +13,23 @@ export function CategoryFilter({ categories, active, onChange }: CategoryFilterP
   const all = ['all', ...categories, 'combos']
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2">
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
       {all.map(category => (
         <button
           key={category}
+          type="button"
           onClick={() => onChange(category)}
           className={cn(
-            'flex-shrink-0 rounded-full px-4 py-1.5 text-sm md:px-5 md:py-2 md:text-sm font-medium transition-colors',
+            'flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors md:px-5',
             active === category
-              ? 'bg-gray-900 text-white'
-              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              ? 'text-[#0A0F00]'
+              : 'border bg-white text-[#0A0A0F]',
           )}
+          style={
+            active === category
+              ? { background: BUYER_COLORS.accent, border: 'none' }
+              : { borderColor: BUYER_COLORS.chipInactiveBorder, background: BUYER_COLORS.chipInactiveBg }
+          }
         >
           {category === 'all' ? 'Todos' : category === 'combos' ? 'Combos' : category}
         </button>

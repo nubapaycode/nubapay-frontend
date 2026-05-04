@@ -10,6 +10,7 @@ import type { OrganizerEventRow } from '@/lib/types/organizer'
 import { formatDate } from '@/lib/utils'
 
 import { OrganizerHubBar } from '@/components/organizer/OrganizerHubBar'
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 
 const LIST_PAGE_SIZE = 8
@@ -128,24 +129,22 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.03em', color: '#0A0A0F', margin: '0 0 6px 0' }}>Mis eventos</h1>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Cada evento tiene su propio panel: métricas, catálogo, pedidos y escáner.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          Nuevo evento
-        </button>
-      </div>
+      <OrganizerToolHeading
+        title="Mis eventos"
+        description="Cada evento tiene su propio panel: métricas, catálogo, pedidos y escáner."
+        actions={
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Nuevo evento
+          </button>
+        }
+      />
 
       {/* List */}
       {listError && (

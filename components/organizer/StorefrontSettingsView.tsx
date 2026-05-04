@@ -9,6 +9,7 @@ import { catalogPublicPath, getPublicSiteOriginForUi } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
 
 const inputClass =
@@ -129,13 +130,10 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
 
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-8">
-      <div>
-        <h1 className="text-xl font-medium text-gray-900">Link del catálogo</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Empezá con una foto de portada: la usamos para el menú público. Cuando esté lista, podés definir el texto
-          corto del enlace y compartirlo con tu gente.
-        </p>
-      </div>
+      <OrganizerToolHeading
+        title="Link del catálogo"
+        description="Empezá con una foto de portada: la usamos para el menú público. Cuando esté lista, podés definir el texto corto del enlace y compartirlo con tu gente."
+      />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -145,8 +143,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           Portada del catálogo
         </div>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Elegí una imagen representativa: la optimizamos automáticamente para que pese menos y se vea bien en el
-          celular. Si mandás una foto en formato Apple (HEIC), la subimos tal cual.
+          Elegí una imagen representativa.
         </p>
 
         {event.cover_image_url ? (

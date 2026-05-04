@@ -201,7 +201,7 @@ export function EventOrganizerSidebar({
 
   return (
     <>
-      <aside className="hidden md:flex w-[264px] shrink-0 bg-gray-100 min-h-screen flex-col p-3">
+      <aside className="hidden h-full min-h-0 w-[264px] shrink-0 flex-col overflow-hidden bg-gray-100 p-3 md:flex">
         <div className="px-3 pt-5 pb-4 mb-1">
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-semibold text-gray-900 tracking-tight">nubapay</span>
@@ -209,7 +209,7 @@ export function EventOrganizerSidebar({
           </div>
         </div>
 
-        <nav ref={navRef} className="flex flex-col gap-2.5 flex-1 relative pt-2">
+        <nav ref={navRef} className="relative flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain pt-2">
           {/* Mis eventos + título */}
           {(() => {
             const myEventsHref = `${basePath}/all`
@@ -268,7 +268,7 @@ export function EventOrganizerSidebar({
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-gray-200 mt-2">
+        <div className="mt-2 shrink-0 border-t border-gray-200 px-3 py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center shrink-0">

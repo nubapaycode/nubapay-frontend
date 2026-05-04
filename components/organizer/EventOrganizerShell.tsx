@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -59,7 +58,7 @@ export function EventOrganizerShell({
   const base = `/events/${eventId}`
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-row overflow-hidden bg-gray-100">
       <EventOrganizerSidebar
         eventTitle={eventTitle}
         basePath={base}
@@ -69,8 +68,8 @@ export function EventOrganizerShell({
           router.replace('/')
         }}
       />
-      <div className="flex-1 bg-white overflow-hidden md:rounded-tl-3xl md:rounded-bl-3xl">
-        <div className="pb-20 md:pb-0">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">{children}</div>
       </div>
     </div>
   )

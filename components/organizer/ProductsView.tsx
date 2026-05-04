@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
@@ -647,14 +648,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
         @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8" style={{ marginTop: '-20px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.03em', color: '#0A0A0F', margin: '0 0 6px 0' }}>Catálogo</h1>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Armá el menú con productos, combos y categorías.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
+      <OrganizerToolHeading
+        title="Catálogo"
+        description="Armá el menú con productos, combos y categorías."
+        actions={
+          <>
           <button
             type="button"
             onClick={() => setDrawerMode('categories')}
@@ -714,8 +712,9 @@ export function ProductsView({ eventId }: { eventId: string }) {
             </svg>
             Combo
           </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {error && (
         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>

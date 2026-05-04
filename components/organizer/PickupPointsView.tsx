@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import {
@@ -327,22 +328,20 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
         .nb-pp-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
       `}</style>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8" style={{ marginTop: '-20px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.03em', color: '#0A0A0F', margin: '0 0 6px 0' }}>Puntos de retiro</h1>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Definí dónde se entrega cada producto del catálogo.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-          Nuevo punto
-        </button>
-      </div>
+      <OrganizerToolHeading
+        title="Puntos de retiro"
+        description="Definí dónde se entrega cada producto del catálogo."
+        actions={
+          <button
+            type="button"
+            onClick={openCreate}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            Nuevo punto
+          </button>
+        }
+      />
 
       {error && (
         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>

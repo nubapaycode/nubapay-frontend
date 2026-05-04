@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
 import type { DashboardSummary } from '@/lib/organizerWorkspace'
 import { fetchEventDashboard } from '@/lib/organizerWorkspace'
@@ -97,9 +98,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
   if (loadError || !summary) {
     return (
       <div className="max-w-6xl space-y-4">
-        <div className="mb-6 md:-mt-5">
-          <h1 className="text-xl font-medium text-gray-900">Dashboard del evento</h1>
-        </div>
+        <OrganizerToolHeading title="Dashboard del evento" />
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-red-600">{loadError || 'Sin datos'}</div>
         <button
           type="button"
@@ -118,10 +117,10 @@ export function DashboardView({ eventId }: { eventId: string }) {
   return (
     <div className="max-w-6xl space-y-4">
 
-      <div className="mb-6 md:-mt-5">
-        <h1 className="text-xl font-medium text-gray-900">Dashboard del evento</h1>
-        <p className="text-xs text-gray-400 mt-1">Métricas y pedidos solo para este evento.</p>
-      </div>
+      <OrganizerToolHeading
+        title="Dashboard del evento"
+        description="Métricas y pedidos solo para este evento."
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
