@@ -1,10 +1,8 @@
 'use client'
 
-import { Store } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Modal } from '@/components/ui/Modal'
-import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
 import {
   createPickupPoint,
@@ -14,7 +12,6 @@ import {
   fetchPickupPoints,
   patchPickupPoint,
   putPickupPointProducts,
-  type PaginationMeta,
   type WorkspaceCategory,
   type WorkspacePickupPoint,
   type WorkspaceProduct,
@@ -58,12 +55,6 @@ const PICKUP_PAGE_SIZE = 12
 
 export function PickupPointsView({ eventId }: { eventId: string }) {
   const [points, setPoints] = useState<WorkspacePickupPoint[]>([])
-  const [pointsPage, setPointsPage] = useState(1)
-  const [pointsPagination, setPointsPagination] = useState<PaginationMeta>({
-    page: 1,
-    page_size: PICKUP_PAGE_SIZE,
-    total: 0,
-  })
   const [catalog, setCatalog] = useState<WorkspaceProduct[]>([])
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,21 +79,18 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
   const loadAll = useCallback(async () => {
     setError('')
     const [pp, pr, cat] = await Promise.all([
-      fetchPickupPoints(eventId, { page: pointsPage, pageSize: PICKUP_PAGE_SIZE }),
+      fetchPickupPoints(eventId, { page: 1, pageSize: 100 }),
       fetchAllWorkspaceProducts(eventId),
       fetchAllCategories(eventId),
     ])
     if (!pp.ok) setError(pp.error)
-    else {
-      setPoints(pp.pickup_points)
-      setPointsPagination(pp.pagination)
-    }
+    else setPoints(pp.pickup_points)
     if (!pr.ok) setError(e => e || pr.error)
     else setCatalog(pr.products)
     if (!cat.ok) setError(e => e || cat.error)
     else setCategories(cat.categories)
     setLoading(false)
-  }, [eventId, pointsPage])
+  }, [eventId])
 
   useEffect(() => {
     setLoading(true)
@@ -366,7 +354,10 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
         {points.length === 0 ? (
           <div className="col-span-full" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <Store size={22} strokeWidth={1.5} color="#C8C8D0" />
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 2C7.96 2 5.5 4.46 5.5 7.5c0 4.12 5.5 11 5.5 11s5.5-6.88 5.5-11C16.5 4.46 14.04 2 11 2z" stroke="#C8C8D0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="11" cy="7.5" r="2" stroke="#C8C8D0" strokeWidth="1.5"/>
+              </svg>
             </div>
             <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin puntos de retiro</p>
             <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero para asignar productos por ubicación.</p>
@@ -455,16 +446,6 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
         )}
       </div>
 
-      {pointsPagination.total > 0 && (
-        <div className="mt-8 max-w-3xl">
-          <PaginationBar
-            page={pointsPagination.page}
-            pageSize={pointsPagination.page_size}
-            total={pointsPagination.total}
-            onPageChange={setPointsPage}
-          />
-        </div>
-      )}
 
       <div
         role="presentation"
