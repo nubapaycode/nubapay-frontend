@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/hooks/useCart'
-import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import { saveOrder } from '@/lib/hooks/useOrderStore'
 
@@ -12,9 +11,45 @@ interface CheckoutViewProps {
 }
 
 const paymentMethods = [
-  { id: 'mp', label: 'Mercado Pago', icon: '💳' },
-  { id: 'cash', label: 'Efectivo', icon: '💵' },
-  { id: 'transfer', label: 'Transferencia', icon: '🏦' },
+  {
+    id: 'mp',
+    label: 'Mercado Pago',
+    sub: 'Débito, crédito o dinero en cuenta',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="11" cy="11" r="11" fill="#009EE3"/>
+        <rect x="5" y="7.5" width="12" height="7.5" rx="1.5" stroke="#fff" strokeWidth="1.25"/>
+        <path d="M5 10.5h12" stroke="#fff" strokeWidth="1.25"/>
+        <rect x="7" y="12.5" width="3" height="1.25" rx="0.5" fill="#fff"/>
+      </svg>
+    ),
+    color: '#009EE3',
+  },
+  {
+    id: 'cash',
+    label: 'Efectivo',
+    sub: 'Pagás en el punto de retiro',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="11" cy="11" r="11" fill="#22C55E"/>
+        <rect x="5" y="8" width="12" height="7" rx="1.5" stroke="#fff" strokeWidth="1.5"/>
+        <circle cx="11" cy="11.5" r="1.5" stroke="#fff" strokeWidth="1.25"/>
+      </svg>
+    ),
+    color: '#22C55E',
+  },
+  {
+    id: 'transfer',
+    label: 'Transferencia',
+    sub: 'CVU / alias bancario',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="11" cy="11" r="11" fill="#8B5CF6"/>
+        <path d="M7 11h8M12 8.5l2.5 2.5-2.5 2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    color: '#8B5CF6',
+  },
 ]
 
 export function CheckoutView({ eventId }: CheckoutViewProps) {
@@ -23,125 +58,223 @@ export function CheckoutView({ eventId }: CheckoutViewProps) {
   const [name, setName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const [error, setError] = useState('')
+  const [focused, setFocused] = useState(false)
 
   const handleConfirm = () => {
-    if (name.trim() === '') {
-      setError('Ingresá tu nombre para continuar')
-      return
-    }
-    if (!paymentMethod) {
-      setError('Seleccioná un método de pago')
-      return
-    }
+    if (name.trim() === '') { setError('Ingresá tu nombre para continuar'); return }
+    if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
     const orderId = crypto.randomUUID()
     saveOrder({ orderId, items, total, paymentMethod, createdAt: new Date().toISOString() })
     clearCart()
     router.push(`/${eventId}/order/${orderId}`)
   }
 
+  const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: '#F7F7FA', fontFamily: font }}>
+
       {/* Top bar */}
-      <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[76px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        display: 'flex', alignItems: 'center',
+        padding: '0 16px', height: '60px',
+      }}>
         <button
           onClick={() => router.push(`/${eventId}/cart`)}
-          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
+          style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: '#F4F4F6', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}
         >
-          ←
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M11 4L6 9l5 5" stroke="#0A0A0F" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-        <h1 className="text-[20px] font-semibold absolute left-1/2 -translate-x-1/2">Checkout</h1>
+        <span style={{
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+          fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em',
+        }}>
+          Confirmar pedido
+        </span>
       </div>
 
-      <div className="flex flex-col flex-1 p-4 gap-4">
-        {/* Resumen */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resumen del pedido</h2>
+      <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '480px', width: '100%', margin: '0 auto' }}>
+
+        {/* Order summary */}
+        <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 16px 0' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#9A9AA8' }}>
+              Resumen del pedido
+            </span>
+          </div>
+
           {items.length === 0 ? (
-            <p className="text-sm text-gray-500">No tenés items en el carrito</p>
+            <div style={{ padding: '20px 16px', fontSize: '13px', color: '#9A9AA8' }}>
+              No tenés items en el carrito
+            </div>
           ) : (
             <>
-              {items.map(item => (
-                <div
-                  key={item.productId}
-                  className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500 shrink-0">
-                      {item.quantity}
+              <div style={{ padding: '10px 0 0' }}>
+                {items.map((item, idx) => (
+                  <div key={item.productId} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 16px',
+                    borderBottom: idx < items.length - 1 ? '1px solid #F4F4F6' : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{
+                        width: '22px', height: '22px', borderRadius: '8px',
+                        background: '#F4F4F6',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '11px', fontWeight: 800, color: '#0A0A0F', flexShrink: 0,
+                      }}>
+                        {item.quantity}
+                      </span>
+                      <span style={{ fontSize: '13px', color: '#0A0A0F', fontWeight: 500 }}>{item.name}</span>
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em' }}>
+                      {formatPrice(item.price * item.quantity)}
                     </span>
-                    <span className="text-sm text-gray-800">{item.name}</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <span className="text-sm text-gray-500">Servicio</span>
-                <span className="text-sm font-medium text-green-600">Gratis</span>
+                ))}
               </div>
-              <div className="flex items-center justify-between mt-2">
-                <span className="font-semibold text-gray-900">Total</span>
-                <span className="text-xl font-bold text-gray-900">{formatPrice(total)}</span>
+
+              <div style={{ padding: '12px 16px', borderTop: '1px solid #F4F4F6', background: '#FAFAFA' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '12px', color: '#9A9AA8' }}>Cargo por servicio</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#16A34A' }}>Gratis</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F' }}>Total</span>
+                  <span style={{ fontSize: '20px', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.04em' }}>
+                    {formatPrice(total)}
+                  </span>
+                </div>
               </div>
             </>
           )}
         </div>
 
-        {/* Nombre */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        {/* Name input */}
+        <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.07)', padding: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#9A9AA8', marginBottom: '10px' }}>
             Tu nombre
           </label>
           <input
             type="text"
             value={name}
-            onChange={e => {
-              setName(e.target.value)
-              if (error) setError('')
-            }}
+            onChange={e => { setName(e.target.value); if (error) setError('') }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             placeholder="Ej: Juan Pérez"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            style={{
+              width: '100%',
+              borderRadius: '12px',
+              border: `1.5px solid ${focused ? '#0A0A0F' : 'rgba(0,0,0,0.1)'}`,
+              padding: '12px 14px',
+              fontSize: '15px',
+              color: '#0A0A0F',
+              background: '#FAFAFA',
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 0.15s',
+              fontFamily: font,
+            }}
           />
         </div>
 
-        {/* Método de pago */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <h2 className="font-semibold text-sm text-gray-500 mb-3">Método de pago</h2>
-          <div className="flex flex-col gap-2">
-            {paymentMethods.map(method => (
-              <button
-                key={method.id}
-                onClick={() => {
-                  setPaymentMethod(method.id)
-                  if (error) setError('')
-                }}
-                className={`flex items-center gap-3 w-full rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-                  paymentMethod === method.id
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-200 text-gray-800 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-lg">{method.icon}</span>
-                {method.label}
-              </button>
-            ))}
+        {/* Payment method */}
+        <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.07)', padding: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#9A9AA8', marginBottom: '10px' }}>
+            Método de pago
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {paymentMethods.map(method => {
+              const selected = paymentMethod === method.id
+              return (
+                <button
+                  key={method.id}
+                  onClick={() => { setPaymentMethod(method.id); if (error) setError('') }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    width: '100%', textAlign: 'left',
+                    borderRadius: '14px',
+                    border: selected ? `2px solid ${method.color}` : '1.5px solid rgba(0,0,0,0.08)',
+                    padding: selected ? '11px 13px' : '11.5px 13.5px',
+                    background: selected ? `${method.color}0D` : '#FAFAFA',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    fontFamily: font,
+                  }}
+                >
+                  <span style={{ flexShrink: 0 }}>{method.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>
+                      {method.label}
+                    </p>
+                    <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#9A9AA8' }}>
+                      {method.sub}
+                    </p>
+                  </div>
+                  <span style={{
+                    width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+                    border: selected ? `5px solid ${method.color}` : '2px solid rgba(0,0,0,0.15)',
+                    background: '#fff',
+                    transition: 'all 0.15s',
+                    boxSizing: 'border-box',
+                  }} />
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {error && (
-          <p className="text-red-500 text-xs -mt-2">{error}</p>
+          <div style={{
+            background: 'rgba(239,68,68,0.06)',
+            border: '1px solid rgba(239,68,68,0.15)',
+            borderRadius: '12px',
+            padding: '10px 14px',
+            fontSize: '13px',
+            color: '#DC2626',
+          }}>
+            {error}
+          </div>
         )}
 
         {/* CTA */}
-        <div className="mt-auto pt-2">
-          <Button
-            size="lg"
-            className="w-full rounded-full"
-            disabled={items.length === 0}
+        <div style={{ marginTop: 'auto', paddingBottom: '8px' }}>
+          <button
             onClick={handleConfirm}
+            disabled={items.length === 0}
+            style={{
+              width: '100%',
+              borderRadius: '100px',
+              background: items.length === 0 ? '#E5E7EB' : '#C6FF00',
+              color: items.length === 0 ? '#9CA3AF' : '#0A0F00',
+              border: 'none',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              cursor: items.length === 0 ? 'not-allowed' : 'pointer',
+              transition: 'opacity 0.15s',
+              fontFamily: font,
+            }}
+            onMouseEnter={e => { if (items.length > 0) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
           >
-            Pagar {items.length > 0 ? formatPrice(total) : ''}
-          </Button>
+            {items.length > 0 ? `Pagar ${formatPrice(total)}` : 'Carrito vacío'}
+          </button>
         </div>
+
       </div>
     </div>
   )
