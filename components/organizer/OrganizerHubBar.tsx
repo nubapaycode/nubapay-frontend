@@ -19,24 +19,23 @@ export function OrganizerHubBar({ compact }: { compact?: boolean }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 pb-6 mb-2 md:-mt-2">
-      <div className="min-w-0">
-        <span className="text-base font-medium text-gray-900 tracking-tight">nubapay</span>
-        <span className="ml-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest">organizer</span>
-        {!compact && (
-          <p className="text-xs text-gray-400 mt-1">Creá un evento y abrí su panel para cargar el catálogo y ver pedidos.</p>
-        )}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
+        <span style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.03em' }}>nubapay</span>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: '#C8C8D0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>organizer</span>
       </div>
-      <div className="shrink-0 text-right space-y-1">
-        <p className="text-xs text-gray-400 truncate max-w-[140px] md:max-w-[220px]" title={emailLabel}>
-          {emailLabel || '…'}
-        </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {emailLabel && (
+          <span style={{ fontSize: '13px', color: '#9A9AA8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {emailLabel}
+          </span>
+        )}
         <button
           type="button"
           onClick={logout}
-          className="text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          style={{ background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '6px 14px', fontSize: '13px', fontWeight: 500, color: '#6A6A78', cursor: 'pointer' }}
         >
-          Cerrar sesión
+          Salir
         </button>
       </div>
     </div>

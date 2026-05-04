@@ -193,27 +193,47 @@ export function EventOrganizerSidebar({
   return (
     <>
       <aside className="hidden md:flex w-[264px] shrink-0 bg-gray-100 min-h-screen flex-col p-3">
-        <div className="px-3 py-4 mb-2 space-y-3">
-          <div>
-            <span className="text-base font-medium text-gray-900 tracking-tight">nubapay</span>
-            <span className="ml-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-widest">organizer</span>
+        <div className="px-3 pt-5 pb-4 mb-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base font-semibold text-gray-900 tracking-tight">nubapay</span>
+            <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
           </div>
-          <Link
-            href="/events"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
-          >
-            <span aria-hidden>←</span>
-            Mis eventos
-          </Link>
-          <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2" title={title}>
-            {title}
-          </p>
         </div>
 
-        <nav ref={navRef} className="flex flex-col gap-2.5 flex-1 relative">
+        <nav ref={navRef} className="flex flex-col gap-2.5 flex-1 relative pt-2">
+          {/* Mis eventos + título */}
+          {(() => {
+            const myEventsHref = `${basePath}/all`
+            const myEventsActive = isRouteActive(pathname, myEventsHref)
+            return (
+              <Link
+                href={myEventsHref}
+                className="relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors z-10"
+                style={{
+                  background: myEventsActive ? '#C6FF00' : 'transparent',
+                  color: myEventsActive ? '#0A0F00' : '#6B7280',
+                  fontWeight: myEventsActive ? 600 : 400,
+                }}
+              >
+                <span className="shrink-0" style={{ color: myEventsActive ? '#0A0F00' : '#9CA3AF' }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <rect x="1" y="3" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </span>
+                <span className="shrink-0">Mis eventos</span>
+                <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.4)' : '#D1D5DB' }}>/</span>
+                <span className="font-semibold truncate" style={{ color: myEventsActive ? '#0A0F00' : '#111827' }}>{title}</span>
+              </Link>
+            )
+          })()}
+
+          <div className="border-t border-gray-200 mx-3 mt-2.5 mb-5" />
+
           <div
-            className="absolute inset-x-0 rounded-full bg-gray-900 pointer-events-none"
+            className="absolute inset-x-0 rounded-full pointer-events-none"
             style={{
+              background: '#C6FF00',
               top: pill.top,
               height: pill.height,
               opacity: pill.ready ? 1 : 0,
@@ -228,10 +248,10 @@ export function EventOrganizerSidebar({
                 <Link
                   href={item.href}
                   className={`relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm z-10 transition-colors ${
-                    active ? 'text-white' : 'text-gray-500 hover:text-gray-900'
+                    active ? 'text-[#0A0F00] font-semibold' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
-                  <span className={active ? 'text-white' : 'text-gray-400'}>{item.icon}</span>
+                  <span className={active ? 'text-[#0A0F00]' : 'text-gray-400'}>{item.icon}</span>
                   {item.label}
                 </Link>
               </div>
@@ -239,15 +259,27 @@ export function EventOrganizerSidebar({
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-gray-100 mt-2 space-y-2">
-          <p className="text-xs text-gray-400 truncate" title={emailLabel}>{emailLabel || '…'}</p>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Cerrar sesión
-          </button>
+        <div className="px-3 py-4 border-t border-gray-200 mt-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
+                <span className="text-[11px] font-semibold text-white uppercase">
+                  {emailLabel ? emailLabel[0] : '?'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 truncate" title={emailLabel}>{emailLabel || '…'}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-900 transition-colors"
+              title="Cerrar sesión"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </aside>
 

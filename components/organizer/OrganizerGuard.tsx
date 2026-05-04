@@ -15,7 +15,7 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = getAuthToken()
     if (!token) {
-      router.replace('/')
+      router.replace('/login')
       return
     }
 
@@ -24,7 +24,7 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
         const res = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
         if (!res.ok) {
           clearAuthSession()
-          router.replace('/')
+          router.replace('/login')
           return
         }
         const body = (await res.json()) as { user?: { id: string; name: string; email: string; role: string } }

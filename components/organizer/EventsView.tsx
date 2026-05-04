@@ -12,19 +12,38 @@ import { formatDate } from '@/lib/utils'
 import { OrganizerHubBar } from '@/components/organizer/OrganizerHubBar'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 
-const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
-
 const LIST_PAGE_SIZE = 8
 
-export function EventsView() {
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  borderRadius: '12px',
+  border: '1px solid rgba(0,0,0,0.1)',
+  padding: '12px 14px',
+  fontSize: '14px',
+  color: '#0A0A0F',
+  background: '#FAFAFA',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Borrador',
+  active: 'Activo',
+  closed: 'Cerrado',
+  archived: 'Archivado',
+}
+
+const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
+  draft:    { bg: 'rgba(0,0,0,0.05)',          color: '#9A9AA8' },
+  active:   { bg: 'rgba(34,197,94,0.1)',       color: '#16A34A' },
+  closed:   { bg: 'rgba(239,68,68,0.08)',      color: '#DC2626' },
+  archived: { bg: 'rgba(0,0,0,0.05)',          color: '#9A9AA8' },
+}
+
+export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
   const [events, setEvents] = useState<OrganizerEventRow[]>([])
   const [listPage, setListPage] = useState(1)
-  const [listPagination, setListPagination] = useState({
-    page: 1,
-    page_size: LIST_PAGE_SIZE,
-    total: 0,
-  })
+  const [listPagination, setListPagination] = useState({ page: 1, page_size: LIST_PAGE_SIZE, total: 0 })
   const [refreshNonce, setRefreshNonce] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -47,22 +66,11 @@ export function EventsView() {
         pagination?: { page: number; page_size: number; total: number }
         error?: string
       }
-      if (!res.ok) {
-        setListError(body.error ?? 'No se pudieron cargar los eventos')
-        return
-      }
+      if (!res.ok) { setListError(body.error ?? 'No se pudieron cargar los eventos'); return }
       const rows = body.events ?? []
       setEvents(rows)
       const p = body.pagination
-      if (p && typeof p.total === 'number') {
-        setListPagination(p)
-      } else {
-        setListPagination({
-          page: listPage,
-          page_size: LIST_PAGE_SIZE,
-          total: rows.length,
-        })
-      }
+      setListPagination(p && typeof p.total === 'number' ? p : { page: listPage, page_size: LIST_PAGE_SIZE, total: rows.length })
     } catch {
       setListError('Error de red al cargar eventos')
     } finally {
@@ -70,233 +78,218 @@ export function EventsView() {
     }
   }, [listPage, refreshNonce])
 
-  useEffect(() => {
-    setLoading(true)
-    loadEvents()
-  }, [loadEvents])
+  useEffect(() => { setLoading(true); loadEvents() }, [loadEvents])
 
   const handleAdd = async () => {
-    if (!name.trim()) {
-      setError('El nombre del evento es obligatorio')
-      return
-    }
-    setSaving(true)
-    setError('')
+    if (!name.trim()) { setError('El nombre del evento es obligatorio'); return }
+    setSaving(true); setError('')
     try {
       const descParts = [venue.trim(), description.trim()].filter(Boolean)
       const res = await browserFetch(eventsPaths.list(), {
         method: 'POST',
         headers: authHeadersJson(),
-        body: JSON.stringify({
-          name: name.trim(),
-          description: descParts.length ? descParts.join('\n\n') : undefined,
-          starts_at: date || undefined,
-          status: 'draft',
-        }),
+        body: JSON.stringify({ name: name.trim(), description: descParts.length ? descParts.join('\n\n') : undefined, starts_at: date || undefined, status: 'draft' }),
       })
       const body = (await res.json()) as { event?: OrganizerEventRow; error?: string }
-      if (!res.ok) {
-        setError(body.error ?? 'No se pudo crear el evento')
-        return
-      }
-      setListPage(1)
-      setRefreshNonce(n => n + 1)
-      setName('')
-      setVenue('')
-      setDescription('')
-      setDate('')
+      if (!res.ok) { setError(body.error ?? 'No se pudo crear el evento'); return }
+      setListPage(1); setRefreshNonce(n => n + 1)
+      setName(''); setVenue(''); setDescription(''); setDate('')
       setDrawerOpen(false)
-    } catch {
-      setError('No se pudo contactar al servidor')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const closeDrawer = () => {
-    setDrawerOpen(false)
-    setError('')
+    } catch { setError('No se pudo contactar al servidor') }
+    finally { setSaving(false) }
   }
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await browserFetch(eventsPaths.detail(id), {
-        method: 'DELETE',
-        headers: authHeadersJson(),
-      })
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string }
-        setListError(body.error ?? 'No se pudo eliminar')
-        return
-      }
+      const res = await browserFetch(eventsPaths.detail(id), { method: 'DELETE', headers: authHeadersJson() })
+      if (!res.ok) { const body = (await res.json()) as { error?: string }; setListError(body.error ?? 'No se pudo eliminar'); return }
       setRefreshNonce(n => n + 1)
-    } catch {
-      setListError('Error de red')
-    }
+    } catch { setListError('Error de red') }
   }
 
-  const formatEventWhen = (row: OrganizerEventRow) => {
-    if (row.starts_at) return formatDate(row.starts_at)
-    return 'Sin fecha'
-  }
+  const closeDrawer = () => { setDrawerOpen(false); setError('') }
 
-  const subtitleLine = (row: OrganizerEventRow) => {
-    const first = (row.description ?? '').split('\n\n')[0]?.trim()
-    return first || row.slug
-  }
+  const formatEventWhen = (row: OrganizerEventRow) => row.starts_at ? formatDate(row.starts_at) : 'Sin fecha'
+  const subtitleLine = (row: OrganizerEventRow) => (row.description ?? '').split('\n\n')[0]?.trim() || row.slug
 
   return (
-    <div className="w-full">
+    <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+      <style>{`
+        .nb-event-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
+        .nb-event-card:hover .nb-event-arrow { transform: translateX(2px); }
+        .nb-event-delete:hover { background: rgba(239,68,68,0.08) !important; color: #DC2626 !important; }
+      `}</style>
 
-      <div className="border-b border-gray-200 pb-6 mb-6">
-        <OrganizerHubBar compact />
-      </div>
+      {/* Nav */}
+      {!embedded && (
+        <div style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', paddingBottom: '20px', marginBottom: '40px' }}>
+          <OrganizerHubBar compact />
+        </div>
+      )}
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 md:-mt-1">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '32px' }}>
         <div>
-          <h1 className="text-xl font-medium text-gray-900">Eventos</h1>
-          <p className="text-xs text-gray-400 mt-1 max-w-md">
+          <h1 style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.03em', color: '#0A0A0F', margin: '0 0 6px 0' }}>Mis eventos</h1>
+          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
             Cada evento tiene su propio panel: métricas, catálogo, pedidos y escáner.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="shrink-0 flex items-center justify-center gap-2 rounded-full bg-white text-gray-900 border border-gray-900 text-sm font-medium px-4 py-2.5 hover:bg-gray-50 transition-colors self-start sm:self-auto"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
         >
-          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-            <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round" />
           </svg>
           Nuevo evento
         </button>
       </div>
 
-      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Tus eventos</p>
-      {listError && <p className="text-red-500 text-xs mb-3">{listError}</p>}
+      {/* List */}
+      {listError && (
+        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '12px 16px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
+          {listError}
+        </div>
+      )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">Cargando…</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ height: '76px', borderRadius: '16px', background: 'rgba(0,0,0,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+          ))}
+        </div>
       ) : listPagination.total === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center py-14 text-center px-4">
-          <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
-              <rect x="2" y="4" width="16" height="13" rx="2" stroke="#9ca3af" strokeWidth="1.5" />
-              <path d="M6 2v3M14 2v3M2 8h16" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+        <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 24px', textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="4" width="16" height="13" rx="2" stroke="#C8C8D0" strokeWidth="1.5" />
+              <path d="M6 2v3M14 2v3M2 8h16" stroke="#C8C8D0" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-900">Sin eventos todavía</p>
-          <p className="text-xs text-gray-400 mt-1 max-w-xs">Creá el primero con el botón de arriba.</p>
+          <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin eventos todavía</p>
+          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero con el botón de arriba.</p>
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            style={{ background: '#C6FF00', color: '#0A0F00', border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            Crear evento
+          </button>
         </div>
       ) : (
         <>
           {events.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6">No hay eventos en esta página.</p>
+            <p style={{ fontSize: '14px', color: '#9A9AA8', padding: '24px 0' }}>No hay eventos en esta página.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {events.map(event => (
-                <div
-                  key={event.id}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5 capitalize">
-                      {(event.status || '').replace(/_/g, ' ')}
-                    </p>
-                    <p className="text-xs text-gray-300 mt-1 truncate">
-                      {subtitleLine(event)} · {formatEventWhen(event)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                      href={`/events/${event.id}/dashboard`}
-                      className="rounded-full bg-gray-900 text-white text-sm font-medium px-4 py-2 hover:bg-gray-700 transition-colors text-center"
-                    >
-                      Abrir panel
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(event.id)}
-                      className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-2"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {events.map(event => {
+                const status = event.status || 'draft'
+                const sc = STATUS_COLOR[status] ?? STATUS_COLOR.draft
+                const initial = (event.name || '?').trim().charAt(0).toUpperCase()
+                return (
+                  <Link
+                    key={event.id}
+                    href={`/events/${event.id}/dashboard`}
+                    className="group nb-event-card"
+                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '16px', textDecoration: 'none', transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s' }}
+                  >
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                        <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
+                        <span style={{ fontSize: '10px', fontWeight: 700, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                          {STATUS_LABEL[status] ?? status}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#9A9AA8' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ flexShrink: 0 }}>
+                            <path d="M5.5 1.5C3.5 1.5 2 3 2 5c0 2.5 3.5 5 3.5 5S9 7.5 9 5c0-2-1.5-3.5-3.5-3.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                            <circle cx="5.5" cy="4.5" r="0.9" fill="currentColor"/>
+                          </svg>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitleLine(event)}</span>
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <rect x="1" y="2.5" width="9" height="7.5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                            <path d="M3.5 1v2M7.5 1v2M1 5h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                          </svg>
+                          {formatEventWhen(event)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#FFFFFF', borderRadius: '100px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                        Abrir
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" className="nb-event-arrow" style={{ transition: 'transform 0.15s' }}>
+                          <path d="M2 5.5h7M6 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(event.id) }}
+                        className="nb-event-delete"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: '#D1D5DB', display: 'flex', alignItems: 'center', borderRadius: '8px', transition: 'background 0.15s, color 0.15s' }}
+                        title="Eliminar"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
-          <div className="mt-4">
-            <PaginationBar
-              page={listPagination.page}
-              pageSize={listPagination.page_size}
-              total={listPagination.total}
-              onPageChange={setListPage}
-            />
+          <div style={{ marginTop: '16px' }}>
+            <PaginationBar page={listPagination.page} pageSize={listPagination.page_size} total={listPagination.total} onPageChange={setListPage} />
           </div>
         </>
       )}
 
+      {/* Backdrop */}
       <div
         role="presentation"
         onClick={closeDrawer}
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.4)', opacity: drawerOpen ? 1 : 0, pointerEvents: drawerOpen ? 'auto' : 'none', transition: 'opacity 0.25s' }}
       />
 
-      <div
-        className={`fixed top-0 right-0 h-full z-50 w-80 bg-white rounded-l-3xl shadow-2xl transition-transform duration-300 ease-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-medium text-gray-900">Nuevo evento</h2>
+      {/* Drawer */}
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', zIndex: 50, width: '360px', background: '#FFFFFF', boxShadow: '-8px 0 40px rgba(0,0,0,0.12)', borderRadius: '24px 0 0 24px', transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+        <div style={{ padding: '28px 28px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>Nuevo evento</h2>
             <button
               type="button"
               onClick={closeDrawer}
-              className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors text-sm"
-              aria-label="Cerrar"
+              style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F5', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6A6A78', fontSize: '14px' }}
             >
               ✕
             </button>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <input
-              type="text"
-              value={name}
-              onChange={e => {
-                setName(e.target.value)
-                setError('')
-              }}
-              placeholder="Nombre del evento"
-              className={inputClass}
-              disabled={saving}
-            />
-            <input
-              type="text"
-              value={venue}
-              onChange={e => {
-                setVenue(e.target.value)
-                setError('')
-              }}
-              placeholder="Lugar (opcional)"
-              className={inputClass}
-              disabled={saving}
-            />
-            <input
-              type="text"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Descripción (opcional)"
-              className={inputClass}
-              disabled={saving}
-            />
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputClass} disabled={saving} />
-            {error && <p className="text-red-500 text-xs">{error}</p>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" value={name} onChange={e => { setName(e.target.value); setError('') }} placeholder="Nombre del evento *" style={inputStyle} disabled={saving} />
+            <input type="text" value={venue} onChange={e => { setVenue(e.target.value); setError('') }} placeholder="Lugar (opcional)" style={inputStyle} disabled={saving} />
+            <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripción (opcional)" style={inputStyle} disabled={saving} />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} disabled={saving} />
+
+            {error && (
+              <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>
+                {error}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={handleAdd}
               disabled={saving}
-              className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3 hover:bg-gray-700 transition-colors mt-2 disabled:opacity-60"
+              style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '14px', fontSize: '15px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, marginTop: '4px', letterSpacing: '-0.01em' }}
             >
               {saving ? 'Guardando…' : 'Crear evento'}
             </button>

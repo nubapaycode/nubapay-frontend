@@ -5,14 +5,13 @@ import { pageMeta } from '@/lib/seo'
 
 export const metadata: Metadata = pageMeta({
   title: 'Mis eventos',
-  description:
-    'Creá y administrá tus eventos: menú digital, pedidos en vivo, cobros y puntos de retiro.',
+  description: 'Lista de tus eventos para alternar entre ellos sin salir del panel.',
 })
 
-export default function OrganizerEventsPage() {
+export default function EventsListInsideShellPage() {
   return (
     <main className="w-full max-w-3xl mx-auto px-6 pt-10 pb-24">
-      <EventsView />
+      <EventsView embedded />
     </main>
   )
 }
