@@ -11,6 +11,7 @@ import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
+import { useToast } from '@/components/ui/Toast'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
@@ -21,21 +22,20 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(true)
   const [savingSlug, setSavingSlug] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
-  const [error, setError] = useState('')
   const [copyMsg, setCopyMsg] = useState('')
+  const { show: showToast, ToastPortal } = useToast()
 
   const load = useCallback(async () => {
-    setError('')
     const res = await fetchOrganizerEventDetail(eventId)
     if (!res.ok) {
-      setError(res.error)
+      showToast(res.error, 'error')
       setEvent(null)
     } else {
       setEvent(res.event)
       setSlugDraft(res.event.slug)
     }
     setLoading(false)
-  }, [eventId])
+  }, [eventId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Carga inicial (patrón como OrdersView)
@@ -53,15 +53,14 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     if (!hasCover) return
     const next = slugDraft.trim()
     if (next.length < 2) {
-      setError('El identificador del enlace debe tener al menos 2 caracteres.')
+      showToast('El identificador del enlace debe tener al menos 2 caracteres.', 'error')
       return
     }
     setSavingSlug(true)
-    setError('')
     const res = await patchOrganizerEvent(eventId, { slug: next })
     setSavingSlug(false)
     if (!res.ok) {
-      setError(res.error)
+      showToast(res.error, 'error')
       return
     }
     setEvent(res.event)
@@ -71,17 +70,16 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const handleCoverFile = async (file: File | null) => {
     if (!file) return
     setUploadingCover(true)
-    setError('')
     const up = await uploadEventCoverImage(eventId, file)
     if (!up.ok) {
       setUploadingCover(false)
-      setError(up.error)
+      showToast(up.error, 'error')
       return
     }
     const res = await patchOrganizerEvent(eventId, { cover_image_url: up.publicUrl })
     setUploadingCover(false)
     if (!res.ok) {
-      setError(res.error)
+      showToast(res.error, 'error')
       return
     }
     setEvent(res.event)
@@ -89,11 +87,10 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
 
   const handleRemoveCover = async () => {
     setUploadingCover(true)
-    setError('')
     const res = await patchOrganizerEvent(eventId, { cover_image_url: null })
     setUploadingCover(false)
     if (!res.ok) {
-      setError(res.error)
+      showToast(res.error, 'error')
       return
     }
     setEvent(res.event)
@@ -106,8 +103,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
       setCopyMsg('Copiado')
       setTimeout(() => setCopyMsg(''), 2000)
     } catch {
-      setCopyMsg('')
-      setError('No se pudo copiar. Copiá el enlace manualmente.')
+      showToast('No se pudo copiar. Copiá el enlace manualmente.', 'error')
     }
   }
 
@@ -123,48 +119,63 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   if (!event) {
     return (
       <div className="max-w-2xl mx-auto p-4 md:p-6">
-        <p className="text-sm text-red-600">{error || 'No se pudo cargar el evento.'}</p>
+        <ToastPortal />
+        <p className="text-sm text-gray-400">No se pudo cargar el evento.</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-8">
+      <ToastPortal />
       <OrganizerToolHeading
         title="Link del catálogo"
         description="Empezá con una foto de portada: la usamos para el menú público. Cuando esté lista, podés definir el texto corto del enlace y compartirlo con tu gente."
       />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      <section className="space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-          <ImageUp className="h-4 w-4 text-gray-500" aria-hidden />
-          Portada del catálogo
+      <section style={{ borderRadius: '20px', border: '1px solid rgba(0,0,0,0.07)', background: '#FFFFFF', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ImageUp className="h-4 w-4 text-gray-500" aria-hidden />
+            </div>
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.01em' }}>Portada del catálogo</p>
+              <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0, marginTop: '1px' }}>La imagen que verán tus clientes al abrir el menú</p>
+            </div>
+          </div>
+          {event.cover_image_url && (
+            <button
+              type="button"
+              onClick={() => void handleRemoveCover()}
+              disabled={uploadingCover}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: uploadingCover ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 500, color: '#EF4444', opacity: uploadingCover ? 0.4 : 1, padding: '4px 0', flexShrink: 0 }}
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+              Quitar
+            </button>
+          )}
         </div>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          Elegí una imagen representativa.
-        </p>
 
+        {/* Image area */}
         {event.cover_image_url ? (
-          <div className="relative w-full max-h-[220px] rounded-xl overflow-hidden bg-gray-100 border border-gray-100">
+          <div style={{ position: 'relative', width: '100%', height: '200px', background: '#F5F5F7', overflow: 'hidden' }}>
             <Image
               src={event.cover_image_url}
               alt="Portada del catálogo"
-              width={1200}
-              height={440}
-              className="w-full h-auto max-h-[220px] object-cover"
+              fill
+              style={{ objectFit: 'cover' }}
               unoptimized
             />
+            {uploadingCover && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center text-sm text-gray-500">
-            Todavía no hay imagen — tocá &quot;Elegir imagen&quot; para empezar.
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex">
+          <label style={{ display: 'block', cursor: uploadingCover ? 'not-allowed' : 'pointer' }}>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
@@ -172,22 +183,39 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               disabled={uploadingCover}
               onChange={e => void handleCoverFile(e.target.files?.[0] ?? null)}
             />
-            <span className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-40">
-              {uploadingCover ? 'Subiendo…' : 'Elegir imagen'}
-            </span>
-          </label>
-          {event.cover_image_url && (
-            <button
-              type="button"
-              onClick={() => void handleRemoveCover()}
-              disabled={uploadingCover}
-              className="inline-flex items-center gap-1.5 rounded-full text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
+            <div style={{ height: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#FAFAFA', borderBottom: 'none', transition: 'background 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#F5F5F7' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAFAFA' }}
             >
-              <Trash2 className="h-4 w-4" aria-hidden />
-              Quitar imagen
-            </button>
-          )}
-        </div>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#F0F0F2', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ImageUp className="h-5 w-5 text-gray-400" aria-hidden />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: 0 }}>{uploadingCover ? 'Subiendo…' : 'Subir imagen'}</p>
+                <p style={{ fontSize: '12px', color: '#9A9AA8', margin: '3px 0 0 0' }}>JPG, PNG o WEBP · Tocá para elegir</p>
+              </div>
+            </div>
+          </label>
+        )}
+
+        {/* Footer action when image exists */}
+        {event.cover_image_url && (
+          <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: uploadingCover ? 'not-allowed' : 'pointer' }}>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                className="sr-only"
+                disabled={uploadingCover}
+                onChange={e => void handleCoverFile(e.target.files?.[0] ?? null)}
+              />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#6B7280', opacity: uploadingCover ? 0.5 : 1 }}>
+                <ImageUp className="h-3.5 w-3.5" aria-hidden />
+                {uploadingCover ? 'Subiendo…' : 'Cambiar imagen'}
+              </span>
+            </label>
+          </div>
+        )}
       </section>
 
       <section

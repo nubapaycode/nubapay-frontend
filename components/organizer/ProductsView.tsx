@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { StorefrontSettingsView } from '@/components/organizer/StorefrontSettingsView'
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
@@ -263,6 +264,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [comboDesc, setComboDesc] = useState('')
 
   const [productTogglePending, setProductTogglePending] = useState<Set<string>>(() => new Set())
+
+  const [linkModalOpen, setLinkModalOpen] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -741,6 +744,19 @@ export function ProductsView({ eventId }: { eventId: string }) {
         description="Armá el menú con productos, combos y categorías."
         actions={
           <>
+          <button
+            type="button"
+            onClick={() => setLinkModalOpen(true)}
+            className="nb-pill-btn"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: '#6B7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '9px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+            title="Link del catálogo"
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M7.5 5.5a3.18 3.18 0 0 0-4.5 0L1.5 7a3.18 3.18 0 0 0 4.5 4.5l.75-.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5.5 7.5a3.18 3.18 0 0 0 4.5 0L11.5 6A3.18 3.18 0 0 0 7 1.5l-.75.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Link
+          </button>
           <button
             type="button"
             onClick={() => setDrawerMode('categories')}
@@ -1728,6 +1744,17 @@ export function ProductsView({ eventId }: { eventId: string }) {
           >
             {bulkSubmitting ? 'Eliminando…' : 'Eliminar'}
           </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        containerClassName="z-[70]"
+        className="max-w-[728px] w-full !p-0 overflow-y-auto h-[calc(95vh-80px)]"
+      >
+        <div style={{ paddingTop: '40px' }}>
+          <StorefrontSettingsView eventId={eventId} />
         </div>
       </Modal>
 
