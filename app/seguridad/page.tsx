@@ -9,6 +9,20 @@ export const metadata: Metadata = {
 
 export default function SeguridadPage() {
   const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+  /** QR minimal: poco dato + EC baja + módulos tipo dot (QuickChart). */
+  const demoQrUrl =
+    'https://quickchart.io/qr?' +
+    new URLSearchParams({
+      text: 'NB-00492',
+      size: '320',
+      margin: '1',
+      ecLevel: 'L',
+      dark: 'ffffff',
+      light: '00000000',
+      dotStyle: 'dot',
+      finderStyle: 'rounded',
+      finderDotStyle: 'dot',
+    }).toString()
 
   return (
     <div style={{ fontFamily: font, background: '#FFFFFF', minHeight: '100vh' }}>
@@ -124,40 +138,33 @@ export default function SeguridadPage() {
             </div>
           </div>
 
-          {/* QR visual */}
+          {/* QR visual — módulos blancos, fondo transparente (PNG RGBA) */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '24px',
-              padding: '32px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
+              padding: '28px 32px 32px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '22px',
+              background: 'linear-gradient(165deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
             }}>
-              {/* Mock QR */}
-              <div style={{
-                width: '160px', height: '160px',
-                background: '#FFFFFF',
-                borderRadius: '16px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '3px',
-                padding: '12px',
-              }}>
-                {Array.from({ length: 49 }, (_, i) => {
-                  const corners = [0,1,2,3,4,5,6,7,13,14,20,21,27,28,42,43,44,45,46,47,48]
-                  const inner = [8,9,10,15,16,17,22,23,24]
-                  const pattern = [30,31,32,37,38,39]
-                  const filled = corners.includes(i) || inner.includes(i) || pattern.includes(i) || (i % 3 === 0 && i > 28)
-                  return (
-                    <div key={i} style={{
-                      background: filled ? '#0A0A0F' : 'transparent',
-                      borderRadius: '2px',
-                    }} />
-                  )
-                })}
-              </div>
+              <img
+                src={demoQrUrl}
+                alt="Código QR de demostración: retiro de prueba NB-00492"
+                width={180}
+                height={180}
+                loading="lazy"
+                decoding="async"
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  display: 'block',
+                  borderRadius: '14px',
+                  filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.5))',
+                }}
+              />
               <div style={{ textAlign: 'center' }}>
                 <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>
                   Pedido #NB-00492

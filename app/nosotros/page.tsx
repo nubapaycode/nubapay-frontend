@@ -209,7 +209,8 @@ export default function NosotrosPage() {
       </div>
       </ScrollReveal>
 
-      {/* Equipo */}
+      {/* Sección equipo desactivada: cambiar a `{true &&` para mostrar */}
+      {false && (
       <div style={{ background: '#FFFFFF', padding: '96px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
@@ -240,7 +241,6 @@ export default function NosotrosPage() {
                 gap: '56px',
                 alignItems: 'start',
               }}>
-                {/* Foto */}
                 <div className="nos-photo-wrap" style={{
                   width: '100%',
                   aspectRatio: '3 / 4',
@@ -257,7 +257,6 @@ export default function NosotrosPage() {
                   />
                 </div>
 
-                {/* Info */}
                 <div style={{ paddingTop: '8px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{
@@ -311,6 +310,7 @@ export default function NosotrosPage() {
 
         </div>
       </div>
+      )}
 
       {/* Divider */}
       <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }} />

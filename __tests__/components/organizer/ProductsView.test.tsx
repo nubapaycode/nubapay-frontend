@@ -161,11 +161,12 @@ describe('ProductsView', () => {
     await waitFor(() => {
       expect(screen.queryByText('Cargando catálogo…')).not.toBeInTheDocument()
     })
-    const toggles = screen.getAllByRole('checkbox')
-    expect(toggles[0]).toBeChecked()
-    await userEvent.click(toggles[0])
+    const checkboxes = screen.getAllByRole('checkbox')
+    const firstProductActiveToggle = checkboxes[2]
+    expect(firstProductActiveToggle).toBeChecked()
+    await userEvent.click(firstProductActiveToggle)
     await waitFor(() => {
-      expect(toggles[0]).not.toBeChecked()
+      expect(firstProductActiveToggle).not.toBeChecked()
     })
     expect(patchWorkspaceProduct).toHaveBeenCalled()
   })

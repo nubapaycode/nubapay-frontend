@@ -19,6 +19,10 @@ import {
   type WorkspaceCategory,
   type WorkspaceProduct,
 } from '@/lib/organizerWorkspace'
+import {
+  clearWorkspaceProductImage,
+  uploadWorkspaceProductImage,
+} from '@/lib/supabase/uploadProductImage'
 import { formatPrice } from '@/lib/utils'
 
 function ToggleSwitch({
@@ -191,6 +195,22 @@ function NubaSelect({
   )
 }
 
+/** Ícono cámara (estilo réflex / digital) para placeholder de foto de producto o combo */
+function CatalogCameraPlaceholderIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
 
@@ -248,6 +268,16 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [formError, setFormError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<DeleteConfirmTarget | null>(null)
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
+
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
+
+  const clearPendingImage = () => {
+    if (pendingImagePreviewUrl) URL.revokeObjectURL(pendingImagePreviewUrl)
+    setPendingImagePreviewUrl(null)
+    setPendingImageFile(null)
+  }
 
   const loadAll = useCallback(async () => {
     setError('')
@@ -348,6 +378,42 @@ export function ProductsView({ eventId }: { eventId: string }) {
     setComboDesc('')
     setComboPickerItems([])
     setComboPickerQuery('')
+    clearPendingImage()
+    setImageUploading(false)
+  }
+
+  const pickPendingImageForCreate = (file: File | null) => {
+    if (!file) return
+    if (pendingImagePreviewUrl) URL.revokeObjectURL(pendingImagePreviewUrl)
+    setPendingImagePreviewUrl(URL.createObjectURL(file))
+    setPendingImageFile(file)
+    setFormError('')
+  }
+
+  const onReplaceCatalogImage = async (file: File | null, catalogId: string | null) => {
+    if (!file || !catalogId) return
+    setImageUploading(true)
+    setFormError('')
+    const res = await uploadWorkspaceProductImage(eventId, catalogId, file)
+    setImageUploading(false)
+    if (!res.ok) {
+      setFormError(res.error)
+      return
+    }
+    setProducts(list => list.map(x => (x.id === res.product.id ? res.product : x)))
+  }
+
+  const onClearCatalogImage = async (catalogId: string | null) => {
+    if (!catalogId) return
+    setImageUploading(true)
+    setFormError('')
+    const res = await clearWorkspaceProductImage(eventId, catalogId)
+    setImageUploading(false)
+    if (!res.ok) {
+      setFormError(res.error)
+      return
+    }
+    setProducts(list => list.map(x => (x.id === res.product.id ? res.product : x)))
   }
 
   const handleAddCategory = async () => {
@@ -412,7 +478,18 @@ export function ProductsView({ eventId }: { eventId: string }) {
       setFormError(res.error)
       return
     }
-    setProducts(prev => [...prev, res.product])
+    let created = res.product
+    if (pendingImageFile) {
+      setImageUploading(true)
+      const up = await uploadWorkspaceProductImage(eventId, created.id, pendingImageFile)
+      setImageUploading(false)
+      if (!up.ok) {
+        setError(up.error)
+      } else {
+        created = up.product
+      }
+    }
+    setProducts(prev => [...prev, created])
     closeDrawer()
   }
 
@@ -464,7 +541,18 @@ export function ProductsView({ eventId }: { eventId: string }) {
       setFormError(res.error)
       return
     }
-    setProducts(prev => [...prev, res.product])
+    let created = res.product
+    if (pendingImageFile) {
+      setImageUploading(true)
+      const up = await uploadWorkspaceProductImage(eventId, created.id, pendingImageFile)
+      setImageUploading(false)
+      if (!up.ok) {
+        setError(up.error)
+      } else {
+        created = up.product
+      }
+    }
+    setProducts(prev => [...prev, created])
     closeDrawer()
   }
 
@@ -673,6 +761,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => {
               setFormError('')
+              clearPendingImage()
               setEditingCatalogId(null)
               setName('')
               setPrice('')
@@ -693,6 +782,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => {
               setFormError('')
+              clearPendingImage()
               setEditingCatalogId(null)
               setComboName('')
               setComboPrice('')
@@ -910,6 +1000,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     >
                       {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </button>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      {product.image_url ? (
+                        <img src={product.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
+                          <CatalogCameraPlaceholderIcon size={20} />
+                        </div>
+                      )}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                         {product.name}
@@ -929,6 +1028,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         type="button"
                         onClick={() => {
                           setFormError('')
+                          clearPendingImage()
                           setEditingCatalogId(product.id)
                           setName(product.name)
                           setPrice(String(product.price))
@@ -1006,6 +1106,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}>
+                        {combo.image_url ? (
+                          <img src={combo.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
+                            <CatalogCameraPlaceholderIcon size={22} />
+                          </div>
+                        )}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                           {combo.name}
@@ -1017,6 +1126,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           type="button"
                           onClick={() => {
                             setFormError('')
+                            clearPendingImage()
                             setEditingCatalogId(combo.id)
                             setComboName(combo.name)
                             setComboPrice(String(combo.price))
@@ -1195,18 +1305,18 @@ export function ProductsView({ eventId }: { eventId: string }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Nombre</label>
-                  <input type="text" value={name} onChange={e => { setName(e.target.value); setFormError('') }} placeholder="Ej: Cerveza Heineken 500ml" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving} />
+                  <input type="text" value={name} onChange={e => { setName(e.target.value); setFormError('') }} placeholder="Ej: Cerveza Heineken 500ml" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Precio (ARS)</label>
-                  <input type="number" value={price} onChange={e => { setPrice(e.target.value); setFormError('') }} placeholder="8000" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving} />
+                  <input type="number" value={price} onChange={e => { setPrice(e.target.value); setFormError('') }} placeholder="8000" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Categoría</label>
                   <NubaSelect
                     value={categoryId}
                     onChange={setCategoryId}
-                    disabled={saving}
+                    disabled={saving || imageUploading}
                     fullWidth
                     ariaLabel="Categoría"
                     options={[
@@ -1219,7 +1329,76 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
                     Descripción <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional</span>
                   </label>
-                  <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Detalle visible en el catálogo" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving} />
+                  <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Detalle visible en el catálogo" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
+                </div>
+                <div>
+                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    Foto <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional · 1 imagen</span>
+                  </span>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '96px', height: '96px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.08)' }}>
+                      {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
+                        <img
+                          src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
+                          <CatalogCameraPlaceholderIcon size={28} />
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <input
+                        id="catalog-item-photo-product"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                        style={{ display: 'none' }}
+                        disabled={saving || imageUploading}
+                        onChange={e => {
+                          const f = e.target.files?.[0] ?? null
+                          e.currentTarget.value = ''
+                          if (!f) return
+                          if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
+                          else pickPendingImageForCreate(f)
+                        }}
+                      />
+                      <label
+                        htmlFor="catalog-item-photo-product"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          alignSelf: 'flex-start',
+                          borderRadius: '100px',
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          background: saving || imageUploading ? '#F5F5F7' : '#FFFFFF',
+                          padding: '8px 16px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#0A0A0F',
+                          cursor: saving || imageUploading ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {imageUploading ? 'Subiendo…' : 'Elegir imagen'}
+                      </label>
+                      {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
+                        <button
+                          type="button"
+                          disabled={saving || imageUploading}
+                          onClick={() => {
+                            if (editingCatalogId) void onClearCatalogImage(editingCatalogId)
+                            else clearPendingImage()
+                          }}
+                          style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, fontSize: '12px', fontWeight: 600, color: '#9A9AA8', cursor: saving || imageUploading ? 'not-allowed' : 'pointer' }}
+                        >
+                          Quitar foto
+                        </button>
+                      )}
+                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: 0, lineHeight: 1.45 }}>JPG, PNG, WebP u HEIC. Máx. 5 MB.</p>
+                    </div>
+                  </div>
                 </div>
                 {formError && (
                   <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>
@@ -1232,8 +1411,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={handleSaveProduct}
-                disabled={saving}
-                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                disabled={saving || imageUploading}
+                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear producto'}
               </button>
@@ -1246,9 +1425,66 @@ export function ProductsView({ eventId }: { eventId: string }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <section className="flex flex-col gap-3">
               <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Datos del combo</p>
-              <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError('') }} placeholder="Nombre visible para el cliente" className={inputClass} disabled={saving} />
-              <input type="number" value={comboPrice} onChange={e => { setComboPrice(e.target.value); setFormError('') }} placeholder="Precio del combo (ARS)" className={inputClass} disabled={saving} />
-              <input type="text" value={comboDesc} onChange={e => setComboDesc(e.target.value)} placeholder="Descripción (opcional)" className={inputClass} disabled={saving} />
+              <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError('') }} placeholder="Nombre visible para el cliente" className={inputClass} disabled={saving || imageUploading} />
+              <input type="number" value={comboPrice} onChange={e => { setComboPrice(e.target.value); setFormError('') }} placeholder="Precio del combo (ARS)" className={inputClass} disabled={saving || imageUploading} />
+              <input type="text" value={comboDesc} onChange={e => setComboDesc(e.target.value)} placeholder="Descripción (opcional)" className={inputClass} disabled={saving || imageUploading} />
+            </section>
+
+            <section className="flex flex-col gap-2">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Foto · opcional · 1 imagen</p>
+              <div className="flex gap-3.5 items-start">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 bg-gray-100 border border-black/[0.08]">
+                  {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
+                    <img
+                      src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
+                      alt=""
+                      className="w-full h-full object-cover block"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <CatalogCameraPlaceholderIcon size={28} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <input
+                    id="catalog-item-photo-combo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                    className="hidden"
+                    disabled={saving || imageUploading}
+                    onChange={e => {
+                      const f = e.target.files?.[0] ?? null
+                      e.currentTarget.value = ''
+                      if (!f) return
+                      if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
+                      else pickPendingImageForCreate(f)
+                    }}
+                  />
+                  <label
+                    htmlFor="catalog-item-photo-combo"
+                    className={`inline-flex self-start items-center justify-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-gray-900 ${
+                      saving || imageUploading ? 'bg-gray-100 cursor-not-allowed' : 'bg-white cursor-pointer'
+                    }`}
+                  >
+                    {imageUploading ? 'Subiendo…' : 'Elegir imagen'}
+                  </label>
+                  {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
+                    <button
+                      type="button"
+                      disabled={saving || imageUploading}
+                      onClick={() => {
+                        if (editingCatalogId) void onClearCatalogImage(editingCatalogId)
+                        else clearPendingImage()
+                      }}
+                      className="self-start text-xs font-semibold text-gray-400 hover:text-red-600 disabled:opacity-50 bg-transparent border-none p-0 cursor-pointer"
+                    >
+                      Quitar foto
+                    </button>
+                  )}
+                  <p className="text-[11px] text-gray-400 leading-snug m-0">JPG, PNG, WebP u HEIC. Máx. 5 MB.</p>
+                </div>
+              </div>
             </section>
 
             <section className="flex flex-col gap-3">
@@ -1401,8 +1637,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={handleSaveCombo}
-                disabled={saving || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))}
-                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: (saving || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                disabled={saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))}
+                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: (saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear combo'}
               </button>
