@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import SiteNavbar from '@/components/SiteNavbar'
 
 const TICKER = [
   'Sin filas', 'Menú digital', 'QR antifraude', 'Pagos online',
@@ -345,30 +346,7 @@ export function LandingPage() {
       <div style={S.root}>
 
         {/* ─── NAV ─── */}
-        <nav className="nb-nav-inner" style={{ position: 'fixed', top: '16px', left: '0', right: '0', zIndex: 100, padding: '0 40px', display: 'flex', justifyContent: 'center' }}>
-          <div style={{
-            width: '100%', maxWidth: '1280px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            height: '56px', padding: '0 24px',
-            background: scrolled ? 'rgba(245,245,240,0.92)' : 'rgba(245,245,240,0.75)',
-            backdropFilter: 'blur(24px) saturate(1.8)',
-            border: `1px solid rgba(0,0,0,0.09)`,
-            borderRadius: '100px',
-            transition: 'background 0.35s, box-shadow 0.35s',
-            boxShadow: scrolled ? '0 8px 32px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.05)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.03em', color: '#0A0A0F' }}>nubapay</span>
-              <span style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: S.accentText, background: 'rgba(198,255,0,0.22)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(198,255,0,0.4)' }}>beta</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <Link href="/login" className="nb-nav-login" style={{ fontSize: '14px', fontWeight: 500, color: '#000000', textDecoration: 'none' }}>Iniciar sesión</Link>
-              <Link href="/register" style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em', background: '#C6FF00', color: '#0A0F00', padding: '9px 22px', borderRadius: '100px', textDecoration: 'none', marginRight: '-15px' }}>
-                Empezar gratis
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <SiteNavbar />
 
         {/* ─── HERO ─── */}
         <section className="nb-hero-section" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '140px 40px 80px', position: 'relative', overflow: 'hidden' }}>
@@ -717,7 +695,7 @@ export function LandingPage() {
         </section>
 
         {/* ─── ATENDIUM ─── */}
-        <section className="nb-atendium-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+        <section id="atendium" className="nb-atendium-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
           <div className="nb-reveal nb-atendium-card" style={{
             background: '#FFFFFF', borderRadius: '36px', border: '1px solid rgba(0,0,0,0.08)',
             padding: '80px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px',
@@ -850,7 +828,7 @@ export function LandingPage() {
         </section>
 
         {/* ─── BLOCKCHAIN ─── */}
-        <section className="nb-blockchain-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+        <section id="qr-antifraude" className="nb-blockchain-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
           <div className="nb-reveal nb-blockchain-grid" style={{ background: '#0A0A0F', borderRadius: '36px', overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'stretch' }}>
             <div style={{ position: 'absolute', top: '-20%', left: '20%', width: '60%', height: '80%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
             <div className="nb-blockchain-left" style={{ padding: '80px', position: 'relative', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1057,7 +1035,7 @@ export function LandingPage() {
                 {
                   title: 'Empresa',
                   links: [
-                    { label: 'Sobre Nubapay', href: '#' },
+                    { label: 'Sobre Nubapay', href: '/nosotros' },
                     { label: 'Blog', href: '#' },
                     { label: 'Contacto', href: '#' },
                     { label: 'Trabaja con nosotros', href: '#' },
@@ -1066,9 +1044,9 @@ export function LandingPage() {
                 {
                   title: 'Legal',
                   links: [
-                    { label: 'Términos de uso', href: '#' },
-                    { label: 'Privacidad', href: '#' },
-                    { label: 'Seguridad', href: '#' },
+                    { label: 'Términos de uso', href: '/terminos' },
+                    { label: 'Privacidad', href: '/privacidad' },
+                    { label: 'Seguridad', href: '/seguridad' },
                   ],
                 },
               ].map(({ title, links }) => (

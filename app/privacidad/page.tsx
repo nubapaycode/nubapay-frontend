@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import SiteNavbar from '@/components/SiteNavbar'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
@@ -313,36 +314,7 @@ export default function PrivacidadPage() {
         .nb-sidebar-link:hover { background: #F0F0F2; color: #0A0A0F; }
       `}</style>
 
-      {/* Nav */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(255,255,255,0.9)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
-      }}>
-        <div style={{
-          maxWidth: '1100px', margin: '0 auto',
-          padding: '0 32px', height: '60px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontSize: '18px', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.04em' }}>
-              nubapay
-            </span>
-          </Link>
-          <Link href="/" style={{
-            textDecoration: 'none',
-            fontSize: '13px', fontWeight: 600,
-            color: '#0A0A0F',
-            background: '#F4F4F6',
-            borderRadius: '100px',
-            padding: '7px 16px',
-          }}>
-            Volver al inicio
-          </Link>
-        </div>
-      </nav>
+      <SiteNavbar />
 
       {/* Hero */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 32px 56px' }}>
