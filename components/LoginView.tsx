@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { authPaths, eventsPaths } from '@/lib/api'
-import { authHeadersJson, type AuthUser, setAuthSession } from '@/lib/authSession'
+import { authHeadersJson, type AuthUser, getAuthToken, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 import { FetchError } from '@/lib/fetcher'
 
@@ -25,13 +25,35 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
-  const [mode, setMode] = useState<Mode>(initialMode)
+  const [mode] = useState<Mode>(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!getAuthToken()) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await browserFetch(eventsPaths.list({ page: 1, page_size: 1 }), {
+          headers: authHeadersJson(),
+        })
+        const body = (await res.json()) as { events?: { id: string }[] }
+        const firstId = body.events?.[0]?.id
+        if (!cancelled && firstId) {
+          router.replace(`/events/${firstId}/all`)
+          return
+        }
+      } catch {}
+      if (!cancelled) router.replace('/events')
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [router])
 
   const finishAuth = async (token: string, user: AuthUser) => {
     setAuthSession(token, user)

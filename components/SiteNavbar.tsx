@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+import { getAuthToken } from '@/lib/authSession'
+
 const navLinks = [
   { label: 'Cómo funciona', href: '/#como-funciona' },
   { label: 'Atendium', href: '/#atendium' },
@@ -12,11 +14,27 @@ const navLinks = [
 
 export default function SiteNavbar({ activePath }: { activePath?: string }) {
   const [scrolled, setScrolled] = useState(false)
+  /** null = cliente aún no montado (evita mismatch de hydration). */
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const sync = () => setLoggedIn(!!getAuthToken())
+    sync()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'nubapay_token' || e.key === null) sync()
+    }
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('nubapay-auth-change', sync)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('nubapay-auth-change', sync)
+    }
   }, [])
 
   return (
@@ -68,11 +86,32 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
           </div>
 
           {/* Acciones */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-            <Link href="/login" className="snb-login">Iniciar sesión</Link>
-            <Link href="/register" style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em', background: '#C6FF00', color: '#0A0F00', padding: '9px 22px', borderRadius: '100px', textDecoration: 'none' }}>
-              Empezar gratis
-            </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, minHeight: '40px', minWidth: loggedIn === true ? '168px' : '208px', justifyContent: 'flex-end' }}>
+            {loggedIn === null ? null : loggedIn ? (
+              <Link
+                href="/events"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em',
+                  background: '#C6FF00',
+                  color: '#0A0F00',
+                  padding: '9px 22px',
+                  borderRadius: '100px',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Ver Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="snb-login">Iniciar sesión</Link>
+                <Link href="/register" style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em', background: '#C6FF00', color: '#0A0F00', padding: '9px 22px', borderRadius: '100px', textDecoration: 'none' }}>
+                  Empezar gratis
+                </Link>
+              </>
+            )}
           </div>
 
         </div>

@@ -6,7 +6,12 @@ export interface Product {
   id: string
   name: string
   description: string
+  /** Precio efectivo en catálogo (promo si aplica). */
   price: number
+  /** Precio de lista cuando hay promo con precio menor. */
+  listPrice?: number
+  /** Texto corto visible en tarjeta (ej. "-20%", "2×1"). */
+  promoLabel?: string
   imageUrl?: string
   category: string
   available: boolean
@@ -17,6 +22,8 @@ export interface Combo {
   name: string
   description: string
   price: number
+  listPrice?: number
+  promoLabel?: string
   products: Product[]
   imageUrl?: string
   available: boolean

@@ -4,6 +4,7 @@ import { ProductsView } from '@/components/organizer/ProductsView'
 import {
   fetchAllCategories,
   fetchAllWorkspaceProducts,
+  fetchWorkspaceProductPromotions,
   fetchWorkspaceProducts,
   patchWorkspaceProduct,
 } from '@/lib/organizerWorkspace'
@@ -13,10 +14,13 @@ jest.mock('@/lib/organizerWorkspace', () => ({
   createWorkspaceProduct: jest.fn(),
   deleteCategory: jest.fn(),
   deleteWorkspaceProduct: jest.fn(),
+  deleteWorkspaceProductPromotion: jest.fn(),
   fetchAllCategories: jest.fn(),
   fetchAllWorkspaceProducts: jest.fn(),
+  fetchWorkspaceProductPromotions: jest.fn(),
   fetchWorkspaceProducts: jest.fn(),
   patchWorkspaceProduct: jest.fn(),
+  upsertWorkspaceProductPromotion: jest.fn(),
 }))
 
 const eventId = '00000000-0000-0000-0000-000000000001'
@@ -107,6 +111,7 @@ function mockFilterProducts(opts?: {
 
 beforeEach(() => {
   ;(fetchAllCategories as jest.Mock).mockResolvedValue({ ok: true, categories: mockCategories })
+  ;(fetchWorkspaceProductPromotions as jest.Mock).mockResolvedValue({ ok: true, promotions: [] })
   ;(fetchWorkspaceProducts as jest.Mock).mockImplementation(async (_e: string, opts?: Record<string, unknown>) => {
     const pageSize = (opts?.pageSize as number) ?? 16
     const page = (opts?.page as number) ?? 1

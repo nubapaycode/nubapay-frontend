@@ -8,16 +8,23 @@ export type AuthUser = {
 const TOKEN_KEY = 'nubapay_token'
 const USER_KEY = 'nubapay_user'
 
+function emitAuthChanged(): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('nubapay-auth-change'))
+}
+
 export function setAuthSession(token: string, user: AuthUser): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(USER_KEY, JSON.stringify(user))
+  emitAuthChanged()
 }
 
 export function clearAuthSession(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
+  emitAuthChanged()
 }
 
 export function getAuthToken(): string | null {

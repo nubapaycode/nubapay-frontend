@@ -87,7 +87,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
         padding: '0 16px', height: '60px',
       }}>
         <button
-          onClick={() => router.push(`/${eventId}/cart`)}
+          onClick={() => router.push(buyerFlowPath(eventId, { catalogSlug, path: 'cart' }))}
           style={{
             width: '36px', height: '36px', borderRadius: '50%',
             background: '#F4F4F6', border: 'none', cursor: 'pointer',

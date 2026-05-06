@@ -467,3 +467,58 @@ export async function putPickupPointProducts(
   if (!res.ok || !body.pickup_point) return { ok: false, error: body.error ?? 'Error' }
   return { ok: true, pickup_point: body.pickup_point }
 }
+
+export type WorkspaceProductPromotion = {
+  id: string
+  product_id: string
+  badge_label: string
+  promo_price: number | null
+  is_active: boolean
+  starts_at: string | null
+  ends_at: string | null
+}
+
+export async function fetchWorkspaceProductPromotions(
+  eventId: string,
+): Promise<{ ok: true; promotions: WorkspaceProductPromotion[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'product-promotions'), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { promotions?: WorkspaceProductPromotion[]; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, promotions: body.promotions ?? [] }
+}
+
+export async function upsertWorkspaceProductPromotion(
+  eventId: string,
+  productId: string,
+  payload: {
+    badge_label: string
+    promo_price?: number | null
+    is_active?: boolean
+    starts_at?: string | null
+    ends_at?: string | null
+  },
+): Promise<{ ok: true; promotion: WorkspaceProductPromotion } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `product-promotions/${productId}`), {
+    method: 'PUT',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { promotion?: WorkspaceProductPromotion; error?: string }
+  if (!res.ok || !body.promotion) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, promotion: body.promotion }
+}
+
+export async function deleteWorkspaceProductPromotion(
+  eventId: string,
+  productId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `product-promotions/${productId}`), {
+    method: 'DELETE',
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true }
+}

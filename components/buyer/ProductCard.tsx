@@ -39,6 +39,16 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
       style={{ border: `1px solid ${BUYER_COLORS.border}` }}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
+        {product.promoLabel?.trim() ? (
+          <div className="absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)]">
+            <span
+              className="inline-block truncate rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-tight shadow-sm"
+              style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+            >
+              {product.promoLabel.trim()}
+            </span>
+          </div>
+        ) : null}
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -107,9 +117,16 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
             {product.description}
           </p>
         ) : null}
-        <span className="mt-2 block text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
-          {formatPrice(product.price)}
-        </span>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          {product.listPrice != null && product.listPrice > product.price ? (
+            <span className="text-xs font-semibold line-through" style={{ color: BUYER_COLORS.muted }}>
+              {formatPrice(product.listPrice)}
+            </span>
+          ) : null}
+          <span className="text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+            {formatPrice(product.price)}
+          </span>
+        </div>
       </div>
     </div>
   )

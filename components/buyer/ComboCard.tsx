@@ -36,6 +36,16 @@ export function ComboCard({ combo, quantity, onAdd, onUpdateQuantity }: ComboCar
       style={{ border: `1px solid ${BUYER_COLORS.border}` }}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
+        {combo.promoLabel?.trim() ? (
+          <div className="absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)]">
+            <span
+              className="inline-block truncate rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-tight shadow-sm"
+              style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+            >
+              {combo.promoLabel.trim()}
+            </span>
+          </div>
+        ) : null}
         {combo.imageUrl ? (
           <Image
             src={combo.imageUrl}
@@ -102,9 +112,16 @@ export function ComboCard({ combo, quantity, onAdd, onUpdateQuantity }: ComboCar
         <p className="mt-0.5 line-clamp-2 text-xs leading-snug" style={{ color: BUYER_COLORS.muted }}>
           Incluye: {includedNames}
         </p>
-        <span className="mt-2 block text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
-          {formatPrice(combo.price)}
-        </span>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          {combo.listPrice != null && combo.listPrice > combo.price ? (
+            <span className="text-xs font-semibold line-through" style={{ color: BUYER_COLORS.muted }}>
+              {formatPrice(combo.listPrice)}
+            </span>
+          ) : null}
+          <span className="text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+            {formatPrice(combo.price)}
+          </span>
+        </div>
       </div>
     </div>
   )

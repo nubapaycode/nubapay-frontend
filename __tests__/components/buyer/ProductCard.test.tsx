@@ -25,39 +25,39 @@ describe('ProductCard', () => {
 
   it('muestra botón "Agregar" cuando quantity=0', () => {
     render(<ProductCard product={mockProduct} quantity={0} onAdd={jest.fn()} onUpdateQuantity={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'Agregar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Agregar Hamburguesa Clásica/i })).toBeInTheDocument()
   })
 
   it('llama onAdd con el producto al hacer click en Agregar', async () => {
     const handleAdd = jest.fn()
     render(<ProductCard product={mockProduct} quantity={0} onAdd={handleAdd} onUpdateQuantity={jest.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }))
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Hamburguesa Clásica/i }))
     expect(handleAdd).toHaveBeenCalledWith(mockProduct)
   })
 
   it('muestra counter cuando quantity>0', () => {
     render(<ProductCard product={mockProduct} quantity={2} onAdd={jest.fn()} onUpdateQuantity={jest.fn()} />)
     expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '−' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '+' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Quitar uno' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Agregar uno' })).toBeInTheDocument()
   })
 
   it('no muestra botón Agregar cuando quantity>0', () => {
     render(<ProductCard product={mockProduct} quantity={1} onAdd={jest.fn()} onUpdateQuantity={jest.fn()} />)
-    expect(screen.queryByRole('button', { name: 'Agregar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Agregar Hamburguesa Clásica/i })).not.toBeInTheDocument()
   })
 
   it('llama onUpdateQuantity(id, quantity+1) al click +', async () => {
     const handleUpdate = jest.fn()
     render(<ProductCard product={mockProduct} quantity={2} onAdd={jest.fn()} onUpdateQuantity={handleUpdate} />)
-    await userEvent.click(screen.getByRole('button', { name: '+' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar uno' }))
     expect(handleUpdate).toHaveBeenCalledWith('p1', 3)
   })
 
   it('llama onUpdateQuantity(id, quantity-1) al click −', async () => {
     const handleUpdate = jest.fn()
     render(<ProductCard product={mockProduct} quantity={2} onAdd={jest.fn()} onUpdateQuantity={handleUpdate} />)
-    await userEvent.click(screen.getByRole('button', { name: '−' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar uno' }))
     expect(handleUpdate).toHaveBeenCalledWith('p1', 1)
   })
 })

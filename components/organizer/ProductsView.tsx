@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { BadgePercent } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { StorefrontSettingsView } from '@/components/organizer/StorefrontSettingsView'
@@ -12,15 +13,19 @@ import {
   createCategory,
   createWorkspaceProduct,
   deleteCategory,
-  patchCategory,
   deleteWorkspaceProduct,
+  patchCategory,
+  deleteWorkspaceProductPromotion,
   fetchAllCategories,
   fetchAllWorkspaceProducts,
+  fetchWorkspaceProductPromotions,
   fetchWorkspaceProducts,
   patchWorkspaceProduct,
+  upsertWorkspaceProductPromotion,
   type PaginationMeta,
   type WorkspaceCategory,
   type WorkspaceProduct,
+  type WorkspaceProductPromotion,
 } from '@/lib/organizerWorkspace'
 import {
   clearWorkspaceProductImage,
@@ -287,15 +292,122 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState(false)
 
+  const [promotionsByProductId, setPromotionsByProductId] = useState<Record<string, WorkspaceProductPromotion>>({})
+  const [promoModalProduct, setPromoModalProduct] = useState<WorkspaceProduct | null>(null)
+  const [promoBadge, setPromoBadge] = useState('')
+  const [promoPrice, setPromoPrice] = useState('')
+  const [promoActive, setPromoActive] = useState(true)
+  const [promoStarts, setPromoStarts] = useState('')
+  const [promoEnds, setPromoEnds] = useState('')
+  const [promoSaving, setPromoSaving] = useState(false)
+  const [promoError, setPromoError] = useState('')
+
   const clearPendingImage = () => {
     if (pendingImagePreviewUrl) URL.revokeObjectURL(pendingImagePreviewUrl)
     setPendingImagePreviewUrl(null)
     setPendingImageFile(null)
   }
 
+  const closePromoModal = (force = false) => {
+    if (!force && promoSaving) return
+    setPromoModalProduct(null)
+    setPromoError('')
+  }
+
+  const openPromoModal = (p: WorkspaceProduct) => {
+    const existing = promotionsByProductId[p.id]
+    setPromoModalProduct(p)
+    setPromoBadge(existing?.badge_label ?? '')
+    setPromoPrice(existing?.promo_price != null ? String(existing.promo_price) : '')
+    setPromoActive(existing?.is_active ?? true)
+    const s = existing?.starts_at
+    const e = existing?.ends_at
+    setPromoStarts(s && s.includes('T') ? s.slice(0, 16) : '')
+    setPromoEnds(e && e.includes('T') ? e.slice(0, 16) : '')
+    setPromoError('')
+  }
+
+  const savePromo = async () => {
+    if (!promoModalProduct) return
+    const badge = promoBadge.trim()
+    if (badge.length < 1 || badge.length > 80) {
+      setPromoError('La etiqueta debe tener entre 1 y 80 caracteres')
+      return
+    }
+    const rawPrice = promoPrice.trim()
+    let promo_price: number | null = null
+    if (rawPrice !== '') {
+      const n = Number(rawPrice.replace(',', '.'))
+      if (Number.isNaN(n) || n < 0) {
+        setPromoError('Precio promocional inválido')
+        return
+      }
+      if (n >= promoModalProduct.price) {
+        setPromoError('El precio promo debe ser menor al precio de lista')
+        return
+      }
+      promo_price = n
+    }
+    let starts_iso: string | null = null
+    let ends_iso: string | null = null
+    if (promoStarts.trim()) {
+      const d = new Date(promoStarts)
+      if (Number.isNaN(d.getTime())) {
+        setPromoError('Fecha de inicio inválida')
+        return
+      }
+      starts_iso = d.toISOString()
+    }
+    if (promoEnds.trim()) {
+      const d = new Date(promoEnds)
+      if (Number.isNaN(d.getTime())) {
+        setPromoError('Fecha de fin inválida')
+        return
+      }
+      ends_iso = d.toISOString()
+    }
+
+    setPromoSaving(true)
+    setPromoError('')
+    const res = await upsertWorkspaceProductPromotion(eventId, promoModalProduct.id, {
+      badge_label: badge,
+      promo_price,
+      is_active: promoActive,
+      starts_at: starts_iso,
+      ends_at: ends_iso,
+    })
+    setPromoSaving(false)
+    if (!res.ok) {
+      setPromoError(res.error)
+      return
+    }
+    setPromotionsByProductId(prev => ({ ...prev, [res.promotion.product_id]: res.promotion }))
+    closePromoModal(true)
+    showToast('Promoción guardada', 'success')
+  }
+
+  const deletePromo = async () => {
+    if (!promoModalProduct) return
+    setPromoSaving(true)
+    setPromoError('')
+    const res = await deleteWorkspaceProductPromotion(eventId, promoModalProduct.id)
+    setPromoSaving(false)
+    if (!res.ok) {
+      setPromoError(res.error)
+      return
+    }
+    setPromotionsByProductId(prev => {
+      const next = { ...prev }
+      delete next[promoModalProduct.id]
+      return next
+    })
+    closePromoModal(true)
+    showToast('Promoción quitada', 'info')
+  }
+
   const loadAll = useCallback(async () => {
     setError('')
-    const [c, p] = await Promise.all([
+    const [c, p, promoRes] = await Promise.all([
       fetchAllCategories(eventId),
       fetchWorkspaceProducts(eventId, {
         page: productPage,
@@ -304,6 +416,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
         q: catalogSearchQ || undefined,
         categoryId: filterCategoryId || undefined,
       }),
+      fetchWorkspaceProductPromotions(eventId),
     ])
     if (!c.ok) setError(c.error)
     else setCategories(c.categories)
@@ -311,6 +424,12 @@ export function ProductsView({ eventId }: { eventId: string }) {
     else {
       setProducts(p.products)
       setProductPagination(p.pagination)
+    }
+    if (!promoRes.ok) setError(e => e || promoRes.error)
+    else {
+      const m: Record<string, WorkspaceProductPromotion> = {}
+      for (const row of promoRes.promotions) m[row.product_id] = row
+      setPromotionsByProductId(m)
     }
     setLoading(false)
     setListLoading(false)
@@ -795,7 +914,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
       <OrganizerToolHeading
         title="Catálogo"
-        description="Armá el menú con productos, combos y categorías."
+        description="Productos, combos, categorías y promociones (icono de etiqueta en cada fila) para el catálogo público."
         actions={
           <>
           <button
@@ -1136,6 +1255,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px', fontSize: '12px', color: '#9A9AA8' }}>
                         <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(product.price)}</span>
+                        {promotionsByProductId[product.id]?.is_active ? (
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#0A0F00', background: '#C6FF00', padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
+                            Promo
+                          </span>
+                        ) : null}
                         {product.category_name && (
                           <>
                             <span style={{ color: '#E0E0E5' }}>·</span>
@@ -1145,6 +1269,29 @@ export function ProductsView({ eventId }: { eventId: string }) {
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => openPromoModal(product)}
+                        title="Promoción en catálogo"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          color: promotionsByProductId[product.id] ? '#0A0A0F' : '#9A9AA8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          transition: 'background 0.15s, color 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = promotionsByProductId[product.id] ? '#0A0A0F' : '#9A9AA8'
+                        }}
+                      >
+                        <BadgePercent size={14} strokeWidth={1.35} className="shrink-0" aria-hidden />
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -1240,9 +1387,39 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                           {combo.name}
                         </p>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#0A0A0F', margin: '3px 0 0 0' }}>{formatPrice(combo.price)}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(combo.price)}</span>
+                          {promotionsByProductId[combo.id]?.is_active ? (
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#0A0F00', background: '#C6FF00', padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
+                              Promo
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => openPromoModal(combo)}
+                          title="Promoción en catálogo"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '8px',
+                            borderRadius: '8px',
+                            color: promotionsByProductId[combo.id] ? '#0A0A0F' : '#9A9AA8',
+                            display: 'flex',
+                            alignItems: 'center',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = promotionsByProductId[combo.id] ? '#0A0A0F' : '#9A9AA8'
+                          }}
+                        >
+                          <BadgePercent size={14} strokeWidth={1.35} className="shrink-0" aria-hidden />
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -1914,6 +2091,118 @@ export function ProductsView({ eventId }: { eventId: string }) {
           </button>
         </div>
       )}
+
+      <Modal
+        isOpen={promoModalProduct !== null}
+        onClose={closePromoModal}
+        title={promoModalProduct ? `Promoción · ${promoModalProduct.name}` : undefined}
+        containerClassName="z-[75]"
+        className="!max-w-md"
+      >
+        {promoModalProduct && (
+          <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+            <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
+              El precio de lista del ítem sigue siendo{' '}
+              <span style={{ fontWeight: 700, color: '#0A0A0F' }}>{formatPrice(promoModalProduct.price)}</span>.
+              Si definís precio promo, debe ser menor: se muestra tachado el de lista en el catálogo público.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Etiqueta visible</label>
+                <input
+                  type="text"
+                  value={promoBadge}
+                  onChange={e => { setPromoBadge(e.target.value); setPromoError('') }}
+                  placeholder="-20%, 2×1, Promo finde…"
+                  maxLength={80}
+                  disabled={promoSaving}
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>
+                  Precio promocional (ARS)<span style={{ fontWeight: 400, color: '#C8C8D0' }}> · opcional</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={promoPrice}
+                  onChange={e => { setPromoPrice(e.target.value); setPromoError('') }}
+                  placeholder="Vacío = solo etiqueta"
+                  disabled={promoSaving}
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Inicio · opc.</label>
+                  <input
+                    type="datetime-local"
+                    value={promoStarts}
+                    onChange={e => setPromoStarts(e.target.value)}
+                    disabled={promoSaving}
+                    style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '9px 10px', fontSize: '12px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Fin · opc.</label>
+                  <input
+                    type="datetime-local"
+                    value={promoEnds}
+                    onChange={e => setPromoEnds(e.target.value)}
+                    disabled={promoSaving}
+                    style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '9px 10px', fontSize: '12px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 500, color: '#0A0A0F', cursor: promoSaving ? 'not-allowed' : 'pointer' }}>
+                <ToggleSwitch checked={promoActive} disabled={promoSaving} onChange={() => setPromoActive(v => !v)} />
+                Activa para el catálogo (si está en fechas válidas)
+              </label>
+            </div>
+            {promoError ? (
+              <p style={{ fontSize: '13px', color: '#DC2626', margin: '0 0 12px' }}>{promoError}</p>
+            ) : null}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+              <button
+                type="button"
+                disabled={promoSaving}
+                onClick={() => void savePromo()}
+                style={{
+                  width: '100%', borderRadius: '100px', border: 'none', background: '#C6FF00', color: '#0A0F00',
+                  fontSize: '14px', fontWeight: 700, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1,
+                }}
+              >
+                {promoSaving ? 'Guardando…' : 'Guardar promoción'}
+              </button>
+              {promotionsByProductId[promoModalProduct.id] ? (
+                <button
+                  type="button"
+                  disabled={promoSaving}
+                  onClick={() => void deletePromo()}
+                  style={{
+                    width: '100%', borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#DC2626',
+                    fontSize: '13px', fontWeight: 600, padding: '10px 16px', cursor: promoSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Quitar promoción
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={promoSaving}
+                onClick={closePromoModal}
+                style={{
+                  width: '100%', borderRadius: '100px', border: 'none', background: '#F5F5F7', color: '#6B7280',
+                  fontSize: '13px', fontWeight: 600, padding: '10px 16px', cursor: promoSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Bulk delete confirm */}
       <Modal

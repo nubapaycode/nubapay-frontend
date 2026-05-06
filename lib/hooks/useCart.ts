@@ -40,7 +40,15 @@ export function useCart(): UseCart {
       const existing = prev.find(i => i.productId === item.id)
       if (existing) {
         return prev.map(i =>
-          i.productId === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.productId === item.id
+            ? {
+                ...i,
+                quantity: i.quantity + 1,
+                price: item.price,
+                name: item.name,
+                imageUrl: item.imageUrl,
+              }
+            : i,
         )
       }
       return [

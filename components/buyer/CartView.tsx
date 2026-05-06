@@ -1,18 +1,23 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { useCart } from '@/lib/hooks/useCart'
-import { CartItemRow } from './CartItemRow'
 import { formatPrice } from '@/lib/utils'
+
+import { CartItemRow } from './CartItemRow'
 
 interface CartViewProps {
   eventId: string
   catalogSlug?: string
 }
 
-export function CartView({ eventId }: CartViewProps) {
+export function CartView({ eventId, catalogSlug }: CartViewProps) {
   const router = useRouter()
   const { items, updateQuantity, total } = useCart()
+  const catalogPath = buyerFlowPath(eventId, { catalogSlug })
+  const checkoutPath = buyerFlowPath(eventId, { catalogSlug, path: 'checkout' })
   const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
 
   if (items.length === 0) {
@@ -42,7 +47,7 @@ export function CartView({ eventId }: CartViewProps) {
           </p>
         </div>
         <button
-          onClick={() => router.push(`/${eventId}`)}
+          onClick={() => router.push(catalogPath)}
           style={{
             background: '#F4F4F6', border: 'none', borderRadius: '100px',
             padding: '10px 20px', fontSize: '14px', fontWeight: 600,
@@ -69,7 +74,7 @@ export function CartView({ eventId }: CartViewProps) {
         padding: '0 16px', height: '60px',
       }}>
         <button
-          onClick={() => router.push(`/${eventId}`)}
+          onClick={() => router.push(catalogPath)}
           style={{
             width: '36px', height: '36px', borderRadius: '50%',
             background: '#F4F4F6', border: 'none', cursor: 'pointer',
@@ -125,7 +130,7 @@ export function CartView({ eventId }: CartViewProps) {
         {/* CTA */}
         <div style={{ marginTop: 'auto', paddingBottom: '8px' }}>
           <button
-            onClick={() => router.push(`/${eventId}/checkout`)}
+            onClick={() => router.push(checkoutPath)}
             style={{
               width: '100%', borderRadius: '100px',
               background: '#C6FF00', color: '#0A0F00',
