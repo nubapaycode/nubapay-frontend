@@ -7,6 +7,7 @@ import { StorefrontSettingsView } from '@/components/organizer/StorefrontSetting
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
+import { useToast } from '@/components/ui/Toast'
 import {
   createCategory,
   createWorkspaceProduct,
@@ -228,6 +229,7 @@ type ComboPickerEntry = { product_id: string; quantity: number; displayName?: st
 const PRODUCT_PAGE_SIZE = 5
 
 export function ProductsView({ eventId }: { eventId: string }) {
+  const { show: showToast, ToastPortal } = useToast()
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
   const [products, setProducts] = useState<WorkspaceProduct[]>([])
   const [productPage, setProductPage] = useState(1)
@@ -594,7 +596,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
       const res = await patchWorkspaceProduct(eventId, p.id, { is_active: nextActive })
       if (!res.ok) {
         setProducts(prev)
-        setError(res.error)
+        showToast(res.error, 'error')
       } else {
         setProducts(list => list.map(x => (x.id === p.id ? res.product : x)))
       }
@@ -732,6 +734,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
       return
     }
     setProducts(prev => prev.filter(p => p.id !== id))
+    if (res.pausedCombos.length > 0) {
+      const names = res.pausedCombos.join(', ')
+      showToast(
+        res.pausedCombos.length === 1
+          ? `El combo «${names}» quedó vacío y fue pausado.`
+          : `Los combos «${names}» quedaron vacíos y fueron pausados.`,
+        'info',
+      )
+    }
   }
 
   const confirmDeleteTarget = async () => {
@@ -760,6 +771,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
   return (
     <div className="w-full min-w-0 max-w-none">
+      <ToastPortal />
       <style>{`
         .nb-pill-btn { transition: background 0.15s, color 0.15s, border-color 0.15s; }
         .nb-pill-btn:hover { background: #F5F5F7 !important; color: #0A0A0F !important; border-color: rgba(0,0,0,0.18) !important; }
@@ -1853,7 +1865,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
       {selectedIds.size > 0 && (
         <div
           style={{
-            position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+            position: 'fixed', bottom: '54px', left: 'calc(50% + 132px)', transform: 'translateX(-50%)',
             zIndex: 30, background: '#FFFFFF', color: '#0A0A0F',
             borderRadius: '100px', padding: '8px 8px 8px 22px',
             display: 'flex', alignItems: 'center', gap: '14px',
@@ -1956,38 +1968,42 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
       <Modal
         isOpen={deleteTarget !== null}
-        onClose={() => {
-          if (!deleteSubmitting) setDeleteTarget(null)
-        }}
-        title="Confirmar eliminación"
+        onClose={() => { if (!deleteSubmitting) setDeleteTarget(null) }}
         containerClassName="z-[70]"
+        className="!p-0 overflow-hidden max-w-sm w-full"
       >
         {deleteTarget && (
-          <>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              {deleteTarget.kind === 'category' ? (
-                <>
-                  ¿Eliminar la categoría «<span className="font-medium text-gray-900">{deleteTarget.name}</span>»? Si hay
-                  productos asignados, el servidor puede rechazar la operación.
-                </>
-              ) : deleteTarget.variant === 'combo' ? (
-                <>
-                  ¿Eliminar el combo «<span className="font-medium text-gray-900">{deleteTarget.name}</span>»? No podrás
-                  recuperarlo.
-                </>
-              ) : (
-                <>
-                  ¿Eliminar el producto «<span className="font-medium text-gray-900">{deleteTarget.name}</span>»? Si forma
-                  parte de combos, el servidor puede rechazar la operación.
-                </>
-              )}
-            </p>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div>
+            {/* Header */}
+            <div style={{ padding: '24px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '11px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M3.5 4l1 9h7l1-9" stroke="#DC2626" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <p style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
+                  {deleteTarget.kind === 'category' ? 'Eliminar categoría' : deleteTarget.variant === 'combo' ? 'Eliminar combo' : 'Eliminar producto'}
+                </p>
+                <p style={{ fontSize: '14px', color: '#6B7280', margin: '8px 0 0 0', lineHeight: 1.6 }}>
+                  {deleteTarget.kind === 'category' ? (
+                    <>«<span style={{ fontWeight: 600, color: '#0A0A0F' }}>{deleteTarget.name}</span>» y todos sus productos perderán la categoría.</>
+                  ) : deleteTarget.variant === 'combo' ? (
+                    <>«<span style={{ fontWeight: 600, color: '#0A0A0F' }}>{deleteTarget.name}</span>» será eliminado permanentemente.</>
+                  ) : (
+                    <>«<span style={{ fontWeight: 600, color: '#0A0A0F' }}>{deleteTarget.name}</span>» será eliminado. Si forma parte de combos, será removido de ellos. Los combos que queden vacíos se pausarán automáticamente.</>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '8px', padding: '20px' }}>
               <button
                 type="button"
                 disabled={deleteSubmitting}
                 onClick={() => setDeleteTarget(null)}
-                className="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
+                style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 500, padding: '8px 16px', cursor: deleteSubmitting ? 'not-allowed' : 'pointer', opacity: deleteSubmitting ? 0.5 : 1 }}
               >
                 Cancelar
               </button>
@@ -1995,12 +2011,12 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={deleteSubmitting}
                 onClick={confirmDeleteTarget}
-                className="rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                style={{ flex: 1, borderRadius: '100px', border: 'none', background: '#DC2626', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, padding: '8px 18px', cursor: deleteSubmitting ? 'not-allowed' : 'pointer', opacity: deleteSubmitting ? 0.6 : 1 }}
               >
                 {deleteSubmitting ? 'Eliminando…' : 'Eliminar'}
               </button>
             </div>
-          </>
+          </div>
         )}
       </Modal>
 

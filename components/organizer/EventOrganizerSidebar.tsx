@@ -39,12 +39,6 @@ function navItems(basePath: string): NavItem[] {
       <path d="M8 9v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
-  const customersIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 14c0-3 3-4 5-4s5 1 5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
   const paymentsIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
       <rect x="1.5" y="4" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -97,12 +91,6 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/pickup-points`,
       label: 'Puntos de retiro',
       icon: pickupIcon,
-      showDesktop: true,
-    },
-    {
-      href: `${basePath}/customers`,
-      label: 'Clientes',
-      icon: customersIcon,
       showDesktop: true,
     },
     {
@@ -176,8 +164,7 @@ export function EventOrganizerSidebar({
   }, [moreOpen])
 
   const moreOverflowActive =
-    pathname.startsWith(`${basePath}/customers`)
-    || pathname.startsWith(`${basePath}/payments`)
+    pathname.startsWith(`${basePath}/payments`)
     || pathname.startsWith(`${basePath}/pickup-points`)
 
 

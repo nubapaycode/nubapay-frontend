@@ -335,9 +335,11 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
           <button
             type="button"
             onClick={openCreate}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             Nuevo punto
           </button>
         }
@@ -436,7 +438,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C8C8D0' }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M4.5 3.5V2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v1M3.5 3.5l.75 7.5h5.5l.75-7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                 </div>
               </div>
@@ -484,7 +486,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Nombre</label>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Nombre</label>
                 <input
                   type="text"
                   value={formName}
@@ -496,8 +498,8 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  Descripción <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional</span>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>
+                  Descripción <span style={{ fontWeight: 500, color: '#C8C8D0' }}>· opcional</span>
                 </label>
                 <textarea
                   value={formDesc}
@@ -510,7 +512,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Productos que se entregan acá</label>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', marginBottom: '8px' }}>Productos que se entregan acá</label>
                 <div style={{ position: 'relative', marginBottom: '10px' }}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#C8C8D0', pointerEvents: 'none' }}>
                     <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>

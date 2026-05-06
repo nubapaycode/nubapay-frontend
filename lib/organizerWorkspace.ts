@@ -118,10 +118,9 @@ export async function fetchEventDashboard(eventId: string): Promise<
 }
 
 export type WorkspaceOrdersFilters = {
-  /** Texto en ID, nº de pedido, cliente, ítems */
   q?: string
-  /** Estado en UI del panel; si se omite, el API excluye cancelados. */
   status?: string
+  paymentStatus?: string
 }
 
 export async function fetchWorkspaceOrders(
@@ -137,6 +136,8 @@ export async function fetchWorkspaceOrders(
   if (trimmedQ) query.q = trimmedQ
   const st = opts?.status?.trim()
   if (st) query.status = st
+  const ps = opts?.paymentStatus?.trim()
+  if (ps) query.payment_status = ps
 
   const res = await browserFetch(workspacePath(eventId, 'orders', query), {
     headers: authHeadersJson(),
@@ -337,14 +338,14 @@ export async function patchWorkspaceProduct(
 export async function deleteWorkspaceProduct(
   eventId: string,
   productId: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; pausedCombos: string[] } | { ok: false; error: string }> {
   const res = await browserFetch(workspacePath(eventId, `products/${productId}`), {
     method: 'DELETE',
     headers: authHeadersJson(),
   })
-  const body = (await res.json()) as { error?: string }
+  const body = (await res.json()) as { error?: string; paused_combos?: string[] }
   if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
-  return { ok: true }
+  return { ok: true, pausedCombos: body.paused_combos ?? [] }
 }
 
 export async function fetchWorkspaceCustomers(

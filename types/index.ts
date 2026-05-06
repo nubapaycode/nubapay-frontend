@@ -27,15 +27,21 @@ export interface CartItem {
   name: string
   price: number
   quantity: number
+  subtotal?: number
+  categoryName?: string | null
   imageUrl?: string
 }
 
 export interface Order {
   id: string
+  orderNumber?: number | null
   eventId: string
+  customerName?: string | null
+  customerPhone?: string | null
   items: CartItem[]
   total: number
   status: OrderStatus
+  paymentStatus?: string
   qrToken: string
   createdAt: string
   updatedAt: string
