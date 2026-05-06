@@ -45,7 +45,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
 
   const hasCover = Boolean(event?.cover_image_url)
   const publicOrigin = getPublicSiteOriginForUi()
-  const slugForUrl = event?.slug ?? slugDraft
+  const slugForUrl = slugDraft.trim() || event?.slug || ''
   const publicUrl =
     hasCover && publicOrigin && slugForUrl ? `${publicOrigin}${catalogPublicPath(slugForUrl)}` : ''
 

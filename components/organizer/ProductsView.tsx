@@ -11,6 +11,7 @@ import {
   createCategory,
   createWorkspaceProduct,
   deleteCategory,
+  patchCategory,
   deleteWorkspaceProduct,
   fetchAllCategories,
   fetchAllWorkspaceProducts,
@@ -152,6 +153,9 @@ function NubaSelect({
             maxHeight: '260px',
             overflowY: 'auto',
             animation: 'nb-select-pop 0.15s cubic-bezier(0.16,1,0.3,1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
           }}
         >
           {options.map(opt => {
@@ -170,7 +174,7 @@ function NubaSelect({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '12px',
-                  background: selected ? '#F5F5F7' : 'transparent',
+                  background: selected ? '#C6FF00' : 'transparent',
                   border: 'none',
                   borderRadius: '10px',
                   padding: '9px 12px',
@@ -221,7 +225,7 @@ type DeleteConfirmTarget =
 
 type ComboPickerEntry = { product_id: string; quantity: number; displayName?: string }
 
-const PRODUCT_PAGE_SIZE = 16
+const PRODUCT_PAGE_SIZE = 5
 
 export function ProductsView({ eventId }: { eventId: string }) {
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
@@ -240,6 +244,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [comboDrawerSinglesLoading, setComboDrawerSinglesLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [listLoading, setListLoading] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'paused'>('all')
+  const [selectingAllPages, setSelectingAllPages] = useState(false)
   const [error, setError] = useState('')
   const [drawerMode, setDrawerMode] = useState<'product' | 'combo' | 'categories' | null>(null)
   const [drawerContent, setDrawerContent] = useState<'product' | 'combo' | 'categories' | null>(null)
@@ -251,6 +257,9 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [editingCatalogId, setEditingCatalogId] = useState<string | null>(null)
 
   const [catName, setCatName] = useState('')
+  const [editingCatId, setEditingCatId] = useState<string | null>(null)
+  const [editingCatName, setEditingCatName] = useState('')
+  const [savingCat, setSavingCat] = useState(false)
 
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -313,6 +322,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
   useLayoutEffect(() => {
     setProductPage(1)
     setSelectedIds(new Set())
+    setFilterStatus('all')
   }, [catalogTab, catalogSearchQ, filterCategoryId])
 
   useEffect(() => {
@@ -367,6 +377,10 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
   const hasCatalogFilters =
     catalogSearchInput.trim().length > 0 || Boolean(filterCategoryId)
+
+  const visibleProducts = filterStatus === 'all'
+    ? products
+    : products.filter(p => filterStatus === 'active' ? p.is_active : !p.is_active)
 
   const closeDrawer = () => {
     setDrawerMode(null)
@@ -431,6 +445,17 @@ export function ProductsView({ eventId }: { eventId: string }) {
     setCatName('')
   }
 
+  const handleSaveCategory = async (id: string) => {
+    const n = editingCatName.trim()
+    if (n.length < 2) return
+    setSavingCat(true)
+    const res = await patchCategory(eventId, id, n)
+    setSavingCat(false)
+    if (!res.ok) { setError(res.error); return }
+    setCategories(prev => prev.map(c => c.id === id ? res.category : c))
+    setEditingCatId(null)
+  }
+
   const handleDeleteCategory = async (id: string) => {
     const res = await deleteCategory(eventId, id)
     if (!res.ok) {
@@ -492,8 +517,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
         created = up.product
       }
     }
-    setProducts(prev => [...prev, created])
     closeDrawer()
+    void loadAll()
   }
 
   const handleSaveCombo = async () => {
@@ -555,8 +580,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
         created = up.product
       }
     }
-    setProducts(prev => [...prev, created])
     closeDrawer()
+    void loadAll()
   }
 
   const toggleActive = async (p: WorkspaceProduct) => {
@@ -632,16 +657,32 @@ export function ProductsView({ eventId }: { eventId: string }) {
     })
   }
 
-  const allVisibleSelected = products.length > 0 && products.every(p => selectedIds.has(p.id))
+  const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every(p => selectedIds.has(p.id))
+  const totalPages = Math.ceil(productPagination.total / PRODUCT_PAGE_SIZE)
+
+  const selectAllAcrossPages = async () => {
+    setSelectingAllPages(true)
+    const res = await fetchAllWorkspaceProducts(eventId, {
+      type: catalogTab === 'products' ? 'single' : 'combo',
+      q: catalogSearchQ || undefined,
+      categoryId: filterCategoryId || undefined,
+    })
+    setSelectingAllPages(false)
+    if (!res.ok) { setError(res.error); return }
+    setSelectedIds(new Set(res.products.map(p => p.id)))
+  }
 
   const toggleSelectAllVisible = () => {
     setSelectedIds(prev => {
-      const next = new Set(prev)
       if (allVisibleSelected) {
-        products.forEach(p => next.delete(p.id))
-      } else {
-        products.forEach(p => next.add(p.id))
+        // Si hay más seleccionados que los visibles (selección cross-page), limpiar todo
+        if (prev.size > visibleProducts.length) return new Set()
+        const next = new Set(prev)
+        visibleProducts.forEach(p => next.delete(p.id))
+        return next
       }
+      const next = new Set(prev)
+      visibleProducts.forEach(p => next.add(p.id))
       return next
     })
   }
@@ -664,6 +705,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
         setProducts(prev => prev.map(p => ids.includes(p.id) ? { ...p, is_active: isActive } : p))
       }
       setSelectedIds(new Set())
+      setSelectingAllPages(false)
       setBulkConfirm(null)
     } finally {
       setBulkSubmitting(false)
@@ -765,10 +807,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             title="Gestionar categorías"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <rect x="1.5" y="1.5" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="7.5" y="1.5" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="1.5" y="7.5" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="7.5" y="7.5" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M1.5 3.5h10M1.5 6.5h7M1.5 9.5h8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
             Categorías
             {categories.length > 0 && <span style={{ background: '#F5F5F7', color: '#0A0A0F', fontWeight: 700, padding: '1px 7px', borderRadius: '100px', fontSize: '11px' }}>{categories.length}</span>}
@@ -917,12 +956,59 @@ export function ProductsView({ eventId }: { eventId: string }) {
               ...categories.map(c => ({ value: c.id, label: c.name })),
             ]}
           />
+          <div style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px', flexShrink: 0 }}>
+            {/* Sliding pill */}
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: '4px',
+                bottom: '4px',
+                left: '4px',
+                width: 'calc(33.333% - 6px)',
+                background: '#FFFFFF',
+                borderRadius: '100px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                transform: filterStatus === 'active' ? 'translateX(calc(100% + 4px))' : filterStatus === 'paused' ? 'translateX(calc(200% + 8px))' : 'translateX(0)',
+                transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+                pointerEvents: 'none',
+              }}
+            />
+            {([
+              { key: 'all', label: 'Todos' },
+              { key: 'active', label: 'Activos' },
+              { key: 'paused', label: 'Pausados' },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilterStatus(key)}
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '100px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: filterStatus === key ? 600 : 500,
+                  color: filterStatus === key ? '#0A0A0F' : '#9A9AA8',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'color 0.2s ease',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {hasCatalogFilters && (
             <button
               type="button"
               onClick={() => {
                 setCatalogSearchInput('')
                 setFilterCategoryId('')
+                setFilterStatus('all')
               }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', padding: '8px 4px', whiteSpace: 'nowrap' }}
             >
@@ -944,7 +1030,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             id="catalog-panel-products"
             aria-labelledby="catalog-tab-products"
           >
-            {products.length === 0 ? (
+            {visibleProducts.length === 0 ? (
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -963,18 +1049,25 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   <span style={{ width: '10px', flexShrink: 0 }} />
                   <button
                     type="button"
-                    onClick={toggleSelectAllVisible}
-                    aria-checked={allVisibleSelected}
+                    onClick={() => {
+                      if (selectedIds.size > 0) {
+                        setSelectedIds(new Set())
+                      } else {
+                        void selectAllAcrossPages()
+                      }
+                    }}
+                    aria-checked={selectedIds.size > 0}
                     role="checkbox"
-                    style={{ width: '18px', height: '18px', borderRadius: '5px', border: allVisibleSelected ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: allVisibleSelected ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+                    disabled={selectingAllPages}
+                    style={{ width: '18px', height: '18px', borderRadius: '5px', border: selectedIds.size > 0 ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: selectedIds.size > 0 ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selectingAllPages ? 'not-allowed' : 'pointer', flexShrink: 0, padding: 0 }}
                   >
-                    {allVisibleSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    {selectedIds.size > 0 && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </button>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    {selectedIds.size > 0 ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? '' : 's'}` : `${products.length} producto${products.length === 1 ? '' : 's'}`}
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>
+                    {selectingAllPages ? 'Cargando…' : selectedIds.size > 0 ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? '' : 's'}` : 'Seleccionar todos'}
                   </span>
                 </div>
-                {products.map((product, idx) => {
+                {visibleProducts.map((product, idx) => {
                   const checked = selectedIds.has(product.id)
                   const isOver = dragOverId === product.id && draggedId !== product.id
                   return (
@@ -1070,7 +1163,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                       <div style={{ marginLeft: '6px' }}>
                         <ToggleSwitch
@@ -1093,7 +1186,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             id="catalog-panel-combos"
             aria-labelledby="catalog-tab-combos"
           >
-            {products.length === 0 ? (
+            {visibleProducts.length === 0 ? (
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -1110,7 +1203,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
               </div>
             ) : (
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
-                {products.map((combo, idx) => (
+                {visibleProducts.map((combo, idx) => (
                   <div
                     key={combo.id}
                     style={{
@@ -1170,7 +1263,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
                           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </button>
                         <div style={{ marginLeft: '6px' }}>
                           <ToggleSwitch
@@ -1202,8 +1295,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
         </div>
       </div>
 
-      {productPagination.total > 0 && (
-        <div className="mt-8 max-w-4xl">
+      {productPagination.total >= 5 && (
+        <div style={{ marginTop: '17px', display: 'flex', justifyContent: 'center', width: '100%' }}>
           <PaginationBar
             page={productPagination.page}
             pageSize={productPagination.page_size}
@@ -1273,7 +1366,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
               </button>
             </div>
             {categories.length > 0 && (
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 10px 0' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8', margin: '0 0 10px 0' }}>
                 {categories.length} categoría{categories.length === 1 ? '' : 's'}
               </p>
             )}
@@ -1295,19 +1388,63 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 {categories.map(c => (
                   <li
                     key={c.id}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '12px', padding: '10px 10px 10px 14px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#FFFFFF', border: `1px solid ${editingCatId === c.id ? '#0A0A0F' : 'rgba(0,0,0,0.07)'}`, borderRadius: '12px', padding: '8px 8px 8px 14px', transition: 'border-color 0.15s' }}
                   >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>{c.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget({ kind: 'category', id: c.id, name: c.name })}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
-                      aria-label={`Eliminar categoría ${c.name}`}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    </button>
+                    {editingCatId === c.id ? (
+                      <>
+                        <input
+                          autoFocus
+                          type="text"
+                          value={editingCatName}
+                          onChange={e => setEditingCatName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); void handleSaveCategory(c.id) }
+                            if (e.key === 'Escape') setEditingCatId(null)
+                          }}
+                          style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', fontWeight: 600, color: '#0A0A0F', background: 'transparent', minWidth: 0 }}
+                          disabled={savingCat}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveCategory(c.id)}
+                          disabled={savingCat || editingCatName.trim().length < 2}
+                          style={{ background: editingCatName.trim().length >= 2 ? '#C6FF00' : '#F5F5F5', color: editingCatName.trim().length >= 2 ? '#0A0F00' : '#C8C8D0', border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 700, cursor: editingCatName.trim().length >= 2 ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                        >
+                          {savingCat ? '…' : 'Guardar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCatId(null)}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center' }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#0A0A0F', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingCatId(c.id); setEditingCatName(c.name) }}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
+                          aria-label={`Editar categoría ${c.name}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 11h2L10 5l-2-2L2 9v2zM8 3l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget({ kind: 'category', id: c.id, name: c.name })}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
+                          aria-label={`Eliminar categoría ${c.name}`}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -1320,15 +1457,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Nombre</label>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Nombre</label>
                   <input type="text" value={name} onChange={e => { setName(e.target.value); setFormError('') }} placeholder="Ej: Cerveza Heineken 500ml" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Precio (ARS)</label>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Precio (ARS)</label>
                   <input type="number" value={price} onChange={e => { setPrice(e.target.value); setFormError('') }} placeholder="8000" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>Categoría</label>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Categoría</label>
                   <NubaSelect
                     value={categoryId}
                     onChange={setCategoryId}
@@ -1342,79 +1479,96 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    Descripción <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional</span>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>
+                    Descripción <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opcional</span>
                   </label>
                   <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Detalle visible en el catálogo" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
                 </div>
-                <div>
-                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    Foto <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#C8C8D0' }}>· opcional · 1 imagen</span>
-                  </span>
-                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                    <div style={{ width: '96px', height: '96px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.08)' }}>
-                      {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
-                        <img
-                          src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
-                          alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
-                          <CatalogCameraPlaceholderIcon size={28} />
+                <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                  {/* Header foto */}
+                  <div style={{ padding: '12px 14px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>
+                      Foto <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opcional</span>
+                    </span>
+                    {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
+                      <button
+                        type="button"
+                        disabled={saving || imageUploading}
+                        onClick={() => {
+                          if (editingCatalogId) void onClearCatalogImage(editingCatalogId)
+                          else clearPendingImage()
+                        }}
+                        style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', fontWeight: 600, color: '#EF4444', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.4 : 1 }}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+
+                  <input
+                    id="catalog-item-photo-product"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                    style={{ display: 'none' }}
+                    disabled={saving || imageUploading}
+                    onChange={e => {
+                      const f = e.target.files?.[0] ?? null
+                      e.currentTarget.value = ''
+                      if (!f) return
+                      if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
+                      else pickPendingImageForCreate(f)
+                    }}
+                  />
+
+                  {/* Image area */}
+                  {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
+                    <div style={{ position: 'relative', width: '100%', height: '140px', background: '#F5F5F7' }}>
+                      <img
+                        src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                      {imageUploading && (
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
                         </div>
                       )}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <input
-                        id="catalog-item-photo-product"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
-                        style={{ display: 'none' }}
-                        disabled={saving || imageUploading}
-                        onChange={e => {
-                          const f = e.target.files?.[0] ?? null
-                          e.currentTarget.value = ''
-                          if (!f) return
-                          if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
-                          else pickPendingImageForCreate(f)
-                        }}
-                      />
+                  ) : (
+                    <label
+                      htmlFor="catalog-item-photo-product"
+                      style={{ display: 'block', cursor: saving || imageUploading ? 'not-allowed' : 'pointer' }}
+                    >
+                      <div
+                        style={{ height: '110px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#FFFFFF', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { if (!saving && !imageUploading) (e.currentTarget as HTMLDivElement).style.background = '#FAFAFA' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = '#FFFFFF' }}
+                      >
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C8C8D0' }}>
+                          <CatalogCameraPlaceholderIcon size={18} />
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>{imageUploading ? 'Subiendo…' : 'Subir foto'}</span>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* Footer action when image exists */}
+                  {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
+                    <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <label
                         htmlFor="catalog-item-photo-product"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          alignSelf: 'flex-start',
-                          borderRadius: '100px',
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          background: saving || imageUploading ? '#F5F5F7' : '#FFFFFF',
-                          padding: '8px 16px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: '#0A0A0F',
-                          cursor: saving || imageUploading ? 'not-allowed' : 'pointer',
-                        }}
+                        style={{ fontSize: '12px', fontWeight: 500, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
                       >
-                        {imageUploading ? 'Subiendo…' : 'Elegir imagen'}
+                        {imageUploading ? 'Subiendo…' : 'Cambiar foto'}
                       </label>
-                      {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
-                        <button
-                          type="button"
-                          disabled={saving || imageUploading}
-                          onClick={() => {
-                            if (editingCatalogId) void onClearCatalogImage(editingCatalogId)
-                            else clearPendingImage()
-                          }}
-                          style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, fontSize: '12px', fontWeight: 600, color: '#9A9AA8', cursor: saving || imageUploading ? 'not-allowed' : 'pointer' }}
-                        >
-                          Quitar foto
-                        </button>
-                      )}
-                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: 0, lineHeight: 1.45 }}>JPG, PNG, WebP u HEIC. Máx. 5 MB.</p>
+                      <span style={{ fontSize: '11px', color: '#C8C8D0' }}>JPG, PNG, WebP · 5 MB</span>
                     </div>
-                  </div>
+                  )}
+                  {!(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
+                    <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', background: '#FAFAFA' }}>
+                      <span style={{ fontSize: '11px', color: '#C8C8D0' }}>JPG, PNG, WebP u HEIC · Máx. 5 MB</span>
+                    </div>
+                  )}
                 </div>
                 {formError && (
                   <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>
@@ -1440,51 +1594,19 @@ export function ProductsView({ eventId }: { eventId: string }) {
           <>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <section className="flex flex-col gap-3">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Datos del combo</p>
+              <p className="text-[11px] font-medium text-gray-400">Datos del combo</p>
               <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError('') }} placeholder="Nombre visible para el cliente" className={inputClass} disabled={saving || imageUploading} />
               <input type="number" value={comboPrice} onChange={e => { setComboPrice(e.target.value); setFormError('') }} placeholder="Precio del combo (ARS)" className={inputClass} disabled={saving || imageUploading} />
               <input type="text" value={comboDesc} onChange={e => setComboDesc(e.target.value)} placeholder="Descripción (opcional)" className={inputClass} disabled={saving || imageUploading} />
             </section>
 
-            <section className="flex flex-col gap-2">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Foto · opcional · 1 imagen</p>
-              <div className="flex gap-3.5 items-start">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 bg-gray-100 border border-black/[0.08]">
-                  {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
-                    <img
-                      src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
-                      alt=""
-                      className="w-full h-full object-cover block"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <CatalogCameraPlaceholderIcon size={28} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                  <input
-                    id="catalog-item-photo-combo"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
-                    className="hidden"
-                    disabled={saving || imageUploading}
-                    onChange={e => {
-                      const f = e.target.files?.[0] ?? null
-                      e.currentTarget.value = ''
-                      if (!f) return
-                      if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
-                      else pickPendingImageForCreate(f)
-                    }}
-                  />
-                  <label
-                    htmlFor="catalog-item-photo-combo"
-                    className={`inline-flex self-start items-center justify-center rounded-full border border-black/10 px-4 py-2 text-xs font-semibold text-gray-900 ${
-                      saving || imageUploading ? 'bg-gray-100 cursor-not-allowed' : 'bg-white cursor-pointer'
-                    }`}
-                  >
-                    {imageUploading ? 'Subiendo…' : 'Elegir imagen'}
-                  </label>
+            <section>
+              <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ padding: '12px 14px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>
+                    Foto <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opcional</span>
+                  </span>
                   {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) && (
                     <button
                       type="button"
@@ -1493,34 +1615,90 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         if (editingCatalogId) void onClearCatalogImage(editingCatalogId)
                         else clearPendingImage()
                       }}
-                      className="self-start text-xs font-semibold text-gray-400 hover:text-red-600 disabled:opacity-50 bg-transparent border-none p-0 cursor-pointer"
+                      style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', fontWeight: 600, color: '#EF4444', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.4 : 1 }}
                     >
-                      Quitar foto
+                      Quitar
                     </button>
                   )}
-                  <p className="text-[11px] text-gray-400 leading-snug m-0">JPG, PNG, WebP u HEIC. Máx. 5 MB.</p>
                 </div>
+
+                <input
+                  id="catalog-item-photo-combo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif"
+                  style={{ display: 'none' }}
+                  disabled={saving || imageUploading}
+                  onChange={e => {
+                    const f = e.target.files?.[0] ?? null
+                    e.currentTarget.value = ''
+                    if (!f) return
+                    if (editingCatalogId) void onReplaceCatalogImage(f, editingCatalogId)
+                    else pickPendingImageForCreate(f)
+                  }}
+                />
+
+                {/* Image area */}
+                {(pendingImagePreviewUrl ?? (editingCatalogId ? products.find(x => x.id === editingCatalogId)?.image_url : null)) ? (
+                  <div style={{ position: 'relative', width: '100%', height: '140px', background: '#F5F5F7' }}>
+                    <img
+                      src={(pendingImagePreviewUrl ?? products.find(x => x.id === editingCatalogId)?.image_url) || ''}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    {imageUploading && (
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="catalog-item-photo-combo"
+                    style={{ display: 'block', cursor: saving || imageUploading ? 'not-allowed' : 'pointer' }}
+                  >
+                    <div
+                      style={{ height: '110px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#FFFFFF', transition: 'background 0.15s' }}
+                      onMouseEnter={e => { if (!saving && !imageUploading) (e.currentTarget as HTMLDivElement).style.background = '#FAFAFA' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = '#FFFFFF' }}
+                    >
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C8C8D0' }}>
+                        <CatalogCameraPlaceholderIcon size={18} />
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>{imageUploading ? 'Subiendo…' : 'Subir foto'}</span>
+                    </div>
+                  </label>
+                )}
+
+                {/* Footer */}
+                {(pendingImagePreviewUrl || (editingCatalogId && products.find(x => x.id === editingCatalogId)?.image_url)) ? (
+                  <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <label
+                      htmlFor="catalog-item-photo-combo"
+                      style={{ fontSize: '12px', fontWeight: 500, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
+                    >
+                      {imageUploading ? 'Subiendo…' : 'Cambiar foto'}
+                    </label>
+                    <span style={{ fontSize: '11px', color: '#C8C8D0' }}>JPG, PNG, WebP · 5 MB</span>
+                  </div>
+                ) : (
+                  <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', background: '#FAFAFA' }}>
+                    <span style={{ fontSize: '11px', color: '#C8C8D0' }}>JPG, PNG, WebP u HEIC · Máx. 5 MB</span>
+                  </div>
+                )}
               </div>
             </section>
 
-            <section className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Qué incluye</p>
-                {comboPickerItems.length > 0 && (
-                  <span className="text-[11px] text-gray-400 tabular-nums">{comboPickerItems.length} ítem{comboPickerItems.length === 1 ? '' : 's'}</span>
-                )}
-              </div>
-
-              {comboPickerItems.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/90 px-4 py-8 text-center">
-                  <p className="text-sm font-medium text-gray-700">Todavía no hay productos en este combo</p>
-                  <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-                    Usá el buscador de abajo. Al tocar un producto lo sumamos acá con cantidad editable.
-                  </p>
+            {comboPickerItems.length > 0 && (
+            <section>
+              <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ padding: '12px 14px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Qué incluye</span>
+                  <span style={{ fontSize: '11px', color: '#C8C8D0', fontWeight: 500 }}>{comboPickerItems.length} ítem{comboPickerItems.length === 1 ? '' : 's'}</span>
                 </div>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {comboPickerItems.map(entry => {
+
+                <ul style={{ display: 'flex', flexDirection: 'column' }}>
+                  {comboPickerItems.map((entry, idx) => {
                     const rowProduct = comboDrawerSingles.find(s => s.id === entry.product_id)
                     const title = entry.displayName ?? rowProduct?.name ?? 'Producto'
                     const unit = rowProduct?.price
@@ -1528,68 +1706,76 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     return (
                       <li
                         key={entry.product_id}
-                        className="rounded-2xl border border-gray-100 bg-white px-3 py-3 shadow-sm flex gap-3 items-center"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '12px',
+                          padding: '12px 14px',
+                          borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
+                          background: '#FFFFFF',
+                        }}
                       >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
-                          <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                        {/* Info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
+                          <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {rowProduct
-                              ? (
-                                  <>
-                                    {formatPrice(rowProduct.price)} c/u
-                                    {rowProduct.category_name ? ` · ${rowProduct.category_name}` : ''}
-                                  </>
-                                )
-                              : (
-                                  <span className="italic">Precio no disponible en el catálogo</span>
-                                )}
+                              ? <>{formatPrice(rowProduct.price)} c/u{rowProduct.category_name ? ` · ${rowProduct.category_name}` : ''}</>
+                              : <span style={{ fontStyle: 'italic' }}>Precio no disponible</span>
+                            }
                           </p>
                           {lineTotal != null && (
-                            <p className="text-xs font-medium text-gray-700 mt-1 tabular-nums">
-                              Subtotal · {formatPrice(lineTotal)}
+                            <p style={{ fontSize: '11px', fontWeight: 600, color: '#6B7280', margin: '4px 0 0 0' }}>
+                              {formatPrice(lineTotal)}
                             </p>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          <div className="flex items-center rounded-full border border-gray-200 bg-gray-50 p-0.5">
-                            <button
-                              type="button"
-                              className="w-9 h-9 rounded-full text-base leading-none text-gray-700 hover:bg-white disabled:opacity-40"
-                              disabled={saving}
-                              aria-label="Menos cantidad"
-                              onClick={() => bumpComboItemQty(entry.product_id, -1)}
-                            >
-                              −
-                            </button>
-                            <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums text-gray-900">{entry.quantity}</span>
-                            <button
-                              type="button"
-                              className="w-9 h-9 rounded-full text-base leading-none text-gray-700 hover:bg-white disabled:opacity-40"
-                              disabled={saving}
-                              aria-label="Más cantidad"
-                              onClick={() => bumpComboItemQty(entry.product_id, 1)}
-                            >
-                              +
-                            </button>
-                          </div>
+
+                        {/* Qty stepper */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '20px', background: '#F5F5F7', padding: '2px', flexShrink: 0 }}>
                           <button
                             type="button"
-                            className="text-[11px] font-medium text-gray-400 hover:text-red-600"
                             disabled={saving}
-                            onClick={() => removeComboItem(entry.product_id)}
+                            aria-label="Menos cantidad"
+                            onClick={() => bumpComboItemQty(entry.product_id, -1)}
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: 'transparent', color: '#0A0A0F', fontSize: '16px', lineHeight: 1, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: saving ? 0.4 : 1 }}
                           >
-                            Quitar
+                            −
+                          </button>
+                          <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '13px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{entry.quantity}</span>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            aria-label="Más cantidad"
+                            onClick={() => bumpComboItemQty(entry.product_id, 1)}
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: 'transparent', color: '#0A0A0F', fontSize: '16px', lineHeight: 1, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: saving ? 0.4 : 1 }}
+                          >
+                            +
                           </button>
                         </div>
+
+                        {/* Quitar */}
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => removeComboItem(entry.product_id)}
+                          style={{ background: 'none', border: 'none', padding: '4px', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.4 : 1, color: '#C8C8D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, borderRadius: '6px', transition: 'color 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#EF4444' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C8C8D0' }}
+                          aria-label="Quitar del combo"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 3.5h10M5 3.5V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v1M3.5 3.5l.75 7.5h5.5l.75-7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
                       </li>
                     )
                   })}
                 </ul>
-              )}
+              </div>
             </section>
+            )}
 
             <section className="flex flex-col gap-2">
-              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Sumar desde el catálogo</p>
+              <p className="text-[11px] font-medium text-gray-400">Sumar desde el catálogo</p>
               <input
                 type="text"
                 value={comboPickerQuery}
@@ -1668,10 +1854,10 @@ export function ProductsView({ eventId }: { eventId: string }) {
         <div
           style={{
             position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-            zIndex: 30, background: '#0A0A0F', color: '#FFFFFF',
+            zIndex: 30, background: '#FFFFFF', color: '#0A0A0F',
             borderRadius: '100px', padding: '8px 8px 8px 22px',
             display: 'flex', alignItems: 'center', gap: '14px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.08)',
             fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
           }}
           role="region"
@@ -1680,12 +1866,12 @@ export function ProductsView({ eventId }: { eventId: string }) {
           <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {selectedIds.size} seleccionado{selectedIds.size === 1 ? '' : 's'}
           </span>
-          <span style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.12)' }} />
+          <span style={{ width: '1px', height: '20px', background: 'rgba(0,0,0,0.08)' }} />
           <button
             type="button"
             onClick={() => runBulkAction('activate')}
             disabled={bulkSubmitting}
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
+            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
           >
             Activar
           </button>
@@ -1693,7 +1879,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => runBulkAction('pause')}
             disabled={bulkSubmitting}
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
+            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
           >
             Pausar
           </button>
@@ -1701,7 +1887,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => setBulkConfirm('delete')}
             disabled={bulkSubmitting}
-            style={{ background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.4)', color: '#FCA5A5', fontSize: '13px', fontWeight: 600, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 14px', borderRadius: '100px' }}
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626', fontSize: '13px', fontWeight: 600, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 14px', borderRadius: '100px' }}
           >
             Eliminar
           </button>
@@ -1709,10 +1895,10 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => setSelectedIds(new Set())}
             disabled={bulkSubmitting}
-            style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#FFFFFF', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ background: '#F5F5F7', border: 'none', color: '#6B7280', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label="Cancelar selección"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="white" strokeWidth="1.6" strokeLinecap="round"/></svg>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
           </button>
         </div>
       )}
@@ -1753,6 +1939,16 @@ export function ProductsView({ eventId }: { eventId: string }) {
         containerClassName="z-[70]"
         className="max-w-[728px] w-full !p-0 overflow-y-auto h-[calc(95vh-80px)]"
       >
+        <button
+          type="button"
+          onClick={() => setLinkModalOpen(false)}
+          aria-label="Cerrar"
+          style={{ position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6B7280', zIndex: 10 }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#E5E7EB'; e.currentTarget.style.color = '#0A0A0F' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#6B7280' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+        </button>
         <div style={{ paddingTop: '40px' }}>
           <StorefrontSettingsView eventId={eventId} />
         </div>

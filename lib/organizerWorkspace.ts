@@ -217,6 +217,21 @@ export async function createCategory(
   return { ok: true, category: body.category }
 }
 
+export async function patchCategory(
+  eventId: string,
+  categoryId: string,
+  name: string,
+): Promise<{ ok: true; category: WorkspaceCategory } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `categories/${categoryId}`), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ name }),
+  })
+  const body = (await res.json()) as { category?: WorkspaceCategory; error?: string }
+  if (!res.ok || !body.category) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, category: body.category }
+}
+
 export async function deleteCategory(
   eventId: string,
   categoryId: string,

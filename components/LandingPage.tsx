@@ -349,7 +349,7 @@ export function LandingPage() {
         <SiteNavbar />
 
         {/* ─── HERO ─── */}
-        <section className="nb-hero-section" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '140px 40px 80px', position: 'relative', overflow: 'hidden' }}>
+        <section className="nb-hero-section" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '60px 40px 80px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: '65%', height: '70%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.28) 0%, transparent 65%)' }} />
             <div style={{ position: 'absolute', bottom: '-5%', right: '-5%', width: '50%', height: '55%', background: 'radial-gradient(ellipse, rgba(255,92,26,0.1) 0%, transparent 65%)' }} />
@@ -675,6 +675,7 @@ export function LandingPage() {
                 borderRadius: '20px', padding: '32px 28px 36px',
                 position: 'relative', display: 'flex', flexDirection: 'column', gap: '0',
                 transitionDelay: `${i * 0.1}s`,
+                zIndex: 4 - i,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: highlight ? 'rgba(10,15,0,0.4)' : '#C8C8D0', letterSpacing: '0.1em' }}>{n}</span>
@@ -685,7 +686,7 @@ export function LandingPage() {
                 <h3 style={{ fontSize: '19px', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 10px 0', color: highlight ? '#0A0F00' : '#0A0A0F' }}>{title}</h3>
                 <p style={{ fontSize: '13px', lineHeight: '1.7', margin: 0, color: highlight ? 'rgba(10,15,0,0.58)' : '#9A9AA8' }}>{desc}</p>
                 {i < 3 && (
-                  <div className="nb-step-arrow" style={{ position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)', zIndex: 1, width: '28px', height: '28px', background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="nb-step-arrow" style={{ position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: '28px', height: '28px', background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5.5 2.5l3 2.5-3 2.5" stroke="#C8C8D0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                 )}
