@@ -81,8 +81,16 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-      const body = (await res.json()) as { token?: string; user?: AuthUser; error?: string }
-      if (res.ok && body.token && body.user) { finishAuth(body.token, body.user); return }
+      const body = (await res.json()) as {
+        token?: string
+        user?: AuthUser
+        staff_memberships?: AuthUser['staff_memberships']
+        error?: string
+      }
+      if (res.ok && body.token && body.user) {
+        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships })
+        return
+      }
       setError(body.error ?? 'Credenciales incorrectas')
     } catch (err) {
       setError(err instanceof FetchError ? err.message : 'No se pudo contactar al servidor')
@@ -101,8 +109,16 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email, password }),
       })
-      const body = (await res.json()) as { token?: string; user?: AuthUser; error?: string }
-      if (res.ok && body.token && body.user) { finishAuth(body.token, body.user); return }
+      const body = (await res.json()) as {
+        token?: string
+        user?: AuthUser
+        staff_memberships?: AuthUser['staff_memberships']
+        error?: string
+      }
+      if (res.ok && body.token && body.user) {
+        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships })
+        return
+      }
       setError(body.error ?? 'No se pudo crear la cuenta')
     } catch (err) {
       setError(err instanceof FetchError ? err.message : 'No se pudo contactar al servidor')

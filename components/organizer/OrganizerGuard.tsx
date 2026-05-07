@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { Spinner } from '@/components/ui/Spinner'
 import { authPaths } from '@/lib/api'
-import { authHeadersJson, clearAuthSession, getAuthToken, setAuthSession } from '@/lib/authSession'
+import { authHeadersJson, clearAuthSession, getAuthToken, setAuthSession, type AuthUser } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 
 export function OrganizerGuard({ children }: { children: React.ReactNode }) {
@@ -27,9 +27,15 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
           router.replace('/login')
           return
         }
-        const body = (await res.json()) as { user?: { id: string; name: string; email: string; role: string } }
+        const body = (await res.json()) as {
+          user?: AuthUser
+          staff_memberships?: AuthUser['staff_memberships']
+        }
         if (body.user) {
-          setAuthSession(token, body.user)
+          setAuthSession(token, {
+            ...body.user,
+            staff_memberships: body.staff_memberships ?? body.user.staff_memberships,
+          })
         }
         setState('ok')
       } catch {

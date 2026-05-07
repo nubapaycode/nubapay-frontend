@@ -118,8 +118,11 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
         title="Escáner"
         description="Validá el código QR del comprador."
         prefix={
-          <span className="mt-0.5 rounded-xl bg-gray-100 p-2 text-gray-900" aria-hidden>
-            <QrCode size={22} strokeWidth={1.75} />
+          <span
+            className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900"
+            aria-hidden
+          >
+            <QrCode size={20} strokeWidth={1.75} className="shrink-0" />
           </span>
         }
         actions={
@@ -134,8 +137,8 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
       {/* Idle */}
       {state === 'idle' && (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-5 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900">
-            <QrCode size={32} strokeWidth={1.75} aria-hidden />
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-900">
+            <QrCode size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
           </div>
           <div>
             <p className="text-base font-medium text-gray-900">Escanear QR de retiro</p>

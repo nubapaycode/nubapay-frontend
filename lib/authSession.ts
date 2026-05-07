@@ -1,10 +1,26 @@
+export type OrganizerStaffTools = {
+  dashboard: boolean
+  storefront: boolean
+  products: boolean
+  scanner: boolean
+  orders: boolean
+  pickup_points: boolean
+  payments: boolean
+}
+
+export type StaffMembership = {
+  event_id: string
+  role: string
+  tools: OrganizerStaffTools
+}
+
 export type AuthUser = {
   id: string
   name: string
   email: string
   role: string
+  staff_memberships?: StaffMembership[]
 }
-
 const TOKEN_KEY = 'nubapay_token'
 const USER_KEY = 'nubapay_user'
 

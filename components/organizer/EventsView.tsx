@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 
 import { eventsPaths } from '@/lib/api'
-import { authHeadersJson } from '@/lib/authSession'
+import { authHeadersJson, getAuthUser } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import { firstAllowedWorkspaceSegment, workspaceToolsForEvent } from '@/lib/organizerStaffTools'
 import type { OrganizerEventRow } from '@/lib/types/organizer'
 import { formatDate } from '@/lib/utils'
 
@@ -55,6 +56,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
   const [date, setDate] = useState('')
   const [error, setError] = useState('')
   const [listError, setListError] = useState('')
+  const [canCreateEvents, setCanCreateEvents] = useState(true)
 
   const loadEvents = useCallback(async () => {
     setListError('')
@@ -80,6 +82,10 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
   }, [listPage, refreshNonce])
 
   useEffect(() => { setLoading(true); loadEvents() }, [loadEvents])
+
+  useEffect(() => {
+    setCanCreateEvents(getAuthUser()?.role !== 'ORGANIZER_STAFF')
+  }, [])
 
   const handleAdd = async () => {
     if (!name.trim()) { setError('El nombre del evento es obligatorio'); return }
@@ -113,6 +119,13 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
   const formatEventWhen = (row: OrganizerEventRow) => row.starts_at ? formatDate(row.starts_at) : 'Sin fecha'
   const subtitleLine = (row: OrganizerEventRow) => (row.description ?? '').split('\n\n')[0]?.trim() || row.slug
 
+  const eventPanelHref = (event: OrganizerEventRow) => {
+    const membership = event.membership === 'staff' ? 'staff' : 'owner'
+    const tools = workspaceToolsForEvent(membership, event.id, getAuthUser()?.staff_memberships)
+    const segment = firstAllowedWorkspaceSegment(tools)
+    return `/events/${event.id}/${segment}`
+  }
+
   return (
     <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
       <style>{`
@@ -133,6 +146,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
         title="Mis eventos"
         description="Cada evento tiene su propio panel: métricas, catálogo, pedidos y escáner."
         actions={
+          canCreateEvents ? (
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
@@ -143,6 +157,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
             </svg>
             Nuevo evento
           </button>
+          ) : undefined
         }
       />
 
@@ -168,7 +183,10 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
             </svg>
           </div>
           <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin eventos todavía</p>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero con el botón de arriba.</p>
+          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>
+            {canCreateEvents ? 'Creá el primero con el botón de arriba.' : 'Cuando te inviten a un evento, vas a verlo acá.'}
+          </p>
+          {canCreateEvents && (
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
@@ -176,6 +194,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
           >
             Crear evento
           </button>
+          )}
         </div>
       ) : (
         <>
@@ -186,11 +205,11 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
               {events.map(event => {
                 const status = event.status || 'draft'
                 const sc = STATUS_COLOR[status] ?? STATUS_COLOR.draft
-                const initial = (event.name || '?').trim().charAt(0).toUpperCase()
+                const showStatus = status !== 'draft'
                 return (
                   <Link
                     key={event.id}
-                    href={`/events/${event.id}/dashboard`}
+                    href={eventPanelHref(event)}
                     className="group nb-event-card"
                     style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '16px', textDecoration: 'none', transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s' }}
                   >
@@ -198,9 +217,11 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                         <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
-                        <span style={{ fontSize: '10px', fontWeight: 700, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-                          {STATUS_LABEL[status] ?? status}
-                        </span>
+                        {showStatus && (
+                          <span style={{ fontSize: '10px', fontWeight: 700, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                            {STATUS_LABEL[status] ?? status}
+                          </span>
+                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#9A9AA8' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
@@ -228,6 +249,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
                           <path d="M2 5.5h7M6 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </span>
+                      {event.membership !== 'staff' && (
                       <button
                         type="button"
                         onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(event.id) }}
@@ -239,6 +261,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
                           <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>
+                      )}
                     </div>
                   </Link>
                 )

@@ -79,7 +79,7 @@ describe('EventsView', () => {
   it('lista eventos desde la API', async () => {
     render(<EventsView />)
     await waitFor(() => expect(screen.getByText('Festival de Verano 2026')).toBeInTheDocument())
-    expect(screen.getByRole('link', { name: 'Abrir panel' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Abrir/i })).toHaveAttribute(
       'href',
       '/events/11111111-1111-1111-1111-111111111111/dashboard',
     )
@@ -96,7 +96,7 @@ describe('EventsView', () => {
     render(<EventsView />)
     await waitFor(() => expect(screen.getByText('Festival de Verano 2026')).toBeInTheDocument())
     await userEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
-    await userEvent.type(screen.getByPlaceholderText('Nombre del evento'), 'Nuevo Evento')
+    await userEvent.type(screen.getByPlaceholderText('Nombre del evento *'), 'Nuevo Evento')
     await userEvent.click(screen.getByRole('button', { name: 'Crear evento' }))
     await waitFor(() => expect(screen.getByText('Nuevo Evento')).toBeInTheDocument())
   })

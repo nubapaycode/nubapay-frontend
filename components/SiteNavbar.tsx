@@ -89,7 +89,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, minHeight: '40px', minWidth: loggedIn === true ? '168px' : '208px', justifyContent: 'flex-end' }}>
             {loggedIn === null ? null : loggedIn ? (
               <Link
-                href="/events"
+                href="/dashboard"
                 style={{
                   fontSize: '14px',
                   fontWeight: 700,

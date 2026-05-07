@@ -1,21 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { QrCode } from 'lucide-react'
+import { QrCode, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
+
+type ToolKey = keyof OrganizerStaffTools
 
 type NavItem = {
   href: string
   label: string
   icon: React.ReactNode
-  /** Visible en sidebar desktop */
   showDesktop: boolean
-  /** Tabs inferiores (no FAB): orden Dashboard → Catálogo → Pedidos */
   mobileTabOrder?: number
-  /** Botón central elevado */
   mobileFab?: boolean
+  /** Permiso requerido (omitir solo para ítems que usan `ownerOnly`). */
+  tool?: ToolKey
+  /** Solo visible para el dueño del evento (ej. equipo / staff). */
+  ownerOnly?: boolean
 }
 
 function navItems(basePath: string): NavItem[] {
@@ -56,6 +60,13 @@ function navItems(basePath: string): NavItem[] {
       <circle cx="8" cy="5" r="1.25" fill="currentColor" />
     </svg>
   )
+  const storefrontIcon = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M2 6l6-4 6 4v8H2V6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+  const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
 
   return [
@@ -65,6 +76,7 @@ function navItems(basePath: string): NavItem[] {
       icon: dashIcon,
       showDesktop: true,
       mobileTabOrder: 0,
+      tool: 'dashboard',
     },
     {
       href: `${basePath}/products`,
@@ -72,6 +84,7 @@ function navItems(basePath: string): NavItem[] {
       icon: catalogIcon,
       showDesktop: true,
       mobileTabOrder: 1,
+      tool: 'products',
     },
     {
       href: `${basePath}/scanner`,
@@ -79,6 +92,7 @@ function navItems(basePath: string): NavItem[] {
       icon: scannerIcon,
       showDesktop: true,
       mobileFab: true,
+      tool: 'scanner',
     },
     {
       href: `${basePath}/orders`,
@@ -86,18 +100,28 @@ function navItems(basePath: string): NavItem[] {
       icon: ordersIcon,
       showDesktop: true,
       mobileTabOrder: 2,
+      tool: 'orders',
     },
     {
       href: `${basePath}/pickup-points`,
       label: 'Puntos de retiro',
       icon: pickupIcon,
       showDesktop: true,
+      tool: 'pickup_points',
     },
     {
       href: `${basePath}/payments`,
       label: 'Pagos',
       icon: paymentsIcon,
       showDesktop: true,
+      tool: 'payments',
+    },
+    {
+      href: `${basePath}/staff`,
+      label: 'Equipo',
+      icon: staffIcon,
+      showDesktop: true,
+      ownerOnly: true,
     },
   ]
 }
@@ -111,6 +135,8 @@ type Props = {
   basePath: string
   pathname: string
   onLogout: () => void
+  workspaceMembership: 'owner' | 'staff'
+  tools: OrganizerStaffTools
 }
 
 export function EventOrganizerSidebar({
@@ -118,20 +144,31 @@ export function EventOrganizerSidebar({
   basePath,
   pathname,
   onLogout,
+  workspaceMembership,
+  tools,
 }: Props) {
-  const items = useMemo(() => navItems(basePath), [basePath])
+  const allItems = useMemo(() => navItems(basePath), [basePath])
+
+  const items = useMemo(() => {
+    return allItems.filter(it => {
+      if (it.ownerOnly) return workspaceMembership === 'owner'
+      if (it.tool) return tools[it.tool]
+      return false
+    })
+  }, [allItems, tools, workspaceMembership])
+
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
   const mobileTabs = useMemo(
     () =>
       items
-        .filter(i => i.mobileTabOrder !== undefined)
+        .filter(i => i.mobileTabOrder !== undefined && !i.mobileFab)
         .sort((a, b) => (a.mobileTabOrder ?? 0) - (b.mobileTabOrder ?? 0)),
     [items],
   )
   const fabItem = useMemo(() => items.find(i => i.mobileFab), [items])
-  const tabDashboard = mobileTabs[0]
-  const tabCatalog = mobileTabs[1]
-  const tabOrders = mobileTabs[2]
+  const tabLeft = mobileTabs[0]
+  const tabMid = mobileTabs[1]
+  const tabRight = mobileTabs[2]
 
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -163,10 +200,14 @@ export function EventOrganizerSidebar({
     return () => document.removeEventListener('keydown', handleKey)
   }, [moreOpen])
 
-  const moreOverflowActive =
-    pathname.startsWith(`${basePath}/payments`)
-    || pathname.startsWith(`${basePath}/pickup-points`)
-
+  const moreOverflowHrefPrefixes = useMemo(
+    () =>
+      items
+        .filter(i => i.mobileTabOrder === undefined && !i.mobileFab)
+        .map(i => i.href),
+    [items],
+  )
+  const moreOverflowActive = moreOverflowHrefPrefixes.some(h => pathname.startsWith(h))
 
   const title = eventTitle ?? 'Evento'
 
@@ -189,7 +230,6 @@ export function EventOrganizerSidebar({
         </div>
 
         <nav ref={navRef} className="relative flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain pt-2">
-          {/* Mis eventos + título */}
           {(() => {
             const myEventsHref = `${basePath}/all`
             const myEventsActive = isRouteActive(pathname, myEventsHref)
@@ -205,8 +245,8 @@ export function EventOrganizerSidebar({
               >
                 <span className="shrink-0" style={{ color: myEventsActive ? '#0A0F00' : '#9CA3AF' }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <rect x="1" y="3" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <rect x="1" y="3" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </span>
                 <span className="shrink-0">Mis eventos</span>
@@ -264,7 +304,7 @@ export function EventOrganizerSidebar({
               title="Cerrar sesión"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -272,39 +312,39 @@ export function EventOrganizerSidebar({
       </aside>
 
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-[env(safe-area-inset-bottom,0px)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 overflow-visible bg-white border-t border-gray-100 pb-[env(safe-area-inset-bottom,0px)]"
         aria-label="Navegación principal"
       >
-        <div className="grid grid-cols-5 items-end min-h-[56px] px-0.5 pt-1">
-          {tabDashboard && (
+        <div className="grid grid-cols-5 items-end min-h-[56px] overflow-visible px-0.5 pt-1">
+          {tabLeft && (
             <Link
-              href={tabDashboard.href}
+              href={tabLeft.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabDashboard.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabLeft.href) ? 'text-gray-900' : 'text-gray-400'
               }`}
             >
-              {tabDashboard.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabDashboard.label}</span>
+              {tabLeft.icon}
+              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabLeft.label}</span>
             </Link>
           )}
-          {tabCatalog && (
+          {tabMid && (
             <Link
-              href={tabCatalog.href}
+              href={tabMid.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabCatalog.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabMid.href) ? 'text-gray-900' : 'text-gray-400'
               }`}
             >
-              {tabCatalog.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabCatalog.label}</span>
+              {tabMid.icon}
+              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabMid.label}</span>
             </Link>
           )}
 
-          <div className="flex flex-col items-center justify-end pb-1 relative z-10">
+          <div className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1">
             {fabItem && (
               <Link href={fabItem.href} className="flex flex-col items-center gap-1 -mt-7 text-gray-900" aria-label={fabItem.label}>
                 <span
-                  className={`flex items-center justify-center w-[52px] h-[52px] rounded-full shadow-lg ring-4 ring-white transition-transform active:scale-95 text-white ${
-                    isRouteActive(pathname, fabItem.href) ? 'bg-gray-900 ring-gray-900/20' : 'bg-gray-900'
+                  className={`flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gray-900 text-white shadow-lg transition-transform active:scale-95 ${
+                    isRouteActive(pathname, fabItem.href) ? 'bg-gray-950' : ''
                   }`}
                 >
                   {fabItem.icon}
@@ -314,15 +354,15 @@ export function EventOrganizerSidebar({
             )}
           </div>
 
-          {tabOrders && (
+          {tabRight && (
             <Link
-              href={tabOrders.href}
+              href={tabRight.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabOrders.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabRight.href) ? 'text-gray-900' : 'text-gray-400'
               }`}
             >
-              {tabOrders.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabOrders.label}</span>
+              {tabRight.icon}
+              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabRight.label}</span>
             </Link>
           )}
 

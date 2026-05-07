@@ -36,15 +36,6 @@ export type DashboardSummary = {
   top_products: { name: string; quantity: number; revenue: number }[]
 }
 
-export type WorkspaceCustomer = {
-  id: string
-  name: string | null
-  phone: string | null
-  email: string | null
-  orders_count: number
-  total_spent: number
-}
-
 export type WorkspacePayment = {
   id: string
   order_id: string
@@ -346,27 +337,6 @@ export async function deleteWorkspaceProduct(
   const body = (await res.json()) as { error?: string; paused_combos?: string[] }
   if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
   return { ok: true, pausedCombos: body.paused_combos ?? [] }
-}
-
-export async function fetchWorkspaceCustomers(
-  eventId: string,
-  opts?: { page?: number; pageSize?: number },
-): Promise<
-  { ok: true; customers: WorkspaceCustomer[]; pagination: PaginationMeta } | { ok: false; error: string }
-> {
-  const page = opts?.page ?? 1
-  const pageSize = opts?.pageSize ?? 20
-  const res = await browserFetch(workspacePath(eventId, 'customers', { page, page_size: pageSize }), {
-    headers: authHeadersJson(),
-  })
-  const body = (await res.json()) as {
-    customers?: WorkspaceCustomer[]
-    pagination?: Partial<PaginationMeta>
-    error?: string
-  }
-  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
-  const customers = body.customers ?? []
-  return { ok: true, customers, pagination: readPagination(body, customers.length) }
 }
 
 export async function fetchWorkspacePayments(
