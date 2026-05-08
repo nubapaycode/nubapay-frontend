@@ -138,12 +138,27 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+      <style>{`
+        .login-left {
+          width: 42%; background: #0A0A0F; display: flex; flex-direction: column;
+          justify-content: space-between; padding: 48px 56px;
+          position: relative; overflow: hidden;
+        }
+        .login-right {
+          flex: 1; display: flex; align-items: center; justify-content: center;
+          background: #FFFFFF; padding: 48px;
+        }
+        @media (max-width: 768px) {
+          .login-left { display: none; }
+          .login-right { padding: 40px 24px; align-items: flex-start; padding-top: 64px; }
+        }
+        @media (max-width: 480px) {
+          .login-right { padding: 48px 20px; }
+        }
+      `}</style>
 
       {/* ── Left panel ── */}
-      <div style={{
-        width: '42%', background: '#0A0A0F', display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between', padding: '48px 56px', position: 'relative', overflow: 'hidden',
-      }}>
+      <div className="login-left">
         {/* glow */}
         <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '70%', height: '60%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.08) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.05) 0%, transparent 65%)', pointerEvents: 'none' }} />
@@ -181,7 +196,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
       </div>
 
       {/* ── Right panel ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', padding: '48px' }}>
+      <div className="login-right">
         <div style={{ width: '100%', maxWidth: '380px' }}>
 
           <div style={{ marginBottom: '36px' }}>

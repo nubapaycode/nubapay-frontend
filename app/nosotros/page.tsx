@@ -110,6 +110,45 @@ export default function NosotrosPage() {
         .nos-social-btn:hover { background: #EAEAEC; }
         .nos-principle { border-top: 1px solid rgba(0,0,0,0.08); padding: 32px 0; display: grid; grid-template-columns: 64px 1fr 2fr; gap: 32px; align-items: start; }
         .nos-principle:last-child { border-bottom: 1px solid rgba(0,0,0,0.08); }
+
+        /* ── Responsive: Stats strip ── */
+        .nos-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+        .nos-stat-border { border-left: 1px solid rgba(0,0,0,0.08); padding-left: 40px; }
+
+        @media (max-width: 640px) {
+          .nos-stats-grid { grid-template-columns: 1fr !important; }
+          .nos-stat-border { border-left: none !important; padding-left: 0 !important; border-top: 1px solid rgba(0,0,0,0.08) !important; }
+          .nos-stat-pad { padding: 28px 0 !important; }
+        }
+
+        /* ── Responsive: Qué hacemos ── */
+        .nos-section-grid { display: grid; grid-template-columns: 240px 1fr; gap: 80px; align-items: start; }
+        .nos-cards-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
+
+        @media (max-width: 768px) {
+          .nos-section-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .nos-section-label { display: none; }
+          .nos-cards-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .nos-que-hacemos { padding: 64px 24px !important; }
+          .nos-principios { padding: 64px 24px !important; }
+          .nos-principios-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .nos-principle { grid-template-columns: 40px 1fr !important; gap: 16px !important; }
+          .nos-principle-desc { grid-column: 2 !important; }
+          .nos-donde { padding: 64px 24px !important; }
+          .nos-donde-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .nos-cta-wrap { padding: 24px 24px 48px !important; }
+          .nos-cta-inner { padding: 48px 32px !important; border-radius: 20px !important; }
+          .nos-cta-bottom { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
+          .nos-cta-buttons { width: 100% !important; flex-direction: column !important; }
+          .nos-cta-btn { width: 100% !important; justify-content: center !important; }
+        }
+        @media (max-width: 640px) {
+          .nos-que-hacemos { padding: 48px 20px !important; }
+          .nos-principios { padding: 48px 20px !important; }
+          .nos-donde { padding: 48px 20px !important; }
+          .nos-cta-wrap { padding: 16px 16px 40px !important; }
+          .nos-cta-inner { padding: 40px 24px !important; }
+        }
       `}</style>
 
       <SiteNavbar activePath="/nosotros" />
@@ -148,16 +187,14 @@ export default function NosotrosPage() {
         </div>
 
         {/* Stats strip */}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="nos-stats-grid" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
           {[
             { val: '1%', label: 'Comisión por transacción', cls: 'nos-stat-item nos-stat-1' },
             { val: '0', label: 'Apps que descargar', cls: 'nos-stat-item nos-stat-2' },
             { val: '5 seg', label: 'Para completar un pedido', cls: 'nos-stat-item nos-stat-3' },
           ].map((s, i) => (
-            <div key={s.label} className={s.cls} style={{
+            <div key={s.label} className={`${s.cls} nos-stat-pad${i > 0 ? ' nos-stat-border' : ''}`} style={{
               padding: '40px 0 56px',
-              borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.08)' : undefined,
-              paddingLeft: i > 0 ? '40px' : undefined,
             }}>
               <div style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.05em', lineHeight: 1, marginBottom: '8px' }}>
                 {s.val}
@@ -174,9 +211,9 @@ export default function NosotrosPage() {
 
       {/* Qué hacemos */}
       <ScrollReveal>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '96px 48px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '80px', alignItems: 'start' }}>
-          <div>
+      <div className="nos-que-hacemos" style={{ maxWidth: '1100px', margin: '0 auto', padding: '96px 48px' }}>
+        <div className="nos-section-grid">
+          <div className="nos-section-label">
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#8B8B9A', letterSpacing: '0.1em' }}>
               QUÉ HACEMOS
             </span>
@@ -192,7 +229,7 @@ export default function NosotrosPage() {
             }}>
               Construimos el{' '}<span style={{ color: '#0A0A0F' }}>sistema operativo</span>{' '}de los{' '}<span style={{ color: '#0A0A0F' }}>eventos masivos</span>. Desde el momento en que el{' '}<span style={{ color: '#0A0A0F' }}>asistente</span>{' '}<span style={{ color: '#0A0A0F' }}>escanea el QR</span>{' '}hasta que{' '}<span style={{ color: '#0A0A0F' }}>retira su pedido</span>{' '}<span style={{ color: '#0A0A0F' }}>sin hacer fila</span>,{' '}<span style={{ color: '#0A0A0F' }}>Nubapay</span>{' '}<span style={{ color: '#0A0A0F' }}>conecta</span>{' '}<span style={{ color: '#0A0A0F' }}>cada parte de la operación</span>.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '32px' }}>
+            <div className="nos-cards-grid">
               {[
                 { title: 'Para asistentes', desc: 'Pedí, pagá y retirá desde el celular. Sin app, sin fila, sin efectivo.' },
                 { title: 'Para organizadores', desc: 'Panel de control con ventas, pedidos y rendimiento en tiempo real.' },
@@ -317,9 +354,9 @@ export default function NosotrosPage() {
 
       {/* Principios */}
       <ScrollReveal>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '96px 48px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '80px', alignItems: 'start' }}>
-          <div style={{ paddingTop: '32px' }}>
+      <div className="nos-principios" style={{ maxWidth: '1100px', margin: '0 auto', padding: '96px 48px' }}>
+        <div className="nos-principios-grid" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '80px', alignItems: 'start' }}>
+          <div style={{ paddingTop: '32px' }} className="nos-section-label">
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#8B8B9A', letterSpacing: '0.1em' }}>
               PRINCIPIOS
             </span>
@@ -333,7 +370,7 @@ export default function NosotrosPage() {
                 <div style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
                   {p.title}
                 </div>
-                <p style={{ fontSize: '15px', color: '#6B6B7A', lineHeight: 1.65, margin: 0 }}>
+                <p className="nos-principle-desc" style={{ fontSize: '15px', color: '#6B6B7A', lineHeight: 1.65, margin: 0 }}>
                   {p.desc}
                 </p>
               </div>
@@ -348,9 +385,9 @@ export default function NosotrosPage() {
 
       {/* Dónde operamos */}
       <ScrollReveal>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '80px 48px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '80px', alignItems: 'start' }}>
-          <div style={{ paddingTop: '4px' }}>
+      <div className="nos-donde" style={{ maxWidth: '1100px', margin: '0 auto', padding: '80px 48px' }}>
+        <div className="nos-donde-grid" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '80px', alignItems: 'start' }}>
+          <div style={{ paddingTop: '4px' }} className="nos-section-label">
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#8B8B9A', letterSpacing: '0.1em' }}>
               DÓNDE OPERAMOS
             </span>
@@ -372,8 +409,8 @@ export default function NosotrosPage() {
       </ScrollReveal>
 
       {/* CTA dark */}
-      <div style={{ padding: '48px 48px 64px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', background: '#0A0A0F', borderRadius: '28px', padding: '72px 64px' }}>
+      <div className="nos-cta-wrap" style={{ padding: '48px 48px 64px' }}>
+        <div className="nos-cta-inner" style={{ maxWidth: '1100px', margin: '0 auto', background: '#0A0A0F', borderRadius: '28px', padding: '72px 64px' }}>
 
           {/* Headline */}
           <h2 style={{
@@ -425,7 +462,7 @@ export default function NosotrosPage() {
           </div>
 
           {/* Divider + acción */}
-          <div style={{
+          <div className="nos-cta-bottom" style={{
             borderTop: '1px solid rgba(255,255,255,0.08)',
             paddingTop: '40px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap',
@@ -433,8 +470,8 @@ export default function NosotrosPage() {
             <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.65, margin: 0, maxWidth: '380px' }}>
               Web app sin descarga. Pedidos, pagos y retiros desde el celular.
             </p>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <Link href="/seguridad" style={{
+            <div className="nos-cta-buttons" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <Link href="/seguridad" className="nos-cta-btn" style={{
                 display: 'inline-flex', alignItems: 'center',
                 color: 'rgba(255,255,255,0.45)',
                 padding: '14px 24px', borderRadius: '100px',
@@ -444,7 +481,7 @@ export default function NosotrosPage() {
               }}>
                 Ver seguridad
               </Link>
-              <Link href="/" style={{
+              <Link href="/" className="nos-cta-btn" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                 background: '#C6FF00', color: '#0A0A0F',
                 padding: '14px 28px', borderRadius: '100px',

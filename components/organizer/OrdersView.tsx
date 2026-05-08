@@ -137,6 +137,36 @@ export function OrdersView({ eventId }: { eventId: string }) {
         .nb-order-row:hover { background: #FAFAFA !important; }
         .nb-search-input:focus { outline: none; border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
         .nb-select-opt:hover { background: #F5F5F7 !important; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+          .nb-orders-filters { flex-wrap: wrap; }
+          .nb-orders-search { flex: 1 1 100% !important; }
+          .nb-orders-cats { min-width: 0 !important; flex: 1 !important; }
+          .nb-orders-tabs button { padding: 7px 14px !important; }
+
+          .nb-orders-table-header { display: none !important; }
+
+          .nb-order-row {
+            grid-template-columns: 1fr auto auto !important;
+            grid-template-areas:
+              "num    status eye"
+              "items  items  items"
+              "cust   total  total" !important;
+            padding: 14px 16px !important;
+            gap: 6px 10px !important;
+          }
+          .nb-cell-num    { grid-area: num; }
+          .nb-cell-items  { grid-area: items; }
+          .nb-cell-cust   { grid-area: cust; font-size: 12px !important; color: #6B7280 !important; }
+          .nb-cell-total  { grid-area: total; text-align: right; }
+          .nb-cell-status { grid-area: status; align-self: center; }
+          .nb-cell-eye    { grid-area: eye; align-self: center; }
+        }
+
+        @media (max-width: 480px) {
+          .nb-orders-tabs button { padding: 7px 10px !important; font-size: 12px !important; }
+        }
       `}</style>
 
       <OrganizerToolHeading
@@ -174,9 +204,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
       />
 
       {/* Filters */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+      <div className="nb-orders-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div className="nb-orders-search" style={{ position: 'relative', flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
             style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9A9AA8', pointerEvents: 'none' }}>
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -200,7 +230,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
         {/* Category multi-select */}
         {categories.length > 0 && (
-          <div ref={catDropdownRef} style={{ position: 'relative', flexShrink: 0, minWidth: '160px' }}>
+          <div ref={catDropdownRef} className="nb-orders-cats" style={{ position: 'relative', flexShrink: 0, minWidth: '160px' }}>
             <button
               type="button"
               onClick={() => setCatDropdownOpen(o => !o)}
@@ -299,7 +329,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
 
         {/* Status tabs */}
-        <div style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px', flexShrink: 0 }}>
+        <div className="nb-orders-tabs" style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px', flexShrink: 0 }}>
           <span aria-hidden style={{
             position: 'absolute', top: '4px', bottom: '4px', left: '4px',
             width: 'calc(33.333% - 6px)',
@@ -359,7 +389,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           )}
 
           {/* Header row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 140px 110px 110px 36px', gap: '0', padding: '10px 16px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+          <div className="nb-orders-table-header" style={{ display: 'grid', gridTemplateColumns: '80px 1fr 140px 110px 110px 36px', gap: '0', padding: '10px 16px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}># Pedido</span>
             <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Productos</span>
             <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Cliente</span>
@@ -387,12 +417,12 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 }}
               >
                 {/* Order number */}
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
+                <span className="nb-cell-num" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
                   {order.orderNumber != null ? `#${order.orderNumber}` : '—'}
                 </span>
 
                 {/* Products summary */}
-                <div style={{ minWidth: 0 }}>
+                <div className="nb-cell-items" style={{ minWidth: 0 }}>
                   <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {order.items.map(i => `${i.name}${i.quantity > 1 ? ` ×${i.quantity}` : ''}`).join(', ')}
                   </p>
@@ -404,17 +434,17 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 </div>
 
                 {/* Customer */}
-                <span style={{ fontSize: '13px', color: order.customerName ? '#0A0A0F' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="nb-cell-cust" style={{ fontSize: '13px', color: order.customerName ? '#0A0A0F' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {order.customerName ?? '—'}
                 </span>
 
                 {/* Total */}
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
+                <span className="nb-cell-total" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
                   {formatPrice(order.total)}
                 </span>
 
                 {/* Status badge */}
-                <div>
+                <div className="nb-cell-status">
                   <span style={{
                     display: 'inline-flex', alignItems: 'center',
                     background: statusStyle.bg, color: statusStyle.color,
@@ -428,6 +458,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 {/* Eye button */}
                 <button
                   type="button"
+                  className="nb-cell-eye"
                   onClick={() => setDetailOrder(order)}
                   aria-label="Ver detalle"
                   style={{

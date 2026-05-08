@@ -422,6 +422,34 @@ export function PaymentsView({ eventId }: { eventId: string }) {
 
   return (
     <div className="max-w-6xl" style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+      <style>{`
+        @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 640px) {
+          .pay-table-wrap { overflow-x: visible !important; }
+          .pay-table { min-width: 0 !important; width: 100% !important; }
+          .pay-table thead { display: none; }
+          .pay-table tbody tr {
+            display: grid !important;
+            grid-template-areas:
+              "status  channel  amount"
+              "prov    orderid  date";
+            grid-template-columns: auto auto 1fr;
+            padding: 12px 16px;
+            gap: 4px 8px;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .pay-table tbody tr:last-child { border-bottom: none; }
+          .pay-table td { padding: 0 !important; display: flex; align-items: center; }
+          .pay-table td:nth-child(1) { grid-area: status; }
+          .pay-table td:nth-child(2) { grid-area: prov; font-size: 11px !important; color: #9A9AA8; }
+          .pay-table td:nth-child(3) { grid-area: channel; }
+          .pay-table td:nth-child(4) { grid-area: orderid; font-size: 11px !important; }
+          .pay-table td:nth-child(5) { grid-area: amount; justify-content: flex-end; }
+          .pay-table td:nth-child(6) { grid-area: date; justify-content: flex-end; }
+        }
+      `}</style>
+
       <OrganizerToolHeading
         title="Pagos"
         description="Registros de cobro asociados a pedidos del evento."
@@ -504,8 +532,8 @@ export function PaymentsView({ eventId }: { eventId: string }) {
             <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Probá con otros filtros.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
+          <div className="pay-table-wrap overflow-x-auto">
+            <table className="pay-table w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
                   <th className="px-4 py-3">Estado</th>

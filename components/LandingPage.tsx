@@ -183,6 +183,8 @@ const CSS = `
     .nb-blockchain-right { padding: 60px 48px !important; }
     .nb-stats-grid { grid-template-columns: repeat(2, 1fr) !important; padding: 48px 40px !important; }
     .nb-stats-item { padding: 24px 20px !important; }
+    .nb-faq-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+    .nb-faq-sticky { position: static !important; }
     .nb-cta-inner { padding: 80px 48px !important; }
     .nb-cta-buttons { flex-wrap: wrap !important; justify-content: center !important; }
     .nb-footer-top { grid-template-columns: 1fr 1fr !important; gap: 40px !important; }
@@ -209,10 +211,16 @@ const CSS = `
     .nb-cta-inner { padding: 56px 24px !important; }
     .nb-cta-buttons { flex-direction: column !important; width: 100% !important; }
     .nb-cta-btn { width: 100% !important; justify-content: center !important; }
+    .nb-hero-cta { flex-direction: column !important; width: 100% !important; }
+    .nb-hero-cta-btn { width: 100% !important; justify-content: center !important; padding-left: 24px !important; padding-right: 24px !important; }
+    .nb-faq-section { padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 80px !important; }
+    .nb-faq-grid { gap: 32px !important; }
+    .nb-faq-answer { padding-right: 0 !important; }
     .nb-footer { padding: 40px 20px 24px !important; }
     .nb-footer-top { grid-template-columns: 1fr !important; gap: 40px !important; }
     .nb-footer-links-grid { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
     .nb-footer-wordmark { font-size: clamp(56px, 18vw, 180px) !important; }
+    .nb-footer-verify { display: none !important; }
   }
 `
 
@@ -368,12 +376,12 @@ export function LandingPage() {
                 <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 8px 3px', borderRadius: '6px', display: 'inline-block', marginTop: '6px', fontWeight: 900, textTransform: 'uppercase' as const }}>Más ventas.</span>
               </p>
 
-              <div className="nb-cta" style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '16px 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              <div className="nb-cta nb-hero-cta" style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link href="/register" className="nb-hero-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '16px 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 700, letterSpacing: '-0.02em' }}>
                   Crear mi evento
                   <ArrowRight color="#0A0F00" />
                 </Link>
-                <a href="#como-funciona" className="nb-btn-fill" style={{ display: 'inline-flex', alignItems: 'center', color: S.muted, padding: '16px 24px', borderRadius: '100px', border: `1px solid rgba(0,0,0,0.14)`, textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+                <a href="#como-funciona" className="nb-btn-fill nb-hero-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', color: S.muted, padding: '16px 24px', borderRadius: '100px', border: `1px solid rgba(0,0,0,0.14)`, textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
                   Ver cómo funciona
                 </a>
               </div>
@@ -909,10 +917,10 @@ export function LandingPage() {
         </section>
 
         {/* ─── FAQ ─── */}
-        <section style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', alignItems: 'start' }}>
+        <section className="nb-faq-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+          <div className="nb-faq-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', alignItems: 'start' }}>
 
-            <div className="nb-reveal" style={{ position: 'sticky', top: '96px' }}>
+            <div className="nb-reveal nb-faq-sticky" style={{ position: 'sticky', top: '96px' }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>FAQ</p>
               <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
                 Preguntas<br />frecuentes.
@@ -964,7 +972,7 @@ export function LandingPage() {
                       overflow: 'hidden',
                       transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
                     }}>
-                      <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.75', margin: '0 0 22px 0', paddingRight: '44px' }}>{a}</p>
+                      <p className="nb-faq-answer" style={{ fontSize: '15px', color: S.muted, lineHeight: '1.75', margin: '0 0 22px 0', paddingRight: '44px' }}>{a}</p>
                     </div>
                   </div>
                 )
@@ -1085,6 +1093,7 @@ export function LandingPage() {
                 nubapay
               </div>
               <svg
+                className="nb-footer-verify"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="rgba(255,255,255,0.1)"

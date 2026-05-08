@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 
 export default function SeguridadPage() {
   const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
-  /** QR minimal: poco dato + EC baja + módulos tipo dot (QuickChart). */
   const demoQrUrl =
     'https://quickchart.io/qr?' +
     new URLSearchParams({
@@ -31,19 +30,110 @@ export default function SeguridadPage() {
         .sec-card:hover { border-color: rgba(0,0,0,0.14); }
         .sec-pill { display: inline-flex; align-items: center; gap: 6px; background: #F0F0F2; border-radius: 100px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: #6B6B7A; }
         .sec-check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #4A4A5A; line-height: 1.6; }
+
+        /* Hero */
+        .sec-hero { background: #0A0A0F; padding: 100px 32px 96px; text-align: center; }
+
+        /* Stats */
+        .sec-stats-grid {
+          max-width: 1100px; margin: 0 auto; padding: 0 32px;
+          display: grid; grid-template-columns: repeat(4, 1fr);
+        }
+        .sec-stat-item { padding: 28px 32px 28px 0; border-right: 1px solid rgba(0,0,0,0.07); }
+        .sec-stat-item:first-child { padding-left: 0; }
+        .sec-stat-item:last-child { border-right: none; padding-right: 0; }
+
+        /* Main container */
+        .sec-main { max-width: 1100px; margin: 0 auto; padding: 72px 32px 120px; }
+
+        /* Featured QR */
+        .sec-featured {
+          background: #0A0A0F; border-radius: 28px; padding: 56px;
+          margin-bottom: 24px;
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 48px; align-items: center;
+        }
+        .sec-featured-qr { display: flex; align-items: center; justify-content: center; }
+
+        /* Grids */
+        .sec-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+        .sec-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 64px; }
+
+        /* Flow */
+        .sec-flow-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; position: relative; }
+        .sec-flow-line {
+          position: absolute; top: 22px; left: 10%; right: 10%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #E5E5EA 15%, #E5E5EA 85%, transparent);
+          z-index: 0;
+        }
+
+        /* CTA */
+        .sec-cta {
+          background: #0A0A0F; border-radius: 28px; padding: 56px;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 32px; flex-wrap: wrap;
+        }
+
+        /* Footer */
+        .sec-footer {
+          border-top: 1px solid rgba(0,0,0,0.06); padding: 28px 32px;
+          display: flex; align-items: center; justify-content: space-between;
+          max-width: 1100px; margin: 0 auto;
+          flex-wrap: wrap; gap: 12px;
+        }
+
+        /* ── Tablet (≤ 1024px) ── */
+        @media (max-width: 1024px) {
+          .sec-grid-3 { grid-template-columns: repeat(2, 1fr); }
+          .sec-flow-grid { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+          .sec-flow-line { display: none; }
+        }
+
+        /* ── Mobile grande (≤ 768px) ── */
+        @media (max-width: 768px) {
+          .sec-hero { padding: 80px 24px 72px; }
+
+          .sec-stats-grid { grid-template-columns: repeat(2, 1fr); padding: 0 24px; }
+          .sec-stat-item { padding: 20px 16px 20px 0; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.07); }
+          .sec-stat-item:nth-child(odd) { border-right: 1px solid rgba(0,0,0,0.07); }
+          .sec-stat-item:nth-last-child(-n+2) { border-bottom: none; }
+          .sec-stat-item:last-child { padding-right: 0; }
+
+          .sec-main { padding: 48px 24px 80px; }
+
+          .sec-featured { grid-template-columns: 1fr; padding: 40px 28px; gap: 36px; }
+          .sec-featured-qr { order: -1; }
+
+          .sec-grid-3 { grid-template-columns: 1fr; }
+          .sec-grid-2 { grid-template-columns: 1fr; margin-bottom: 48px; }
+
+          .sec-flow-grid { grid-template-columns: repeat(2, 1fr); gap: 28px; }
+
+          .sec-cta { padding: 40px 28px; flex-direction: column; align-items: flex-start; }
+
+          .sec-footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
+        }
+
+        /* ── Mobile pequeño (≤ 480px) ── */
+        @media (max-width: 480px) {
+          .sec-hero { padding: 64px 20px 56px; }
+          .sec-stats-grid { grid-template-columns: 1fr 1fr; padding: 0 20px; }
+          .sec-main { padding: 40px 20px 64px; }
+          .sec-featured { padding: 32px 20px; }
+          .sec-cta { padding: 32px 20px; }
+          .sec-flow-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
+          .sec-footer { padding: 20px; }
+        }
       `}</style>
 
       <SiteNavbar activePath="/seguridad" />
 
       {/* Hero */}
-      <div style={{
-        background: '#0A0A0F',
-        padding: '100px 32px 96px',
-        textAlign: 'center',
-      }}>
+      <div className="sec-hero">
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <h1 style={{
-            fontSize: 'clamp(40px, 6vw, 72px)',
+            fontSize: 'clamp(36px, 6vw, 72px)',
             fontWeight: 800,
             color: '#FFFFFF',
             letterSpacing: '-0.04em',
@@ -52,35 +142,22 @@ export default function SeguridadPage() {
           }}>
             Tu evento, protegido<br />de punta a punta
           </h1>
-          <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, margin: 0 }}>
+          <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, margin: 0 }}>
             Cada pedido, pago y retiro en Nubapay pasa por múltiples capas de verificación. Sin atajos, sin trucos. Así funciona.
           </p>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div style={{
-        borderBottom: '1px solid rgba(0,0,0,0.07)',
-        background: '#FFFFFF',
-      }}>
-        <div style={{
-          maxWidth: '1100px', margin: '0 auto',
-          padding: '0 32px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-        }}>
+      <div style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', background: '#FFFFFF' }}>
+        <div className="sec-stats-grid">
           {[
             { value: '0%', label: 'QRs duplicados procesados' },
             { value: '256-bit', label: 'Cifrado en tránsito (TLS)' },
             { value: 'Blockchain', label: 'Certificación de retiros' },
             { value: '24/7', label: 'Monitoreo del sistema' },
           ].map((stat, i) => (
-            <div key={i} style={{
-              padding: '28px 0',
-              borderRight: i < 3 ? '1px solid rgba(0,0,0,0.07)' : 'none',
-              paddingLeft: i > 0 ? '32px' : '0',
-              paddingRight: i < 3 ? '32px' : '0',
-            }}>
+            <div key={i} className="sec-stat-item">
               <p style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.04em' }}>
                 {stat.value}
               </p>
@@ -92,25 +169,16 @@ export default function SeguridadPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 32px 120px' }}>
+      <div className="sec-main">
 
         {/* QR antifraude — featured */}
-        <div style={{
-          background: '#0A0A0F',
-          borderRadius: '28px',
-          padding: '56px',
-          marginBottom: '24px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '48px',
-          alignItems: 'center',
-        }}>
+        <div className="sec-featured">
           <div>
             <div className="sec-pill" style={{ background: 'rgba(198,255,0,0.12)', color: '#C6FF00', marginBottom: '20px' }}>
               QR Antifraude
             </div>
             <h2 style={{
-              fontSize: 'clamp(28px, 3.5vw, 42px)',
+              fontSize: 'clamp(24px, 3.5vw, 42px)',
               fontWeight: 800, color: '#FFFFFF',
               letterSpacing: '-0.04em', lineHeight: 1.1,
               margin: '0 0 16px',
@@ -138,10 +206,8 @@ export default function SeguridadPage() {
             </div>
           </div>
 
-          {/* QR visual — módulos blancos, fondo transparente (PNG RGBA) */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          {/* QR visual */}
+          <div className="sec-featured-qr">
             <div style={{
               borderRadius: '24px',
               padding: '28px 32px 32px',
@@ -183,7 +249,7 @@ export default function SeguridadPage() {
         </div>
 
         {/* Grid de 3 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
+        <div className="sec-grid-3">
 
           {/* Blockchain */}
           <div className="sec-card">
@@ -281,7 +347,7 @@ export default function SeguridadPage() {
         </div>
 
         {/* Grid de 2 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '64px' }}>
+        <div className="sec-grid-2">
 
           {/* Detección de fraude */}
           <div className="sec-card">
@@ -361,7 +427,7 @@ export default function SeguridadPage() {
         {/* Cómo funciona el flujo */}
         <div style={{ marginBottom: '64px' }}>
           <h2 style={{
-            fontSize: 'clamp(24px, 3vw, 36px)',
+            fontSize: 'clamp(22px, 3vw, 36px)',
             fontWeight: 800, color: '#0A0A0F',
             letterSpacing: '-0.04em', lineHeight: 1.1,
             margin: '0 0 8px',
@@ -372,15 +438,8 @@ export default function SeguridadPage() {
             De la compra al retiro, cada paso está verificado.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0', position: 'relative' }}>
-            {/* Línea conectora */}
-            <div style={{
-              position: 'absolute',
-              top: '22px', left: '10%', right: '10%',
-              height: '1px',
-              background: 'linear-gradient(90deg, transparent, #E5E5EA 15%, #E5E5EA 85%, transparent)',
-              zIndex: 0,
-            }} />
+          <div className="sec-flow-grid">
+            <div className="sec-flow-line" />
 
             {[
               {
@@ -431,16 +490,10 @@ export default function SeguridadPage() {
         </div>
 
         {/* CTA final */}
-        <div style={{
-          background: '#0A0A0F',
-          borderRadius: '28px',
-          padding: '56px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: '32px', flexWrap: 'wrap',
-        }}>
+        <div className="sec-cta">
           <div>
             <h2 style={{
-              fontSize: 'clamp(22px, 3vw, 32px)',
+              fontSize: 'clamp(20px, 3vw, 32px)',
               fontWeight: 800, color: '#FFFFFF',
               letterSpacing: '-0.04em', margin: '0 0 10px',
             }}>
@@ -476,13 +529,7 @@ export default function SeguridadPage() {
       </div>
 
       {/* Footer */}
-      <div style={{
-        borderTop: '1px solid rgba(0,0,0,0.06)',
-        padding: '28px 32px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        maxWidth: '1100px', margin: '0 auto',
-        flexWrap: 'wrap', gap: '12px',
-      }}>
+      <div className="sec-footer">
         <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
           © 2025 Nubapay. Todos los derechos reservados.
         </span>

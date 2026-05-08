@@ -259,15 +259,50 @@ export default function TerminosPage() {
         .nb-sidebar-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; text-decoration: none; font-size: 12px; color: #6B6B7A; font-weight: 500; line-height: 1.35; transition: background 0.12s, color 0.12s; }
         .nb-sidebar-link:hover { background: #F0F0F2; color: #0A0A0F; }
         .nb-back-link:hover { background: #E8E8EA !important; }
+
+        .term-hero { max-width: 1100px; margin: 0 auto; padding: 72px 32px 56px; }
+        .term-divider { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+        .term-layout {
+          max-width: 1100px; margin: 0 auto;
+          padding: 48px 32px 120px;
+          display: grid;
+          grid-template-columns: 220px 1fr;
+          gap: 48px;
+          align-items: start;
+        }
+        .term-sidebar { display: block; }
+        .term-footer {
+          border-top: 1px solid rgba(0,0,0,0.06);
+          padding: 28px 32px;
+          display: flex; align-items: center; justify-content: space-between;
+          max-width: 1100px; margin: 0 auto;
+          flex-wrap: wrap; gap: 12px;
+        }
+
+        @media (max-width: 1024px) {
+          .term-layout { grid-template-columns: 180px 1fr; gap: 32px; }
+        }
+
+        @media (max-width: 768px) {
+          .term-hero { padding: 48px 24px 40px; }
+          .term-divider { padding: 0 24px; }
+          .term-layout { grid-template-columns: 1fr; padding: 32px 24px 80px; gap: 0; }
+          .term-sidebar { display: none; }
+          .term-footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
+        }
+
+        @media (max-width: 480px) {
+          .term-hero { padding: 40px 20px 32px; }
+          .term-divider { padding: 0 20px; }
+          .term-layout { padding: 28px 20px 64px; }
+          .term-footer { padding: 20px; }
+        }
       `}</style>
 
       <SiteNavbar />
 
       {/* Hero */}
-      <div style={{
-        maxWidth: '1100px', margin: '0 auto',
-        padding: '72px 32px 56px',
-      }}>
+      <div className="term-hero">
         <h1 style={{
           fontSize: 'clamp(40px, 6vw, 72px)',
           fontWeight: 800,
@@ -316,24 +351,15 @@ export default function TerminosPage() {
       </div>
 
       {/* Divider */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 32px' }}>
+      <div className="term-divider">
         <div style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
       </div>
 
       {/* Content */}
-      <div style={{
-        maxWidth: '1100px', margin: '0 auto',
-        padding: '48px 32px 120px',
-        display: 'grid',
-        gridTemplateColumns: '220px 1fr',
-        gap: '48px',
-        alignItems: 'start',
-      }}>
+      <div className="term-layout">
 
-        {/* Sidebar — hidden on narrow screens via CSS */}
-        <aside style={{
-          position: 'sticky', top: '84px',
-        }}>
+        {/* Sidebar */}
+        <aside className="term-sidebar" style={{ position: 'sticky', top: '84px' }}>
           <p style={{
             fontSize: '11px', fontWeight: 700, color: '#9A9AA8',
             letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -449,13 +475,7 @@ export default function TerminosPage() {
       </div>
 
       {/* Footer */}
-      <div style={{
-        borderTop: '1px solid rgba(0,0,0,0.06)',
-        padding: '28px 32px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        maxWidth: '1100px', margin: '0 auto',
-        flexWrap: 'wrap', gap: '12px',
-      }}>
+      <div className="term-footer">
         <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
           © 2025 Nubapay. Todos los derechos reservados.
         </span>
