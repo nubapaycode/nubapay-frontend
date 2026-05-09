@@ -26,6 +26,19 @@ export const catalogPaths = {
   },
 }
 
+export const partnerTenantPaths = {
+  tenant: () => apiUrl('/me/tenant'),
+  provision: () => apiUrl('/me/tenant/provision'),
+  domains: () => apiUrl('/me/tenant/domains'),
+  domain: (domainId: string) => apiUrl(`/me/tenant/domains/${encodeURIComponent(domainId)}`),
+  domainVerify: (domainId: string) =>
+    apiUrl(`/me/tenant/domains/${encodeURIComponent(domainId)}/verify`),
+}
+
+export const publicPaths = {
+  tenantByHost: () => apiUrl('/public/tenant-by-host'),
+}
+
 export const eventsPaths = {
   list: (opts?: { page?: number; page_size?: number }) => {
     const base = apiUrl('/events')

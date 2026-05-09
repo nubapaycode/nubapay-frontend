@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { QrCode, Users } from 'lucide-react'
+import { Palette, QrCode, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { OrganizerStaffTools } from '@/lib/authSession'
@@ -20,6 +20,8 @@ type NavItem = {
   tool?: ToolKey
   /** Solo visible para el dueño del evento (ej. equipo / staff). */
   ownerOnly?: boolean
+  /** Solo cuenta partner (menú marca blanca). */
+  partnerBrand?: boolean
 }
 
 function navItems(basePath: string): NavItem[] {
@@ -58,12 +60,6 @@ function navItems(basePath: string): NavItem[] {
         strokeLinejoin="round"
       />
       <circle cx="8" cy="5" r="1.25" fill="currentColor" />
-    </svg>
-  )
-  const storefrontIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d="M2 6l6-4 6 4v8H2V6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M6 14V9h4v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
   const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
@@ -117,6 +113,14 @@ function navItems(basePath: string): NavItem[] {
       tool: 'payments',
     },
     {
+      href: `${basePath}/brand`,
+      label: 'Marca y dominios',
+      icon: <Palette size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
+      showDesktop: true,
+      ownerOnly: true,
+      partnerBrand: true,
+    },
+    {
       href: `${basePath}/staff`,
       label: 'Equipo',
       icon: staffIcon,
@@ -137,6 +141,7 @@ type Props = {
   onLogout: () => void
   workspaceMembership: 'owner' | 'staff'
   tools: OrganizerStaffTools
+  showPartnerBrand?: boolean
 }
 
 export function EventOrganizerSidebar({
@@ -146,16 +151,18 @@ export function EventOrganizerSidebar({
   onLogout,
   workspaceMembership,
   tools,
+  showPartnerBrand = false,
 }: Props) {
   const allItems = useMemo(() => navItems(basePath), [basePath])
 
   const items = useMemo(() => {
     return allItems.filter(it => {
+      if (it.partnerBrand && !showPartnerBrand) return false
       if (it.ownerOnly) return workspaceMembership === 'owner'
       if (it.tool) return tools[it.tool]
       return false
     })
-  }, [allItems, tools, workspaceMembership])
+  }, [allItems, tools, workspaceMembership, showPartnerBrand])
 
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
   const mobileTabs = useMemo(
@@ -177,18 +184,24 @@ export function EventOrganizerSidebar({
   const [moreOpen, setMoreOpen] = useState(false)
 
   useEffect(() => {
-    setEmailLabel(getAuthUser()?.email ?? '')
+    const syncEmail = () => queueMicrotask(() => setEmailLabel(getAuthUser()?.email ?? ''))
+    syncEmail()
+    if (typeof window === 'undefined') return
+    window.addEventListener('nubapay-auth-change', syncEmail)
+    return () => window.removeEventListener('nubapay-auth-change', syncEmail)
   }, [])
 
   useEffect(() => {
-    const activeIndex = desktopItems.findIndex(item => isRouteActive(pathname, item.href))
-    if (activeIndex === -1) {
-      setPill(p => ({ ...p, ready: false }))
-      return
-    }
-    const el = itemRefs.current[activeIndex]
-    if (!el) return
-    setPill({ top: el.offsetTop, height: el.offsetHeight, ready: true })
+    queueMicrotask(() => {
+      const activeIndex = desktopItems.findIndex(item => isRouteActive(pathname, item.href))
+      if (activeIndex === -1) {
+        setPill(p => ({ ...p, ready: false }))
+        return
+      }
+      const el = itemRefs.current[activeIndex]
+      if (!el) return
+      setPill({ top: el.offsetTop, height: el.offsetHeight, ready: true })
+    })
   }, [pathname, desktopItems])
 
   useEffect(() => {

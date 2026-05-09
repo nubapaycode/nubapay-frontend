@@ -44,10 +44,15 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   }, [load])
 
   const hasCover = Boolean(event?.cover_image_url)
-  const publicOrigin = getPublicSiteOriginForUi()
+  const [browserOrigin, setBrowserOrigin] = useState<string | null>(null)
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setBrowserOrigin(window.location.origin))
+    return () => window.cancelAnimationFrame(id)
+  }, [])
+  const publicOriginUi = browserOrigin ?? getPublicSiteOriginForUi()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
   const publicUrl =
-    hasCover && publicOrigin && slugForUrl ? `${publicOrigin}${catalogPublicPath(slugForUrl)}` : ''
+    hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${catalogPublicPath(slugForUrl)}` : ''
 
   const handleSaveSlug = async () => {
     if (!hasCover) return

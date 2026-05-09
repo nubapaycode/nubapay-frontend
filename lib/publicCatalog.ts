@@ -1,8 +1,10 @@
 import { cache } from 'react'
 
 import { catalogPaths } from '@/lib/api'
+import { brandedRequestHeaders } from '@/lib/server/brandedRequestHeaders'
 import { resolveInternalFetchUrl } from '@/lib/server/resolveInternalFetchUrl'
 import type { Combo, Event, Product } from '@/types'
+import type { TenantThemePayload } from '@/lib/types/tenantTheme'
 
 export type StorefrontApiResponse = {
   event: {
@@ -15,6 +17,7 @@ export type StorefrontApiResponse = {
   }
   products: Product[]
   combos: Combo[]
+  theme?: TenantThemePayload
 }
 
 export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
@@ -34,7 +37,8 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
 export const fetchPublicStorefront = cache(async (slug: string): Promise<StorefrontApiResponse | null> => {
   let url = catalogPaths.storefrontBySlug(slug)
   url = await resolveInternalFetchUrl(url)
-  const res = await fetch(url, { cache: 'no-store' })
+  const extra = await brandedRequestHeaders()
+  const res = await fetch(url, { cache: 'no-store', headers: extra })
   if (!res.ok) return null
   return res.json() as Promise<StorefrontApiResponse>
 })

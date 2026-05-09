@@ -1,6 +1,7 @@
 'use client'
 
 import type { CartItem } from '@/types'
+import { BUYER_COLORS } from '@/lib/buyerUi'
 import { formatPrice } from '@/lib/utils'
 
 interface CartItemRowProps {
@@ -71,9 +72,9 @@ export function CartItemRow({ item, onUpdateQuantity }: CartItemRowProps) {
           style={{
             width: '30px', height: '30px', borderRadius: '50%',
             border: 'none',
-            background: '#C6FF00',
+            background: BUYER_COLORS.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: '16px', color: '#0A0F00',
+            cursor: 'pointer', fontSize: '16px', color: BUYER_COLORS.accentText,
             fontFamily: font, lineHeight: 1,
             transition: 'opacity 0.1s',
           }}

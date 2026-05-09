@@ -19,6 +19,13 @@ export type AuthUser = {
   name: string
   email: string
   role: string
+  partner?: boolean
+  tenant_id?: string
+  /** Subdominio del tenant (`platform` para la instancia compartida). */
+  tenant_subdomain?: string
+  /** True si el usuario sigue en el tenant plataforma (puede crear espacio dedicado desde Marca). */
+  on_platform_tenant?: boolean
+  tenant_partner_whitelabel_enabled?: boolean
   staff_memberships?: StaffMembership[]
 }
 const TOKEN_KEY = 'nubapay_token'

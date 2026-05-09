@@ -27,6 +27,8 @@ export function EventOrganizerShell({
   const [loading, setLoading] = useState(true)
   const [authNonce, setAuthNonce] = useState(0)
 
+  const [brandNavEligible, setBrandNavEligible] = useState(false)
+
   const loadEvent = useCallback(async () => {
     setLoading(true)
     try {
@@ -52,7 +54,10 @@ export function EventOrganizerShell({
   }, [eventId])
 
   useEffect(() => {
-    loadEvent()
+    const id = window.requestAnimationFrame(() => {
+      void loadEvent()
+    })
+    return () => window.cancelAnimationFrame(id)
   }, [loadEvent])
 
   useEffect(() => {
@@ -62,11 +67,32 @@ export function EventOrganizerShell({
     return () => window.removeEventListener('nubapay-auth-change', onAuth)
   }, [])
 
+  useEffect(() => {
+    const syncBrand = () =>
+      queueMicrotask(() => {
+        const u = getAuthUser()
+        if (!u || u.role === 'ORGANIZER_STAFF') {
+          setBrandNavEligible(false)
+          return
+        }
+        const subdomain = (u.tenant_subdomain ?? '').toLowerCase()
+        const onPlatform =
+          Boolean(u.on_platform_tenant) ||
+          subdomain === 'platform'
+        setBrandNavEligible(Boolean(u.partner) || onPlatform)
+      })
+    syncBrand()
+    if (typeof window === 'undefined') return
+    window.addEventListener('nubapay-auth-change', syncBrand)
+    return () => window.removeEventListener('nubapay-auth-change', syncBrand)
+  }, [])
+
   const tools = useMemo(() => {
     if (!eventMeta) {
       return workspaceToolsForEvent(undefined, eventId, getAuthUser()?.staff_memberships)
     }
     return workspaceToolsForEvent(eventMeta.membership, eventId, getAuthUser()?.staff_memberships)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- authNonce refleja `nubapay-auth-change` (staff memberships).
   }, [eventMeta, eventId, authNonce])
 
   /** Si el integrante abre una URL de herramienta que no le corresponde, mandarlo a la primera permitida. */
@@ -82,6 +108,13 @@ export function EventOrganizerShell({
     )
     const segment = pathname.slice(base.length + 1).split('/')[0] ?? 'all'
     if (segment === 'all') return
+
+    if (segment === 'brand') {
+      if (eventMeta.membership !== 'owner' || !brandNavEligible) {
+        router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+      }
+      return
+    }
 
     const segmentTool: Partial<Record<string, keyof OrganizerStaffTools>> = {
       dashboard: 'dashboard',
@@ -102,7 +135,16 @@ export function EventOrganizerShell({
     if (required && !toolsNow[required]) {
       router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
     }
-  }, [loading, eventMeta, notFound, eventId, pathname, authNonce, router])
+  }, [
+    loading,
+    eventMeta,
+    notFound,
+    eventId,
+    pathname,
+    authNonce,
+    router,
+    brandNavEligible,
+  ])
 
   useEffect(() => {
     if (!notFound) return
@@ -139,6 +181,7 @@ export function EventOrganizerShell({
           clearAuthSession()
           router.replace('/')
         }}
+        showPartnerBrand={brandNavEligible}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">{children}</div>

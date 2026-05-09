@@ -9,8 +9,8 @@ export const BUYER_COLORS = {
   border: 'rgba(0,0,0,0.07)',
   chipInactiveBg: '#FFFFFF',
   chipInactiveBorder: 'rgba(0,0,0,0.1)',
-  accent: '#C6FF00',
-  accentText: '#0A0F00',
+  accent: 'var(--buyer-accent, #C6FF00)',
+  accentText: 'var(--buyer-accent-text, #0A0F00)',
   subtleFill: '#F4F4F6',
   iconMuted: '#C4C4CF',
 } as const

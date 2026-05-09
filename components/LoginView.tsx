@@ -88,7 +88,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         error?: string
       }
       if (res.ok && body.token && body.user) {
-        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships })
+        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships ?? body.user.staff_memberships })
         return
       }
       setError(body.error ?? 'Credenciales incorrectas')
@@ -116,7 +116,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         error?: string
       }
       if (res.ok && body.token && body.user) {
-        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships })
+        finishAuth(body.token, { ...body.user, staff_memberships: body.staff_memberships ?? body.user.staff_memberships })
         return
       }
       setError(body.error ?? 'No se pudo crear la cuenta')

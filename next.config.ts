@@ -1,19 +1,9 @@
 import type { NextConfig } from "next";
 
-const backendOrigin =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://127.0.0.1:5001";
-
+/** Proxies Flask: `app/api/backend/[[...path]]/route.ts` reenvía el host público como `X-Branded-Host`. */
 const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/c/:slug", destination: "/catalogo/:slug", permanent: true }];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/backend/:path*",
-        destination: `${backendOrigin.replace(/\/$/, "")}/api/:path*`,
-      },
-    ];
   },
   images: {
     remotePatterns: [

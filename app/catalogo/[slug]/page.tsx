@@ -2,27 +2,35 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { CatalogView } from '@/components/buyer/CatalogView'
+import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
 import { pageMeta } from '@/lib/seo'
+import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
 type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const data = await fetchPublicStorefront(slug)
+  const [theme, data] = await Promise.all([fetchTenantThemeForRequest(), fetchPublicStorefront(slug)])
   if (!data) {
-    return pageMeta({
-      title: 'Catálogo',
-      description: 'Este enlace no está disponible.',
-    })
+    return augmentMetadataWithTenant(
+      pageMeta({
+        title: 'Catálogo',
+        description: 'Este enlace no está disponible.',
+      }),
+      theme,
+      'Catálogo',
+    )
   }
   const title = data.event.name
   const d = (data.event.description ?? '').trim()
   const description = d.length > 0 ? d.slice(0, 160) : `Menú y pedidos: ${data.event.name}`
   const base = pageMeta({ title, description })
   const cover = data.event.coverImageUrl
-  if (!cover) return base
-  return {
+  if (!cover) {
+    return augmentMetadataWithTenant(base, theme, title)
+  }
+  const enriched: Metadata = {
     ...base,
     openGraph: {
       ...base.openGraph,
@@ -33,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [cover],
     },
   }
+  return augmentMetadataWithTenant(enriched, theme, title)
 }
 
 /** Catálogo público por slug: portada + productos/combos activos (API). */

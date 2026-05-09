@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 
 import { buyerFlowPath } from '@/lib/buyerRoutes'
+import { BUYER_COLORS } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
 
@@ -95,7 +96,7 @@ export function CartView({ eventId, catalogSlug }: CartViewProps) {
         <span style={{
           marginLeft: 'auto',
           fontSize: '12px', fontWeight: 700,
-          background: '#C6FF00', color: '#0A0F00',
+          background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText,
           borderRadius: '100px', padding: '3px 10px',
         }}>
           {items.reduce((s, i) => s + i.quantity, 0)} items
@@ -133,7 +134,7 @@ export function CartView({ eventId, catalogSlug }: CartViewProps) {
             onClick={() => router.push(checkoutPath)}
             style={{
               width: '100%', borderRadius: '100px',
-              background: '#C6FF00', color: '#0A0F00',
+              background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText,
               border: 'none', padding: '16px',
               fontSize: '16px', fontWeight: 800,
               letterSpacing: '-0.02em',

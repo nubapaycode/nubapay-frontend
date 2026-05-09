@@ -28,4 +28,4 @@ export type LoginResponse = {
   error?: string
 }
 
-export { authPaths, catalogPaths, eventsPaths, systemPaths } from './api/paths'
+export { authPaths, catalogPaths, eventsPaths, partnerTenantPaths, publicPaths, systemPaths } from './api/paths'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { Spinner } from '@/components/ui/Spinner'
 import { authPaths } from '@/lib/api'
@@ -10,6 +10,7 @@ import { browserFetch } from '@/lib/browserFetch'
 
 export function OrganizerGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [state, setState] = useState<'loading' | 'ok'>('loading')
 
   useEffect(() => {
@@ -42,7 +43,8 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
         setState('ok')
       }
     })()
-  }, [router])
+    // Refresh session on each organizer navigation so sidebar (Marca/partner flags) stays in sync after provision or tab switch.
+  }, [router, pathname])
 
   if (state === 'loading') {
     return (

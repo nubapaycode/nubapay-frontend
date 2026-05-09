@@ -6,6 +6,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
 import { saveOrder } from '@/lib/hooks/useOrderStore'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
+import { BUYER_COLORS } from '@/lib/buyerUi'
 
 interface CheckoutViewProps {
   eventId: string
@@ -259,8 +260,8 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
             style={{
               width: '100%',
               borderRadius: '100px',
-              background: items.length === 0 ? '#E5E7EB' : '#C6FF00',
-              color: items.length === 0 ? '#9CA3AF' : '#0A0F00',
+              background: items.length === 0 ? '#E5E7EB' : BUYER_COLORS.accent,
+              color: items.length === 0 ? '#9CA3AF' : BUYER_COLORS.accentText,
               border: 'none',
               padding: '16px',
               fontSize: '16px',
