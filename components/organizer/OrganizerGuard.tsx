@@ -38,6 +38,14 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
             staff_memberships: body.staff_memberships ?? body.user.staff_memberships,
           })
         }
+        if (process.env.NEXT_PUBLIC_DEBUG_TENANT_THEME === '1' && typeof window !== 'undefined') {
+          console.warn('[nubapay organizer:client] después de GET /auth/me', {
+            pathname,
+            windowHost: window.location.host,
+            tenantSubdomain: body.user?.tenant_subdomain,
+            partner: body.user?.partner,
+          })
+        }
         setState('ok')
       } catch {
         setState('ok')

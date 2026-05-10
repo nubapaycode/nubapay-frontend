@@ -3,12 +3,17 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
+
 import { authPaths, eventsPaths } from '@/lib/api'
 import { authHeadersJson, type AuthUser, getAuthToken, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 import { FetchError } from '@/lib/fetcher'
 
 type Mode = 'login' | 'register'
+
+const ACCENT = 'var(--organizer-accent, #C6FF00)'
+const ACCENT_INK = 'var(--organizer-accent-ink, #0A0F00)'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -25,6 +30,25 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
+  const pubTheme = useOrganizerPublicTheme()
+  const whitelabel = !!(pubTheme && !pubTheme.inherit)
+  const resolvedSub =
+    typeof pubTheme?.resolved_subdomain === 'string' && pubTheme.resolved_subdomain.trim()
+      ? pubTheme.resolved_subdomain.trim()
+      : ''
+  const displayName =
+    whitelabel && pubTheme
+      ? typeof pubTheme.branding.displayName === 'string' && pubTheme.branding.displayName.trim()
+        ? pubTheme.branding.displayName.trim()
+        : ''
+      : ''
+  const logoUrl =
+    whitelabel && pubTheme
+      ? typeof pubTheme.branding.logoUrl === 'string' && pubTheme.branding.logoUrl.trim()
+        ? pubTheme.branding.logoUrl.trim()
+        : ''
+      : ''
+  const brandWord = displayName || resolvedSub || 'nubapay'
   const [mode] = useState<Mode>(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -165,15 +189,29 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
 
         {/* logo */}
         <div style={{ position: 'relative' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.03em' }}>nubapay</span>
-            <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>organizer</span>
-          </div>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              style={{ maxHeight: '44px', maxWidth: '220px', width: 'auto', objectFit: 'contain', display: 'block' }}
+            />
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.03em' }}>
+                {brandWord}
+              </span>
+              {!(whitelabel || resolvedSub) ? (
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  organizer
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* center copy */}
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(198,255,0,0.7)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '20px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: ACCENT, opacity: 0.75, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '20px' }}>
             Panel de organizador
           </div>
           <h2 style={{ fontSize: 'clamp(28px, 2.5vw, 40px)', fontWeight: 500, letterSpacing: '-0.04em', lineHeight: '1.05', color: '#FFFFFF', margin: '0 0 20px 0' }}>
@@ -188,7 +226,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         <div style={{ position: 'relative', display: 'flex', gap: '32px' }}>
           {[{ n: '+40%', label: 'más ventas' }, { n: '0 min', label: 'espera retiro' }, { n: '~1%', label: 'comisión' }].map(({ n, label }) => (
             <div key={label}>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#C6FF00', letterSpacing: '-0.05em', lineHeight: '1' }}>{n}</div>
+              <div style={{ fontSize: '20px', fontWeight: 900, color: ACCENT, letterSpacing: '-0.05em', lineHeight: '1' }}>{n}</div>
               <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>{label}</div>
             </div>
           ))}
@@ -243,7 +281,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
             <button
               type="submit" disabled={loading}
               style={{
-                width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00',
+                width: '100%', borderRadius: '100px', background: ACCENT, color: ACCENT_INK,
                 padding: '14px', fontSize: '15px', fontWeight: 700, border: 'none',
                 cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1,
                 marginTop: '4px', letterSpacing: '-0.01em', transition: 'opacity 0.15s',

@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { Palette, QrCode, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
+import { organizerAccentColorsFromTheme } from '@/lib/organizerAccentCss'
 
 type ToolKey = keyof OrganizerStaffTools
 
@@ -153,6 +155,19 @@ export function EventOrganizerSidebar({
   tools,
   showPartnerBrand = false,
 }: Props) {
+  const pubTheme = useOrganizerPublicTheme()
+  const { bg: ORG_ACC, fg: ORG_INK } = useMemo(() => organizerAccentColorsFromTheme(pubTheme), [pubTheme])
+  const tintedShell = pubTheme != null && pubTheme.inherit === false
+  const pubBranding = tintedShell ? pubTheme.branding : null
+  const brandLogo =
+    typeof pubBranding?.logoUrl === 'string' && pubBranding.logoUrl.trim() !== ''
+      ? pubBranding.logoUrl.trim()
+      : ''
+  const brandName =
+    typeof pubBranding?.displayName === 'string' && pubBranding.displayName.trim() !== ''
+      ? pubBranding.displayName.trim()
+      : ''
+
   const allItems = useMemo(() => navItems(basePath), [basePath])
 
   const items = useMemo(() => {
@@ -236,10 +251,23 @@ export function EventOrganizerSidebar({
     <>
       <aside className="hidden h-full min-h-0 w-[264px] shrink-0 flex-col overflow-hidden bg-gray-100 p-3 md:flex">
         <div className="px-3 pt-5 pb-4 mb-1">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-semibold text-gray-900 tracking-tight">nubapay</span>
-            <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
-          </div>
+          {brandLogo ? (
+            <div className="flex flex-col gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element -- URL remota de marca configurada */}
+              <img src={brandLogo} alt="" className="h-6 max-w-[136px] w-auto object-contain object-left" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Organizer</span>
+            </div>
+          ) : brandName ? (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-semibold text-gray-900 tracking-tight">{brandName}</span>
+              <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-semibold text-gray-900 tracking-tight">nubapay</span>
+              <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
+            </div>
+          )}
         </div>
 
         <nav ref={navRef} className="relative flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain pt-2">
@@ -251,20 +279,20 @@ export function EventOrganizerSidebar({
                 href={myEventsHref}
                 className="relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors z-10"
                 style={{
-                  background: myEventsActive ? '#C6FF00' : 'transparent',
-                  color: myEventsActive ? '#0A0F00' : '#6B7280',
+                  background: myEventsActive ? ORG_ACC : 'transparent',
+                  color: myEventsActive ? ORG_INK : '#6B7280',
                   fontWeight: myEventsActive ? 600 : 400,
                 }}
               >
-                <span className="shrink-0" style={{ color: myEventsActive ? '#0A0F00' : '#9CA3AF' }}>
+                <span className="shrink-0" style={{ color: myEventsActive ? ORG_INK : '#9CA3AF' }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
                     <rect x="1" y="3" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
                     <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </span>
                 <span className="shrink-0">Mis eventos</span>
-                <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.4)' : '#D1D5DB' }}>/</span>
-                <span className="font-semibold truncate" style={{ color: myEventsActive ? '#0A0F00' : '#111827' }}>{title}</span>
+                <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.35)' : '#D1D5DB' }}>/</span>
+                <span className="font-semibold truncate" style={{ color: myEventsActive ? ORG_INK : '#111827' }}>{title}</span>
               </Link>
             )
           })()}
@@ -274,7 +302,7 @@ export function EventOrganizerSidebar({
           <div
             className="absolute inset-x-0 rounded-full pointer-events-none"
             style={{
-              background: '#C6FF00',
+              background: ORG_ACC,
               top: pill.top,
               height: pill.height,
               opacity: pill.ready ? 1 : 0,
@@ -289,10 +317,13 @@ export function EventOrganizerSidebar({
                 <Link
                   href={item.href}
                   className={`relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm z-10 transition-colors ${
-                    active ? 'text-[#0A0F00] font-semibold' : 'text-gray-500 hover:text-gray-900'
+                    active ? 'font-semibold' : 'text-gray-500 hover:text-gray-900'
                   }`}
+                  style={active ? { color: ORG_INK } : undefined}
                 >
-                  <span className={active ? 'text-[#0A0F00]' : 'text-gray-400'}>{item.icon}</span>
+                  <span className={`shrink-0 ${active ? '' : 'text-gray-400'}`} style={active ? { color: ORG_INK } : undefined}>
+                    {item.icon}
+                  </span>
                   {item.label}
                 </Link>
               </div>
@@ -333,8 +364,11 @@ export function EventOrganizerSidebar({
             <Link
               href={tabLeft.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabLeft.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabLeft.href) ? 'font-semibold' : 'text-gray-400'
               }`}
+              style={
+                isRouteActive(pathname, tabLeft.href) ? { color: ORG_INK } : undefined
+              }
             >
               {tabLeft.icon}
               <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabLeft.label}</span>
@@ -344,8 +378,11 @@ export function EventOrganizerSidebar({
             <Link
               href={tabMid.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabMid.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabMid.href) ? 'font-semibold' : 'text-gray-400'
               }`}
+              style={
+                isRouteActive(pathname, tabMid.href) ? { color: ORG_INK } : undefined
+              }
             >
               {tabMid.icon}
               <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabMid.label}</span>
@@ -354,15 +391,31 @@ export function EventOrganizerSidebar({
 
           <div className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1">
             {fabItem && (
-              <Link href={fabItem.href} className="flex flex-col items-center gap-1 -mt-7 text-gray-900" aria-label={fabItem.label}>
+              <Link
+                href={fabItem.href}
+                className="flex flex-col items-center gap-1 -mt-7 transition-colors"
+                style={{ color: tintedShell ? ORG_INK : undefined }}
+                aria-label={fabItem.label}
+              >
                 <span
-                  className={`flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gray-900 text-white shadow-lg transition-transform active:scale-95 ${
-                    isRouteActive(pathname, fabItem.href) ? 'bg-gray-950' : ''
+                  className={`flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white shadow-lg transition-transform active:scale-95 ${
+                    tintedShell
+                      ? ''
+                      : `bg-gray-900 text-white ${isRouteActive(pathname, fabItem.href) ? 'bg-gray-950' : ''}`
                   }`}
+                  style={
+                    tintedShell
+                      ? {
+                          backgroundColor: ORG_ACC,
+                          color: ORG_INK,
+                          borderColor: '#fff',
+                        }
+                      : undefined
+                  }
                 >
                   {fabItem.icon}
                 </span>
-                <span className="text-[9px] font-semibold leading-none text-gray-900">{fabItem.label}</span>
+                <span className={`text-[9px] font-semibold leading-none ${tintedShell ? '' : 'text-gray-900'}`}>{fabItem.label}</span>
               </Link>
             )}
           </div>
@@ -371,8 +424,11 @@ export function EventOrganizerSidebar({
             <Link
               href={tabRight.href}
               className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabRight.href) ? 'text-gray-900' : 'text-gray-400'
+                isRouteActive(pathname, tabRight.href) ? 'font-semibold' : 'text-gray-400'
               }`}
+              style={
+                isRouteActive(pathname, tabRight.href) ? { color: ORG_INK } : undefined
+              }
             >
               {tabRight.icon}
               <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabRight.label}</span>
@@ -383,8 +439,11 @@ export function EventOrganizerSidebar({
             type="button"
             onClick={() => setMoreOpen(true)}
             className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-              moreOverflowActive ? 'text-gray-900' : 'text-gray-400'
+              moreOverflowActive ? 'font-semibold' : 'text-gray-400'
             }`}
+            style={
+              moreOverflowActive ? { color: ORG_INK } : undefined
+            }
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
             aria-label="Ver más herramientas"

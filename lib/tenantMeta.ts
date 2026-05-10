@@ -39,9 +39,21 @@ export function augmentMetadataWithTenant(meta: Metadata, theme: TenantThemePayl
       ? brand.primaryColor.trim()
       : null
 
+  const seoDesc =
+    typeof brand.seoDescription === 'string' && brand.seoDescription.trim()
+      ? brand.seoDescription.trim()
+      : undefined
+  const descriptionOut =
+    typeof seoDesc === 'string'
+      ? seoDesc
+      : typeof meta.description === 'string'
+        ? meta.description
+        : undefined
+
   const next: Metadata = {
     ...meta,
     title: titleOut,
+    ...(descriptionOut !== undefined ? { description: descriptionOut } : {}),
     applicationName: siteName ?? meta.applicationName,
     themeColor: primary ?? meta.themeColor,
   }
@@ -54,16 +66,17 @@ export function augmentMetadataWithTenant(meta: Metadata, theme: TenantThemePayl
     }
   }
 
-  if (siteName) {
-    next.openGraph = {
-      ...meta.openGraph,
-      siteName,
-      title: titleOut,
-    }
-    next.twitter = {
-      ...meta.twitter,
-      title: titleOut,
-    }
+  next.openGraph = {
+    ...(meta.openGraph ?? {}),
+    ...(siteName ? { siteName } : {}),
+    title: titleOut,
+    ...(descriptionOut !== undefined ? { description: descriptionOut } : {}),
+  }
+
+  next.twitter = {
+    ...(meta.twitter ?? {}),
+    title: titleOut,
+    ...(descriptionOut !== undefined ? { description: descriptionOut } : {}),
   }
 
   return next

@@ -1,7 +1,8 @@
 'use client'
 
 import { Palette } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
@@ -10,9 +11,19 @@ import { authPaths, partnerTenantPaths } from '@/lib/api'
 import type { AuthUser } from '@/lib/authSession'
 import { authHeadersJson, getAuthToken, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import {
+  approximateAccentBackgroundHex,
+  coerceBrandHex,
+  resolvedAccentContrastTextLive,
+  suggestedContrastOnAccentHex,
+  wcagContrastBetweenHex,
+} from '@/lib/accentContrastText'
+import { organizerAccentColorsFromDraft } from '@/lib/organizerAccentCss'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
+
+const textareaClass = `${inputClass} min-h-[88px] resize-y leading-relaxed`
 
 type TenantDomainRow = {
   id: string
@@ -39,6 +50,7 @@ function strField(v: unknown): string {
 }
 
 export function PartnerBrandView() {
+  const router = useRouter()
   const { show: toast, ToastPortal } = useToast()
   const [loading, setLoading] = useState(true)
   const [needsProvision, setNeedsProvision] = useState(false)
@@ -50,10 +62,12 @@ export function PartnerBrandView() {
 
   const [displayName, setDisplayName] = useState('')
   const [seoTitleSuffix, setSeoTitleSuffix] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
   const [primaryColor, setPrimaryColor] = useState('')
   const [secondaryColor, setSecondaryColor] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [faviconUrl, setFaviconUrl] = useState('')
+  const [accentContrastText, setAccentContrastText] = useState('')
 
   const [savingBrand, setSavingBrand] = useState(false)
 
@@ -87,11 +101,68 @@ export function PartnerBrandView() {
     const b = t.branding ?? {}
     setDisplayName(strField(b.displayName))
     setSeoTitleSuffix(strField(b.seoTitleSuffix))
+    setSeoDescription(strField(b.seoDescription))
     setPrimaryColor(strField(b.primaryColor))
     setSecondaryColor(strField(b.secondaryColor))
     setLogoUrl(strField(b.logoUrl))
     setFaviconUrl(strField(b.faviconUrl))
+    setAccentContrastText(strField(b.accentContrastText))
   }, [])
+
+  const primaryCanon = useMemo(() => coerceBrandHex(primaryColor) ?? '', [primaryColor])
+  const primaryBackdropLive = useMemo(
+    () => coerceBrandHex(primaryColor) ?? approximateAccentBackgroundHex(primaryColor) ?? '',
+    [primaryColor],
+  )
+
+  const accentAutoHex = useMemo(() => {
+    if (!primaryBackdropLive) return null
+    return suggestedContrastOnAccentHex(primaryBackdropLive)
+  }, [primaryBackdropLive])
+
+  const accentEffectiveHex = useMemo(() => {
+    return resolvedAccentContrastTextLive(primaryColor, accentContrastText)
+  }, [primaryColor, accentContrastText])
+
+  const accentManualLowContrast = useMemo(() => {
+    if (!primaryBackdropLive) return false
+    const manualCanon = coerceBrandHex(accentContrastText.trim())
+    if (!manualCanon) return false
+    const ratio = wcagContrastBetweenHex(manualCanon, primaryBackdropLive)
+    return ratio !== null && ratio < 3
+  }, [primaryBackdropLive, accentContrastText])
+
+  const brandAccentBtn = useMemo(
+    () => organizerAccentColorsFromDraft(primaryColor, accentContrastText),
+    [primaryColor, accentContrastText],
+  )
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEBUG_TENANT_THEME !== '1') return
+    const manualCanon = coerceBrandHex(accentContrastText.trim())
+    const ratio =
+      primaryBackdropLive.length > 0 && manualCanon
+        ? wcagContrastBetweenHex(manualCanon, primaryBackdropLive)
+        : null
+    console.warn('[nubapay organizer-accent] marca / formulario (botones borrador)', {
+      primaryInput: primaryColor,
+      accentContrastInput: accentContrastText,
+      primaryCoerced: primaryCanon || null,
+      primaryBackdropLive: primaryBackdropLive || null,
+      suggestedAuto: accentAutoHex,
+      effectivePreview: accentEffectiveHex,
+      buttonDraftSurface: brandAccentBtn,
+      manualContrastRatio: ratio,
+    })
+  }, [
+    primaryColor,
+    accentContrastText,
+    primaryCanon,
+    primaryBackdropLive,
+    accentAutoHex,
+    accentEffectiveHex,
+    brandAccentBtn,
+  ])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -162,6 +233,7 @@ export function PartnerBrandView() {
         setProvisionSubdomain('')
         await refreshAuthProfile()
         toast('Listo: ya tenés un espacio dedicado para tu marca y catálogo.', 'success')
+        router.refresh()
         return
       }
       toast('No se recibieron datos del servidor', 'error')
@@ -174,6 +246,7 @@ export function PartnerBrandView() {
 
   const handleSaveBranding = async () => {
     if (!tenant) return
+    const trimmedAccent = accentContrastText.trim()
     setSavingBrand(true)
     try {
       const res = await browserFetch(partnerTenantPaths.tenant(), {
@@ -183,10 +256,16 @@ export function PartnerBrandView() {
           branding: {
             displayName: displayName.trim() || null,
             seoTitleSuffix: seoTitleSuffix.trim() || null,
-            primaryColor: primaryColor.trim() || null,
-            secondaryColor: secondaryColor.trim() || null,
+            seoDescription: seoDescription.trim() || null,
+            primaryColor:
+              coerceBrandHex(primaryColor) ?? (primaryColor.trim().length ? primaryColor.trim() : null),
+            secondaryColor:
+              coerceBrandHex(secondaryColor) ??
+              (secondaryColor.trim().length ? secondaryColor.trim() : null),
             logoUrl: logoUrl.trim() || null,
             faviconUrl: faviconUrl.trim() || null,
+            accentContrastText:
+              trimmedAccent.length === 0 ? null : coerceBrandHex(trimmedAccent) ?? trimmedAccent,
           },
         }),
       })
@@ -196,6 +275,7 @@ export function PartnerBrandView() {
         return
       }
       applyTenant(body.tenant)
+      router.refresh()
       toast('Marca actualizada', 'success')
     } catch {
       toast('No se pudo contactar al servidor', 'error')
@@ -365,7 +445,8 @@ export function PartnerBrandView() {
             type="button"
             onClick={handleSaveBranding}
             disabled={savingBrand}
-            className="rounded-full px-5 py-2.5 text-sm font-semibold text-[#0A0F00] bg-[#C6FF00] hover:opacity-90 disabled:opacity-50 transition"
+            className="rounded-full px-5 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
+            style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
           >
             {savingBrand ? 'Guardando…' : 'Guardar marca'}
           </button>
@@ -397,6 +478,22 @@ export function PartnerBrandView() {
           <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} />
         </label>
 
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Descripción SEO (opcional)</span>
+          <textarea
+            className={`${textareaClass} mt-2`}
+            value={seoDescription}
+            onChange={e => {
+              setSeoDescription(e.target.value)
+            }}
+            rows={3}
+            placeholder="Breve texto para meta description del catálogo y del panel en tu dominio."
+          />
+          <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">
+            Si está vacío, el sitio arma una descripción por defecto según el nombre visible o subdominio.
+          </p>
+        </label>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Color principal (hex)</span>
@@ -418,6 +515,58 @@ export function PartnerBrandView() {
               placeholder="#000000"
             />
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">
+              Texto sobre el color principal
+            </span>
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              Vacío = automático (
+              {accentAutoHex ? (
+                <>
+                  sugerido <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">{accentAutoHex}</code>
+                </>
+              ) : (
+                'ingresá el color principal (con o sin #)'
+              )}
+              ). Con #hex válido distinto del principal siempre se usa tu color (vacío ⇒ automático). Ratio WCAG bajo también se aplica: acá sólo recomendamos legibilidad.
+            </p>
+          </div>
+          <label className="block">
+            <span className="text-[11px] font-medium text-gray-600 mb-1.5 block">Override manual (#hex)</span>
+            <input
+              type="text"
+              className={`${inputClass} font-mono`}
+              value={accentContrastText}
+              onChange={e => {
+                setAccentContrastText(e.target.value)
+              }}
+              placeholder="Vacío = automático"
+              autoComplete="off"
+            />
+          </label>
+          {accentManualLowContrast ? (
+            <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              Ese texto sobre el fondo principal tiene menos contraste habitual (menos de 3:1 según WCAG). Lo aplicamos si
+              lo querés como marca — revisá cómo se lee en vivo.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <span className="text-[11px] font-medium text-gray-500">
+              En uso: <code className="font-mono text-gray-800">{accentEffectiveHex}</code>
+            </span>
+            <span
+              className="inline-flex rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-black/5"
+              style={{
+                backgroundColor: primaryBackdropLive || '#e5e7eb',
+                color: accentEffectiveHex,
+              }}
+            >
+              Vista previa
+            </span>
+          </div>
         </div>
 
         <label className="block">
@@ -485,7 +634,8 @@ export function PartnerBrandView() {
                       type="button"
                       onClick={() => void handleVerifyDomain(d.id)}
                       disabled={verifyingId === d.id}
-                      className="rounded-full px-4 py-2 text-xs font-semibold bg-[#C6FF00] text-[#0A0F00] hover:opacity-90 disabled:opacity-50"
+                      className="rounded-full px-4 py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
                     >
                       {verifyingId === d.id ? '…' : 'Verificar'}
                     </button>

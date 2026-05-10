@@ -9,6 +9,8 @@ const defaultInherit: TenantThemePayload = {
   inherit: true,
   branding: null,
   subdomain: null,
+  dedicated_partner_host: false,
+  resolved_subdomain: null,
 }
 
 const tenantThemeVerbose =
@@ -50,6 +52,7 @@ export const fetchTenantThemeForRequest = cache(async (): Promise<TenantThemePay
       logTenantThemeServer('parsed', {
         inherit: (t as { inherit?: boolean }).inherit,
         subdomain: (t as { subdomain?: string | null }).subdomain ?? null,
+        dedicated_partner_host: (t as { dedicated_partner_host?: boolean }).dedicated_partner_host === true,
         primarySnippet:
           !(t as { inherit?: boolean }).inherit &&
           (t as { branding?: { primaryColor?: string } }).branding?.primaryColor,
@@ -69,13 +72,4 @@ export const fetchTenantThemeForRequest = cache(async (): Promise<TenantThemePay
   }
 })
 
-export function brandingAccentVars(theme: TenantThemePayload): Record<string, string> | undefined {
-  if (theme.inherit) return undefined
-  const b = theme.branding
-  const accent = typeof b.primaryColor === 'string' ? b.primaryColor.trim() : ''
-  if (!accent || !accent.startsWith('#')) return undefined
-  return {
-    '--buyer-accent': accent,
-    '--buyer-accent-text': '#0a0a0f',
-  }
-}
+export { brandingAccentVars, organizerBrandingAccentVars } from '@/lib/tenantThemeAccentVars'
