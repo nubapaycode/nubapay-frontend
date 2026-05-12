@@ -1,6 +1,7 @@
 'use client'
 
 import type { Order } from '@/types'
+import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import { formatPrice } from '@/lib/utils'
 
 interface OrderCardProps {
@@ -88,8 +89,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             style={{
               fontSize: '11px',
               fontWeight: 700,
-              background: '#C6FF00',
-              color: '#0A0F00',
+              ...organizerAccentFilledButtonStyle(),
               border: 'none',
               borderRadius: '100px',
               padding: '5px 12px',
@@ -110,8 +110,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             style={{
               fontSize: '11px',
               fontWeight: 700,
-              background: '#0A0A0F',
-              color: '#FFFFFF',
+              ...organizerAccentFilledButtonStyle(),
               border: 'none',
               borderRadius: '100px',
               padding: '5px 12px',

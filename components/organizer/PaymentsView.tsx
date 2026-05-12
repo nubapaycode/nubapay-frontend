@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
+import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { fetchWorkspacePayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 
@@ -96,10 +97,10 @@ function StatusDropdown({ value, onChange }: { value: string[]; onChange: (v: st
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           height: '38px', padding: '0 14px',
-          background: hasFilter ? '#C6FF00' : '#FAFAFA',
-          border: `1px solid ${hasFilter ? '#C6FF00' : 'rgba(0,0,0,0.08)'}`,
+          background: hasFilter ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
+          border: `1px solid ${hasFilter ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
           borderRadius: '12px', fontSize: '13px', fontWeight: hasFilter ? 600 : 400,
-          color: hasFilter ? '#0A0A0F' : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
+          color: hasFilter ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
           maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis',
           transition: 'all 0.15s',
         }}
@@ -148,12 +149,12 @@ function StatusDropdown({ value, onChange }: { value: string[]; onChange: (v: st
               >
                 <span style={{
                   width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
-                  border: `1.5px solid ${active ? '#C6FF00' : 'rgba(0,0,0,0.18)'}`,
-                  background: active ? '#C6FF00' : 'transparent',
+                  border: `1.5px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.18)'}`,
+                  background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.12s',
                 }}>
-                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
                 {opt.label}
               </button>
@@ -195,10 +196,10 @@ function ChannelDropdown({ value, onChange }: { value: string[]; onChange: (v: s
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           height: '38px', padding: '0 14px',
-          background: hasFilter ? '#C6FF00' : '#FAFAFA',
-          border: `1px solid ${hasFilter ? '#C6FF00' : 'rgba(0,0,0,0.08)'}`,
+          background: hasFilter ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
+          border: `1px solid ${hasFilter ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
           borderRadius: '12px', fontSize: '13px', fontWeight: hasFilter ? 600 : 400,
-          color: hasFilter ? '#0A0A0F' : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
+          color: hasFilter ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
           maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis',
           transition: 'all 0.15s',
         }}
@@ -246,12 +247,12 @@ function ChannelDropdown({ value, onChange }: { value: string[]; onChange: (v: s
               >
                 <span style={{
                   width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
-                  border: `1.5px solid ${active ? '#C6FF00' : 'rgba(0,0,0,0.18)'}`,
-                  background: active ? '#C6FF00' : 'transparent',
+                  border: `1.5px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.18)'}`,
+                  background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.12s',
                 }}>
-                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </span>
                 {ch.label}
               </button>
@@ -294,10 +295,10 @@ function SimpleSortDropdown({
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           height: '38px', padding: '0 14px',
-          background: active ? '#C6FF00' : '#FAFAFA',
-          border: `1px solid ${active ? '#C6FF00' : 'rgba(0,0,0,0.08)'}`,
+          background: active ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
+          border: `1px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
           borderRadius: '12px', fontSize: '13px', fontWeight: active ? 600 : 400,
-          color: active ? '#0A0A0F' : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
+          color: active ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
           transition: 'all 0.15s',
         }}
       >

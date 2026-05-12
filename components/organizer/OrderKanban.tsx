@@ -1,4 +1,5 @@
 import type { Order, OrderStatus } from '@/types'
+import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { OrderCard } from './OrderCard'
 
 interface Column {
@@ -11,7 +12,7 @@ interface Column {
 const COLUMNS: Column[] = [
   { key: 'pending',   label: 'Pendiente',     accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)'  },
   { key: 'preparing', label: 'En preparación', accent: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
-  { key: 'ready',     label: 'Listo',          accent: '#C6FF00', bg: 'rgba(198,255,0,0.1)'   },
+  { key: 'ready',     label: 'Listo',          accent: ORGANIZER_ACCENT_BACKGROUND, bg: `color-mix(in srgb, ${ORGANIZER_ACCENT_BACKGROUND} 12%, transparent)` },
   { key: 'delivered', label: 'Entregado',      accent: '#9A9AA8', bg: 'rgba(154,154,168,0.08)' },
 ]
 
@@ -54,8 +55,11 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
               <span style={{
                 fontSize: '11px',
                 fontWeight: 700,
-                color: col.accent === '#C6FF00' ? '#5A6000' : col.accent,
-                background: `${col.accent}22`,
+                color: col.key === 'ready' ? ORGANIZER_ACCENT_FOREGROUND : col.accent,
+                background:
+                  col.key === 'ready'
+                    ? `color-mix(in srgb, ${ORGANIZER_ACCENT_BACKGROUND} 18%, transparent)`
+                    : `${col.accent}22`,
                 borderRadius: '100px',
                 padding: '1px 7px',
                 minWidth: '20px',

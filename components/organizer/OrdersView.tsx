@@ -6,6 +6,7 @@ import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeadin
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
+import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { fetchAllCategories, fetchWorkspaceOrders } from '@/lib/organizerWorkspace'
 import type { PaginationMeta, WorkspaceCategory } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
@@ -290,16 +291,16 @@ export function OrdersView({ eventId }: { eventId: string }) {
                       className="nb-select-opt"
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
-                        background: active ? '#C6FF00' : 'transparent',
+                        background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                         border: 'none', borderRadius: '10px',
                         padding: '9px 12px', fontSize: '13px',
-                        color: '#0A0A0F', cursor: 'pointer', textAlign: 'left',
+                        color: active ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F', cursor: 'pointer', textAlign: 'left',
                       }}
                     >
                       <span>{cat.name}</span>
                       {active && (
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
-                          <path d="M2.5 6.5l3 3 5-5" stroke="#0A0A0F" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M2.5 6.5l3 3 5-5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
                     </button>

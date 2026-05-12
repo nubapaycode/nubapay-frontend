@@ -32,7 +32,7 @@ export type TenantThemePayload =
     } & TenantThemeExtra)
   | ({
       inherit: false
-      partner_whitelabel_enabled: true
+      partner_whitelabel_enabled: boolean
       subdomain: string
       branding: TenantBranding
     } & TenantThemeExtra)

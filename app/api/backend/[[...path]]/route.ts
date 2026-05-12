@@ -35,13 +35,13 @@ function buildOutboundHeaders(req: NextRequest): Headers {
   req.headers.forEach((value, key) => {
     const low = key.toLowerCase()
     if (low === 'host') return
+    // No confiar en `X-Branded-Host` entrante (spoof desde cliente); siempre lo resolvemos desde el host del request.
+    if (low === 'x-branded-host') return
     if (HOP_BYHOP_HEADERS.has(low)) return
     out.set(key, value)
   })
-  if (!out.has('X-Branded-Host')) {
-    const h = forwardedBrandHost(req)
-    if (h) out.set('X-Branded-Host', h)
-  }
+  const h = forwardedBrandHost(req)
+  if (h) out.set('X-Branded-Host', h)
   return out
 }
 

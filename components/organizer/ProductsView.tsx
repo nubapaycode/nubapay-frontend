@@ -32,6 +32,7 @@ import {
   uploadWorkspaceProductImage,
 } from '@/lib/supabase/uploadProductImage'
 import { formatPrice } from '@/lib/utils'
+import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND, organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 
 function ToggleSwitch({
   checked,
@@ -53,7 +54,7 @@ function ToggleSwitch({
       className={`w-10 h-5.5 rounded-full shrink-0 relative overflow-hidden transition-colors duration-200 ease-out ${
         disabled ? 'opacity-55 cursor-not-allowed' : ''
       }`}
-      style={{ width: '40px', height: '22px', background: checked ? '#C6FF00' : '#E5E7EB' }}
+      style={{ width: '40px', height: '22px', background: checked ? ORGANIZER_ACCENT_BACKGROUND : '#E5E7EB' }}
     >
       <span
         className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-md ring-1 ring-black/10 ease-out ${
@@ -180,20 +181,20 @@ function NubaSelect({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '12px',
-                  background: selected ? '#C6FF00' : 'transparent',
+                  background: selected ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                   border: 'none',
                   borderRadius: '10px',
                   padding: '9px 12px',
                   fontSize: '13px',
                   fontWeight: selected ? 600 : 500,
-                  color: '#0A0A0F',
+                  color: selected ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F',
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.label}</span>
                 {selected && (
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" style={{ flexShrink: 0, color: '#0A0A0F' }}>
+                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" style={{ flexShrink: 0, color: ORGANIZER_ACCENT_FOREGROUND }}>
                     <path d="M1 5l3 3 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
@@ -1256,7 +1257,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px', fontSize: '12px', color: '#9A9AA8' }}>
                         <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(product.price)}</span>
                         {promotionsByProductId[product.id]?.is_active ? (
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#0A0F00', background: '#C6FF00', padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
                             Promo
                           </span>
                         ) : null}
@@ -1390,7 +1391,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
                           <span style={{ fontSize: '12px', fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(combo.price)}</span>
                           {promotionsByProductId[combo.id]?.is_active ? (
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#0A0F00', background: '#C6FF00', padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
                               Promo
                             </span>
                           ) : null}
@@ -1549,7 +1550,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleAddCategory}
                 disabled={!catName.trim()}
-                style={{ background: catName.trim() ? '#C6FF00' : '#F5F5F5', color: catName.trim() ? '#0A0F00' : '#C8C8D0', border: 'none', borderRadius: '12px', padding: '11px 18px', fontSize: '13px', fontWeight: 700, cursor: catName.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                style={{ ...(catName.trim() ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '12px', padding: '11px 18px', fontSize: '13px', fontWeight: 700, cursor: catName.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}
               >
                 Agregar
               </button>
@@ -1597,7 +1598,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           type="button"
                           onClick={() => void handleSaveCategory(c.id)}
                           disabled={savingCat || editingCatName.trim().length < 2}
-                          style={{ background: editingCatName.trim().length >= 2 ? '#C6FF00' : '#F5F5F5', color: editingCatName.trim().length >= 2 ? '#0A0F00' : '#C8C8D0', border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 700, cursor: editingCatName.trim().length >= 2 ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                          style={{ ...(editingCatName.trim().length >= 2 ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 700, cursor: editingCatName.trim().length >= 2 ? 'pointer' : 'not-allowed', flexShrink: 0 }}
                         >
                           {savingCat ? '…' : 'Guardar'}
                         </button>
@@ -1771,7 +1772,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleSaveProduct}
                 disabled={saving || imageUploading}
-                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear producto'}
               </button>
@@ -2029,7 +2030,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleSaveCombo}
                 disabled={saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))}
-                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: (saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: (saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear combo'}
               </button>
@@ -2169,7 +2170,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 disabled={promoSaving}
                 onClick={() => void savePromo()}
                 style={{
-                  width: '100%', borderRadius: '100px', border: 'none', background: '#C6FF00', color: '#0A0F00',
+                  width: '100%', borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(),
                   fontSize: '14px', fontWeight: 700, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1,
                 }}
               >
@@ -2191,7 +2192,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 disabled={promoSaving}
-                onClick={closePromoModal}
+                onClick={() => closePromoModal()}
                 style={{
                   width: '100%', borderRadius: '100px', border: 'none', background: '#F5F5F7', color: '#6B7280',
                   fontSize: '13px', fontWeight: 600, padding: '10px 16px', cursor: promoSaving ? 'not-allowed' : 'pointer',

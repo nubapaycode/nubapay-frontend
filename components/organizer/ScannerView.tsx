@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { QrCode } from 'lucide-react'
 
+import { AccentButton } from '@/components/organizer/AccentButton'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { getOrder } from '@/lib/hooks/useOrderStore'
 import { formatPrice } from '@/lib/utils'
@@ -145,12 +146,12 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             <p className="text-sm text-gray-400 mt-1">Activá la cámara para validar un pedido</p>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
+          <AccentButton
             onClick={startCamera}
-            className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3 hover:bg-gray-700 transition-colors"
+            className="w-full py-3 hover:opacity-90"
           >
             Activar cámara
-          </button>
+          </AccentButton>
         </div>
       )}
 
@@ -206,12 +207,12 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             )}
           </div>
 
-          <button
+          <AccentButton
             onClick={confirmDelivery}
-            className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3.5 hover:bg-gray-700 transition-colors"
+            className="w-full py-3.5 hover:opacity-90"
           >
             Confirmar entrega
-          </button>
+          </AccentButton>
           <button onClick={reset} className="w-full rounded-full border border-gray-200 text-sm font-medium text-gray-600 py-3 hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
@@ -226,9 +227,9 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             <p className="text-base font-medium text-gray-900">QR no válido</p>
             <p className="text-sm text-gray-400 mt-1">No se encontró ningún pedido asociado</p>
           </div>
-          <button onClick={reset} className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3 hover:bg-gray-700 transition-colors">
+          <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
             Intentar de nuevo
-          </button>
+          </AccentButton>
         </div>
       )}
 
@@ -240,9 +241,9 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             <p className="text-base font-medium text-gray-900">Entrega confirmada</p>
             <p className="text-sm text-gray-400 mt-1">El pedido fue marcado como entregado</p>
           </div>
-          <button onClick={reset} className="w-full rounded-full bg-gray-900 text-white text-sm font-medium py-3 hover:bg-gray-700 transition-colors">
+          <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
             Escanear otro
-          </button>
+          </AccentButton>
         </div>
       )}
     </div>

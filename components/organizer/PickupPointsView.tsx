@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
+import { ORGANIZER_ACCENT_BACKGROUND, organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import {
   createPickupPoint,
   deletePickupPoint,
@@ -30,7 +31,7 @@ function ToggleSwitch({ checked, disabled, onChange }: { checked: boolean; disab
       className={`rounded-full shrink-0 relative overflow-hidden transition-colors duration-200 ease-out ${
         disabled ? 'opacity-55 cursor-not-allowed' : ''
       }`}
-      style={{ width: '40px', height: '22px', background: checked ? '#C6FF00' : '#E5E7EB' }}
+      style={{ width: '40px', height: '22px', background: checked ? ORGANIZER_ACCENT_BACKGROUND : '#E5E7EB' }}
     >
       <span
         className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-md ring-1 ring-black/10 ease-out ${
@@ -365,7 +366,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
             <button
               type="button"
               onClick={openCreate}
-              style={{ background: '#C6FF00', color: '#0A0F00', border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+              style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
             >
               Crear punto
             </button>
@@ -633,7 +634,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={saving}
                 onClick={handleSave}
-                style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : drawerVisible === 'create' ? 'Crear punto' : 'Guardar cambios'}
               </button>

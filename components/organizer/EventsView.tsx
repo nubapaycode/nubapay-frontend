@@ -9,6 +9,7 @@ import { browserFetch } from '@/lib/browserFetch'
 import { firstAllowedWorkspaceSegment, workspaceToolsForEvent } from '@/lib/organizerStaffTools'
 import type { OrganizerEventRow } from '@/lib/types/organizer'
 import { formatDate } from '@/lib/utils'
+import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 
 import { OrganizerHubBar } from '@/components/organizer/OrganizerHubBar'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
@@ -190,7 +191,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            style={{ background: '#C6FF00', color: '#0A0F00', border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
           >
             Crear evento
           </button>
@@ -311,7 +312,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
               type="button"
               onClick={handleAdd}
               disabled={saving}
-              style={{ width: '100%', borderRadius: '100px', background: '#C6FF00', color: '#0A0F00', border: 'none', padding: '14px', fontSize: '15px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, marginTop: '4px', letterSpacing: '-0.01em' }}
+              style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '14px', fontSize: '15px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, marginTop: '4px', letterSpacing: '-0.01em' }}
             >
               {saving ? 'Guardando…' : 'Crear evento'}
             </button>

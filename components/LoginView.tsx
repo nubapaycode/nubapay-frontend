@@ -31,6 +31,7 @@ const inputStyle: React.CSSProperties = {
 export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
   const pubTheme = useOrganizerPublicTheme()
+  const tenantLogin = !!pubTheme?.dedicated_partner_host
   const whitelabel = !!(pubTheme && !pubTheme.inherit)
   const resolvedSub =
     typeof pubTheme?.resolved_subdomain === 'string' && pubTheme.resolved_subdomain.trim()
@@ -160,12 +161,230 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
     boxShadow: focused === id ? '0 0 0 3px rgba(0,0,0,0.06)' : 'none',
   })
 
+  const BrandLogo = ({ variant, align }: { variant: 'dark' | 'light'; align: 'center' | 'start' }) => {
+    const textColor = variant === 'dark' ? '#FFFFFF' : '#0A0A0F'
+    const badgeColor = variant === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(10,10,15,0.35)'
+    return (
+      <div
+        style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: align === 'center' ? 'center' : 'flex-start',
+        }}
+      >
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt=""
+            style={{
+              maxHeight: '44px',
+              maxWidth: '220px',
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: textColor, letterSpacing: '-0.03em' }}>
+              {brandWord}
+            </span>
+            {!(whitelabel || resolvedSub) ? (
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: badgeColor,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                organizer
+              </span>
+            ) : null}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (tenantLogin) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '56px 20px',
+          background: '#FFFFFF',
+          fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: '380px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '28px' }}>
+            <BrandLogo variant="light" align="center" />
+          </div>
+
+          <div style={{ marginBottom: '28px' }}>
+            <h1
+              style={{
+                fontSize: '26px',
+                fontWeight: 600,
+                letterSpacing: '-0.04em',
+                color: '#0A0A0F',
+                margin: '0 0 8px 0',
+              }}
+            >
+              {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            </h1>
+            <p style={{ fontSize: '14px', color: '#9A9AA8', margin: 0 }}>
+              {mode === 'login' ? 'Ingresá tus datos para continuar' : 'Registrate y empezá a crear eventos'}
+            </p>
+          </div>
+
+          <form
+            onSubmit={mode === 'login' ? handleLogin : handleRegister}
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}
+          >
+            {mode === 'register' && (
+              <input
+                type="text"
+                value={name}
+                onChange={e => {
+                  setName(e.target.value)
+                  setError('')
+                }}
+                onFocus={() => setFocused('name')}
+                onBlur={() => setFocused(null)}
+                placeholder="Nombre completo"
+                autoComplete="name"
+                style={inp('name')}
+                disabled={loading}
+              />
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={e => {
+                setEmail(e.target.value)
+                setError('')
+              }}
+              onFocus={() => setFocused('email')}
+              onBlur={() => setFocused(null)}
+              placeholder="Email"
+              autoComplete="email"
+              style={inp('email')}
+              disabled={loading}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={e => {
+                setPassword(e.target.value)
+                setError('')
+              }}
+              onFocus={() => setFocused('password')}
+              onBlur={() => setFocused(null)}
+              placeholder={mode === 'register' ? 'Contraseña (mín. 8 caracteres)' : 'Contraseña'}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              style={inp('password')}
+              disabled={loading}
+            />
+
+            {error && (
+              <div
+                style={{
+                  background: 'rgba(239,68,68,0.06)',
+                  border: '1px solid rgba(239,68,68,0.15)',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  color: '#DC2626',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                borderRadius: '100px',
+                background: ACCENT,
+                color: ACCENT_INK,
+                padding: '14px',
+                fontSize: '15px',
+                fontWeight: 700,
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                marginTop: '4px',
+                letterSpacing: '-0.01em',
+                transition: 'opacity 0.15s',
+              }}
+            >
+              {loading
+                ? mode === 'login'
+                  ? 'Ingresando…'
+                  : 'Creando cuenta…'
+                : mode === 'login'
+                  ? 'Ingresar'
+                  : 'Crear cuenta y entrar'}
+            </button>
+          </form>
+
+          <div
+            style={{
+              marginTop: '24px',
+              paddingTop: '18px',
+              borderTop: '1px solid rgba(0,0,0,0.07)',
+              textAlign: 'center',
+            }}
+          >
+            {mode === 'login' ? (
+              <button
+                type="button"
+                onClick={() => switchMode('register')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#9A9AA8',
+                }}
+              >
+                ¿No tenés cuenta? <span style={{ fontWeight: 600, color: '#0A0A0F' }}>Registrate</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#9A9AA8',
+                }}
+              >
+                ¿Ya tenés cuenta? <span style={{ fontWeight: 600, color: '#0A0A0F' }}>Iniciá sesión</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
       <style>{`
         .login-left {
           width: 42%; background: #0A0A0F; display: flex; flex-direction: column;
-          justify-content: space-between; padding: 48px 56px;
+          justify-content: center; padding: 48px 56px;
           position: relative; overflow: hidden;
         }
         .login-right {
@@ -188,25 +407,8 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.05) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
         {/* logo */}
-        <div style={{ position: 'relative' }}>
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt=""
-              style={{ maxHeight: '44px', maxWidth: '220px', width: 'auto', objectFit: 'contain', display: 'block' }}
-            />
-          ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.03em' }}>
-                {brandWord}
-              </span>
-              {!(whitelabel || resolvedSub) ? (
-                <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                  organizer
-                </span>
-              ) : null}
-            </div>
-          )}
+        <div style={{ position: 'absolute', top: '48px', left: '56px', right: '56px' }}>
+          <BrandLogo variant="dark" align="start" />
         </div>
 
         {/* center copy */}
@@ -220,16 +422,6 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.7', maxWidth: '300px' }}>
             Pedidos en tiempo real, menú digital, cobros sin fila y retiro con QR antifraude.
           </p>
-        </div>
-
-        {/* bottom stats */}
-        <div style={{ position: 'relative', display: 'flex', gap: '32px' }}>
-          {[{ n: '+40%', label: 'más ventas' }, { n: '0 min', label: 'espera retiro' }, { n: '~1%', label: 'comisión' }].map(({ n, label }) => (
-            <div key={label}>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: ACCENT, letterSpacing: '-0.05em', lineHeight: '1' }}>{n}</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>{label}</div>
-            </div>
-          ))}
         </div>
       </div>
 

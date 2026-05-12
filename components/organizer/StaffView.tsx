@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import type { OrganizerStaffTools } from '@/lib/authSession'
+import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { ORGANIZER_ZERO_TOOLS } from '@/lib/organizerStaffTools'
 import {
   deleteEventStaff,
@@ -167,16 +168,17 @@ function ToolToggle({
         'flex items-center gap-2.5 rounded-xl cursor-pointer select-none transition-all text-sm font-medium',
         compact ? 'px-2.5 py-2' : 'px-3 py-2.5',
         checked
-          ? 'bg-[#C6FF00] text-[#0A0F00] shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
+          ? 'shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
           : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800',
         disabled && 'opacity-40 cursor-not-allowed',
       )}
+      style={checked ? { backgroundColor: ORGANIZER_ACCENT_BACKGROUND, color: ORGANIZER_ACCENT_FOREGROUND } : undefined}
     >
       <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} disabled={disabled} />
       <span
         className={cn(
           'flex-shrink-0 flex items-center justify-center w-[18px] h-[18px] rounded transition-colors',
-          checked ? 'text-[#0A0F00]' : 'text-gray-400',
+          checked ? '' : 'text-gray-400',
         )}
       >
         <Icon size={compact ? 11 : 13} />
@@ -185,7 +187,7 @@ function ToolToggle({
       {checked && (
         <span className="ml-auto flex-shrink-0">
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4l3 3 5-6" stroke="#0A0F00" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1 4l3 3 5-6" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
       )}
@@ -637,13 +639,13 @@ function ToolFilterDropdown({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: isSelected ? '#C6FF00' : 'transparent',
+                  background: isSelected ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                   border: 'none',
                   borderRadius: '10px',
                   padding: '9px 12px',
                   fontSize: '13px',
                   fontWeight: isSelected ? 600 : 500,
-                  color: '#0A0A0F',
+                  color: isSelected ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F',
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
