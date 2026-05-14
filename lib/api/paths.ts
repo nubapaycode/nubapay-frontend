@@ -12,6 +12,8 @@ export const authPaths = {
   login: () => apiUrl('/auth/login'),
   register: () => apiUrl('/auth/register'),
   me: () => apiUrl('/auth/me'),
+  forgotPassword: () => apiUrl('/auth/forgot-password'),
+  resetPassword: () => apiUrl('/auth/reset-password'),
 }
 
 export const catalogPaths = {
@@ -23,6 +25,15 @@ export const catalogPaths = {
   storefrontBySlug: (slug: string) => {
     const s = encodeURIComponent(slug)
     return apiUrl(`/catalog/storefront/${s}`)
+  },
+  /** Crea una orden pública (sin auth). POST con { customer_name, payment_method, items }. */
+  createOrder: (slug: string) => {
+    const s = encodeURIComponent(slug)
+    return apiUrl(`/catalog/storefront/${s}/orders`)
+  },
+  /** Consulta pública del estado de una orden por ID. */
+  orderStatus: (orderId: string) => {
+    return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}`)
   },
 }
 

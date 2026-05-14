@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
-import { saveOrder } from '@/lib/hooks/useOrderStore'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS } from '@/lib/buyerUi'
+import { catalogPaths } from '@/lib/api/paths'
 
 interface CheckoutViewProps {
   eventId: string
@@ -28,54 +28,113 @@ const paymentMethods = [
     ),
     color: '#009EE3',
   },
-  {
-    id: 'cash',
-    label: 'Efectivo',
-    sub: 'Pagás en el punto de retiro',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="11" cy="11" r="11" fill="#22C55E"/>
-        <rect x="5" y="8" width="12" height="7" rx="1.5" stroke="#fff" strokeWidth="1.5"/>
-        <circle cx="11" cy="11.5" r="1.5" stroke="#fff" strokeWidth="1.25"/>
-      </svg>
-    ),
-    color: '#22C55E',
-  },
-  {
-    id: 'transfer',
-    label: 'Transferencia',
-    sub: 'CVU / alias bancario',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="11" cy="11" r="11" fill="#8B5CF6"/>
-        <path d="M7 11h8M12 8.5l2.5 2.5-2.5 2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-    color: '#8B5CF6',
-  },
+  // {
+  //   id: 'cash',
+  //   label: 'Efectivo',
+  //   sub: 'Pagás en el punto de retiro',
+  //   icon: (
+  //     <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+  //       <circle cx="11" cy="11" r="11" fill="#22C55E"/>
+  //       <rect x="5" y="8" width="12" height="7" rx="1.5" stroke="#fff" strokeWidth="1.5"/>
+  //       <circle cx="11" cy="11.5" r="1.5" stroke="#fff" strokeWidth="1.25"/>
+  //     </svg>
+  //   ),
+  //   color: '#22C55E',
+  // },
+  // {
+  //   id: 'transfer',
+  //   label: 'Transferencia',
+  //   sub: 'CVU / alias bancario',
+  //   icon: (
+  //     <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+  //       <circle cx="11" cy="11" r="11" fill="#8B5CF6"/>
+  //       <path d="M7 11h8M12 8.5l2.5 2.5-2.5 2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  //     </svg>
+  //   ),
+  //   color: '#8B5CF6',
+  // },
 ]
 
 export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('mp')
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (name.trim() === '') { setError('Ingresá tu nombre para continuar'); return }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
-    const orderId = crypto.randomUUID()
-    saveOrder({ orderId, items, total, paymentMethod, createdAt: new Date().toISOString() })
-    clearCart()
-    router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${orderId}` }))
+    if (items.length === 0) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const slug = catalogSlug ?? eventId
+      const res = await fetch(catalogPaths.createOrder(slug), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Branded-Host': window.location.host,
+        },
+        body: JSON.stringify({
+          customer_name: name.trim(),
+          payment_method: paymentMethod,
+          items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
+        }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setError(body.error ?? 'Error al crear la orden. Intentá de nuevo.')
+        return
+      }
+
+      const data = await res.json()
+      clearCart()
+
+      if (paymentMethod === 'mp' && data.checkout_url) {
+        window.location.href = data.checkout_url
+      } else {
+        router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
+      }
+    } catch {
+      setError('Error de conexión. Verificá tu internet e intentá de nuevo.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: '#F7F7FA', fontFamily: font }}>
+
+      {/* Loader overlay */}
+      {loading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(247,247,250,0.92)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '16px',
+        }}>
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '50%',
+            border: '3px solid #E5E7EB',
+            borderTopColor: '#0A0A0F',
+            animation: 'spin 0.75s linear infinite',
+          }} />
+          <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0 }}>
+            Procesando tu pedido...
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
 
       {/* Top bar */}
       <div style={{
@@ -256,25 +315,25 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
         <div style={{ marginTop: 'auto', paddingBottom: '8px' }}>
           <button
             onClick={handleConfirm}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || loading}
             style={{
               width: '100%',
               borderRadius: '100px',
-              background: items.length === 0 ? '#E5E7EB' : BUYER_COLORS.accent,
-              color: items.length === 0 ? '#9CA3AF' : BUYER_COLORS.accentText,
+              background: items.length === 0 || loading ? '#E5E7EB' : BUYER_COLORS.accent,
+              color: items.length === 0 || loading ? '#9CA3AF' : BUYER_COLORS.accentText,
               border: 'none',
               padding: '16px',
               fontSize: '16px',
               fontWeight: 800,
               letterSpacing: '-0.02em',
-              cursor: items.length === 0 ? 'not-allowed' : 'pointer',
+              cursor: items.length === 0 || loading ? 'not-allowed' : 'pointer',
               transition: 'opacity 0.15s',
               fontFamily: font,
             }}
-            onMouseEnter={e => { if (items.length > 0) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseEnter={e => { if (items.length > 0 && !loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
           >
-            {items.length > 0 ? `Pagar ${formatPrice(total)}` : 'Carrito vacío'}
+            {loading ? 'Procesando...' : items.length > 0 ? `Pagar ${formatPrice(total)}` : 'Carrito vacío'}
           </button>
         </div>
 

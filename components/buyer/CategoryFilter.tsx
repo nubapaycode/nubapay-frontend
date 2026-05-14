@@ -19,16 +19,11 @@ export function CategoryFilter({ categories, active, onChange }: CategoryFilterP
           key={category}
           type="button"
           onClick={() => onChange(category)}
-          className={cn(
-            'flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors md:px-5',
-            active === category
-              ? 'text-[#0A0F00]'
-              : 'border bg-white text-[#0A0A0F]',
-          )}
+          className="flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors md:px-5"
           style={
             active === category
-              ? { background: BUYER_COLORS.accent, border: 'none' }
-              : { borderColor: BUYER_COLORS.chipInactiveBorder, background: BUYER_COLORS.chipInactiveBg }
+              ? { background: BUYER_COLORS.accent, border: 'none', color: BUYER_COLORS.accentText }
+              : { borderColor: BUYER_COLORS.chipInactiveBorder, background: BUYER_COLORS.chipInactiveBg, border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`, color: BUYER_COLORS.text }
           }
         >
           {category === 'all' ? 'Todos' : category === 'combos' ? 'Combos' : category}

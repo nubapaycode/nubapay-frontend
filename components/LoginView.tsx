@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -292,6 +293,17 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
               disabled={loading}
             />
 
+            {mode === 'login' && (
+              <div style={{ textAlign: 'right', marginTop: '-4px' }}>
+                <Link
+                  href="/forgot-password"
+                  style={{ fontSize: '13px', color: '#9A9AA8', textDecoration: 'none' }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+            )}
+
             {error && (
               <div
                 style={{
@@ -463,6 +475,14 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               style={inp('password')} disabled={loading}
             />
+
+            {mode === 'login' && (
+              <div style={{ textAlign: 'right', marginTop: '-4px' }}>
+                <Link href="/forgot-password" style={{ fontSize: '13px', color: '#9A9AA8', textDecoration: 'none' }}>
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+            )}
 
             {error && (
               <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>

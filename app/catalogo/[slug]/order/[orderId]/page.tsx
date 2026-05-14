@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { OrderTracker } from '@/components/buyer/OrderTracker'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
@@ -32,7 +33,9 @@ export default async function CatalogoOrderPage({ params }: Props) {
   if (!data) notFound()
   return (
     <main className="min-h-screen bg-white">
-      <OrderTracker orderId={orderId} eventId={data.event.id} catalogSlug={slug} />
+      <Suspense>
+        <OrderTracker orderId={orderId} eventId={data.event.id} catalogSlug={slug} />
+      </Suspense>
     </main>
   )
 }
