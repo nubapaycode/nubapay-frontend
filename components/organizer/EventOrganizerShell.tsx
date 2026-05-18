@@ -75,11 +75,7 @@ export function EventOrganizerShell({
           setBrandNavEligible(false)
           return
         }
-        const subdomain = (u.tenant_subdomain ?? '').toLowerCase()
-        const onPlatform =
-          Boolean(u.on_platform_tenant) ||
-          subdomain === 'platform'
-        setBrandNavEligible(Boolean(u.partner) || onPlatform)
+        setBrandNavEligible(Boolean(u.partner))
       })
     syncBrand()
     if (typeof window === 'undefined') return
