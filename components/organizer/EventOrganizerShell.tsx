@@ -126,7 +126,10 @@ export function EventOrganizerShell({
       payments: 'payments',
     }
 
-    if (segment === 'staff' && eventMeta.membership === 'staff') {
+    if (
+      (segment === 'staff' || segment === 'config') &&
+      eventMeta.membership === 'staff'
+    ) {
       router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
       return
     }

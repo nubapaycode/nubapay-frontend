@@ -16,6 +16,8 @@ export type OrganizerEventRow = {
 /** Respuesta de `GET /api/events/:id` (misma forma que un item de lista). */
 export type OrganizerEventDetail = OrganizerEventRow & {
   user_id: string
+  /** true si el evento tiene un token de MP propio configurado. El valor nunca se devuelve. */
+  has_mp_token: boolean
   created_at: string | null
   updated_at: string | null
   membership?: 'owner' | 'staff'

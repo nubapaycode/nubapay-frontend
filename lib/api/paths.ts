@@ -14,6 +14,7 @@ export const authPaths = {
   me: () => apiUrl('/auth/me'),
   forgotPassword: () => apiUrl('/auth/forgot-password'),
   resetPassword: () => apiUrl('/auth/reset-password'),
+  completeOnboarding: () => apiUrl('/auth/complete-onboarding'),
 }
 
 export const catalogPaths = {

@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
+import { Download } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { catalogPaths } from '@/lib/api/paths'
-import type { OrderStatus } from '@/types'
 
 interface OrderTrackerProps {
   orderId: string
@@ -26,42 +26,15 @@ interface OrderData {
   created_at: string
 }
 
-const steps: { key: OrderStatus; label: string; description: string }[] = [
-  { key: 'pending', label: 'Recibido', description: 'Tu pedido fue registrado' },
-  { key: 'preparing', label: 'En preparación', description: 'Estamos preparando tu pedido' },
-  { key: 'ready', label: 'Listo para retirar', description: 'Acercate al mostrador' },
-  { key: 'delivered', label: 'Entregado', description: '¡Que lo disfrutes!' },
-]
-
-const statusOrder: OrderStatus[] = ['pending', 'preparing', 'ready', 'delivered']
-
 const paymentLabels: Record<string, string> = {
   mp: 'Mercado Pago',
   cash: 'Efectivo',
   transfer: 'Transferencia',
 }
 
-function normalizeStatus(raw: string): OrderStatus {
-  if (statusOrder.includes(raw as OrderStatus)) return raw as OrderStatus
-  // pending_payment se muestra como "pending" (esperando confirmación)
-  return 'pending'
-}
-
-function getStepState(
-  stepKey: OrderStatus,
-  currentStatus: OrderStatus,
-): 'completed' | 'active' | 'pending' {
-  const stepIdx = statusOrder.indexOf(stepKey)
-  const currentIdx = statusOrder.indexOf(currentStatus)
-  if (stepIdx < currentIdx) return 'completed'
-  if (stepIdx === currentIdx) return 'active'
-  return 'pending'
-}
-
 const POLL_INTERVAL = 6000
 
-export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProps) {
-  const router = useRouter()
+export function OrderTracker({ orderId }: OrderTrackerProps) {
   const searchParams = useSearchParams()
   const paymentResult = searchParams.get('payment_result')
 
@@ -78,13 +51,6 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
       const data: OrderData = await res.json()
       setOrder(data)
       setLoadError(false)
-
-      // Dejar de hacer polling si la orden ya está entregada o cancelada
-      const terminal = ['delivered', 'cancelled'].includes(data.status)
-      if (terminal && pollRef.current) {
-        clearInterval(pollRef.current)
-        pollRef.current = null
-      }
     } catch {
       setLoadError(true)
     }
@@ -99,10 +65,8 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
-  const status = order ? normalizeStatus(order.status) : 'pending'
+  const isPaid = order?.payment_status === 'approved'
   const isPendingPayment = order?.status === 'pending_payment'
-  const isPaid = order?.payment_status === 'paid'
-  const isMP = order?.payment_method === 'mp'
 
   const formattedDate = order?.created_at
     ? new Date(order.created_at).toLocaleString('es-AR', {
@@ -116,21 +80,34 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F7F7FA]">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #order-print-area, #order-print-area * { visibility: visible; }
+          #order-print-area {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; padding: 32px;
+            background: white;
+          }
+        }
+      `}</style>
+
       {/* Top bar */}
       <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[60px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
         <h1 className="text-[17px] font-bold absolute left-1/2 -translate-x-1/2 tracking-tight">
-          Detalle del pedido
+          Tu pedido
         </h1>
       </div>
 
       <div className="flex flex-col flex-1 p-4 gap-3 max-w-[480px] w-full mx-auto">
 
-        {/* Banner de resultado de pago MP */}
+        {/* Banners de resultado de pago MP */}
         {paymentResult === 'success' && (
           <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-3">
             <span className="text-green-600 text-xl">✓</span>
             <p className="text-sm font-semibold text-green-800">
-              ¡Pago aprobado! Tu pedido está siendo procesado.
+              ¡Pago aprobado! Tu pedido está confirmado.
             </p>
           </div>
         )}
@@ -149,8 +126,8 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
           </div>
         )}
 
-        {/* Alerta pago pendiente (MP no pagado) */}
-        {isPendingPayment && isMP && !isPaid && order?.checkout_url && (
+        {/* Alerta pago pendiente MP */}
+        {isPendingPayment && order?.checkout_url && (
           <div className="bg-[#009EE3]/8 border border-[#009EE3]/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
             <p className="text-sm font-semibold text-[#0077B6]">
               Tu pedido está reservado. Completá el pago para confirmarlo.
@@ -171,54 +148,34 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
           </div>
         )}
 
-        {/* Estado */}
-        {order && !isPendingPayment && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Estado</h2>
-            <div className="flex flex-col">
-              {steps.map((step, i) => {
-                const state = getStepState(step.key, status)
-                return (
-                  <div key={step.key} className="flex items-start gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                        state === 'completed' ? 'bg-gray-900 text-white'
-                        : state === 'active' ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-300'
-                      }`}>
-                        {state === 'completed' ? '✓' : i + 1}
-                      </div>
-                      {i < steps.length - 1 && (
-                        <div className={`w-px mt-1 mb-1 h-6 ${state === 'completed' ? 'bg-gray-900' : 'bg-gray-100'}`} />
-                      )}
-                    </div>
-                    <div className="pb-1">
-                      <p className={`text-sm font-semibold ${state === 'pending' ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {step.label}
-                      </p>
-                      {state === 'active' && (
-                        <p className="text-xs text-gray-400 mt-0.5">{step.description}</p>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+        {/* QR de retiro */}
+        {order && isPaid && (
+          <div id="order-print-area" className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-[15px] font-bold text-gray-900">Presentá este QR en la barra</span>
+              <span className="text-xs text-gray-400">El personal escaneará el código para entregar tu pedido</span>
             </div>
+            <div className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
+              <QRCodeSVG value={orderId} size={200} />
+            </div>
+            {order.order_number && (
+              <span className="text-xs text-gray-400 font-mono">Pedido #{order.order_number}</span>
+            )}
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              <Download size={14} />
+              Descargar PDF
+            </button>
           </div>
         )}
 
         {/* Skeleton mientras carga */}
         {!order && !loadError && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
-            <div className="h-3 w-24 bg-gray-100 rounded mb-4" />
-            <div className="flex flex-col gap-3">
-              {[1,2,3,4].map(n => (
-                <div key={n} className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-gray-100" />
-                  <div className="h-3 w-32 bg-gray-100 rounded" />
-                </div>
-              ))}
-            </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center gap-4 animate-pulse">
+            <div className="h-4 w-48 bg-gray-100 rounded" />
+            <div className="w-[200px] h-[200px] bg-gray-100 rounded-xl" />
           </div>
         )}
 
@@ -258,6 +215,12 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
                   <span className="font-mono font-semibold text-gray-900">#{order.order_number}</span>
                 </div>
               )}
+              {order.customer_name && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Cliente</span>
+                  <span className="font-medium text-gray-900">{order.customer_name}</span>
+                </div>
+              )}
               {formattedDate && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Fecha</span>
@@ -275,30 +238,18 @@ export function OrderTracker({ orderId, eventId, catalogSlug }: OrderTrackerProp
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Estado del pago</span>
                 <span className={`font-semibold ${
-                  order.payment_status === 'paid' ? 'text-green-600'
-                  : order.payment_status === 'failed' ? 'text-red-500'
+                  order.payment_status === 'approved' ? 'text-green-600'
+                  : order.payment_status === 'rejected' || order.payment_status === 'cancelled' ? 'text-red-500'
                   : 'text-yellow-600'
                 }`}>
-                  {order.payment_status === 'paid' ? 'Pagado'
-                   : order.payment_status === 'failed' ? 'Fallido'
+                  {order.payment_status === 'approved' ? 'Pagado'
+                   : order.payment_status === 'rejected' ? 'Rechazado'
+                   : order.payment_status === 'cancelled' ? 'Cancelado'
+                   : order.payment_status === 'refunded' ? 'Reintegrado'
                    : 'Pendiente'}
                 </span>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* CTA retiro */}
-        {status === 'ready' && (
-          <div className="mt-auto">
-            <button
-              onClick={() =>
-                router.push(buyerFlowPath(eventId, { catalogSlug, path: `qr/${orderId}` }))
-              }
-              className="w-full rounded-full bg-gray-900 text-white text-sm font-semibold py-4 hover:bg-gray-700 transition-colors"
-            >
-              Ver QR de retiro
-            </button>
           </div>
         )}
 

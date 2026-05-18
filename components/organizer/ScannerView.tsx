@@ -6,37 +6,63 @@ import { QrCode } from 'lucide-react'
 
 import { AccentButton } from '@/components/organizer/AccentButton'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
-import { getOrder } from '@/lib/hooks/useOrderStore'
+import { scanQr } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
+import type { Order } from '@/types'
 
-type ScanState = 'idle' | 'scanning' | 'found' | 'invalid' | 'delivered'
-
-interface ScannedOrder {
-  orderId: string
-  items: { productId: string; name: string; price: number; quantity: number }[]
-  total: number
-  paymentMethod: string
-}
+type ScanState = 'idle' | 'scanning' | 'loading' | 'ready' | 'error'
 
 const paymentLabels: Record<string, string> = {
   mp: 'Mercado Pago', cash: 'Efectivo', transfer: 'Transferencia',
 }
 
-export function ScannerView({ eventId: _eventId }: { eventId: string }) {
+export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const streamRef = useRef<MediaStream | null>(null)
 
   const [state, setState] = useState<ScanState>('idle')
-  const [scannedOrder, setScannedOrder] = useState<ScannedOrder | null>(null)
-  const [error, setError] = useState('')
+  const [order, setOrder] = useState<Order | null>(null)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [cameraError, setCameraError] = useState('')
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current)
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
   }, [])
+
+  const handleQrData = useCallback(async (data: string) => {
+    stopCamera()
+    setState('loading')
+
+    let orderId: string | null = null
+    try {
+      const url = new URL(data)
+      const parts = url.pathname.split('/')
+      const idx = parts.indexOf('order')
+      orderId = idx !== -1 ? parts[idx + 1] : null
+    } catch {
+      // not a URL — treat raw data as order id
+      orderId = data.trim()
+    }
+
+    if (!orderId) {
+      setErrorMsg('QR no reconocido')
+      setState('error')
+      return
+    }
+
+    const result = await scanQr(eventId, orderId)
+    if (result.ok) {
+      setOrder(result.order)
+      setState('ready')
+    } else {
+      setErrorMsg(result.error)
+      setState('error')
+    }
+  }, [eventId, stopCamera])
 
   const scan = useCallback(() => {
     const video = videoRef.current
@@ -54,35 +80,15 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
     const code = jsQR(imageData.data, imageData.width, imageData.height)
 
     if (code) {
-      try {
-        const url = new URL(code.data)
-        const parts = url.pathname.split('/')
-        const orderIdx = parts.indexOf('order')
-        const orderId = orderIdx !== -1 ? parts[orderIdx + 1] : null
-
-        if (!orderId) throw new Error('invalid')
-
-        const order = getOrder(orderId)
-        if (order) {
-          stopCamera()
-          setScannedOrder(order)
-          setState('found')
-        } else {
-          stopCamera()
-          setState('invalid')
-        }
-      } catch {
-        stopCamera()
-        setState('invalid')
-      }
+      handleQrData(code.data)
       return
     }
 
     rafRef.current = requestAnimationFrame(scan)
-  }, [stopCamera])
+  }, [handleQrData])
 
   const startCamera = useCallback(async () => {
-    setError('')
+    setCameraError('')
     setState('scanning')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -95,21 +101,18 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
         rafRef.current = requestAnimationFrame(scan)
       }
     } catch {
-      setError('No se pudo acceder a la cámara. Verificá los permisos.')
+      setCameraError('No se pudo acceder a la cámara. Verificá los permisos.')
       setState('idle')
     }
   }, [scan])
 
   const reset = useCallback(() => {
     stopCamera()
-    setScannedOrder(null)
-    setError('')
+    setOrder(null)
+    setErrorMsg('')
+    setCameraError('')
     setState('idle')
   }, [stopCamera])
-
-  const confirmDelivery = () => {
-    setState('delivered')
-  }
 
   useEffect(() => () => stopCamera(), [stopCamera])
 
@@ -145,11 +148,8 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             <p className="text-base font-medium text-gray-900">Escanear QR de retiro</p>
             <p className="text-sm text-gray-400 mt-1">Activá la cámara para validar un pedido</p>
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <AccentButton
-            onClick={startCamera}
-            className="w-full py-3 hover:opacity-90"
-          >
+          {cameraError && <p className="text-red-500 text-sm">{cameraError}</p>}
+          <AccentButton onClick={startCamera} className="w-full py-3 hover:opacity-90">
             Activar cámara
           </AccentButton>
         </div>
@@ -161,7 +161,6 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
           <div className="relative aspect-square w-full bg-black">
             <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
             <canvas ref={canvasRef} className="hidden" />
-            {/* Visor */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-48 h-48 relative">
                 <span className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-lg" />
@@ -177,16 +176,33 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
         </div>
       )}
 
-      {/* Found */}
-      {state === 'found' && scannedOrder && (
+      {/* Loading */}
+      {state === 'loading' && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-4 text-center">
+          <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+          <p className="text-sm text-gray-400">Verificando pedido…</p>
+        </div>
+      )}
+
+      {/* Ready — order marked as ready */}
+      {state === 'ready' && order && (
         <div className="flex flex-col gap-3">
-          <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Pedido encontrado</p>
+          <div className="bg-white rounded-2xl border border-green-100 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-sm">✓</div>
+              <div>
+                <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Listo para entregar</p>
+                {order.customerName && (
+                  <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
+                )}
+              </div>
+              {order.orderNumber && (
+                <span className="ml-auto text-xs font-mono text-gray-400">#{order.orderNumber}</span>
+              )}
             </div>
             <div className="flex flex-col gap-2 mb-4">
-              {scannedOrder.items.map(item => (
-                <div key={item.productId} className="flex items-center justify-between">
+              {order.items.map((item, i) => (
+                <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
                     <span className="text-sm text-gray-800">{item.name}</span>
@@ -197,52 +213,31 @@ export function ScannerView({ eventId: _eventId }: { eventId: string }) {
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
               <span className="text-sm text-gray-500">Total</span>
-              <span className="text-lg font-medium text-gray-900">{formatPrice(scannedOrder.total)}</span>
+              <span className="text-lg font-medium text-gray-900">{formatPrice(order.total)}</span>
             </div>
-            {scannedOrder.paymentMethod && (
+            {order.paymentMethod && (
               <div className="flex items-center justify-between mt-2">
                 <span className="text-sm text-gray-500">Pago</span>
-                <span className="text-sm font-medium text-gray-900">{paymentLabels[scannedOrder.paymentMethod] ?? scannedOrder.paymentMethod}</span>
+                <span className="text-sm font-medium text-gray-900">{paymentLabels[order.paymentMethod] ?? order.paymentMethod}</span>
               </div>
             )}
           </div>
-
-          <AccentButton
-            onClick={confirmDelivery}
-            className="w-full py-3.5 hover:opacity-90"
-          >
-            Confirmar entrega
+          <AccentButton onClick={reset} className="w-full py-3.5 hover:opacity-90">
+            Escanear otro
           </AccentButton>
-          <button onClick={reset} className="w-full rounded-full border border-gray-200 text-sm font-medium text-gray-600 py-3 hover:bg-gray-50 transition-colors">
-            Cancelar
-          </button>
         </div>
       )}
 
-      {/* Invalid */}
-      {state === 'invalid' && (
+      {/* Error */}
+      {state === 'error' && (
         <div className="bg-white rounded-2xl border border-red-100 p-8 flex flex-col items-center gap-4 text-center">
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 text-xl">✕</div>
           <div>
             <p className="text-base font-medium text-gray-900">QR no válido</p>
-            <p className="text-sm text-gray-400 mt-1">No se encontró ningún pedido asociado</p>
+            <p className="text-sm text-gray-400 mt-1">{errorMsg}</p>
           </div>
           <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
             Intentar de nuevo
-          </AccentButton>
-        </div>
-      )}
-
-      {/* Delivered */}
-      {state === 'delivered' && (
-        <div className="bg-white rounded-2xl border border-green-100 p-8 flex flex-col items-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">✓</div>
-          <div>
-            <p className="text-base font-medium text-gray-900">Entrega confirmada</p>
-            <p className="text-sm text-gray-400 mt-1">El pedido fue marcado como entregado</p>
-          </div>
-          <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
-            Escanear otro
           </AccentButton>
         </div>
       )}

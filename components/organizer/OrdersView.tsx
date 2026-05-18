@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
@@ -51,7 +52,6 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [error, setError] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [searchQ, setSearchQ] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const [detailOrder, setDetailOrder] = useState<Order | null>(null)
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
@@ -65,7 +65,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
     return () => window.clearTimeout(t)
   }, [searchInput])
 
-  useEffect(() => { setPage(1) }, [searchQ, statusFilter])
+  useEffect(() => { setPage(1) }, [searchQ])
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -74,26 +74,20 @@ export function OrdersView({ eventId }: { eventId: string }) {
     const res = await fetchWorkspaceOrders(eventId, {
       page,
       pageSize: PAGE_SIZE,
-      paymentStatus: 'paid',
-      status: statusFilter === 'delivered' ? 'delivered' : undefined,
+      paymentStatus: 'approved',
       q: searchQ || undefined,
     })
     if (!res.ok) {
       setError(res.error)
       if (!silent) setOrders([])
     } else {
-      const filtered = statusFilter === 'paid'
-        ? res.orders.filter(o => o.status !== 'delivered')
-        : statusFilter === 'delivered'
-        ? res.orders.filter(o => o.status === 'delivered')
-        : res.orders
-      setOrders(filtered)
+      setOrders(res.orders)
       setPagination(res.pagination)
       setLastRefresh(new Date())
     }
     setLoading(false)
     setRefreshing(false)
-  }, [eventId, page, searchQ, statusFilter])
+  }, [eventId, page, searchQ])
 
   useEffect(() => { void load() }, [load])
 
@@ -121,13 +115,6 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const displayOrders = selectedCats.size === 0
     ? orders
     : orders.filter(o => o.items.some(i => i.categoryName && selectedCats.has(i.categoryName)))
-
-  const statusTabs = [
-    { key: 'all',       label: 'Todos' },
-    { key: 'paid',      label: 'Pagados' },
-    { key: 'delivered', label: 'Entregados' },
-  ]
-  const activeTabIdx = statusTabs.findIndex(t => t.key === statusFilter)
 
   return (
     <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
@@ -195,10 +182,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
               opacity: refreshing ? 0.6 : 1,
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"
-              style={{ animation: refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }}>
-              <path d="M11 6.5A4.5 4.5 0 116.5 2M6.5 2L9 4.5M6.5 2L4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <RefreshCw size={13} style={{ animation: refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
             Actualizar
           </button>
         }
@@ -329,34 +313,6 @@ export function OrdersView({ eventId }: { eventId: string }) {
         )}
 
 
-        {/* Status tabs */}
-        <div className="nb-orders-tabs" style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px', flexShrink: 0 }}>
-          <span aria-hidden style={{
-            position: 'absolute', top: '4px', bottom: '4px', left: '4px',
-            width: 'calc(33.333% - 6px)',
-            background: '#FFFFFF', borderRadius: '100px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-            transform: statusFilter === 'paid' ? 'translateX(calc(100% + 4px))' : statusFilter === 'delivered' ? 'translateX(calc(200% + 8px))' : 'translateX(0)',
-            transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
-          }} />
-          {statusTabs.map(tab => (
-            <button key={tab.key} type="button"
-              onClick={() => setStatusFilter(tab.key)}
-              style={{
-                position: 'relative', zIndex: 1,
-                background: 'transparent', border: 'none', borderRadius: '100px',
-                padding: '7px 22px',
-                fontSize: '13px', fontWeight: 600,
-                color: statusFilter === tab.key ? '#0A0A0F' : '#9A9AA8',
-                cursor: 'pointer', whiteSpace: 'nowrap',
-                letterSpacing: '-0.01em',
-                transition: 'color 0.2s ease',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {error && (
@@ -380,7 +336,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           </div>
           <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin pedidos</p>
           <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            {searchQ || statusFilter !== 'all' ? 'Probá otra búsqueda o quitá filtros.' : 'Los pedidos pagados aparecerán acá.'}
+            {searchQ || selectedCats.size > 0 ? 'Probá otra búsqueda o quitá filtros.' : 'Los pedidos pagados aparecerán acá.'}
           </p>
         </div>
       ) : (

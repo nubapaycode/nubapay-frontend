@@ -154,6 +154,20 @@ export async function patchOrderStatus(
   return { ok: true, order: body.order }
 }
 
+export async function scanQr(
+  eventId: string,
+  orderId: string,
+): Promise<{ ok: true; order: Order } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'scan-qr'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ order_id: orderId }),
+  })
+  const body = (await res.json()) as { order?: Order; error?: string }
+  if (!res.ok || !body.order) return { ok: false, error: body.error ?? 'Error al escanear' }
+  return { ok: true, order: body.order }
+}
+
 export async function fetchCategories(
   eventId: string,
   opts?: { page?: number; pageSize?: number },

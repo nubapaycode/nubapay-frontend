@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Palette, QrCode, Users } from 'lucide-react'
+import { Palette, QrCode, Settings, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
@@ -24,6 +24,8 @@ type NavItem = {
   ownerOnly?: boolean
   /** Solo cuenta partner (menú marca blanca). */
   partnerBrand?: boolean
+  /** data-tour attribute for guided onboarding. */
+  tourId?: string
 }
 
 function navItems(basePath: string): NavItem[] {
@@ -83,6 +85,7 @@ function navItems(basePath: string): NavItem[] {
       showDesktop: true,
       mobileTabOrder: 1,
       tool: 'products',
+      tourId: 'sidebar-catalog',
     },
     {
       href: `${basePath}/scanner`,
@@ -91,6 +94,7 @@ function navItems(basePath: string): NavItem[] {
       showDesktop: true,
       mobileFab: true,
       tool: 'scanner',
+      tourId: 'sidebar-scanner',
     },
     {
       href: `${basePath}/orders`,
@@ -99,6 +103,7 @@ function navItems(basePath: string): NavItem[] {
       showDesktop: true,
       mobileTabOrder: 2,
       tool: 'orders',
+      tourId: 'sidebar-orders',
     },
     {
       href: `${basePath}/pickup-points`,
@@ -128,6 +133,14 @@ function navItems(basePath: string): NavItem[] {
       icon: staffIcon,
       showDesktop: true,
       ownerOnly: true,
+    },
+    {
+      href: `${basePath}/config`,
+      label: 'Configuración',
+      icon: <Settings size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
+      showDesktop: true,
+      ownerOnly: true,
+      tourId: 'sidebar-config',
     },
   ]
 }
@@ -316,6 +329,7 @@ export function EventOrganizerSidebar({
               <div key={item.href} ref={el => { itemRefs.current[i] = el }}>
                 <Link
                   href={item.href}
+                  data-tour={item.tourId}
                   className={`relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm z-10 transition-colors ${
                     active ? 'font-semibold' : 'text-gray-500 hover:text-gray-900'
                   }`}
@@ -393,6 +407,7 @@ export function EventOrganizerSidebar({
             {fabItem && (
               <Link
                 href={fabItem.href}
+                data-tour={fabItem.tourId}
                 className="flex flex-col items-center gap-1 -mt-7 transition-colors"
                 style={{ color: tintedShell ? ORG_INK : undefined }}
                 aria-label={fabItem.label}

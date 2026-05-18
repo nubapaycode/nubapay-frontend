@@ -150,6 +150,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
           canCreateEvents ? (
           <button
             type="button"
+            data-tour="new-event-btn"
             onClick={() => setDrawerOpen(true)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#0A0A0F', color: '#FFFFFF', border: 'none', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
           >
@@ -202,7 +203,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
           {events.length === 0 ? (
             <p style={{ fontSize: '14px', color: '#9A9AA8', padding: '24px 0' }}>No hay eventos en esta página.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div data-tour="events-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {events.map(event => {
                 const status = event.status || 'draft'
                 const sc = STATUS_COLOR[status] ?? STATUS_COLOR.draft

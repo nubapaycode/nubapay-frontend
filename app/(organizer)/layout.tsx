@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { OrganizerGuard } from '@/components/organizer/OrganizerGuard'
 import { OrganizerThemeBridge } from '@/components/organizer/OrganizerThemeBridge'
+import { OrganizerTourRoot } from '@/components/organizer/OrganizerTourRoot'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { logOrganizerSsrContext } from '@/lib/server/logOrganizerRequestContext'
 import { ORGANIZER_ROBOTS, SITE_NAME, pageMeta } from '@/lib/seo'
@@ -58,7 +59,9 @@ export default async function OrganizerLayout({ children }: { children: React.Re
 
   return (
     <OrganizerGuard>
-      <OrganizerThemeBridge theme={theme}>{children}</OrganizerThemeBridge>
+      <OrganizerThemeBridge theme={theme}>
+        <OrganizerTourRoot>{children}</OrganizerTourRoot>
+      </OrganizerThemeBridge>
     </OrganizerGuard>
   )
 }

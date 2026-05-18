@@ -25,6 +25,8 @@ export async function patchOrganizerEvent(
     ends_at: string | null
     status: string
     is_active: boolean
+    /** String para guardar el token; null o "" para eliminarlo. */
+    mp_access_token: string | null
   }>,
 ): Promise<{ ok: true; event: OrganizerEventDetail } | { ok: false; error: string }> {
   const res = await browserFetch(eventsPaths.detail(eventId), {
