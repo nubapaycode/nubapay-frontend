@@ -298,7 +298,7 @@ export function PartnerBrandView() {
         body: JSON.stringify({ hostname: host }),
       })
       const body = (await res.json()) as {
-        domain?: TenantDomainRow & { dns_txt_challenge?: string }
+        domain?: TenantDomainRow & { dns_txt_challenge?: string; vercel_warning?: string }
         error?: string
       }
       if (!res.ok || !body.domain) {
@@ -309,7 +309,11 @@ export function PartnerBrandView() {
         setChallengeByHostname(prev => ({ ...prev, [body.domain!.hostname]: body.domain!.dns_txt_challenge! }))
       }
       setHostnameDraft('')
-      toast('Dominio registrado. Agregá el TXT y verificá.', 'success')
+      if (body.domain.vercel_warning) {
+        toast(body.domain.vercel_warning, 'error')
+      } else {
+        toast('Dominio registrado y agregado a Vercel. Ahora agregá los DNS y verificá.', 'success')
+      }
       await load()
     } catch {
       toast('No se pudo contactar al servidor', 'error')
