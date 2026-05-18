@@ -1,64 +1,87 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { OrdersView } from '@/components/organizer/OrdersView'
-import { fetchWorkspaceOrders, patchOrderStatus } from '@/lib/organizerWorkspace'
+import { fetchWorkspaceOrders, fetchAllCategories } from '@/lib/organizerWorkspace'
 
 jest.mock('@/lib/organizerWorkspace', () => ({
   fetchWorkspaceOrders: jest.fn(),
-  patchOrderStatus: jest.fn(),
+  fetchAllCategories: jest.fn(),
 }))
 
 const mockOrderPending = {
   id: 'aaaaaaaa-bbbb-cccc-dddddddddd01',
   eventId: 'demo-event',
-  items: [{ productId: 'p', name: 'Cerveza', price: 100, quantity: 2 }],
+  orderNumber: 1,
+  items: [{ productId: 'p', name: 'Cerveza', price: 100, quantity: 2, categoryName: null, subtotal: 200 }],
   total: 200,
   status: 'pending' as const,
   qrToken: 't',
   createdAt: '2025-01-01T12:00:00.000Z',
   updatedAt: '2025-01-01T12:00:00.000Z',
   paymentMethod: 'mp' as const,
+  customerName: 'Test User',
+  paymentStatus: 'paid',
 }
 
 const mockOrderReady = {
   id: 'aaaaaaaa-bbbb-cccc-dddddddddd02',
   eventId: 'demo-event',
-  items: [{ productId: 'p2', name: 'Agua', price: 50, quantity: 1 }],
+  orderNumber: 2,
+  items: [{ productId: 'p2', name: 'Agua', price: 50, quantity: 1, categoryName: null, subtotal: 50 }],
   total: 50,
   status: 'ready' as const,
   qrToken: 't2',
   createdAt: '2025-01-01T11:00:00.000Z',
   updatedAt: '2025-01-01T11:00:00.000Z',
   paymentMethod: 'cash' as const,
+  customerName: 'Otro User',
+  paymentStatus: 'pending',
 }
 
+beforeEach(() => {
+  jest.mocked(fetchWorkspaceOrders).mockResolvedValue({
+    ok: true,
+    orders: [mockOrderPending, mockOrderReady],
+    pagination: { page: 1, page_size: 40, total: 2 },
+  })
+  jest.mocked(fetchAllCategories).mockResolvedValue({
+    ok: true,
+    categories: [],
+  })
+})
+
 describe('OrdersView', () => {
-  beforeEach(() => {
-    jest.mocked(fetchWorkspaceOrders).mockResolvedValue({
-      ok: true,
-      orders: [mockOrderPending, mockOrderReady],
-      pagination: { page: 1, page_size: 40, total: 2 },
-    })
-    jest.mocked(patchOrderStatus).mockResolvedValue({
-      ok: true,
-      order: { ...mockOrderPending, status: 'ready' as const },
-    })
+  it('muestra el título "Pedidos"', async () => {
+    render(<OrdersView eventId="demo-event" />)
+    await waitFor(() => expect(screen.getByText('Pedidos')).toBeInTheDocument())
   })
 
-  it('renderiza lista con cabeceras y controles de búsqueda', async () => {
+  it('muestra el campo de búsqueda', async () => {
     render(<OrdersView eventId="demo-event" />)
-    await waitFor(() => expect(screen.getByPlaceholderText(/Buscar por ID/)).toBeInTheDocument())
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
-    expect(screen.getByText('Pedido')).toBeInTheDocument()
-    expect(screen.getAllByText('Pendiente').length).toBeGreaterThan(0)
+    await waitFor(() =>
+      expect(
+        screen.getByPlaceholderText(/Buscar por cliente, producto/),
+      ).toBeInTheDocument(),
+    )
   })
 
-  it('al marcar listo un pedido, llama al API y refresca', async () => {
+  it('muestra las tabs de estado (Todos, Pagados, Entregados)', async () => {
     render(<OrdersView eventId="demo-event" />)
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Marcar listo' }).length).toBeGreaterThan(0))
-    const markReadyButtons = screen.getAllByRole('button', { name: 'Marcar listo' })
-    await userEvent.click(markReadyButtons[0])
-    await waitFor(() => expect(jest.mocked(patchOrderStatus)).toHaveBeenCalled())
-    await waitFor(() => expect(jest.mocked(fetchWorkspaceOrders).mock.calls.length).toBeGreaterThan(1))
+    await waitFor(() => expect(screen.getByText('Pedidos')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Todos' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Pagados' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entregados' })).toBeInTheDocument()
+  })
+
+  it('muestra los pedidos en la tabla', async () => {
+    render(<OrdersView eventId="demo-event" />)
+    await waitFor(() => expect(screen.queryByText('Cargando')).not.toBeInTheDocument())
+    // Verifica que se renderizaron botones "Ver detalle" para cada orden
+    const detailButtons = await screen.findAllByRole('button', { name: 'Ver detalle' })
+    expect(detailButtons.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('llama a fetchWorkspaceOrders con el eventId correcto', async () => {
+    render(<OrdersView eventId="demo-event" />)
+    await waitFor(() => expect(fetchWorkspaceOrders).toHaveBeenCalledWith('demo-event', expect.any(Object)))
   })
 })

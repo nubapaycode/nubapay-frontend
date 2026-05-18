@@ -18,9 +18,10 @@ const baseOrder: Order = {
 }
 
 describe('OrderCard', () => {
-  it('muestra el id truncado con #', () => {
+  it('muestra el id truncado con # en mayúsculas', () => {
     render(<OrderCard order={baseOrder} />)
-    expect(screen.getByText('#abc12345')).toBeInTheDocument()
+    // El componente renderiza #{id.slice(0,8).toUpperCase()} → #ABC12345
+    expect(screen.getByText(/ABC12345/)).toBeInTheDocument()
   })
 
   it('muestra botón "Marcar listo" cuando status=pending', () => {

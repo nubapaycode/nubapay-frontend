@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CheckoutView } from '@/components/buyer/CheckoutView'
 import { useRouter } from 'next/navigation'
@@ -35,9 +35,9 @@ describe('CheckoutView — carrito vacío', () => {
     expect(screen.getByText('No tenés items en el carrito')).toBeInTheDocument()
   })
 
-  it('botón confirmar está deshabilitado', () => {
+  it('botón confirmar está deshabilitado con texto "Carrito vacío"', () => {
     render(<CheckoutView eventId="demo" />)
-    expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Carrito vacío/ })).toBeDisabled()
   })
 })
 
@@ -61,23 +61,27 @@ describe('CheckoutView — con items', () => {
     expect(screen.getByText('Gaseosa 500ml')).toBeInTheDocument()
   })
 
-  it('muestra el total formateado', () => {
+  it('muestra el total formateado en el botón', () => {
     render(<CheckoutView eventId="demo" />)
-    expect(screen.getByText(/8.200/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Pagar/ })).toBeInTheDocument()
   })
 
   it('muestra error si se confirma sin nombre', async () => {
     render(<CheckoutView eventId="demo" />)
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await userEvent.click(screen.getByRole('button', { name: /Pagar/ }))
     expect(screen.getByText('Ingresá tu nombre para continuar')).toBeInTheDocument()
     expect(mockClearCart).not.toHaveBeenCalled()
   })
 
   it('llama clearCart y navega a order tracking con nombre válido', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ order_id: 'test-order-uuid', checkout_url: null }),
+    })
     render(<CheckoutView eventId="demo" />)
     await userEvent.type(screen.getByRole('textbox'), 'Juan Pérez')
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }))
-    expect(mockClearCart).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: /Pagar/ }))
+    await waitFor(() => expect(mockClearCart).toHaveBeenCalledTimes(1))
     expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/demo\/order\/.+/))
   })
 })

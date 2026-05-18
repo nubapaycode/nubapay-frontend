@@ -146,7 +146,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="lg:col-span-2 flex flex-col gap-4">
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Por estado</p>
+            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Por estado</p>
             <div className="flex flex-col gap-3">
               {STATUS_CONFIG.map(({ key, label, dot }) => {
                 const count = byStatus(key)
@@ -174,7 +174,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Ventas por hora</p>
+              <p className="text-xs font-medium text-gray-400 tracking-wide">Ventas por hora</p>
               <span className="text-xs text-gray-400">últimas 8h</span>
             </div>
             <LineChart data={hourlyData.length ? hourlyData : Array.from({ length: 8 }, (_, i) => ({ hour: `${i}h`, revenue: 0 }))} />
@@ -190,7 +190,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="lg:col-span-3 flex flex-col gap-4">
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Métodos de pago</p>
+            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Métodos de pago</p>
             <div className="flex flex-col gap-3">
               {PAYMENT_CONFIG.map(({ key, label, dot }) => {
                 const row = paymentRow(key)
@@ -219,7 +219,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Más vendidos</p>
+            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Más vendidos</p>
             {topProducts.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-center">
                 <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">

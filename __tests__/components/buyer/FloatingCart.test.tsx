@@ -20,24 +20,25 @@ describe('FloatingCart', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renderiza el botón cuando count>0', () => {
+  it('renderiza botones cuando count>0', () => {
     render(<FloatingCart count={2} total={7000} eventId="demo" />)
-    expect(screen.getByRole('button')).toBeInTheDocument()
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0)
   })
 
   it('muestra la cantidad en plural cuando count>1', () => {
     render(<FloatingCart count={3} total={10500} eventId="demo" />)
-    expect(screen.getByText(/3 items/)).toBeInTheDocument()
+    // El componente renderiza "3 productos" en la barra mobile y en el pill desktop
+    expect(screen.getAllByText(/3 productos/).length).toBeGreaterThan(0)
   })
 
-  it('muestra "item" en singular cuando count=1', () => {
+  it('muestra "producto" en singular cuando count=1', () => {
     render(<FloatingCart count={1} total={3500} eventId="demo" />)
-    expect(screen.getByText(/1 item\b/)).toBeInTheDocument()
+    expect(screen.getAllByText(/1 producto/).length).toBeGreaterThan(0)
   })
 
-  it('navega al carrito del evento al hacer click', async () => {
+  it('navega al carrito del evento al hacer click en "Ver carrito"', async () => {
     render(<FloatingCart count={2} total={7000} eventId="mi-evento" />)
-    await userEvent.click(screen.getByRole('button'))
+    await userEvent.click(screen.getByRole('button', { name: /Ver carrito/ }))
     expect(mockPush).toHaveBeenCalledWith('/mi-evento/cart')
   })
 })

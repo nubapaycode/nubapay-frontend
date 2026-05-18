@@ -16,14 +16,18 @@ describe('CategoryFilter', () => {
     expect(screen.getByRole('button', { name: 'Bebidas' })).toBeInTheDocument()
   })
 
-  it('chip activa tiene clase bg-gray-900', () => {
+  it('chip activa usa inline style de accent (no texto bg-gray-900)', () => {
     render(<CategoryFilter categories={categories} active="Comidas" onChange={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'Comidas' })).toHaveClass('bg-gray-900')
+    const btn = screen.getByRole('button', { name: 'Comidas' })
+    // La chip activa aplica estilos inline, no clases de Tailwind
+    expect(btn).toHaveAttribute('style')
+    expect(btn.getAttribute('style')).toContain('background')
   })
 
-  it('chip inactiva no tiene clase bg-gray-900', () => {
+  it('chip inactiva tiene borde visible', () => {
     render(<CategoryFilter categories={categories} active="all" onChange={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'Comidas' })).not.toHaveClass('bg-gray-900')
+    const btn = screen.getByRole('button', { name: 'Comidas' })
+    expect(btn.getAttribute('style')).toContain('border')
   })
 
   it('llama onChange con la categoría al hacer click', async () => {

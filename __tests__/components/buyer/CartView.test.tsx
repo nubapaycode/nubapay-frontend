@@ -69,7 +69,7 @@ describe('CartView — con items', () => {
 
   it('botón checkout navega a checkout', async () => {
     render(<CartView eventId="demo" />)
-    await userEvent.click(screen.getByRole('button', { name: /Confirmar pedido/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Ir a pagar/ }))
     expect(mockPush).toHaveBeenCalledWith('/demo/checkout')
   })
 
