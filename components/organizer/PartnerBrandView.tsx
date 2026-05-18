@@ -658,6 +658,13 @@ export function PartnerBrandView() {
                         name={dnsNameLabel(d.hostname)}
                         value={isApex(d.hostname) ? '216.198.79.1' : 'cname.vercel-dns.com'}
                       />
+                      {isApex(d.hostname) && (
+                        <DnsRow
+                          type="CNAME"
+                          name="www"
+                          value="cname.vercel-dns.com"
+                        />
+                      )}
                       {challengeByHostname[d.hostname] ? (
                         <DnsRow
                           type="TXT"
