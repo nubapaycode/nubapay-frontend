@@ -45,6 +45,21 @@ type TenantApiBody = {
   error?: string
 }
 
+function DnsRow({ type, name, value }: { type: string; name: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-[11px] leading-relaxed">
+      <div className="grid grid-cols-[40px_1fr] gap-x-3 gap-y-1">
+        <span className="font-semibold text-gray-500 uppercase tracking-wide">Tipo</span>
+        <code className="font-mono text-gray-900">{type}</code>
+        <span className="font-semibold text-gray-500 uppercase tracking-wide">Nombre</span>
+        <code className="font-mono text-gray-900 break-all">{name}</code>
+        <span className="font-semibold text-gray-500 uppercase tracking-wide">Valor</span>
+        <code className="font-mono text-gray-900 break-all">{value}</code>
+      </div>
+    </div>
+  )
+}
+
 function strField(v: unknown): string {
   return typeof v === 'string' ? v : ''
 }
@@ -620,18 +635,35 @@ export function PartnerBrandView() {
         <ul className="flex flex-col gap-3 mt-2">
           {tenant.domains.map(d => (
             <li key={d.id} className="rounded-2xl border border-gray-200 bg-white p-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900">{d.hostname}</p>
                   <p className={`text-xs font-medium mt-1 ${d.verified ? 'text-green-700' : 'text-amber-700'}`}>
-                    {d.verified ? 'Verificado' : 'Pendiente de verificación TXT'}
+                    {d.verified ? '✓ Verificado y activo' : 'Pendiente — agregá los registros DNS y luego verificá'}
                   </p>
-                  {!d.verified && challengeByHostname[d.hostname] ? (
-                    <p className="text-xs text-gray-600 mt-2 break-all">
-                      Valor TXT: <code>{challengeByHostname[d.hostname]}</code>
-                    </p>
-                  ) : null}
+
+                  {!d.verified && (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <DnsRow
+                        type="CNAME"
+                        name={d.hostname}
+                        value="cname.vercel-dns.com"
+                      />
+                      {challengeByHostname[d.hostname] ? (
+                        <DnsRow
+                          type="TXT"
+                          name={d.hostname}
+                          value={challengeByHostname[d.hostname]}
+                        />
+                      ) : (
+                        <p className="text-[11px] text-gray-400 italic">
+                          Recargá la página para volver a ver el valor TXT (guardalo antes de cerrar).
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
+
                 <div className="flex gap-2 shrink-0">
                   {!d.verified ? (
                     <button
