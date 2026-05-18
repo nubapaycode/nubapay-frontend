@@ -45,6 +45,15 @@ type TenantApiBody = {
   error?: string
 }
 
+function isApex(hostname: string): boolean {
+  return hostname.split('.').length === 2
+}
+
+function dnsNameLabel(hostname: string): string {
+  if (isApex(hostname)) return '@'
+  return hostname.split('.')[0]
+}
+
 function DnsRow({ type, name, value }: { type: string; name: string; value: string }) {
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-[11px] leading-relaxed">
@@ -645,14 +654,14 @@ export function PartnerBrandView() {
                   {!d.verified && (
                     <div className="mt-3 flex flex-col gap-2">
                       <DnsRow
-                        type="CNAME"
-                        name={d.hostname}
-                        value="cname.vercel-dns.com"
+                        type={isApex(d.hostname) ? 'A' : 'CNAME'}
+                        name={dnsNameLabel(d.hostname)}
+                        value={isApex(d.hostname) ? '76.76.21.21' : 'cname.vercel-dns.com'}
                       />
                       {challengeByHostname[d.hostname] ? (
                         <DnsRow
                           type="TXT"
-                          name={d.hostname}
+                          name={dnsNameLabel(d.hostname)}
                           value={challengeByHostname[d.hostname]}
                         />
                       ) : (
