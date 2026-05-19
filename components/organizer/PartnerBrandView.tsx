@@ -417,6 +417,14 @@ export function PartnerBrandView() {
 
   const handleSaveBranding = async () => {
     if (!tenant) return
+    if (!seoTitleSuffix.trim()) {
+      toast('El título en el navegador es requerido.', 'error')
+      return
+    }
+    if (!seoDescription.trim()) {
+      toast('La descripción es requerida.', 'error')
+      return
+    }
     const trimmedAccent = accentContrastText.trim()
     setSavingBrand(true)
     try {
@@ -750,13 +758,13 @@ export function PartnerBrandView() {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Título en el navegador (opcional)</span>
+            <span className="text-sm font-medium text-gray-700">Título en el navegador</span>
             <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} placeholder="ej. · Festival Costa" />
             <p className="mt-1.5 text-[11px] text-gray-500">Texto que se agrega al título de la pestaña del navegador.</p>
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Descripción (opcional)</span>
+            <span className="text-sm font-medium text-gray-700">Descripción</span>
             <textarea
               className={`${textareaClass} mt-2`}
               value={seoDescription}
