@@ -778,10 +778,10 @@ export function PartnerBrandView() {
           </label>
         </div>
 
-        {/* Subsección: Colores — aparece cuando hay nombre */}
+        {/* Subsección: Colores — aparece cuando hay nombre, título y descripción */}
         <div
           className="grid transition-all duration-500 ease-in-out"
-          style={{ gridTemplateRows: displayName.trim() ? '1fr' : '0fr' }}
+          style={{ gridTemplateRows: displayName.trim() && seoTitleSuffix.trim() && seoDescription.trim() ? '1fr' : '0fr' }}
         >
           <div className="overflow-hidden">
             <div className="flex flex-col gap-4 pt-1">
