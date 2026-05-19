@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import SiteNavbar from '@/components/SiteNavbar'
+import SiteFooter from '@/components/SiteFooter'
 import ScrollReveal from '@/components/ScrollReveal'
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default function NosotrosPage() {
       short: 'CEO',
       bio: 'Lidera la estrategia, la visión comercial y el crecimiento de Nubapay. Con foco en construir relaciones con organizadores, partners y el ecosistema de eventos masivos en Latinoamérica.',
       initial: 'AV',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=400&h=530&q=80',
+      photo: '/images/angelito.jpeg',
       linkedin: 'https://linkedin.com',
       email: 'angel@nubapay.com',
     },
@@ -29,7 +30,7 @@ export default function NosotrosPage() {
       short: 'CTO',
       bio: 'Lidera el desarrollo tecnológico, la arquitectura del sistema y la escalabilidad de la plataforma. Responsable de las decisiones técnicas que sostienen cada pedido, pago y retiro en tiempo real.',
       initial: 'FG',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=crop&w=400&h=530&q=80',
+      photo: '/images/facu.png',
       linkedin: 'https://linkedin.com',
       email: 'facundo@nubapay.com',
     },
@@ -39,7 +40,7 @@ export default function NosotrosPage() {
       short: 'CPO',
       bio: 'Lidera el producto, la experiencia de usuario, la definición funcional y la evolución de la plataforma. Traduce los problemas reales de asistentes y organizadores en decisiones de diseño y producto.',
       initial: 'AV',
-      photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fit=crop&w=400&h=530&q=80',
+      photo: '/images/alejo.jpeg',
       linkedin: 'https://linkedin.com',
       email: 'alejo@nubapay.com',
     },
@@ -167,8 +168,8 @@ export default function NosotrosPage() {
           maxWidth: '900px',
         }}>
           <span className="nos-line-wrap nos-line-1"><span className="nos-line-inner">Terminamos con</span></span>
-          <span className="nos-line-wrap nos-line-2"><span className="nos-line-inner">las filas, de una</span></span>
-          <span className="nos-line-wrap nos-line-3"><span className="nos-line-inner" style={{ color: '#C6FF00', WebkitTextStroke: '2px #0A0A0F' }}>vez por todas</span></span>
+          <span className="nos-line-wrap nos-line-2"><span className="nos-line-inner">las filas, de</span></span>
+          <span className="nos-line-wrap nos-line-3"><span className="nos-line-inner" style={{ color: '#C6FF00', WebkitTextStroke: '2px #0A0A0F' }}>una vez por todas</span></span>
         </h1>
 
         {/* Misión */}
@@ -187,14 +188,16 @@ export default function NosotrosPage() {
         </div>
 
         {/* Stats strip */}
-        <div className="nos-stats-grid" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+        <div className="nos-stats-grid" style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingLeft: '40px' }}>
           {[
             { val: '+3.000', label: 'Eventos gestionados', cls: 'nos-stat-item nos-stat-1' },
             { val: '0', label: 'Apps que descargar', cls: 'nos-stat-item nos-stat-2' },
             { val: '+50K', label: 'Ventas realizadas activos', cls: 'nos-stat-item nos-stat-3' },
           ].map((s, i) => (
             <div key={s.label} className={`${s.cls} nos-stat-pad${i > 0 ? ' nos-stat-border' : ''}`} style={{
-              padding: '40px 0 56px',
+              paddingTop: '40px',
+              paddingBottom: '56px',
+              paddingRight: '0',
             }}>
               <div style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.05em', lineHeight: 1, marginBottom: '8px' }}>
                 {s.val}
@@ -246,8 +249,7 @@ export default function NosotrosPage() {
       </div>
       </ScrollReveal>
 
-      {/* Sección equipo desactivada: cambiar a `{true &&` para mostrar */}
-      {false && (
+      {true && (
       <div style={{ background: '#FFFFFF', padding: '96px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
@@ -264,83 +266,70 @@ export default function NosotrosPage() {
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px' }}>
             {founders.map((f, i) => (
-              <ScrollReveal key={f.name} delay={i * 120} style={{
-                borderTop: '1px solid rgba(0,0,0,0.08)',
-                ...(i === founders.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.08)' } : {}),
-              }}>
-              <div style={{
-                paddingTop: '40px',
-                paddingBottom: '40px',
-                display: 'grid',
-                gridTemplateColumns: '280px 1fr',
-                gap: '56px',
-                alignItems: 'start',
-              }}>
+              <ScrollReveal key={f.name} delay={i * 120}>
                 <div className="nos-photo-wrap" style={{
                   width: '100%',
                   aspectRatio: '3 / 4',
                   borderRadius: '16px',
                   background: '#F0F0F2',
                   position: 'relative',
+                  marginBottom: '24px',
                 }}>
                   <Image
                     src={f.photo}
                     alt={f.name}
                     fill
                     style={{ objectFit: 'cover', borderRadius: '16px' }}
-                    sizes="280px"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
 
-                <div style={{ paddingTop: '8px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      background: '#F0F0F2',
-                      borderRadius: '6px', padding: '3px 10px',
-                      fontSize: '10px', fontWeight: 700, color: '#3A3A4A',
-                      letterSpacing: '0.08em', marginBottom: '20px',
-                    }}>
-                      {f.short}
-                    </div>
-                    <h3 style={{
-                      fontSize: 'clamp(28px, 3vw, 44px)',
-                      fontWeight: 800, color: '#0A0A0F',
-                      letterSpacing: '-0.04em', lineHeight: 1.0,
-                      margin: '0 0 6px',
-                    }}>
-                      {f.name}
-                    </h3>
-                    <p style={{
-                      fontSize: '14px', color: '#8B8B9A',
-                      fontWeight: 500, margin: '0 0 32px',
-                    }}>
-                      {f.role}
-                    </p>
-                    <p style={{
-                      fontSize: '16px', color: '#4A4A5A',
-                      lineHeight: 1.7, margin: '0 0 28px', maxWidth: '480px',
-                    }}>
-                      {f.bio}
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <a href={f.linkedin} target="_blank" rel="noopener noreferrer" className="nos-social-btn" title="LinkedIn">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M2.5 5.5h2.5v8H2.5v-8ZM3.75 4.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5ZM6.5 5.5H9v1.1c.4-.7 1.3-1.3 2.5-1.3 2.2 0 3 1.5 3 3.5v4.7H12V9.2c0-1-.4-1.7-1.3-1.7-1 0-1.7.7-1.7 1.9v4.1H6.5v-8Z" fill="#3A3A4A"/>
-                        </svg>
-                      </a>
-                      <a href={`mailto:${f.email}`} className="nos-social-btn" title={f.email}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="#3A3A4A" strokeWidth="1.3"/>
-                          <path d="M1.5 5.5l6.5 4 6.5-4" stroke="#3A3A4A" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </a>
-                    </div>
+                <div>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center',
+                    background: '#F0F0F2',
+                    borderRadius: '6px', padding: '3px 10px',
+                    fontSize: '10px', fontWeight: 700, color: '#3A3A4A',
+                    letterSpacing: '0.08em', marginBottom: '12px',
+                  }}>
+                    {f.short}
+                  </div>
+                  <h3 style={{
+                    fontSize: 'clamp(20px, 2vw, 28px)',
+                    fontWeight: 800, color: '#0A0A0F',
+                    letterSpacing: '-0.04em', lineHeight: 1.1,
+                    margin: '0 0 4px',
+                  }}>
+                    {f.name}
+                  </h3>
+                  <p style={{
+                    fontSize: '13px', color: '#8B8B9A',
+                    fontWeight: 500, margin: '0 0 16px',
+                  }}>
+                    {f.role}
+                  </p>
+                  <p style={{
+                    fontSize: '14px', color: '#4A4A5A',
+                    lineHeight: 1.7, margin: '0 0 20px',
+                  }}>
+                    {f.bio}
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a href={f.linkedin} target="_blank" rel="noopener noreferrer" className="nos-social-btn" title="LinkedIn">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2.5 5.5h2.5v8H2.5v-8ZM3.75 4.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5ZM6.5 5.5H9v1.1c.4-.7 1.3-1.3 2.5-1.3 2.2 0 3 1.5 3 3.5v4.7H12V9.2c0-1-.4-1.7-1.3-1.7-1 0-1.7.7-1.7 1.9v4.1H6.5v-8Z" fill="#3A3A4A"/>
+                      </svg>
+                    </a>
+                    <a href={`mailto:${f.email}`} className="nos-social-btn" title={f.email}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="#3A3A4A" strokeWidth="1.3"/>
+                        <path d="M1.5 5.5l6.5 4 6.5-4" stroke="#3A3A4A" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </a>
                   </div>
                 </div>
-              </div>
               </ScrollReveal>
             ))}
           </div>
@@ -499,28 +488,7 @@ export default function NosotrosPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{ borderTop: '1px solid rgba(0,0,0,0.07)', padding: '28px 48px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 800, color: '#0A0A0F', letterSpacing: '-0.04em' }}>
-            nubapay
-          </span>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-            {[
-              { label: 'Seguridad', href: '/seguridad' },
-              { label: 'Privacidad', href: '/privacidad' },
-              { label: 'Términos', href: '/terminos' },
-            ].map(link => (
-              <Link key={link.label} href={link.href} style={{
-                fontSize: '13px', color: '#8B8B9A', fontWeight: 500, textDecoration: 'none',
-              }}>
-                {link.label}
-              </Link>
-            ))}
-          </div>
-          <span style={{ fontSize: '12px', color: '#BCBCC8' }}>© 2025 Nubapay</span>
-        </div>
-      </div>
+      <SiteFooter />
     </div>
   )
 }

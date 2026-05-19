@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteNavbar from '@/components/SiteNavbar'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Términos y Condiciones',
@@ -271,13 +272,6 @@ export default function TerminosPage() {
           align-items: start;
         }
         .term-sidebar { display: block; }
-        .term-footer {
-          border-top: 1px solid rgba(0,0,0,0.06);
-          padding: 28px 32px;
-          display: flex; align-items: center; justify-content: space-between;
-          max-width: 1100px; margin: 0 auto;
-          flex-wrap: wrap; gap: 12px;
-        }
 
         @media (max-width: 1024px) {
           .term-layout { grid-template-columns: 180px 1fr; gap: 32px; }
@@ -288,14 +282,12 @@ export default function TerminosPage() {
           .term-divider { padding: 0 24px; }
           .term-layout { grid-template-columns: 1fr; padding: 32px 24px 80px; gap: 0; }
           .term-sidebar { display: none; }
-          .term-footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
         }
 
         @media (max-width: 480px) {
           .term-hero { padding: 40px 20px 32px; }
           .term-divider { padding: 0 20px; }
           .term-layout { padding: 28px 20px 64px; }
-          .term-footer { padding: 20px; }
         }
       `}</style>
 
@@ -474,20 +466,7 @@ export default function TerminosPage() {
 
       </div>
 
-      {/* Footer */}
-      <div className="term-footer">
-        <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
-          © 2026 Nubapay. Todos los derechos reservados.
-        </span>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <Link href="/terminos" style={{ fontSize: '13px', color: '#0A0A0F', fontWeight: 600, textDecoration: 'none' }}>
-            Términos
-          </Link>
-          <a href="mailto:legal@nubapay.com" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>
-            Contacto legal
-          </a>
-        </div>
-      </div>
+      <SiteFooter />
 
     </div>
   )

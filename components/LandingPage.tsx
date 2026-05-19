@@ -390,7 +390,7 @@ export function LandingPage() {
                 {[
                   { prefix: '+', to: 10, suffix: 'K', label: 'pedidos procesados' },
                   { prefix: '', to: 0, suffix: ' min', label: 'espera en retiro' },
-                  { prefix: '~', to: 1, suffix: '%', label: 'comisión total' },
+                  { prefix: '+', to: 98, suffix: '%', label: 'satisfacción de asistentes' },
                 ].map(({ prefix, to, suffix, label }) => (
                   <div key={label}>
                     <div style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-0.045em', color: '#000000' }}>
@@ -730,100 +730,148 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Chat UI */}
-            <div style={{ background: '#F7F7F5', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.08)', padding: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '18px 22px', borderBottom: '1px solid rgba(0,0,0,0.07)', background: '#FFFFFF' }}>
-                <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'linear-gradient(135deg, #FF5C1A 0%, #FF8C4A 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <rect x="4" y="7" width="12" height="9" rx="3" stroke="white" strokeWidth="1.6"/>
-                    <path d="M7 7V5.5a3 3 0 016 0V7" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
-                    <circle cx="7.5" cy="11.5" r="1" fill="white"/>
-                    <circle cx="12.5" cy="11.5" r="1" fill="white"/>
-                    <path d="M8.5 13.5c.4.4 2.6.4 3 0" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
-                    <path d="M10 4V2.5M10 2.5H8.5M10 2.5H11.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>Atendium</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', display: 'inline-block', boxShadow: '0 0 6px rgba(34,197,94,0.4)' }} />
-                    <span style={{ fontSize: '11px', color: S.faint, fontWeight: 500 }}>En línea · responde al instante</span>
-                  </div>
-                </div>
-              </div>
+            {/* Phone mockup */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {/* Phone frame */}
+              <div style={{
+                width: '270px',
+                borderRadius: '50px',
+                background: '#0A0A0F',
+                padding: '3px',
+                boxShadow: '0 48px 100px rgba(0,0,0,0.28), 0 12px 36px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.07)',
+                position: 'relative',
+                flexShrink: 0,
+              }}>
+                {/* Side buttons */}
+                <div style={{ position: 'absolute', left: '-3px', top: '88px', width: '3px', height: '32px', background: '#1A1A1F', borderRadius: '2px 0 0 2px' }} />
+                <div style={{ position: 'absolute', left: '-3px', top: '132px', width: '3px', height: '56px', background: '#1A1A1F', borderRadius: '2px 0 0 2px' }} />
+                <div style={{ position: 'absolute', left: '-3px', top: '198px', width: '3px', height: '56px', background: '#1A1A1F', borderRadius: '2px 0 0 2px' }} />
+                <div style={{ position: 'absolute', right: '-3px', top: '148px', width: '3px', height: '72px', background: '#1A1A1F', borderRadius: '0 2px 2px 0' }} />
 
-              <div style={{ padding: '20px 20px 8px', display: 'flex', flexDirection: 'column', gap: '8px', height: '380px', overflow: 'hidden', justifyContent: 'flex-end' }}>
-                <div className="nb-typing-bubble nb-typing-1 nb-typing-fade-1" style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div style={{ padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} />
-                  </div>
-                </div>
-                <div className="nb-msg nb-msg-0" style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                  <div style={{ maxWidth: '82%', padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#3A3A48' }}>
-                    Vi que pediste la Heineken. ¿Te suma un Fernet con Coca? Van perfectas juntas.
-                  </div>
-                </div>
-                <div className="nb-msg nb-msg-1" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ maxWidth: '82%', padding: '10px 14px', background: 'rgba(255,92,26,0.1)', border: '1px solid rgba(255,92,26,0.22)', borderRadius: '16px 4px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#0A0A0F' }}>
-                    Dale, agregá uno.
-                  </div>
-                </div>
-                <div className="nb-typing-bubble nb-typing-2 nb-typing-fade-2" style={{ display: 'flex', justifyContent: 'flex-start', maxHeight: '6px', overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} />
-                  </div>
-                </div>
-                <div className="nb-msg nb-msg-2" style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '-8px' }}>
-                  <div style={{ maxWidth: '82%', padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#3A3A48' }}>
-                    ¡Listo! También tengo el Combo Tragos (Heineken + Fernet) con 20% off.
-                  </div>
-                </div>
-                <div className="nb-msg nb-msg-3" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ maxWidth: '82%', padding: '10px 14px', background: 'rgba(255,92,26,0.1)', border: '1px solid rgba(255,92,26,0.22)', borderRadius: '16px 4px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#0A0A0F' }}>
-                    ¿Cuánto sale?
-                  </div>
-                </div>
-                <div className="nb-typing-bubble nb-typing-3 nb-typing-fade-3" style={{ display: 'flex', justifyContent: 'flex-start', maxHeight: '6px', overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.3)' }} />
-                  </div>
-                </div>
-                <div className="nb-msg nb-msg-4" style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '-8px' }}>
-                  <div style={{ maxWidth: '82%', padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#3A3A48' }}>
-                    $19.200 en lugar de $24.000. ¿Lo sumamos al pedido?
-                  </div>
-                </div>
-              </div>
+                {/* Screen */}
+                <div style={{ borderRadius: '48px', background: '#F2F2F7', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '580px' }}>
 
-              {chatConfirmed && (
-                <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
-                    <div style={{ maxWidth: '82%', padding: '10px 14px', background: 'rgba(255,92,26,0.1)', border: '1px solid rgba(255,92,26,0.22)', borderRadius: '16px 4px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#0A0A0F' }}>Sí, sumalo al pedido.</div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-start', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) 0.7s both' }}>
-                    <div style={{ maxWidth: '82%', padding: '10px 14px', background: '#EAEAE5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '4px 16px 16px 16px', fontSize: '13px', lineHeight: '1.6', color: '#3A3A48' }}>
-                      ¡Listo! Combo Tragos agregado. Tu total es <strong>$43.200</strong>. ¿Confirmamos el pedido?
+                  {/* Status bar */}
+                  <div style={{ background: '#FFFFFF', padding: '14px 22px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#0A0A0F' }}>9:41</span>
+                    <div style={{ position: 'absolute', top: '14px', left: '50%', transform: 'translateX(-50%)', width: '90px', height: '22px', borderRadius: '100px', background: '#0A0A0F', zIndex: 10 }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="3" width="2.5" height="7" rx="0.5" fill="#0A0A0F"/><rect x="3.5" y="2" width="2.5" height="8" rx="0.5" fill="#0A0A0F"/><rect x="7" y="0.5" width="2.5" height="9.5" rx="0.5" fill="#0A0A0F"/><rect x="10.5" y="0" width="2.5" height="10" rx="0.5" fill="#0A0A0F" opacity="0.3"/></svg>
+                      <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M7 2.5C9.2 2.5 11.2 3.4 12.6 4.9L13.8 3.6C12.1 1.8 9.7 0.7 7 0.7C4.3 0.7 1.9 1.8 0.2 3.6L1.4 4.9C2.8 3.4 4.8 2.5 7 2.5Z" fill="#0A0A0F"/><path d="M7 5.5C8.4 5.5 9.7 6.1 10.6 7L11.8 5.7C10.6 4.5 8.9 3.7 7 3.7C5.1 3.7 3.4 4.5 2.2 5.7L3.4 7C4.3 6.1 5.6 5.5 7 5.5Z" fill="#0A0A0F"/><circle cx="7" cy="9.5" r="1.5" fill="#0A0A0F"/></svg>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+                        <div style={{ width: '20px', height: '10px', border: '1.5px solid #0A0A0F', borderRadius: '2.5px', padding: '1.5px', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ width: '65%', height: '100%', background: '#34C759', borderRadius: '1px' }} />
+                        </div>
+                        <div style={{ width: '2px', height: '5px', background: '#0A0A0F', borderRadius: '0 1px 1px 0', marginLeft: '1px' }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
 
-              <div style={{ padding: '12px 20px 20px' }}>
-                {chatConfirmed ? (
-                  <div style={{ display: 'flex', gap: '8px', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) 0.9s both' }}>
-                    <div style={{ flex: 1, background: 'linear-gradient(135deg, #FF5C1A 0%, #FF7A3D 100%)', borderRadius: '14px', padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>Confirmar pedido</span>
+                  {/* Chat header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px 12px', background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A 0%, #FF8C4A 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                        <rect x="4" y="7" width="12" height="9" rx="3" stroke="white" strokeWidth="1.6"/>
+                        <path d="M7 7V5.5a3 3 0 016 0V7" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+                        <circle cx="7.5" cy="11.5" r="1" fill="white"/>
+                        <circle cx="12.5" cy="11.5" r="1" fill="white"/>
+                        <path d="M8.5 13.5c.4.4 2.6.4 3 0" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
                     </div>
-                    <div onClick={() => setChatConfirmed(false)} style={{ background: 'rgba(0,0,0,0.06)', borderRadius: '14px', padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#6A6A78" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>Atendium</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
+                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
+                        <span style={{ fontSize: '10px', color: '#8A8A94' }}>en línea</span>
+                      </div>
                     </div>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="4" cy="9" r="1.5" fill="#8A8A94"/><circle cx="9" cy="9" r="1.5" fill="#8A8A94"/><circle cx="14" cy="9" r="1.5" fill="#8A8A94"/></svg>
                   </div>
-                ) : (
-                  <div onClick={() => setChatConfirmed(true)} style={{ background: 'linear-gradient(135deg, #FF5C1A 0%, #FF7A3D 100%)', borderRadius: '14px', padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>Sí, sumalo al pedido</span>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+
+                  {/* Messages */}
+                  <div style={{ flex: 1, padding: '12px 12px 6px', display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'hidden', justifyContent: 'flex-end', background: '#F2F2F7' }}>
+                    <div className="nb-typing-bubble nb-typing-1 nb-typing-fade-1" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', display: 'flex', gap: '4px', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} />
+                      </div>
+                    </div>
+                    <div className="nb-msg nb-msg-0" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#1C1C1E', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        Vi que pediste la Heineken 🍺 ¿Te suma un Fernet con Coca? Van perfectas juntas.
+                      </div>
+                    </div>
+                    <div className="nb-msg nb-msg-1" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FF5C1A', borderRadius: '14px 4px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#FFFFFF' }}>
+                        Dale, agregá uno.
+                      </div>
+                    </div>
+                    <div className="nb-typing-bubble nb-typing-2 nb-typing-fade-2" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px', maxHeight: '6px', overflow: 'hidden' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', display: 'flex', gap: '4px', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} />
+                      </div>
+                    </div>
+                    <div className="nb-msg nb-msg-2" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px', marginTop: '-6px' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#1C1C1E', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        ¡Listo! 🔥 También tengo el <strong>Combo Tragos</strong> (Heineken + Fernet) con 20% off.
+                      </div>
+                    </div>
+                    <div className="nb-msg nb-msg-3" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FF5C1A', borderRadius: '14px 4px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#FFFFFF' }}>
+                        ¿Cuánto sale?
+                      </div>
+                    </div>
+                    <div className="nb-typing-bubble nb-typing-3 nb-typing-fade-3" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px', maxHeight: '6px', overflow: 'hidden' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', display: 'flex', gap: '4px', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        <span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} /><span className="nb-typing-dot" style={{ background: 'rgba(0,0,0,0.25)' }} />
+                      </div>
+                    </div>
+                    <div className="nb-msg nb-msg-4" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px', marginTop: '-6px' }}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                      <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#1C1C1E', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                        $19.200 en vez de $24.000. ¿Lo sumamos? 👇
+                      </div>
+                    </div>
+
+                    {chatConfirmed && (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
+                          <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FF5C1A', borderRadius: '14px 4px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#FFFFFF' }}>Sí, sumalo.</div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end', gap: '6px', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) 0.7s both' }}>
+                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #FF5C1A, #FF8C4A)', flexShrink: 0 }} />
+                          <div style={{ maxWidth: '78%', padding: '8px 12px', background: '#FFFFFF', borderRadius: '4px 14px 14px 14px', fontSize: '11.5px', lineHeight: '1.55', color: '#1C1C1E', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                            ✅ Combo agregado. Total: <strong>$43.200</strong>. ¿Confirmamos?
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
+
+                  {/* Input bar */}
+                  <div style={{ padding: '8px 12px 20px', background: '#FFFFFF', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                    {chatConfirmed ? (
+                      <div style={{ display: 'flex', gap: '6px', animation: 'nb-msg-in 0.4s cubic-bezier(0.16,1,0.3,1) 0.9s both' }}>
+                        <div style={{ flex: 1, background: 'linear-gradient(135deg, #FF5C1A 0%, #FF7A3D 100%)', borderRadius: '20px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                          <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#FFFFFF' }}>Confirmar pedido</span>
+                        </div>
+                        <div onClick={() => setChatConfirmed(false)} style={{ background: '#F2F2F7', borderRadius: '20px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="#6A6A78" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                        </div>
+                      </div>
+                    ) : (
+                      <div onClick={() => setChatConfirmed(true)} style={{ background: 'linear-gradient(135deg, #FF5C1A 0%, #FF7A3D 100%)', borderRadius: '20px', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#FFFFFF' }}>Sí, sumalo al pedido</span>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 3l4 4-4 4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
               </div>
             </div>
           </div>
@@ -896,7 +944,7 @@ export function LandingPage() {
               { prefix: '+', to: 40, suffix: '%', label: 'aumento en ventas promedio por evento', sub: 'vs. sin plataforma' },
               { prefix: '', to: 0, suffix: ' min', label: 'tiempo de espera en retiro', sub: 'vs. 23 min promedio' },
               { prefix: '', to: 100, suffix: '%', label: 'transacciones verificadas en blockchain', sub: 'unickeys · Solana' },
-              { prefix: '~', to: 1, suffix: '%', label: 'comisión total por transacción', sub: 'sin costos fijos' },
+              { prefix: '+', to: 3, suffix: 'x', label: 'velocidad de atención por punto de retiro', sub: 'vs. caja tradicional' },
             ].map(({ prefix, to, suffix, label, sub }, i) => (
               <div key={label} className="nb-stats-item" style={{ padding: '0 40px', borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.12)' : 'none', position: 'relative' }}>
                 <div style={{ fontSize: 'clamp(40px, 3.5vw, 62px)', fontWeight: 900, color: '#0A0F00', letterSpacing: '-0.055em', lineHeight: '1', marginBottom: '12px' }}>
@@ -1030,7 +1078,6 @@ export function LandingPage() {
                     { label: 'Cómo funciona', href: '#como-funciona' },
                     { label: 'Atendium IA', href: '#' },
                     { label: 'Blockchain QR', href: '#' },
-                    { label: 'Precios', href: '#' },
                     { label: 'Para organizadores', href: '/register' },
                   ],
                 },
@@ -1104,7 +1151,7 @@ export function LandingPage() {
           {/* Bottom bar */}
           <div style={{ padding: '20px 0' }}>
             <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', fontWeight: 400 }}>© 2025 Nubapay · Argentina</span>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', fontWeight: 400 }}>© 2026 Nubapay · Argentina</span>
             </div>
           </div>
 

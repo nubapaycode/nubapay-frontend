@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteNavbar from '@/components/SiteNavbar'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
@@ -324,13 +325,6 @@ export default function PrivacidadPage() {
           align-items: start;
         }
         .priv-sidebar { display: block; }
-        .priv-footer {
-          border-top: 1px solid rgba(0,0,0,0.06);
-          padding: 28px 32px;
-          display: flex; align-items: center; justify-content: space-between;
-          max-width: 1100px; margin: 0 auto;
-          flex-wrap: wrap; gap: 12px;
-        }
 
         @media (max-width: 1024px) {
           .priv-layout { grid-template-columns: 180px 1fr; gap: 32px; }
@@ -341,14 +335,12 @@ export default function PrivacidadPage() {
           .priv-divider { padding: 0 24px; }
           .priv-layout { grid-template-columns: 1fr; padding: 32px 24px 80px; gap: 0; }
           .priv-sidebar { display: none; }
-          .priv-footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
         }
 
         @media (max-width: 480px) {
           .priv-hero { padding: 40px 20px 32px; }
           .priv-divider { padding: 0 20px; }
           .priv-layout { padding: 28px 20px 64px; }
-          .priv-footer { padding: 20px; }
         }
       `}</style>
 
@@ -522,23 +514,7 @@ export default function PrivacidadPage() {
 
       </div>
 
-      {/* Footer */}
-      <div className="priv-footer">
-        <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
-          © 2026 Nubapay. Todos los derechos reservados.
-        </span>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <Link href="/terminos" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>
-            Términos
-          </Link>
-          <Link href="/privacidad" style={{ fontSize: '13px', color: '#0A0A0F', fontWeight: 600, textDecoration: 'none' }}>
-            Privacidad
-          </Link>
-          <a href="mailto:privacidad@nubapay.com" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>
-            Contacto
-          </a>
-        </div>
-      </div>
+      <SiteFooter />
 
     </div>
   )

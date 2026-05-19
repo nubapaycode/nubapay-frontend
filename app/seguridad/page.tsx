@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteNavbar from '@/components/SiteNavbar'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Seguridad',
@@ -75,13 +76,6 @@ export default function SeguridadPage() {
           gap: 32px; flex-wrap: wrap;
         }
 
-        /* Footer */
-        .sec-footer {
-          border-top: 1px solid rgba(0,0,0,0.06); padding: 28px 32px;
-          display: flex; align-items: center; justify-content: space-between;
-          max-width: 1100px; margin: 0 auto;
-          flex-wrap: wrap; gap: 12px;
-        }
 
         /* ── Tablet (≤ 1024px) ── */
         @media (max-width: 1024px) {
@@ -112,7 +106,6 @@ export default function SeguridadPage() {
 
           .sec-cta { padding: 40px 28px; flex-direction: column; align-items: flex-start; }
 
-          .sec-footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
         }
 
         /* ── Mobile pequeño (≤ 480px) ── */
@@ -123,7 +116,6 @@ export default function SeguridadPage() {
           .sec-featured { padding: 32px 20px; }
           .sec-cta { padding: 32px 20px; }
           .sec-flow-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
-          .sec-footer { padding: 20px; }
         }
       `}</style>
 
@@ -528,17 +520,7 @@ export default function SeguridadPage() {
 
       </div>
 
-      {/* Footer */}
-      <div className="sec-footer">
-        <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
-          © 2026 Nubapay. Todos los derechos reservados.
-        </span>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <Link href="/terminos" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>Términos</Link>
-          <Link href="/privacidad" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>Privacidad</Link>
-          <Link href="/seguridad" style={{ fontSize: '13px', color: '#0A0A0F', fontWeight: 600, textDecoration: 'none' }}>Seguridad</Link>
-        </div>
-      </div>
+      <SiteFooter />
 
     </div>
   )
