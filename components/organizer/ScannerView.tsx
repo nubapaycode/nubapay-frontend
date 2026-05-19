@@ -233,8 +233,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
         <div className="bg-white rounded-2xl border border-red-100 p-8 flex flex-col items-center gap-4 text-center">
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-500 text-xl">✕</div>
           <div>
-            <p className="text-base font-medium text-gray-900">QR no válido</p>
-            <p className="text-sm text-gray-400 mt-1">{errorMsg}</p>
+            <p className="text-base font-medium text-gray-900">{errorMsg || 'QR no válido'}</p>
           </div>
           <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
             Intentar de nuevo
