@@ -184,14 +184,14 @@ export function ScannerView({ eventId }: { eventId: string }) {
         </div>
       )}
 
-      {/* Ready — order marked as ready */}
+      {/* Ready — order marked as delivered */}
       {state === 'ready' && order && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-green-100 p-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-sm">✓</div>
               <div>
-                <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Listo para entregar</p>
+                <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Pedido finalizado</p>
                 {order.customerName && (
                   <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
                 )}
