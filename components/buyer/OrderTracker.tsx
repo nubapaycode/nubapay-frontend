@@ -67,6 +67,7 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
 
 
   const isPaid = order?.payment_status === 'approved'
+  const isDelivered = order?.status === 'delivered'
   const isPendingPayment = order?.status === 'pending_payment'
 
   const formattedDate = order?.created_at
@@ -103,8 +104,8 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
 
       <div className="flex flex-col flex-1 p-4 gap-3 max-w-[480px] w-full mx-auto">
 
-        {/* Banners de resultado de pago MP */}
-        {paymentResult === 'success' && (
+        {/* Banners de resultado de pago MP — solo si el pago no está ya aprobado en DB */}
+        {!isPaid && paymentResult === 'success' && (
           <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-3">
             <span className="text-green-600 text-xl">✓</span>
             <p className="text-sm font-semibold text-green-800">
@@ -112,14 +113,14 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
             </p>
           </div>
         )}
-        {paymentResult === 'pending' && (
+        {!isPaid && paymentResult === 'pending' && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
             <p className="text-sm font-semibold text-yellow-800">
               Tu pago está siendo procesado por Mercado Pago.
             </p>
           </div>
         )}
-        {paymentResult === 'failure' && (
+        {!isPaid && paymentResult === 'failure' && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
             <p className="text-sm font-semibold text-red-800">
               El pago no pudo procesarse. Podés intentar de nuevo.
@@ -157,8 +158,17 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
           </div>
         )}
 
+        {/* Finalizado */}
+        {order && isDelivered && (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex flex-col items-center gap-2 text-center">
+            <span className="text-4xl">✓</span>
+            <span className="text-[16px] font-bold text-green-800">¡Pedido finalizado!</span>
+            <span className="text-sm text-green-600">Tu pedido fue entregado. ¡Gracias!</span>
+          </div>
+        )}
+
         {/* QR de retiro */}
-        {order && isPaid && (
+        {order && isPaid && !isDelivered && (
           <div id="order-print-area" className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center gap-4">
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="text-[15px] font-bold text-gray-900">Presentá este QR en la barra</span>
@@ -245,17 +255,19 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Estado del pago</span>
+                <span className="text-gray-400">Estado</span>
                 <span className={`font-semibold ${
-                  order.payment_status === 'approved' ? 'text-green-600'
+                  isDelivered ? 'text-green-600'
+                  : order.payment_status === 'approved' ? 'text-blue-600'
                   : order.payment_status === 'rejected' || order.payment_status === 'cancelled' ? 'text-red-500'
                   : 'text-yellow-600'
                 }`}>
-                  {order.payment_status === 'approved' ? 'Pagado'
+                  {isDelivered ? 'Finalizado'
+                   : order.payment_status === 'approved' ? 'Pagado'
                    : order.payment_status === 'rejected' ? 'Rechazado'
                    : order.payment_status === 'cancelled' ? 'Cancelado'
                    : order.payment_status === 'refunded' ? 'Reintegrado'
-                   : 'Pendiente'}
+                   : 'Pendiente de pago'}
                 </span>
               </div>
             </div>

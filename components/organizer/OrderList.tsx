@@ -5,14 +5,16 @@ import { formatDate, formatPrice } from '@/lib/utils'
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pendiente',
+  paid: 'Pagado',
   preparing: 'En preparación',
   ready: 'Listo',
-  delivered: 'Entregado',
+  delivered: 'Finalizado',
   cancelled: 'Cancelado',
 }
 
 const STATUS_BADGE: Record<OrderStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
+  paid: 'bg-blue-100 text-blue-800',
   preparing: 'bg-blue-100 text-blue-800',
   ready: 'bg-green-100 text-green-800',
   delivered: 'bg-gray-100 text-gray-600',

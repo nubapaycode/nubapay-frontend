@@ -16,10 +16,10 @@ const PAYMENT_CONFIG = [
 ] as const
 
 const STATUS_CONFIG: { key: OrderStatus; label: string; dot: string }[] = [
-  { key: 'pending', label: 'Pendientes', dot: 'bg-amber-400' },
-  { key: 'preparing', label: 'En preparación', dot: 'bg-blue-400' },
-  { key: 'ready', label: 'Listos', dot: 'bg-green-400' },
-  { key: 'delivered', label: 'Entregados', dot: 'bg-gray-300' },
+  { key: 'pending', label: 'Pendientes de pago', dot: 'bg-amber-400' },
+  { key: 'paid', label: 'Pagados', dot: 'bg-blue-400' },
+  { key: 'delivered', label: 'Finalizados', dot: 'bg-gray-300' },
+  { key: 'cancelled', label: 'Cancelados', dot: 'bg-red-300' },
 ]
 
 function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
@@ -88,7 +88,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="max-w-6xl flex flex-col items-center justify-center py-24 gap-3">
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando métricas…</p>
       </div>
@@ -97,7 +97,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   if (loadError || !summary) {
     return (
-      <div className="max-w-6xl space-y-4">
+      <div className="space-y-4">
         <OrganizerToolHeading title="Dashboard del evento" />
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-red-600">{loadError || 'Sin datos'}</div>
         <button
@@ -115,7 +115,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="space-y-4">
 
       <OrganizerToolHeading
         title="Dashboard del evento"
