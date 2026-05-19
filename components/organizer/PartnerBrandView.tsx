@@ -819,7 +819,7 @@ export function PartnerBrandView() {
                   <p className="text-[10px] text-[#7a9b7e] mb-2 font-medium">Vista previa en WhatsApp</p>
                   <div className="flex justify-end">
                     <div className="max-w-[290px] w-full rounded-lg overflow-hidden shadow-sm bg-[#004E36] px-3 pt-3 pb-2">
-                      <div className="bg-[#003F2C] rounded-xl px-3 py-2.5 mb-2 border border-[#005a3f]">
+                      <div className="bg-[#003F2C] rounded-xl px-3 py-2.5 mb-1 border border-[#005a3f]">
                         <p className="text-[12px] font-bold text-white leading-snug line-clamp-2 mb-1">
                           {seoTitleSuffix.trim() || displayName.trim() || tenant.subdomain}
                         </p>
