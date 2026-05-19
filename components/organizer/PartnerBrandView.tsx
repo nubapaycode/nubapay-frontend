@@ -23,7 +23,7 @@ import {
 import { organizerAccentColorsFromDraft } from '@/lib/organizerAccentCss'
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
+  'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-900 focus:border-transparent transition'
 
 const textareaClass = `${inputClass} min-h-[88px] resize-y leading-relaxed`
 
