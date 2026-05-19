@@ -145,12 +145,17 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
             <p className="text-sm font-semibold text-[#0077B6]">
               Tu pedido está reservado. Completá el pago para confirmarlo.
             </p>
-            <a
-              href={order.checkout_url}
-              className="self-start text-sm font-bold text-[#009EE3] underline underline-offset-2"
+            <button
+              onClick={() => {
+                const webUrl = order.checkout_url!
+                const fallback = setTimeout(() => { window.location.href = webUrl }, 1500)
+                window.addEventListener('blur', () => clearTimeout(fallback), { once: true })
+                window.location.href = 'mercadopago://'
+              }}
+              className="self-start text-sm font-bold text-[#009EE3] underline underline-offset-2 bg-transparent border-none cursor-pointer p-0"
             >
               Ir a Mercado Pago →
-            </a>
+            </button>
           </div>
         )}
 
