@@ -760,7 +760,42 @@ export function PartnerBrandView() {
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Título en el navegador</span>
             <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} placeholder="ej. · Festival Costa" />
-            <p className="mt-1.5 text-[11px] text-gray-500">Texto que se agrega al título de la pestaña del navegador.</p>
+            {/* Tab bar preview */}
+            <div className="mt-2 rounded-xl border border-gray-200 bg-[#e8eaed] overflow-hidden">
+              {/* Tab strip */}
+              <div className="flex items-end px-2 pt-2 gap-0.5">
+                {/* Active tab */}
+                <div className="relative flex items-center gap-1.5 bg-white rounded-t-lg px-3 py-1.5 min-w-0 max-w-[240px] shadow-sm border border-b-0 border-gray-200">
+                  {/* Favicon placeholder */}
+                  <div className="shrink-0 h-3.5 w-3.5 rounded-sm bg-gray-200" />
+                  <span className="text-[11px] text-gray-800 truncate font-medium leading-none">
+                    {seoTitleSuffix.trim()
+                      ? `Catálogo ${seoTitleSuffix.trim()}`
+                      : <span className="text-gray-400 italic">Catálogo</span>}
+                  </span>
+                  <button type="button" tabIndex={-1} className="ml-1 shrink-0 rounded-full p-0.5 text-gray-400 hover:bg-gray-100 pointer-events-none">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                  </button>
+                </div>
+                {/* Inactive tab */}
+                <div className="flex items-center gap-1.5 rounded-t-lg px-3 py-1.5 min-w-0 max-w-[160px] opacity-60">
+                  <div className="shrink-0 h-3.5 w-3.5 rounded-sm bg-gray-300" />
+                  <span className="text-[11px] text-gray-500 truncate leading-none">Nueva pestaña</span>
+                </div>
+              </div>
+              {/* Address bar row */}
+              <div className="bg-white border-t border-gray-200 px-3 py-1.5 flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="h-4 w-4 rounded-full bg-gray-100" />
+                  <div className="h-4 w-4 rounded-full bg-gray-100" />
+                  <div className="h-4 w-4 rounded-full bg-gray-100" />
+                </div>
+                <div className="flex-1 flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1">
+                  <Lock size={9} className="text-gray-400 shrink-0" />
+                  <span className="text-[10px] text-gray-500 font-mono truncate">{tenant.subdomain}.nubapay.com</span>
+                </div>
+              </div>
+            </div>
           </label>
 
           <label className="block">
