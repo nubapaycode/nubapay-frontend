@@ -835,9 +835,9 @@ export function PartnerBrandView() {
                         <span className="text-[11px] text-[#25d366] truncate">https://{tenant.subdomain}.nubapay.com</span>
                         <div className="flex items-center gap-1 ml-2 shrink-0">
                           <span className="text-[10px] text-[#a8b8aa]">12:34</span>
-                          <svg width="14" height="10" viewBox="0 0 16 11" fill="none" className="text-[#53bdeb]">
-                            <path d="M1 5.5l4 4L15 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M5 5.5l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <svg width="16" height="11" viewBox="0 0 18 11" fill="none" className="text-[#53bdeb]">
+                            <path d="M1 5.5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M5 5.5l3.5 3.5L16 1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
                       </div>
