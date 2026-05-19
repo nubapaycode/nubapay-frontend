@@ -819,15 +819,17 @@ export function PartnerBrandView() {
                   <p className="text-[10px] text-[#7a9b7e] mb-2 font-medium">Vista previa en WhatsApp</p>
                   <div className="flex justify-end">
                     <div className="max-w-[280px] w-full rounded-lg overflow-hidden shadow-sm bg-[#004E36] px-3 pt-3 pb-2">
-                      <p className="text-[12px] font-bold text-white leading-snug line-clamp-2 mb-1">
-                        {seoTitleSuffix.trim() || displayName.trim() || tenant.subdomain}
-                      </p>
-                      <p className="text-[11px] text-[#a8b8aa] leading-relaxed line-clamp-3 mb-2">
-                        {seoDescription.trim()}
-                      </p>
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-[#a8b8aa] shrink-0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        <span className="text-[11px] text-[#a8b8aa]">{tenant.subdomain}.nubapay.com</span>
+                      <div className="bg-[#003F2C] rounded-xl px-3 py-2.5 mb-2 border border-[#005a3f]">
+                        <p className="text-[12px] font-bold text-white leading-snug line-clamp-2 mb-1">
+                          {seoTitleSuffix.trim() || displayName.trim() || tenant.subdomain}
+                        </p>
+                        <p className="text-[11px] text-[#a8b8aa] leading-relaxed line-clamp-3 mb-2">
+                          {seoDescription.trim()}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-[#a8b8aa] shrink-0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          <span className="text-[11px] text-[#a8b8aa]">{tenant.subdomain}.nubapay.com</span>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] text-[#25d366] truncate">https://{tenant.subdomain}.nubapay.com</span>
