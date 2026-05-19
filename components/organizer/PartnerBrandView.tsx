@@ -830,7 +830,7 @@ export function PartnerBrandView() {
                         <span className="text-[11px] text-[#a8b8aa]">{tenant.subdomain}.nubapay.com</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-[#25d366] truncate">https://{tenant.subdomain}.nubapay.com</span>
+                        <code className="text-[10px] text-white bg-[#003F2C] border border-[#005a3f] rounded-lg px-2 py-0.5 truncate">{tenant.subdomain}.nubapay.com</code>
                         <div className="flex items-center gap-1 ml-2 shrink-0">
                           <span className="text-[10px] text-[#a8b8aa]">12:34</span>
                           <svg width="14" height="10" viewBox="0 0 16 11" fill="none" className="text-[#53bdeb]">
