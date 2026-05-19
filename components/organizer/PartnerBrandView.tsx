@@ -863,54 +863,61 @@ export function PartnerBrandView() {
                 <ColorInput label="Color secundario" value={secondaryColor} onChange={setSecondaryColor} />
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-[11px] font-medium text-gray-500">Texto sobre color principal:</span>
-                    <span
-                      className="inline-flex rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-black/5"
-                      style={{ backgroundColor: primaryBackdropLive || '#e5e7eb', color: accentEffectiveHex }}
+              <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+                {/* Preview row */}
+                <div className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="shrink-0 h-10 rounded-xl flex items-center justify-center px-4 shadow-sm ring-1 ring-black/5"
+                      style={{ backgroundColor: primaryBackdropLive || '#e5e7eb' }}
                     >
-                      Vista previa
-                    </span>
-                    <code className="text-[11px] font-mono text-gray-500">{accentEffectiveHex}</code>
+                      <span className="text-sm font-semibold whitespace-nowrap" style={{ color: accentEffectiveHex }}>
+                        Texto de ejemplo
+                      </span>
+                    </div>
+                    <code className="text-[11px] font-mono text-gray-400 shrink-0">{accentEffectiveHex}</code>
                   </div>
                   <button
                     type="button"
                     onClick={() => { setShowAdvancedAccent(v => !v) }}
-                    className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-700 transition shrink-0"
+                    className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-700 transition shrink-0"
                   >
-                    Avanzado {showAdvancedAccent ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    Ajustar {showAdvancedAccent ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
                 </div>
-                {showAdvancedAccent && (
-                  <div className="flex flex-col gap-2 pt-1 border-t border-gray-100">
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
-                      Por defecto se elige automáticamente (
-                      {accentAutoHex ? (
-                        <>sugerido <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">{accentAutoHex}</code></>
-                      ) : ('ingresá el color principal primero')}
-                      ). Podés forzarlo con un #hex distinto.
-                    </p>
-                    <label className="block">
-                      <span className="text-[11px] font-medium text-gray-600 mb-1.5 block">Override manual (#hex)</span>
-                      <input
-                        type="text"
-                        className={`${inputClass} font-mono`}
-                        value={accentContrastText}
-                        onChange={e => { setAccentContrastText(e.target.value) }}
-                        placeholder="Vacío = automático"
-                        autoComplete="off"
-                      />
-                    </label>
-                    {accentManualLowContrast && (
-                      <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                        Ese texto sobre el fondo principal tiene menos contraste habitual (menos de 3:1 según WCAG). Lo aplicamos si
-                        lo querés como marca — revisá cómo se lee en vivo.
+
+                {/* Advanced panel */}
+                <div
+                  className="grid transition-all duration-300 ease-in-out"
+                  style={{ gridTemplateRows: showAdvancedAccent ? '1fr' : '0fr' }}
+                >
+                  <div className="overflow-hidden">
+                    <div className="flex flex-col gap-3 px-4 pb-4 pt-1 border-t border-gray-100">
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        El color del texto se elige automáticamente para garantizar legibilidad
+                        {accentAutoHex && (
+                          <> — sugerido <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">{accentAutoHex}</code></>
+                        )}. Podés sobreescribirlo con cualquier hex.
                       </p>
-                    )}
+                      <label className="block">
+                        <span className="text-[11px] font-medium text-gray-600 mb-1.5 block">Color manual</span>
+                        <input
+                          type="text"
+                          className={`${inputClass} font-mono`}
+                          value={accentContrastText}
+                          onChange={e => { setAccentContrastText(e.target.value) }}
+                          placeholder="Vacío = automático"
+                          autoComplete="off"
+                        />
+                      </label>
+                      {accentManualLowContrast && (
+                        <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 leading-relaxed">
+                          El contraste con el fondo es bajo (menos de 3:1 según WCAG). Si es intencional como parte de tu marca, está bien — pero revisá cómo se ve en pantalla.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
