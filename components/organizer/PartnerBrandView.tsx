@@ -204,7 +204,7 @@ function ColorInput({
       </div>
 
       {open && (
-        <div className="absolute z-50 top-[calc(100%+8px)] left-0 w-64 rounded-2xl border border-gray-200 bg-white shadow-xl p-3 flex flex-col gap-3">
+        <div className="absolute z-[200] top-[calc(100%+8px)] left-0 w-64 rounded-2xl border border-gray-200 bg-white shadow-xl p-3 flex flex-col gap-3">
           {/* Gradient area */}
           <div
             ref={gradientRef}
