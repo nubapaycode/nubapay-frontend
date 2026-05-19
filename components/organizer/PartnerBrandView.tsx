@@ -245,6 +245,7 @@ export function PartnerBrandView() {
 
   const [provisionSubdomain, setProvisionSubdomain] = useState('')
   const [provisioning, setProvisioning] = useState(false)
+  const [isEditingSubdomain, setIsEditingSubdomain] = useState(false)
 
   const [displayName, setDisplayName] = useState('')
   const [seoTitleSuffix, setSeoTitleSuffix] = useState('')
@@ -380,22 +381,29 @@ export function PartnerBrandView() {
     }
     setProvisioning(true)
     try {
-      const res = await browserFetch(partnerTenantPaths.provision(), {
-        method: 'POST',
-        headers: authHeadersJson(),
-        body: JSON.stringify({ subdomain: raw }),
-      })
+      const res = isEditingSubdomain
+        ? await browserFetch(partnerTenantPaths.tenant(), {
+            method: 'PATCH',
+            headers: authHeadersJson(),
+            body: JSON.stringify({ subdomain: raw }),
+          })
+        : await browserFetch(partnerTenantPaths.provision(), {
+            method: 'POST',
+            headers: authHeadersJson(),
+            body: JSON.stringify({ subdomain: raw }),
+          })
       const body = (await res.json()) as TenantApiBody & { code?: string }
       if (!res.ok) {
-        toast(body.error ?? 'No se pudo crear el espacio', 'error')
+        toast(body.error ?? (isEditingSubdomain ? 'No se pudo actualizar el subdominio' : 'No se pudo crear el espacio'), 'error')
         return
       }
       if (body.tenant) {
         applyTenant(body.tenant)
         setNeedsProvision(false)
+        setIsEditingSubdomain(false)
         setProvisionSubdomain('')
         await refreshAuthProfile()
-        toast('Listo: ya tenés un espacio dedicado para tu marca y catálogo.', 'success')
+        toast(isEditingSubdomain ? 'Subdominio actualizado' : 'Listo: ya tenés un espacio dedicado para tu marca y catálogo.', 'success')
         router.refresh()
         return
       }
@@ -549,26 +557,32 @@ export function PartnerBrandView() {
       <div className="max-w-3xl mx-auto px-4 py-10">
         <OrganizerToolHeading
           prefix={<Palette size={24} strokeWidth={1.75} />}
-          title="Personalizá tu marca"
-          description="Agregá el logo, los colores y el nombre de tu organización. Tus compradores los van a ver en el catálogo."
+          title={isEditingSubdomain ? 'Cambiar subdominio' : 'Personalizá tu marca'}
+          description={
+            isEditingSubdomain
+              ? 'Elegí el nuevo nombre corto para tu espacio en Nubapay.'
+              : 'Agregá el logo, los colores y el nombre de tu organización. Tus compradores los van a ver en el catálogo.'
+          }
         />
 
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm text-gray-600">
-          {[
-            { icon: <Palette size={16} strokeWidth={1.75} />, label: 'Colores y logo propios' },
-            { icon: <Globe size={16} strokeWidth={1.75} />, label: 'Tu propio dominio web' },
-            { icon: <ShoppingCart size={16} strokeWidth={1.75} />, label: 'Catálogo con tu identidad' },
-          ].map(({ icon, label }) => (
-            <div key={label} className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <span className="text-gray-500 shrink-0">{icon}</span>
-              <span className="text-[14px] font-medium text-gray-700">{label}</span>
-            </div>
-          ))}
-        </div>
+        {!isEditingSubdomain && (
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm text-gray-600">
+            {[
+              { icon: <Palette size={16} strokeWidth={1.75} />, label: 'Colores y logo propios' },
+              { icon: <Globe size={16} strokeWidth={1.75} />, label: 'Tu propio dominio web' },
+              { icon: <ShoppingCart size={16} strokeWidth={1.75} />, label: 'Catálogo con tu identidad' },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <span className="text-gray-500 shrink-0">{icon}</span>
+                <span className="text-[14px] font-medium text-gray-700">{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-4 py-5">
           <p className="text-sm font-medium text-gray-900 mb-4">
-            Primero, elegí un nombre corto para tu organización.
+            {isEditingSubdomain ? 'Nuevo nombre de subdominio' : 'Primero, elegí un nombre corto para tu organización.'}
           </p>
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium text-gray-700">Nombre de tu organización</span>
@@ -580,13 +594,23 @@ export function PartnerBrandView() {
                 placeholder="ej. festival-costa"
                 autoComplete="off"
               />
+              {isEditingSubdomain && (
+                <button
+                  type="button"
+                  onClick={() => { setNeedsProvision(false); setIsEditingSubdomain(false) }}
+                  disabled={provisioning}
+                  className="shrink-0 rounded-full px-5 py-3 text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition"
+                >
+                  Cancelar
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => void handleProvision()}
                 disabled={provisioning || previewSubdomain.length < 2}
                 className="shrink-0 rounded-full px-5 py-3 text-sm font-semibold bg-[#c6ff00] text-[#0a0a0f] hover:opacity-90 disabled:opacity-40 transition"
               >
-                {provisioning ? 'Configurando…' : 'Confirmar'}
+                {provisioning ? (isEditingSubdomain ? 'Guardando…' : 'Configurando…') : 'Confirmar'}
               </button>
             </div>
             <p className="text-[11px] text-gray-400">
@@ -659,7 +683,7 @@ export function PartnerBrandView() {
           </div>
         </div>
 
-        <FaqSection />
+        {!isEditingSubdomain && <FaqSection />}
         <ToastPortal />
       </div>
     )
@@ -704,7 +728,7 @@ export function PartnerBrandView() {
           <button
             type="button"
             aria-label="Cambiar nombre"
-            onClick={() => { setProvisionSubdomain(tenant.subdomain); setNeedsProvision(true) }}
+            onClick={() => { setProvisionSubdomain(tenant.subdomain); setIsEditingSubdomain(true); setNeedsProvision(true) }}
             className="ml-3 shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition"
           >
             <Pencil size={13} />
