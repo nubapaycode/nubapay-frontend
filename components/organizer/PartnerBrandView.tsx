@@ -3,6 +3,7 @@
 import { Check, ChevronDown, ChevronUp, Copy, Globe, Lock, Palette, Pencil, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
@@ -144,19 +145,29 @@ function ColorInput({
   onChange: (v: string) => void
 }) {
   const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null)
+  const swatchRef = useRef<HTMLButtonElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
   const gradientRef = useRef<HTMLDivElement>(null)
   const hueRef = useRef<HTMLDivElement>(null)
   const canon = coerceBrandHex(value)
   const [h, s, v] = canon ? hexToHsv(canon) : [0, 0, 0.9]
   const hueHex = hsvToHex(h, 1, 1)
 
+  const openPicker = () => {
+    if (!swatchRef.current) return
+    const rect = swatchRef.current.getBoundingClientRect()
+    setPopoverPos({ top: rect.bottom + window.scrollY + 8, left: rect.left + window.scrollX })
+    setOpen(true)
+  }
+
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (
+        swatchRef.current && !swatchRef.current.contains(e.target as Node) &&
+        popoverRef.current && !popoverRef.current.contains(e.target as Node)
+      ) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -183,14 +194,65 @@ function ColorInput({
     window.addEventListener('mouseup', up)
   }
 
+  const popover = open && popoverPos ? (
+    <div
+      ref={popoverRef}
+      className="fixed z-[9999] w-64 rounded-2xl border border-gray-200 bg-white shadow-xl p-3 flex flex-col gap-3"
+      style={{ top: popoverPos.top, left: popoverPos.left }}
+    >
+      {/* Gradient area */}
+      <div
+        ref={gradientRef}
+        className="relative w-full h-36 rounded-xl cursor-crosshair select-none overflow-hidden"
+        style={{ backgroundColor: hueHex }}
+        onMouseDown={e => { applyGradientPos(e.clientX, e.clientY); startDrag(e => applyGradientPos(e.clientX, e.clientY)) }}
+      >
+        <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to right, #fff, transparent)' }} />
+        <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to bottom, transparent, #000)' }} />
+        {canon && (
+          <div
+            className="absolute w-[14px] h-[14px] rounded-full border-2 border-white shadow pointer-events-none -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${s * 100}%`, top: `${(1 - v) * 100}%`, backgroundColor: canon }}
+          />
+        )}
+      </div>
+
+      {/* Hue slider */}
+      <div
+        ref={hueRef}
+        className="relative w-full h-3.5 rounded-full cursor-pointer select-none"
+        style={{ background: 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }}
+        onMouseDown={e => { applyHuePos(e.clientX); startDrag(e => applyHuePos(e.clientX)) }}
+      >
+        <div
+          className="absolute top-1/2 w-[18px] h-[18px] rounded-full border-2 border-white shadow -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ left: `${(h / 360) * 100}%`, backgroundColor: hueHex }}
+        />
+      </div>
+
+      {/* Hex input */}
+      <div className="flex items-center gap-2">
+        <div className="shrink-0 h-8 w-8 rounded-lg border border-gray-200" style={{ backgroundColor: canon ?? '#e5e7eb' }} />
+        <input
+          type="text"
+          className={inputClass + ' font-mono h-8 py-0 text-[12px]'}
+          value={value}
+          onChange={e => { onChange(e.target.value) }}
+          placeholder="#000000"
+        />
+      </div>
+    </div>
+  ) : null
+
   return (
-    <div ref={containerRef} className="relative block">
+    <div className="block">
       <span className="text-sm font-medium text-gray-700">{label}</span>
       <div className="mt-2 flex items-center gap-2">
         <button
+          ref={swatchRef}
           type="button"
           aria-label="Abrir selector de color"
-          onClick={() => setOpen(v => !v)}
+          onClick={openPicker}
           className="shrink-0 h-10 w-10 rounded-lg border border-gray-200 shadow-sm transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900"
           style={{ backgroundColor: canon ?? '#e5e7eb' }}
         />
@@ -202,52 +264,7 @@ function ColorInput({
           placeholder="#000000"
         />
       </div>
-
-      {open && (
-        <div className="absolute z-[200] top-[calc(100%+8px)] left-0 w-64 rounded-2xl border border-gray-200 bg-white shadow-xl p-3 flex flex-col gap-3">
-          {/* Gradient area */}
-          <div
-            ref={gradientRef}
-            className="relative w-full h-36 rounded-xl cursor-crosshair select-none overflow-hidden"
-            style={{ backgroundColor: hueHex }}
-            onMouseDown={e => { applyGradientPos(e.clientX, e.clientY); startDrag(e => applyGradientPos(e.clientX, e.clientY)) }}
-          >
-            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to right, #fff, transparent)' }} />
-            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to bottom, transparent, #000)' }} />
-            {canon && (
-              <div
-                className="absolute w-[14px] h-[14px] rounded-full border-2 border-white shadow pointer-events-none -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${s * 100}%`, top: `${(1 - v) * 100}%`, backgroundColor: canon }}
-              />
-            )}
-          </div>
-
-          {/* Hue slider */}
-          <div
-            ref={hueRef}
-            className="relative w-full h-3.5 rounded-full cursor-pointer select-none"
-            style={{ background: 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }}
-            onMouseDown={e => { applyHuePos(e.clientX); startDrag(e => applyHuePos(e.clientX)) }}
-          >
-            <div
-              className="absolute top-1/2 w-[18px] h-[18px] rounded-full border-2 border-white shadow -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ left: `${(h / 360) * 100}%`, backgroundColor: hueHex }}
-            />
-          </div>
-
-          {/* Hex input */}
-          <div className="flex items-center gap-2">
-            <div className="shrink-0 h-8 w-8 rounded-lg border border-gray-200" style={{ backgroundColor: canon ?? '#e5e7eb' }} />
-            <input
-              type="text"
-              className={inputClass + ' font-mono h-8 py-0 text-[12px]'}
-              value={value}
-              onChange={e => { onChange(e.target.value) }}
-              placeholder="#000000"
-            />
-          </div>
-        </div>
-      )}
+      {typeof document !== 'undefined' && createPortal(popover, document.body)}
     </div>
   )
 }
