@@ -8,6 +8,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/utils'
 
 import { CartItemRow } from './CartItemRow'
+import { FloatingOrders } from './FloatingOrders'
 
 interface CartViewProps {
   eventId: string
@@ -148,7 +149,7 @@ export function CartView({ eventId, catalogSlug }: CartViewProps) {
           </button>
         </div>
 
-      </div>
+      <FloatingOrders eventId={eventId} catalogSlug={catalogSlug} />
     </div>
   )
 }

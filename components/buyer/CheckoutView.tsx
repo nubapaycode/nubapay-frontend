@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/hooks/useCart'
+import { saveOrder } from '@/lib/hooks/useOrderHistory'
 import { formatPrice } from '@/lib/utils'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS } from '@/lib/buyerUi'
@@ -94,12 +95,14 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
 
       const data = await res.json()
       clearCart()
-
-      if (paymentMethod === 'mp' && data.checkout_url) {
-        window.location.href = data.checkout_url
-      } else {
-        router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
-      }
+      saveOrder({
+        orderId: data.order_id,
+        orderNumber: data.order_number ?? null,
+        slug: catalogSlug ?? eventId,
+        total,
+        createdAt: new Date().toISOString(),
+      })
+      router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
     } catch {
       setError('Error de conexión. Verificá tu internet e intentá de nuevo.')
     } finally {

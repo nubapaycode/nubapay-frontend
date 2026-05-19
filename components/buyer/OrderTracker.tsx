@@ -65,18 +65,6 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
-  // Si llegamos a esta página con pago MP pendiente y aún no tenemos checkout_url,
-  // redirigir automáticamente en cuanto aparezca (fallback al polling del CheckoutView)
-  useEffect(() => {
-    if (
-      order?.payment_method === 'mp' &&
-      order.payment_status === 'pending' &&
-      order.checkout_url &&
-      !paymentResult
-    ) {
-      window.location.href = order.checkout_url
-    }
-  }, [order?.checkout_url, order?.payment_method, order?.payment_status, paymentResult])
 
   const isPaid = order?.payment_status === 'approved'
   const isPendingPayment = order?.status === 'pending_payment'
@@ -141,10 +129,11 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
 
         {/* Alerta pago pendiente MP */}
         {isPendingPayment && order?.checkout_url && (
-          <div className="bg-[#009EE3]/8 border border-[#009EE3]/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
-            <p className="text-sm font-semibold text-[#0077B6]">
-              Tu pedido está reservado. Completá el pago para confirmarlo.
-            </p>
+          <div className="bg-white rounded-2xl border border-[#009EE3]/30 p-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <p className="text-[15px] font-bold text-gray-900">Tu pedido está reservado</p>
+              <p className="text-sm text-gray-500">Completá el pago para confirmarlo.</p>
+            </div>
             <button
               onClick={() => {
                 const webUrl = order.checkout_url!
@@ -152,9 +141,16 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
                 window.addEventListener('blur', () => clearTimeout(fallback), { once: true })
                 window.location.href = 'mercadopago://'
               }}
-              className="self-start text-sm font-bold text-[#009EE3] underline underline-offset-2 bg-transparent border-none cursor-pointer p-0"
+              className="w-full rounded-full py-3.5 text-[15px] font-bold text-white flex items-center justify-center gap-2"
+              style={{ background: '#009EE3' }}
             >
-              Ir a Mercado Pago →
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+                <circle cx="11" cy="11" r="11" fill="white" fillOpacity="0.25"/>
+                <rect x="5" y="7.5" width="12" height="7.5" rx="1.5" stroke="white" strokeWidth="1.25"/>
+                <path d="M5 10.5h12" stroke="white" strokeWidth="1.25"/>
+                <rect x="7" y="12.5" width="3" height="1.25" rx="0.5" fill="white"/>
+              </svg>
+              Pagar con Mercado Pago
             </button>
           </div>
         )}

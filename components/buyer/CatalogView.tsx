@@ -10,6 +10,7 @@ import { CatalogSection } from './CatalogSection'
 import { ProductCard } from './ProductCard'
 import { ComboCard } from './ComboCard'
 import { FloatingCart } from './FloatingCart'
+import { FloatingOrders } from './FloatingOrders'
 import type { Event } from '@/types'
 
 interface CatalogViewProps {
@@ -179,6 +180,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
       </div>
 
       <FloatingCart count={count} total={total} eventId={event.id} catalogSlug={catalogSlug} />
+      <FloatingOrders eventId={event.id} catalogSlug={catalogSlug} />
     </div>
   )
 }
