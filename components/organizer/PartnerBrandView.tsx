@@ -837,8 +837,8 @@ export function PartnerBrandView() {
               style={{ gridTemplateRows: seoDescription.trim() ? '1fr' : '0fr' }}
             >
               <div className="overflow-hidden">
-                <div className="mt-2 rounded-xl border border-gray-200 bg-[#e5ddd5] px-4 py-3">
-                  <p className="text-[10px] text-gray-500 mb-2 font-medium">Vista previa en WhatsApp</p>
+                <div className="mt-2 rounded-xl border border-gray-200 bg-[#2a3b2e] px-4 py-3">
+                  <p className="text-[10px] text-[#7a9b7e] mb-2 font-medium">Vista previa en WhatsApp</p>
                   <div className="flex justify-end">
                     <div className="max-w-[280px] w-full rounded-lg overflow-hidden shadow-sm bg-[#1f2f23] px-3 pt-3 pb-2">
                       <p className="text-[12px] font-bold text-white leading-snug line-clamp-2 mb-1">
