@@ -911,7 +911,7 @@ export function PartnerBrandView() {
                         />
                       </label>
                       {accentManualLowContrast && (
-                        <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 leading-relaxed">
+                        <p className="text-[11px] text-orange-900 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 leading-relaxed">
                           El contraste con el fondo es bajo (menos de 3:1 según WCAG). Si es intencional como parte de tu marca, está bien — pero revisá cómo se ve en pantalla.
                         </p>
                       )}
