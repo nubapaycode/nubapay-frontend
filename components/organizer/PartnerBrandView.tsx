@@ -1,10 +1,11 @@
 'use client'
 
-import { Palette } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Copy, Globe, Lock, Palette, Pencil, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 import { authPaths, partnerTenantPaths } from '@/lib/api'
@@ -73,6 +74,167 @@ function strField(v: unknown): string {
   return typeof v === 'string' ? v : ''
 }
 
+function ImagePreview({ url, label }: { url: string; label: string }) {
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null)
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const canon = coerceBrandHex(url)
+  const trimmed = url.trim()
+
+  useEffect(() => {
+    if (!trimmed || canon) return
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => { if (!cancelled) setResolvedUrl(trimmed) }
+    img.onerror = () => { if (!cancelled) setFailedUrl(trimmed) }
+    img.src = trimmed
+    return () => { cancelled = true }
+  }, [trimmed, canon])
+
+  if (!trimmed || canon) return null
+
+  const isPending = resolvedUrl !== trimmed && failedUrl !== trimmed
+  const isOk = resolvedUrl === trimmed
+  const isError = failedUrl === trimmed
+
+  return (
+    <div className="mt-2 flex items-center gap-3">
+      {isPending && <Spinner size="sm" className="text-gray-400" />}
+      {isOk && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={trimmed} alt={label} className="h-10 w-auto rounded-lg border border-gray-200 object-contain bg-gray-50" />
+      )}
+      {isError && (
+        <p className="text-[11px] text-red-600">No se pudo cargar la imagen</p>
+      )}
+    </div>
+  )
+}
+
+function ColorInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  const pickerRef = useRef<HTMLInputElement>(null)
+  const canon = coerceBrandHex(value)
+
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <div className="relative mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Abrir selector de color"
+          onClick={() => pickerRef.current?.click()}
+          className="shrink-0 h-10 w-10 rounded-lg border border-gray-200 shadow-sm transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900"
+          style={{ backgroundColor: canon ?? '#e5e7eb' }}
+        />
+        <input
+          type="color"
+          ref={pickerRef}
+          className="sr-only"
+          value={canon ?? '#000000'}
+          onChange={e => { onChange(e.target.value) }}
+        />
+        <input
+          type="text"
+          className={inputClass + ' font-mono'}
+          value={value}
+          onChange={e => { onChange(e.target.value) }}
+          placeholder={placeholder ?? '#000000'}
+        />
+      </div>
+    </label>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => { setCopied(false) }, 2500)
+    } catch {
+      /* ignore */
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-100 transition"
+      title="Copiar"
+    >
+      {copied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
+      {copied ? 'Copiado' : 'Copiar'}
+    </button>
+  )
+}
+
+const FAQS = [
+  {
+    q: '¿Puedo cambiar el nombre después?',
+    a: 'Sí, podés cambiarlo cuando quieras desde esta misma pantalla usando el ícono de lápiz.',
+  },
+  {
+    q: '¿Qué ven mis compradores con mi marca?',
+    a: 'Van a ver tu logo, tus colores y el nombre de tu organización en el catálogo y en todas las pantallas del proceso de compra.',
+  },
+  {
+    q: '¿Necesito tener mi propio dominio?',
+    a: 'No. Tu catálogo funciona desde el primer momento en tu dirección de Nubapay. El dominio propio es opcional para quienes quieren una experiencia completamente personalizada.',
+  },
+  {
+    q: '¿Cuándo se activa mi marca?',
+    a: 'Una vez que completás la configuración y el equipo de Nubapay habilita tu cuenta. Mientras tanto podés dejar todo listo de antemano.',
+  },
+]
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button
+        type="button"
+        onClick={() => { setOpen(v => !v) }}
+        className="flex w-full items-center justify-between py-3.5 text-left text-sm font-medium text-gray-800 hover:text-gray-900 transition"
+      >
+        <span>{q}</span>
+        <ChevronDown
+          size={15}
+          className="shrink-0 text-gray-400 transition-transform duration-300"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+      <div
+        className="grid transition-all duration-300 ease-in-out"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <p className="pb-4 text-sm text-gray-500 leading-relaxed">{a}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FaqSection() {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 mt-2 mb-6">
+      <p className="pt-4 pb-1 text-xs font-semibold text-gray-400">Preguntas frecuentes</p>
+      {FAQS.map(f => <FaqItem key={f.q} q={f.q} a={f.a} />)}
+    </div>
+  )
+}
+
 export function PartnerBrandView() {
   const router = useRouter()
   const { show: toast, ToastPortal } = useToast()
@@ -92,6 +254,7 @@ export function PartnerBrandView() {
   const [logoUrl, setLogoUrl] = useState('')
   const [faviconUrl, setFaviconUrl] = useState('')
   const [accentContrastText, setAccentContrastText] = useState('')
+  const [showAdvancedAccent, setShowAdvancedAccent] = useState(false)
 
   const [savingBrand, setSavingBrand] = useState(false)
 
@@ -99,6 +262,10 @@ export function PartnerBrandView() {
   const [creatingDomain, setCreatingDomain] = useState(false)
   const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const [challengeByHostname, setChallengeByHostname] = useState<Record<string, string>>({})
+
+  const [deleteTarget, setDeleteTarget] = useState<TenantDomainRow | null>(null)
+  const [showDnsGuide, setShowDnsGuide] = useState(false)
+
 
   const refreshAuthProfile = useCallback(async () => {
     const token = getAuthToken()
@@ -133,7 +300,6 @@ export function PartnerBrandView() {
     setAccentContrastText(strField(b.accentContrastText))
   }, [])
 
-  const primaryCanon = useMemo(() => coerceBrandHex(primaryColor) ?? '', [primaryColor])
   const primaryBackdropLive = useMemo(
     () => coerceBrandHex(primaryColor) ?? approximateAccentBackgroundHex(primaryColor) ?? '',
     [primaryColor],
@@ -160,33 +326,6 @@ export function PartnerBrandView() {
     () => organizerAccentColorsFromDraft(primaryColor, accentContrastText),
     [primaryColor, accentContrastText],
   )
-
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEBUG_TENANT_THEME !== '1') return
-    const manualCanon = coerceBrandHex(accentContrastText.trim())
-    const ratio =
-      primaryBackdropLive.length > 0 && manualCanon
-        ? wcagContrastBetweenHex(manualCanon, primaryBackdropLive)
-        : null
-    console.warn('[nubapay organizer-accent] marca / formulario (botones borrador)', {
-      primaryInput: primaryColor,
-      accentContrastInput: accentContrastText,
-      primaryCoerced: primaryCanon || null,
-      primaryBackdropLive: primaryBackdropLive || null,
-      suggestedAuto: accentAutoHex,
-      effectivePreview: accentEffectiveHex,
-      buttonDraftSurface: brandAccentBtn,
-      manualContrastRatio: ratio,
-    })
-  }, [
-    primaryColor,
-    accentContrastText,
-    primaryCanon,
-    primaryBackdropLive,
-    accentAutoHex,
-    accentEffectiveHex,
-    brandAccentBtn,
-  ])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -367,9 +506,12 @@ export function PartnerBrandView() {
     }
   }
 
-  const handleDeleteDomain = async (domainId: string, hostname: string) => {
+  const handleDeleteDomain = async () => {
+    if (!deleteTarget) return
+    const { id, hostname } = deleteTarget
+    setDeleteTarget(null)
     try {
-      const res = await browserFetch(partnerTenantPaths.domain(domainId), {
+      const res = await browserFetch(partnerTenantPaths.domain(id), {
         method: 'DELETE',
         headers: authHeadersJson(),
       })
@@ -401,46 +543,123 @@ export function PartnerBrandView() {
   }
 
   if (needsProvision) {
+    const previewSubdomain = provisionSubdomain.trim().toLowerCase()
+
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
         <OrganizerToolHeading
           prefix={<Palette size={24} strokeWidth={1.75} />}
-          title="Activá tu marca blanca"
-          description={
-            <>
-              Tu cuenta está en la instancia compartida de Nubapay. Creá un <strong>subdominio dedicado</strong> para
-              tu organización (tu catálogo y panel quedarán bajo ese espacio cuando uses el mismo host público que
-              definas en DNS).
-            </>
-          }
+          title="Personalizá tu marca"
+          description="Agregá el logo, los colores y el nombre de tu organización. Tus compradores los van a ver en el catálogo."
         />
 
-        <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-4 py-5">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Identificador (subdominio)</span>
-            <input
-              className={`${inputClass} mt-2 font-mono`}
-              value={provisionSubdomain}
-              onChange={e => { setProvisionSubdomain(e.target.value.trim().toLowerCase()) }}
-              placeholder="ej. festival-costa"
-              autoComplete="off"
-            />
-          </label>
-          <p className="mt-3 text-[13px] text-gray-600 leading-relaxed">
-            Solo letras minúsculas, números y guiones medios (2–63 caracteres). No podés usar palabras reservadas como{' '}
-            <code className="text-xs">platform</code> ni <code className="text-xs">www</code>. Los eventos de tu cuenta
-            y el equipo sólo-organizador ligado pasan automáticamente a este tenant.
-          </p>
-          <button
-            type="button"
-            onClick={() => void handleProvision()}
-            disabled={provisioning}
-            className="mt-6 w-full sm:w-auto rounded-full px-6 py-3 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 transition"
-          >
-            {provisioning ? 'Creando…' : 'Crear espacio dedicado'}
-          </button>
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm text-gray-600">
+          {[
+            { icon: <Palette size={16} strokeWidth={1.75} />, label: 'Colores y logo propios' },
+            { icon: <Globe size={16} strokeWidth={1.75} />, label: 'Tu propio dominio web' },
+            { icon: <ShoppingCart size={16} strokeWidth={1.75} />, label: 'Catálogo con tu identidad' },
+          ].map(({ icon, label }) => (
+            <div key={label} className="flex items-center gap-2.5 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <span className="text-gray-500 shrink-0">{icon}</span>
+              <span className="text-[14px] font-medium text-gray-700">{label}</span>
+            </div>
+          ))}
         </div>
 
+        <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-4 py-5">
+          <p className="text-sm font-medium text-gray-900 mb-4">
+            Primero, elegí un nombre corto para tu organización.
+          </p>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">Nombre de tu organización</span>
+            <div className="flex gap-2 items-center">
+              <input
+                className={`${inputClass} font-mono`}
+                value={provisionSubdomain}
+                onChange={e => { setProvisionSubdomain(e.target.value.toLowerCase().replace(/\s/g, '-').slice(0, 25)) }}
+                placeholder="ej. festival-costa"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() => void handleProvision()}
+                disabled={provisioning || previewSubdomain.length < 2}
+                className="shrink-0 rounded-full px-5 py-3 text-sm font-semibold bg-[#c6ff00] text-[#0a0a0f] hover:opacity-90 disabled:opacity-40 transition"
+              >
+                {provisioning ? 'Configurando…' : 'Confirmar'}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              Letras minúsculas, números y guiones. Mínimo 2 caracteres.
+            </p>
+            <div
+              className="grid transition-all duration-300 ease-in-out"
+              style={{ gridTemplateRows: previewSubdomain.length >= 18 ? '1fr' : '0fr' }}
+            >
+              <div className="overflow-hidden">
+                <div className="flex flex-col gap-1 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-medium transition-colors duration-300 ${previewSubdomain.length === 25 ? 'text-red-500' : 'text-amber-500'}`}>
+                      {previewSubdomain.length === 25 ? 'Límite alcanzado' : `Te quedan ${25 - previewSubdomain.length} caracteres`}
+                    </span>
+                    <span className={`text-[11px] tabular-nums font-mono transition-colors duration-300 ${previewSubdomain.length === 25 ? 'text-red-500' : 'text-amber-500'}`}>
+                      {previewSubdomain.length}/25
+                    </span>
+                  </div>
+                  <div className="h-1 w-full rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${previewSubdomain.length === 25 ? 'bg-red-400' : 'bg-amber-400'}`}
+                      style={{ width: `${(previewSubdomain.length / 25) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="grid transition-all duration-300 ease-in-out"
+            style={{ gridTemplateRows: previewSubdomain.length >= 2 ? '1fr' : '0fr' }}
+          >
+            <div className="overflow-hidden">
+              <div className="mt-3 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                {/* Chrome bar */}
+                <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2">
+                  <div className="flex gap-1.5 shrink-0">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                  </div>
+                  {/* Address bar */}
+                  <div className="flex flex-1 items-center gap-1.5 rounded-md bg-white border border-gray-200 px-2.5 py-1 min-w-0">
+                    <Lock size={10} className="shrink-0 text-gray-400" />
+                    <span className="text-[11px] font-mono text-gray-500 truncate">
+                      <span className="text-gray-400">https://</span>
+                      <span className="font-semibold text-gray-800">{previewSubdomain}</span>
+                      <span className="text-gray-500">.nubapay.com</span>
+                    </span>
+                  </div>
+                </div>
+                {/* Page skeleton */}
+                <div className="px-4 py-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-md bg-gray-100 shrink-0" />
+                    <div className="h-3 w-28 rounded-full bg-gray-100" />
+                  </div>
+                  <div className="mt-1 h-2.5 w-3/4 rounded-full bg-gray-100" />
+                  <div className="h-2.5 w-1/2 rounded-full bg-gray-100" />
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="h-14 rounded-lg bg-gray-100" />
+                    <div className="h-14 rounded-lg bg-gray-100" />
+                    <div className="h-14 rounded-lg bg-gray-100" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <FaqSection />
         <ToastPortal />
       </div>
     )
@@ -466,164 +685,239 @@ export function PartnerBrandView() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <OrganizerToolHeading
         prefix={<Palette size={24} strokeWidth={1.75} />}
-        title="Marca y dominios"
-        description="Colores y metadatos visibles cuando el programa de marca blanca está activado para tu subdominio o dominio verificado."
-        actions={
-          <button
-            type="button"
-            onClick={handleSaveBranding}
-            disabled={savingBrand}
-            className="rounded-full px-5 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
-            style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
-          >
-            {savingBrand ? 'Guardando…' : 'Guardar marca'}
-          </button>
-        }
+        title="Tu marca"
+        description="Personalizá cómo ven tu organización los compradores: colores, logo y nombre."
       />
 
       {whitelabelOff && (
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          El whitelabel público no está habilitado para tu tenant todavía. Podés cargar marca y registrar dominios; el
-          público sigue viendo identidad Nubapay hasta que se active desde operaciones/soporte.
+          Tu marca todavía no está visible al público. Podés configurarla ahora y se activará cuando el equipo de Nubapay habilite tu cuenta.
         </div>
       )}
 
       <div className="mb-10 rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-3 text-xs text-gray-600">
-        <span className="font-semibold text-gray-900">Subdominio de la cuenta:</span>{' '}
-        <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}</code>
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="font-semibold text-gray-900">Tu dirección en Nubapay:</span>{' '}
+            <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}.nubapay.com</code>
+          </div>
+          <button
+            type="button"
+            aria-label="Cambiar nombre"
+            onClick={() => { setProvisionSubdomain(tenant.subdomain); setNeedsProvision(true) }}
+            className="ml-3 shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition"
+          >
+            <Pencil size={13} />
+          </button>
+        </div>
       </div>
 
-      <section className="flex flex-col gap-4 mb-14">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-400">Identidad visual</h2>
+      {/* ── Identidad visual ── */}
+      <section className="flex flex-col gap-8 mb-14">
+        <h2 className="text-sm font-semibold text-gray-400">Identidad visual</h2>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Nombre visible</span>
-          <input className={`${inputClass} mt-2`} value={displayName} onChange={e => { setDisplayName(e.target.value) }} />
-        </label>
+        {/* Subsección: Texto */}
+        <div className="flex flex-col gap-4">
+          <p className="text-xs font-semibold text-gray-400 border-b border-gray-100 pb-2">Nombre y descripción</p>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Sufijo título SEO (opcional)</span>
-          <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} />
-        </label>
-
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Descripción SEO (opcional)</span>
-          <textarea
-            className={`${textareaClass} mt-2`}
-            value={seoDescription}
-            onChange={e => {
-              setSeoDescription(e.target.value)
-            }}
-            rows={3}
-            placeholder="Breve texto para meta description del catálogo y del panel en tu dominio."
-          />
-          <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">
-            Si está vacío, el sitio arma una descripción por defecto según el nombre visible o subdominio.
-          </p>
-        </label>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Color principal (hex)</span>
-            <input
-              type="text"
-              className={`${inputClass} mt-2 font-mono`}
-              value={primaryColor}
-              onChange={e => { setPrimaryColor(e.target.value) }}
-              placeholder="#000000"
-            />
+            <span className="text-sm font-medium text-gray-700">Nombre visible</span>
+            <input className={`${inputClass} mt-2`} value={displayName} onChange={e => { setDisplayName(e.target.value) }} />
           </label>
+
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Color secundario (hex)</span>
-            <input
-              type="text"
-              className={`${inputClass} mt-2 font-mono`}
-              value={secondaryColor}
-              onChange={e => { setSecondaryColor(e.target.value) }}
-              placeholder="#000000"
+            <span className="text-sm font-medium text-gray-700">Título en el navegador (opcional)</span>
+            <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} placeholder="ej. · Festival Costa" />
+            <p className="mt-1.5 text-[11px] text-gray-500">Texto que se agrega al título de la pestaña del navegador.</p>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Descripción (opcional)</span>
+            <textarea
+              className={`${textareaClass} mt-2`}
+              value={seoDescription}
+              onChange={e => { setSeoDescription(e.target.value) }}
+              rows={3}
+              placeholder="Describí brevemente tu organización o evento."
             />
+            <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">
+              Aparece en buscadores y al compartir el link del catálogo.
+            </p>
           </label>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">
-              Texto sobre el color principal
-            </span>
-            <p className="text-[11px] text-gray-500 leading-relaxed">
-              Vacío = automático (
-              {accentAutoHex ? (
-                <>
-                  sugerido <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">{accentAutoHex}</code>
-                </>
-              ) : (
-                'ingresá el color principal (con o sin #)'
-              )}
-              ). Con #hex válido distinto del principal siempre se usa tu color (vacío ⇒ automático). Ratio WCAG bajo también se aplica: acá sólo recomendamos legibilidad.
-            </p>
-          </div>
-          <label className="block">
-            <span className="text-[11px] font-medium text-gray-600 mb-1.5 block">Override manual (#hex)</span>
-            <input
-              type="text"
-              className={`${inputClass} font-mono`}
-              value={accentContrastText}
-              onChange={e => {
-                setAccentContrastText(e.target.value)
-              }}
-              placeholder="Vacío = automático"
-              autoComplete="off"
-            />
-          </label>
-          {accentManualLowContrast ? (
-            <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-              Ese texto sobre el fondo principal tiene menos contraste habitual (menos de 3:1 según WCAG). Lo aplicamos si
-              lo querés como marca — revisá cómo se lee en vivo.
-            </p>
-          ) : null}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <span className="text-[11px] font-medium text-gray-500">
-              En uso: <code className="font-mono text-gray-800">{accentEffectiveHex}</code>
-            </span>
-            <span
-              className="inline-flex rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-black/5"
-              style={{
-                backgroundColor: primaryBackdropLive || '#e5e7eb',
-                color: accentEffectiveHex,
-              }}
-            >
-              Vista previa
-            </span>
+        {/* Subsección: Colores — aparece cuando hay nombre */}
+        <div
+          className="grid transition-all duration-500 ease-in-out"
+          style={{ gridTemplateRows: displayName.trim() ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-4 pt-1">
+              <p className="text-xs font-semibold text-gray-400 border-b border-gray-100 pb-2">Colores</p>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <ColorInput label="Color principal" value={primaryColor} onChange={setPrimaryColor} />
+                <ColorInput label="Color secundario" value={secondaryColor} onChange={setSecondaryColor} />
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-[11px] font-medium text-gray-500">Texto sobre color principal:</span>
+                    <span
+                      className="inline-flex rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-black/5"
+                      style={{ backgroundColor: primaryBackdropLive || '#e5e7eb', color: accentEffectiveHex }}
+                    >
+                      Vista previa
+                    </span>
+                    <code className="text-[11px] font-mono text-gray-500">{accentEffectiveHex}</code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAdvancedAccent(v => !v) }}
+                    className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-700 transition shrink-0"
+                  >
+                    Avanzado {showAdvancedAccent ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                </div>
+                {showAdvancedAccent && (
+                  <div className="flex flex-col gap-2 pt-1 border-t border-gray-100">
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                      Por defecto se elige automáticamente (
+                      {accentAutoHex ? (
+                        <>sugerido <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-[10px]">{accentAutoHex}</code></>
+                      ) : ('ingresá el color principal primero')}
+                      ). Podés forzarlo con un #hex distinto.
+                    </p>
+                    <label className="block">
+                      <span className="text-[11px] font-medium text-gray-600 mb-1.5 block">Override manual (#hex)</span>
+                      <input
+                        type="text"
+                        className={`${inputClass} font-mono`}
+                        value={accentContrastText}
+                        onChange={e => { setAccentContrastText(e.target.value) }}
+                        placeholder="Vacío = automático"
+                        autoComplete="off"
+                      />
+                    </label>
+                    {accentManualLowContrast && (
+                      <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                        Ese texto sobre el fondo principal tiene menos contraste habitual (menos de 3:1 según WCAG). Lo aplicamos si
+                        lo querés como marca — revisá cómo se lee en vivo.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">URL logo</span>
-          <input className={`${inputClass} mt-2`} value={logoUrl} onChange={e => { setLogoUrl(e.target.value) }} placeholder="https://..." />
-        </label>
+        {/* Subsección: Imágenes — aparece cuando hay color principal */}
+        <div
+          className="grid transition-all duration-500 ease-in-out"
+          style={{ gridTemplateRows: coerceBrandHex(primaryColor) ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-4 pt-1">
+              <p className="text-xs font-semibold text-gray-400 border-b border-gray-100 pb-2">Imágenes</p>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">URL favicon</span>
-          <input className={`${inputClass} mt-2`} value={faviconUrl} onChange={e => { setFaviconUrl(e.target.value) }} placeholder="https://..." />
-        </label>
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">Logo</span>
+                <input
+                  className={`${inputClass} mt-2`}
+                  value={logoUrl}
+                  onChange={e => { setLogoUrl(e.target.value) }}
+                  placeholder="https://..."
+                />
+                <p className="mt-1.5 text-[11px] text-gray-500">Pegá la dirección de tu logo (PNG o SVG recomendado).</p>
+                <ImagePreview url={logoUrl} label="Logo" />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">Ícono de la pestaña</span>
+                <input
+                  className={`${inputClass} mt-2`}
+                  value={faviconUrl}
+                  onChange={e => { setFaviconUrl(e.target.value) }}
+                  placeholder="https://..."
+                />
+                <p className="mt-1.5 text-[11px] text-gray-500">La imagen pequeña que aparece en la pestaña del navegador (favicon).</p>
+                <ImagePreview url={faviconUrl} label="Favicon" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Guardar — aparece cuando hay imágenes o color */}
+        <div
+          className="grid transition-all duration-500 ease-in-out"
+          style={{ gridTemplateRows: coerceBrandHex(primaryColor) ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => void handleSaveBranding()}
+                disabled={savingBrand}
+                className="rounded-full px-5 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
+                style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
+              >
+                {savingBrand ? 'Guardando…' : 'Guardar marca'}
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
+      {/* ── Dominios externos ── */}
       <section className="flex flex-col gap-4 mb-24">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-400">Dominios externos</h2>
+        <h2 className="text-sm font-semibold text-gray-400">Tu propio dominio</h2>
 
         <p className="text-sm text-gray-600">
-          Agregá un hostname (sin protocolo). Creá un registro TXT con el valor que te damos para verificar. Vercel y tu
-          proveedor DNS deben apuntar el host a este proyecto.
+          Si tenés un dominio propio (ej. <code className="text-xs bg-gray-100 rounded px-1">pedidos.tumarca.com</code>), podés conectarlo para que tu catálogo aparezca bajo esa dirección.
         </p>
 
-        <p className="text-[11px] text-gray-500">
-          Conservá una copia del valor TXT después de registrar un dominio: por seguridad no lo volvemos a mostrar al
-          recargar.
-        </p>
+        {/* Guía DNS colapsable */}
+        <div className="rounded-2xl border border-gray-100 bg-gray-50">
+          <button
+            type="button"
+            onClick={() => { setShowDnsGuide(v => !v) }}
+            className="flex w-full items-center justify-between px-4 py-3 text-[14px] font-semibold text-gray-700 hover:text-gray-900 transition"
+          >
+            <span>¿Cómo conecto mi dominio?</span>
+            {showDnsGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          {showDnsGuide && (
+            <div className="px-4 pb-4 flex flex-col gap-3 text-[14px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+              <ol className="flex flex-col gap-3">
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">1</span>
+                  <span>Ingresá tu dominio en el campo de abajo y hacé click en <strong>Agregar</strong>. Vamos a darte un código de verificación.</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">2</span>
+                  <span>Copiá ese código y pegalo como un registro <code className="bg-white border border-gray-200 rounded px-1">TXT</code> en el panel de tu proveedor de dominio (GoDaddy, Namecheap, Cloudflare, etc.).</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">3</span>
+                  <span>También creá un registro <code className="bg-white border border-gray-200 rounded px-1">CNAME</code> que apunte tu dominio hacia <code className="bg-white border border-gray-200 rounded px-1 select-all">cname.vercel-dns.com</code>.</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">4</span>
+                  <span>Volvé acá y presioná <strong>Verificar</strong>. Puede tardar hasta 48 hs en activarse.</span>
+                </li>
+              </ol>
+              <p className="text-[11px] text-gray-900 bg-gray-200 rounded-lg px-3 py-2">
+                Guardá el código de verificación antes de cerrar la página — no lo volvemos a mostrar por seguridad.
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="block flex-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-600">Hostname</span>
+            <span className="text-sm font-medium text-gray-700">Dirección web</span>
             <input
               className={`${inputClass} mt-2`}
               value={hostnameDraft}
@@ -637,7 +931,7 @@ export function PartnerBrandView() {
             disabled={creatingDomain}
             className="rounded-full px-5 py-3 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 shrink-0"
           >
-            {creatingDomain ? '…' : 'Registrar'}
+            {creatingDomain ? '…' : 'Agregar'}
           </button>
         </div>
 
@@ -681,7 +975,7 @@ export function PartnerBrandView() {
                 </div>
 
                 <div className="flex gap-2 shrink-0">
-                  {!d.verified ? (
+                  {!d.verified && (
                     <button
                       type="button"
                       onClick={() => void handleVerifyDomain(d.id)}
@@ -691,10 +985,10 @@ export function PartnerBrandView() {
                     >
                       {verifyingId === d.id ? '…' : 'Verificar'}
                     </button>
-                  ) : null}
+                  )}
                   <button
                     type="button"
-                    onClick={() => void handleDeleteDomain(d.id, d.hostname)}
+                    onClick={() => { setDeleteTarget(d) }}
                     className="rounded-full px-4 py-2 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100"
                   >
                     Eliminar
@@ -705,6 +999,33 @@ export function PartnerBrandView() {
           ))}
         </ul>
       </section>
+
+      {/* Modal confirmación eliminar dominio */}
+      <Modal
+        isOpen={deleteTarget !== null}
+        onClose={() => { setDeleteTarget(null) }}
+        title="¿Eliminar dominio?"
+      >
+        <p className="text-sm text-gray-600 mb-6">
+          Vas a eliminar <strong>{deleteTarget?.hostname}</strong>. Esta acción no se puede deshacer.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => { setDeleteTarget(null) }}
+            className="rounded-full px-5 py-2.5 text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDeleteDomain()}
+            className="rounded-full px-5 py-2.5 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition"
+          >
+            Eliminar
+          </button>
+        </div>
+      </Modal>
 
       <ToastPortal />
     </div>
