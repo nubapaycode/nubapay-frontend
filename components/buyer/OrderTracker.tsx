@@ -135,12 +135,7 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
               <p className="text-sm text-gray-500">Completá el pago para confirmarlo.</p>
             </div>
             <button
-              onClick={() => {
-                const webUrl = order.checkout_url!
-                const fallback = setTimeout(() => { window.location.href = webUrl }, 1500)
-                window.addEventListener('blur', () => clearTimeout(fallback), { once: true })
-                window.location.href = 'mercadopago://'
-              }}
+              onClick={() => { window.location.href = order.checkout_url! }}
               className="w-full rounded-full py-3.5 text-[15px] font-bold text-white flex items-center justify-center gap-2"
               style={{ background: '#009EE3' }}
             >
