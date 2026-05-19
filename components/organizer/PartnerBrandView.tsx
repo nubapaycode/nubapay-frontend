@@ -830,6 +830,46 @@ export function PartnerBrandView() {
                 </div>
               </div>
             </div>
+
+            {/* WhatsApp preview */}
+            <div
+              className="grid transition-all duration-500 ease-in-out"
+              style={{ gridTemplateRows: seoDescription.trim() ? '1fr' : '0fr' }}
+            >
+              <div className="overflow-hidden">
+                <div className="mt-2 rounded-xl border border-gray-200 bg-[#e5ddd5] px-4 py-3">
+                  <p className="text-[10px] text-gray-500 mb-2 font-medium">Vista previa en WhatsApp</p>
+                  <div className="flex justify-end">
+                    <div className="max-w-[260px] w-full rounded-lg overflow-hidden shadow-sm bg-[#dcf8c6]">
+                      {/* OG image placeholder */}
+                      <div className="h-28 bg-gray-200 flex items-center justify-center">
+                        <Globe size={28} className="text-gray-400" strokeWidth={1.5} />
+                      </div>
+                      {/* Link card body */}
+                      <div className="bg-white px-3 py-2 border-l-4 border-[#25d366]">
+                        <p className="text-[11px] font-semibold text-gray-900 leading-snug line-clamp-2">
+                          {seoTitleSuffix.trim() || displayName.trim() || tenant.subdomain}
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">
+                          {seoDescription.trim()}
+                        </p>
+                        <p className="text-[10px] text-[#25d366] mt-1 truncate font-medium">
+                          {tenant.subdomain}.nubapay.com
+                        </p>
+                      </div>
+                      {/* Bubble tail + timestamp */}
+                      <div className="bg-[#dcf8c6] px-3 py-1.5 flex justify-end items-center gap-1">
+                        <span className="text-[10px] text-gray-400">12:34</span>
+                        <svg width="14" height="10" viewBox="0 0 16 11" fill="none" className="text-[#53bdeb]">
+                          <path d="M1 5.5l4 4L15 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M5 5.5l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </label>
         </div>
 
