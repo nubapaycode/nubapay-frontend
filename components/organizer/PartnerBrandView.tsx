@@ -731,7 +731,7 @@ export function PartnerBrandView() {
         <div className="flex items-center justify-between">
           <div>
             <span className="font-semibold text-gray-900">Tu dirección en Nubapay:</span>{' '}
-            <code className="rounded-lg bg-[#003F2C] text-white px-2 py-1 border border-[#005a3f]">{tenant.subdomain}.nubapay.com</code>
+            <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}.nubapay.com</code>
           </div>
           <button
             type="button"
