@@ -44,17 +44,31 @@ const colors: Record<ToastType, { bg: string; border: string; color: string }> =
 }
 
 function ToastList({ toasts, onDismiss }: ToastProps) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  if (!mounted || toasts.length === 0) return null
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    let el = document.getElementById('nuba-toast-root')
+    if (!el) {
+      el = document.createElement('div')
+      el.id = 'nuba-toast-root'
+      el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;'
+      document.body.appendChild(el)
+    }
+    setPortalEl(el)
+    return () => {
+      // no removemos el nodo, se reutiliza entre montajes
+    }
+  }, [])
+
+  if (!portalEl || toasts.length === 0) return null
 
   return createPortal(
     <div
       style={{
         position: 'fixed',
-        bottom: '28px',
-        right: '28px',
-        zIndex: 9999,
+        top: '20px',
+        right: '20px',
+        zIndex: 2147483647,
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -103,12 +117,12 @@ function ToastList({ toasts, onDismiss }: ToastProps) {
       })}
       <style>{`
         @keyframes toast-in {
-          from { opacity: 0; transform: translateY(12px) scale(0.97); }
+          from { opacity: 0; transform: translateY(-10px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>,
-    document.body,
+    portalEl,
   )
 }
 

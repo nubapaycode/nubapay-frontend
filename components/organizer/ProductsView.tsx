@@ -207,6 +207,283 @@ function NubaSelect({
   )
 }
 
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+const DAY_NAMES = ['Lu','Ma','Mi','Ju','Vi','Sa','Do']
+
+function DateTimeField({
+  value,
+  onChange,
+  disabled,
+  placeholder = 'Sin fecha',
+}: {
+  value: string
+  onChange: (v: string) => void
+  disabled?: boolean
+  placeholder?: string
+}) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const today = new Date()
+
+  const parsed = value ? new Date(value) : null
+  const valid = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null
+
+  const [viewYear, setViewYear] = useState(valid?.getFullYear() ?? today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(valid?.getMonth() ?? today.getMonth())
+  const [selYear, setSelYear] = useState<number | null>(valid?.getFullYear() ?? null)
+  const [selMonth, setSelMonth] = useState<number | null>(valid?.getMonth() ?? null)
+  const [selDay, setSelDay] = useState<number | null>(valid?.getDate() ?? null)
+  const [selHour, setSelHour] = useState(valid ? String(valid.getHours()).padStart(2, '0') : '00')
+  const [selMin, setSelMin] = useState(valid ? String(valid.getMinutes()).padStart(2, '0') : '00')
+
+  const formatted = valid
+    ? valid.toLocaleString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : null
+
+  const openPicker = () => {
+    if (disabled) return
+    const v = value ? new Date(value) : null
+    const pv = v && !Number.isNaN(v.getTime()) ? v : null
+    setViewYear(pv?.getFullYear() ?? today.getFullYear())
+    setViewMonth(pv?.getMonth() ?? today.getMonth())
+    setSelYear(pv?.getFullYear() ?? null)
+    setSelMonth(pv?.getMonth() ?? null)
+    setSelDay(pv?.getDate() ?? null)
+    setSelHour(pv ? String(pv.getHours()).padStart(2, '0') : '00')
+    setSelMin(pv ? String(pv.getMinutes()).padStart(2, '0') : '00')
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      const popoverWidth = 272
+      const spaceBelow = window.innerHeight - rect.bottom
+      const top = spaceBelow >= 320 ? rect.bottom + 6 : rect.top - 6 - 320
+      const left = Math.min(rect.left, window.innerWidth - popoverWidth - 8)
+      setPopoverPos({ top, left, width: popoverWidth })
+    }
+    setOpen(true)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
+    else setViewMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
+    else setViewMonth(m => m + 1)
+  }
+
+  // Build calendar grid (Mon-first)
+  const firstDow = new Date(viewYear, viewMonth, 1).getDay()
+  const offset = (firstDow + 6) % 7
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const cells: (number | null)[] = [
+    ...Array(offset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  const handleDayClick = (day: number) => {
+    setSelYear(viewYear); setSelMonth(viewMonth); setSelDay(day)
+  }
+
+  const handleConfirm = () => {
+    if (selYear === null || selMonth === null || selDay === null) return
+    const h = Math.min(23, Math.max(0, Number(selHour) || 0))
+    const m = Math.min(59, Math.max(0, Number(selMin) || 0))
+    const dateStr = `${selYear}-${String(selMonth + 1).padStart(2, '0')}-${String(selDay).padStart(2, '0')}`
+    onChange(`${dateStr}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    setOpen(false)
+  }
+
+  const isSelected = (day: number) => selDay === day && selMonth === viewMonth && selYear === viewYear
+  const isToday = (day: number) => day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      {/* Trigger */}
+      <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
+        onClick={openPicker}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+          borderRadius: '12px', border: `1px solid ${open ? '#0A0A0F' : 'rgba(0,0,0,0.1)'}`,
+          background: '#FAFAFA', padding: '10px 14px', fontSize: '13px',
+          color: formatted ? '#0A0A0F' : '#C8C8D0',
+          cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
+          boxSizing: 'border-box', textAlign: 'left', outline: 'none',
+          boxShadow: open ? '0 0 0 3px rgba(0,0,0,0.06)' : 'none',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {formatted ?? placeholder}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {value && !disabled && (
+            <span
+              role="button"
+              aria-label="Quitar fecha"
+              style={{ cursor: 'pointer', color: '#C8C8D0', display: 'flex', alignItems: 'center', padding: '2px', borderRadius: '4px' }}
+              onPointerDown={e => { e.stopPropagation(); onChange(''); setOpen(false) }}
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+            </span>
+          )}
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ color: open ? '#0A0A0F' : '#9A9AA8', transition: 'color 0.15s' }}>
+            <rect x="1.5" y="2.5" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M4.5 1v3M9.5 1v3M1.5 6h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        </span>
+      </button>
+
+      {/* Popover — fixed para escapar del overflow:hidden del Modal */}
+      {open && popoverPos && (
+        <div
+          style={{
+            position: 'fixed',
+            top: popoverPos.top,
+            left: popoverPos.left,
+            width: popoverPos.width,
+            zIndex: 200,
+            background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.14)', padding: '16px',
+            animation: 'nb-select-pop 0.15s cubic-bezier(0.16,1,0.3,1)',
+            fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+          }}
+        >
+          {/* Month navigation */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <button type="button" onClick={prevMonth} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button type="button" onClick={nextMonth} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 2l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          </div>
+
+          {/* Day names */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '4px' }}>
+            {DAY_NAMES.map(d => (
+              <div key={d} style={{ textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#C8C8D0', padding: '4px 0', letterSpacing: '0.02em' }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Day cells */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+            {cells.map((day, i) => {
+              if (!day) return <div key={`e-${i}`} />
+              const sel = isSelected(day)
+              const tod = isToday(day)
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleDayClick(day)}
+                  style={{
+                    width: '100%', aspectRatio: '1', borderRadius: '8px', border: 'none',
+                    background: sel ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
+                    color: sel ? ORGANIZER_ACCENT_FOREGROUND : tod ? '#0A0A0F' : '#374151',
+                    fontSize: '12px', fontWeight: sel || tod ? 700 : 400,
+                    cursor: 'pointer',
+                    outline: tod && !sel ? `1.5px solid rgba(0,0,0,0.15)` : 'none',
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#F5F5F7' }}
+                  onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'transparent' }}
+                >
+                  {day}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Time */}
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8', margin: '0 0 8px 0' }}>Hora</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              {/* Horas */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <button type="button" onClick={() => setSelHour(h => String((Number(h) + 1) % 24).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 6.5L5 3.5L8 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <input
+                  type="text"
+                  value={selHour}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 2)
+                    setSelHour(v)
+                  }}
+                  onBlur={e => setSelHour(String(Math.min(23, Math.max(0, Number(e.target.value) || 0))).padStart(2, '0'))}
+                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 700, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
+                />
+                <button type="button" onClick={() => setSelHour(h => String((Number(h) + 23) % 24).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              </div>
+
+              <span style={{ fontSize: '22px', fontWeight: 700, color: '#C8C8D0', lineHeight: 1, marginTop: '-2px' }}>:</span>
+
+              {/* Minutos */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <button type="button" onClick={() => setSelMin(m => String((Number(m) + 5) % 60).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 6.5L5 3.5L8 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <input
+                  type="text"
+                  value={selMin}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 2)
+                    setSelMin(v)
+                  }}
+                  onBlur={e => setSelMin(String(Math.min(59, Math.max(0, Number(e.target.value) || 0))).padStart(2, '0'))}
+                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 700, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
+                />
+                <button type="button" onClick={() => setSelMin(m => String((Number(m) + 55) % 60).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ marginTop: '12px', display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false) }}
+              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '12px', fontWeight: 500, padding: '7px 12px', cursor: 'pointer' }}
+            >
+              Limpiar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={selDay === null}
+              style={{ flex: 2, borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '12px', fontWeight: 700, padding: '7px 12px', cursor: selDay === null ? 'not-allowed' : 'pointer', opacity: selDay === null ? 0.4 : 1 }}
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Ícono cámara (estilo réflex / digital) para placeholder de foto de producto o combo */
 function CatalogCameraPlaceholderIcon({ size = 28 }: { size?: number }) {
   return (
@@ -273,12 +550,16 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [price, setPrice] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState<string>('')
+  const [nameError, setNameError] = useState(false)
+  const [priceError, setPriceError] = useState(false)
 
   const [comboName, setComboName] = useState('')
   const [comboPrice, setComboPrice] = useState('')
   const [comboPickerItems, setComboPickerItems] = useState<ComboPickerEntry[]>([])
   const [comboPickerQuery, setComboPickerQuery] = useState('')
   const [comboDesc, setComboDesc] = useState('')
+  const [comboNameError, setComboNameError] = useState(false)
+  const [comboPriceError, setComboPriceError] = useState(false)
 
   const [productTogglePending, setProductTogglePending] = useState<Set<string>>(() => new Set())
 
@@ -512,11 +793,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
     setPrice('')
     setDescription('')
     setCategoryId('')
+    setNameError(false)
+    setPriceError(false)
     setComboName('')
     setComboPrice('')
     setComboDesc('')
     setComboPickerItems([])
     setComboPickerQuery('')
+    setComboNameError(false)
+    setComboPriceError(false)
     clearPendingImage()
     setImageUploading(false)
   }
@@ -589,15 +874,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
   }
 
   const handleSaveProduct = async () => {
-    if (!name.trim() || !price.trim()) {
-      setFormError('Nombre y precio son requeridos')
-      return
-    }
+    if (!name.trim()) { setNameError(true); return }
+    if (!price.trim()) { setPriceError(true); return }
     const pr = Number(price)
-    if (Number.isNaN(pr) || pr < 0) {
-      setFormError('Precio inválido')
-      return
-    }
+    if (Number.isNaN(pr) || pr < 0) { setPriceError(true); return }
+    setNameError(false); setPriceError(false)
     setSaving(true)
     setFormError('')
     if (editingCatalogId) {
@@ -644,22 +925,17 @@ export function ProductsView({ eventId }: { eventId: string }) {
   }
 
   const handleSaveCombo = async () => {
-    if (!comboName.trim() || !comboPrice.trim()) {
-      setFormError('Nombre y precio son requeridos')
-      return
-    }
+    if (!comboName.trim()) { setComboNameError(true); return }
+    if (!comboPrice.trim()) { setComboPriceError(true); return }
     const pr = Number(comboPrice)
-    if (Number.isNaN(pr) || pr < 0) {
-      setFormError('Precio inválido')
-      return
-    }
+    if (Number.isNaN(pr) || pr < 0) { setComboPriceError(true); return }
+    setComboNameError(false); setComboPriceError(false)
     const lines = comboPickerItems.map(l => ({
       product_id: l.product_id,
       quantity: Math.max(1, l.quantity),
     }))
     if (lines.length === 0) {
-      setFormError('Agregá al menos un producto al combo')
-      return
+      showToast('Agregá al menos un producto al combo', 'error'); return
     }
     setSaving(true)
     setFormError('')
@@ -1254,13 +1530,26 @@ export function ProductsView({ eventId }: { eventId: string }) {
                       <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                         {product.name}
                       </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px', fontSize: '12px', color: '#9A9AA8' }}>
-                        <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(product.price)}</span>
-                        {promotionsByProductId[product.id]?.is_active ? (
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
-                            Promo
-                          </span>
-                        ) : null}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px', fontSize: '12px', color: '#9A9AA8', flexWrap: 'wrap' }}>
+                        {(() => {
+                          const promo = promotionsByProductId[product.id]
+                          const hasPromoPrice = promo?.is_active && promo.promo_price != null && promo.promo_price < product.price
+                          return hasPromoPrice ? (
+                            <>
+                              <span style={{ fontWeight: 600, color: '#9A9AA8', textDecoration: 'line-through', textDecorationColor: '#C8C8D0' }}>{formatPrice(product.price)}</span>
+                              <span style={{ fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '1px 8px', borderRadius: '100px', fontSize: '12px' }}>{formatPrice(promo.promo_price!)}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(product.price)}</span>
+                              {promo?.is_active && (
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
+                                  Promo
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                         {product.category_name && (
                           <>
                             <span style={{ color: '#E0E0E5' }}>·</span>
@@ -1269,7 +1558,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
                       <button
                         type="button"
                         onClick={() => openPromoModal(product)}
@@ -1278,9 +1567,9 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           background: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          padding: '8px',
+                          padding: '7px',
                           borderRadius: '8px',
-                          color: promotionsByProductId[product.id] ? '#0A0A0F' : '#9A9AA8',
+                          color: promotionsByProductId[product.id] ? '#0A0A0F' : '#6B7280',
                           display: 'flex',
                           alignItems: 'center',
                           transition: 'background 0.15s, color 0.15s',
@@ -1288,10 +1577,10 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
                         onMouseLeave={e => {
                           e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.color = promotionsByProductId[product.id] ? '#0A0A0F' : '#9A9AA8'
+                          e.currentTarget.style.color = promotionsByProductId[product.id] ? '#0A0A0F' : '#6B7280'
                         }}
                       >
-                        <BadgePercent size={14} strokeWidth={1.35} className="shrink-0" aria-hidden />
+                        <BadgePercent size={15} strokeWidth={1.5} className="shrink-0" aria-hidden />
                       </button>
                       <button
                         type="button"
@@ -1306,11 +1595,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           setDrawerMode('product')
                         }}
                         title="Editar"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '7px', borderRadius: '8px', color: '#6B7280', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
                           <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
@@ -1319,11 +1608,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         onClick={() => setDeleteTarget({ kind: 'catalog', id: product.id, name: product.name, variant: 'single' })}
                         aria-label={`Eliminar ${product.name}`}
                         title="Eliminar"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '7px', borderRadius: '8px', color: '#6B7280', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                       <div style={{ marginLeft: '6px' }}>
                         <ToggleSwitch
@@ -1648,11 +1937,11 @@ export function ProductsView({ eventId }: { eventId: string }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Nombre</label>
-                  <input type="text" value={name} onChange={e => { setName(e.target.value); setFormError('') }} placeholder="Ej: Cerveza Heineken 500ml" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
+                  <input type="text" value={name} onChange={e => { setName(e.target.value); setNameError(false) }} placeholder="Ej: Cerveza Heineken 500ml" style={{ width: '100%', borderRadius: '12px', border: nameError ? '1.5px solid #EF4444' : '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: nameError ? '#FFF5F5' : '#FAFAFA', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s, background 0.15s' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Precio (ARS)</label>
-                  <input type="number" value={price} onChange={e => { setPrice(e.target.value); setFormError('') }} placeholder="8000" style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }} disabled={saving || imageUploading} />
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: priceError ? '#EF4444' : '#9A9AA8', marginBottom: '6px', transition: 'color 0.15s' }}>Precio (ARS)</label>
+                  <input type="number" value={price} onChange={e => { setPrice(e.target.value); setPriceError(false) }} placeholder="8000" style={{ width: '100%', borderRadius: '12px', border: priceError ? '1.5px solid #EF4444' : '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: priceError ? '#FFF5F5' : '#FAFAFA', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s, background 0.15s' }} disabled={saving || imageUploading} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Categoría</label>
@@ -1785,8 +2074,22 @@ export function ProductsView({ eventId }: { eventId: string }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <section className="flex flex-col gap-3">
               <p className="text-[11px] font-medium text-gray-400">Datos del combo</p>
-              <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError('') }} placeholder="Nombre visible para el cliente" className={inputClass} disabled={saving || imageUploading} />
-              <input type="number" value={comboPrice} onChange={e => { setComboPrice(e.target.value); setFormError('') }} placeholder="Precio del combo (ARS)" className={inputClass} disabled={saving || imageUploading} />
+              <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError(''); setComboNameError(false) }} placeholder="Nombre visible para el cliente" disabled={saving || imageUploading}
+                style={{
+                  width: '100%', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', outline: 'none',
+                  border: comboNameError ? '1.5px solid #EF4444' : '1px solid rgba(0,0,0,0.1)',
+                  background: comboNameError ? '#FFF5F5' : '#FAFAFA',
+                  color: '#0A0A0F', transition: 'border-color 0.15s, background 0.15s',
+                }}
+              />
+              <input type="number" value={comboPrice} onChange={e => { setComboPrice(e.target.value); setFormError(''); setComboPriceError(false) }} placeholder="Precio del combo (ARS)" disabled={saving || imageUploading}
+                style={{
+                  width: '100%', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', outline: 'none',
+                  border: comboPriceError ? '1.5px solid #EF4444' : '1px solid rgba(0,0,0,0.1)',
+                  background: comboPriceError ? '#FFF5F5' : '#FAFAFA',
+                  color: '#0A0A0F', transition: 'border-color 0.15s, background 0.15s',
+                }}
+              />
               <input type="text" value={comboDesc} onChange={e => setComboDesc(e.target.value)} placeholder="Descripción (opcional)" className={inputClass} disabled={saving || imageUploading} />
             </section>
 
@@ -2040,18 +2343,26 @@ export function ProductsView({ eventId }: { eventId: string }) {
       </div>
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
-        <div
-          style={{
-            position: 'fixed', bottom: '54px', left: 'calc(50% + 132px)', transform: 'translateX(-50%)',
-            zIndex: 30, background: '#FFFFFF', color: '#0A0A0F',
-            borderRadius: '100px', padding: '8px 8px 8px 22px',
-            display: 'flex', alignItems: 'center', gap: '14px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.08)',
-            fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
-          }}
-          role="region"
-          aria-label="Acciones masivas"
+      <div
+        style={{
+          position: 'fixed', bottom: '54px', left: 'calc(50% + 132px)',
+          transform: selectedIds.size > 0
+            ? 'translateX(-50%) translateY(0px) scaleX(1)'
+            : 'translateX(-50%) translateY(20px) scaleX(0.72)',
+          opacity: selectedIds.size > 0 ? 1 : 0,
+          pointerEvents: selectedIds.size > 0 ? 'auto' : 'none',
+          transition: selectedIds.size > 0
+            ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease'
+            : 'transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease',
+          zIndex: 30, background: '#FFFFFF', color: '#0A0A0F',
+          borderRadius: '100px', padding: '8px 8px 8px 22px',
+          display: 'flex', alignItems: 'center', gap: '14px',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.08)',
+          fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+        }}
+        role="region"
+        aria-label="Acciones masivas"
+        aria-hidden={selectedIds.size === 0}
         >
           <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {selectedIds.size} seleccionado{selectedIds.size === 1 ? '' : 's'}
@@ -2073,6 +2384,38 @@ export function ProductsView({ eventId }: { eventId: string }) {
           >
             Pausar
           </button>
+          <div style={{
+            maxWidth: catalogTab === 'products' && selectedIds.size >= 2 ? '140px' : '0px',
+            overflow: 'hidden',
+            flexShrink: 0,
+            transition: 'max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}>
+            <button
+              type="button"
+              disabled={bulkSubmitting || !(catalogTab === 'products' && selectedIds.size >= 2)}
+              onClick={() => {
+                const items = Array.from(selectedIds).map(id => {
+                  const p = products.find(x => x.id === id)
+                  return { product_id: id, quantity: 1, displayName: p?.name }
+                })
+                setFormError('')
+                clearPendingImage()
+                setEditingCatalogId(null)
+                setComboName('')
+                setComboPrice('')
+                setComboDesc('')
+                setComboPickerItems(items)
+                setComboPickerQuery('')
+                setSelectedIds(new Set())
+                setDrawerMode('combo')
+              }}
+              style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', opacity: catalogTab === 'products' && selectedIds.size >= 2 ? 1 : 0, transition: 'background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = ORGANIZER_ACCENT_BACKGROUND; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = ORGANIZER_ACCENT_FOREGROUND }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#6B7280' }}
+            >
+              Crear combo
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setBulkConfirm('delete')}
@@ -2091,23 +2434,40 @@ export function ProductsView({ eventId }: { eventId: string }) {
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
           </button>
         </div>
-      )}
 
       <Modal
         isOpen={promoModalProduct !== null}
         onClose={closePromoModal}
-        title={promoModalProduct ? `Promoción · ${promoModalProduct.name}` : undefined}
         containerClassName="z-[75]"
-        className="!max-w-md"
+        className="!p-0 overflow-hidden max-w-sm w-full"
       >
         {promoModalProduct && (
           <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
-            <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
-              El precio de lista del ítem sigue siendo{' '}
-              <span style={{ fontWeight: 700, color: '#0A0A0F' }}>{formatPrice(promoModalProduct.price)}</span>.
-              Si definís precio promo, debe ser menor: se muestra tachado el de lista en el catálogo público.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+
+            {/* Header */}
+            <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: ORGANIZER_ACCENT_BACKGROUND, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BadgePercent size={15} strokeWidth={1.5} style={{ color: ORGANIZER_ACCENT_FOREGROUND }} aria-hidden />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: '15px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {promoModalProduct.name}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0 }}>Promoción del catálogo</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Precio de referencia */}
+            <div style={{ margin: '16px 20px 0', padding: '10px 14px', background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <span style={{ fontSize: '12px', color: '#9A9AA8' }}>Precio de lista</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>{formatPrice(promoModalProduct.price)}</span>
+            </div>
+
+            {/* Campos */}
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Etiqueta visible</label>
                 <input
@@ -2117,90 +2477,83 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   placeholder="-20%, 2×1, Promo finde…"
                   maxLength={80}
                   disabled={promoSaving}
-                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
                 />
               </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>
-                  Precio promocional (ARS)<span style={{ fontWeight: 400, color: '#C8C8D0' }}> · opcional</span>
+                  Precio promo <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opcional</span>
                 </label>
                 <input
                   type="text"
                   inputMode="decimal"
                   value={promoPrice}
-                  onChange={e => { setPromoPrice(e.target.value); setPromoError('') }}
-                  placeholder="Vacío = solo etiqueta"
+                  onChange={e => { setPromoPrice(e.target.value.replace(/[^0-9.,]/g, '')); setPromoError('') }}
+                  placeholder="Si es menor al de lista, se muestra tachado"
                   disabled={promoSaving}
-                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '11px 14px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
                 />
               </div>
-              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Inicio · opc.</label>
-                  <input
-                    type="datetime-local"
-                    value={promoStarts}
-                    onChange={e => setPromoStarts(e.target.value)}
-                    disabled={promoSaving}
-                    style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '9px 10px', fontSize: '12px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Inicio <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opc.</span></label>
+                  <DateTimeField value={promoStarts} onChange={setPromoStarts} disabled={promoSaving} placeholder="Sin fecha de inicio" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Fin · opc.</label>
-                  <input
-                    type="datetime-local"
-                    value={promoEnds}
-                    onChange={e => setPromoEnds(e.target.value)}
-                    disabled={promoSaving}
-                    style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '9px 10px', fontSize: '12px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>Fin <span style={{ fontWeight: 400, color: '#C8C8D0' }}>· opc.</span></label>
+                  <DateTimeField value={promoEnds} onChange={setPromoEnds} disabled={promoSaving} placeholder="Sin fecha de fin" />
                 </div>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 500, color: '#0A0A0F', cursor: promoSaving ? 'not-allowed' : 'pointer' }}>
+
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 14px', background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', cursor: promoSaving ? 'not-allowed' : 'pointer' }}>
+                <div>
+                  <p style={{ fontSize: '13px', fontWeight: 500, color: '#0A0A0F', margin: 0 }}>Activa en el catálogo</p>
+                  <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0' }}>Si está en fechas válidas se muestra al cliente</p>
+                </div>
                 <ToggleSwitch checked={promoActive} disabled={promoSaving} onChange={() => setPromoActive(v => !v)} />
-                Activa para el catálogo (si está en fechas válidas)
               </label>
+
+              {promoError && (
+                <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#DC2626' }}>
+                  {promoError}
+                </div>
+              )}
             </div>
-            {promoError ? (
-              <p style={{ fontSize: '13px', color: '#DC2626', margin: '0 0 12px' }}>{promoError}</p>
-            ) : null}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+
+            {/* Acciones */}
+            <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
                 disabled={promoSaving}
                 onClick={() => void savePromo()}
-                style={{
-                  width: '100%', borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(),
-                  fontSize: '14px', fontWeight: 700, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1,
-                }}
+                style={{ width: '100%', borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '14px', fontWeight: 700, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1 }}
               >
                 {promoSaving ? 'Guardando…' : 'Guardar promoción'}
               </button>
-              {promotionsByProductId[promoModalProduct.id] ? (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {promotionsByProductId[promoModalProduct.id] && (
+                  <button
+                    type="button"
+                    disabled={promoSaving}
+                    onClick={() => void deletePromo()}
+                    style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: '#DC2626', fontSize: '13px', fontWeight: 600, padding: '10px 14px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.5 : 1 }}
+                  >
+                    Quitar promo
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={promoSaving}
-                  onClick={() => void deletePromo()}
-                  style={{
-                    width: '100%', borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#DC2626',
-                    fontSize: '13px', fontWeight: 600, padding: '10px 16px', cursor: promoSaving ? 'not-allowed' : 'pointer',
-                  }}
+                  onClick={() => closePromoModal()}
+                  style={{ flex: 1, borderRadius: '100px', border: 'none', background: '#F5F5F7', color: '#6B7280', fontSize: '13px', fontWeight: 600, padding: '10px 14px', cursor: promoSaving ? 'not-allowed' : 'pointer' }}
                 >
-                  Quitar promoción
+                  Cancelar
                 </button>
-              ) : null}
-              <button
-                type="button"
-                disabled={promoSaving}
-                onClick={() => closePromoModal()}
-                style={{
-                  width: '100%', borderRadius: '100px', border: 'none', background: '#F5F5F7', color: '#6B7280',
-                  fontSize: '13px', fontWeight: 600, padding: '10px 16px', cursor: promoSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Cancelar
-              </button>
+              </div>
             </div>
+
           </div>
         )}
       </Modal>
@@ -2209,29 +2562,46 @@ export function ProductsView({ eventId }: { eventId: string }) {
       <Modal
         isOpen={bulkConfirm === 'delete'}
         onClose={() => { if (!bulkSubmitting) setBulkConfirm(null) }}
-        title="Eliminar seleccionados"
         containerClassName="z-[70]"
+        className="!p-0 overflow-hidden max-w-sm w-full"
       >
-        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-          ¿Eliminar <span className="font-medium text-gray-900">{selectedIds.size}</span> ítem{selectedIds.size === 1 ? '' : 's'}? No se puede deshacer.
-        </p>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            disabled={bulkSubmitting}
-            onClick={() => setBulkConfirm(null)}
-            className="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={bulkSubmitting}
-            onClick={() => runBulkAction('delete')}
-            className="rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-          >
-            {bulkSubmitting ? 'Eliminando…' : 'Eliminar'}
-          </button>
+        <div>
+          <div style={{ padding: '24px 20px 0 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '11px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M3.5 4l1 9h7l1-9" stroke="#DC2626" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
+                Eliminar {selectedIds.size} {selectedIds.size === 1 ? 'ítem' : 'ítems'}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6B7280', margin: '8px 0 0 0', lineHeight: 1.6 }}>
+                {selectedIds.size === 1
+                  ? 'Este ítem será eliminado permanentemente. Los combos que queden vacíos se pausarán.'
+                  : <>Estos <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{selectedIds.size} ítems</span> serán eliminados permanentemente. Los combos que queden vacíos se pausarán.</>
+                }
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', padding: '20px' }}>
+            <button
+              type="button"
+              disabled={bulkSubmitting}
+              onClick={() => setBulkConfirm(null)}
+              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 500, padding: '8px 16px', cursor: bulkSubmitting ? 'not-allowed' : 'pointer', opacity: bulkSubmitting ? 0.5 : 1 }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={bulkSubmitting}
+              onClick={() => void runBulkAction('delete')}
+              style={{ flex: 1, borderRadius: '100px', border: 'none', background: '#DC2626', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, padding: '8px 18px', cursor: bulkSubmitting ? 'not-allowed' : 'pointer', opacity: bulkSubmitting ? 0.6 : 1 }}
+            >
+              {bulkSubmitting ? 'Eliminando…' : 'Eliminar'}
+            </button>
+          </div>
         </div>
       </Modal>
 

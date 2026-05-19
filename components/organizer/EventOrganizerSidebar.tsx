@@ -345,27 +345,38 @@ export function EventOrganizerSidebar({
           })}
         </nav>
 
-        <div className="mt-2 shrink-0 border-t border-gray-200 px-3 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                <span className="text-[11px] font-semibold text-white uppercase">
-                  {emailLabel ? emailLabel[0] : '?'}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 truncate" title={emailLabel}>{emailLabel || '…'}</p>
-            </div>
+        <div className="mt-2 shrink-0 border-t border-gray-200 px-3 py-3">
+          <Link
+            href={`${basePath}/cuenta`}
+            className={`group flex w-full items-center gap-2 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/70 ${
+              isRouteActive(pathname, `${basePath}/cuenta`) ? 'bg-white/80 shadow-[0_1px_3px_rgba(0,0,0,0.06)]' : ''
+            }`}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 13 13"
+              fill="none"
+              className="shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors"
+              aria-hidden
+            >
+              <circle cx="6.5" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M1.5 11.5c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+            <p className="min-w-0 flex-1 truncate text-[12px] text-gray-500 group-hover:text-gray-800 transition-colors" title={emailLabel}>
+              {emailLabel || '…'}
+            </p>
             <button
               type="button"
-              onClick={onLogout}
-              className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-900 transition-colors"
+              onClick={e => { e.preventDefault(); onLogout() }}
+              className="shrink-0 rounded-md p-1 text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-600"
               title="Cerrar sesión"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-          </div>
+          </Link>
         </div>
       </aside>
 

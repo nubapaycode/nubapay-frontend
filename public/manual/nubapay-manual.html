@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Nubapay – Manual de uso</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0A0A0F;
+    --gray-dark: #3A3A48;
+    --gray-mid: #6A6A78;
+    --gray-light: #9A9AA8;
+    --gray-border: rgba(0,0,0,0.09);
+    --gray-bg: #F7F7F9;
+    --green: #16A34A;
+    --green-bg: rgba(34,197,94,0.08);
+    --blue: #2563EB;
+    --blue-bg: rgba(37,99,235,0.07);
+    --purple: #7C3AED;
+    --purple-bg: rgba(124,58,237,0.07);
+    --orange: #EA580C;
+    --orange-bg: rgba(234,88,12,0.07);
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--black);
+    background: #FFFFFF;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    page-break-after: always;
+    page-break-inside: avoid;
+    position: relative;
+  }
+
+  .page:last-child {
+    page-break-after: avoid;
+  }
+
+  /* ─── COVER ─── */
+  .cover {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 56px 64px;
+    background: #0A0A0F;
+    color: #FFFFFF;
+  }
+
+  .cover-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cover-logo-mark {
+    width: 40px;
+    height: 40px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cover-logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #FFFFFF;
+  }
+
+  .cover-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.65);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 13px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+
+  .cover-title {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 18px;
+    color: #FFFFFF;
+  }
+
+  .cover-title span { color: rgba(255,255,255,0.3); }
+
+  .cover-subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    max-width: 460px;
+  }
+
+  .cover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 24px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* ─── CONTENT PAGE ─── */
+  .content-page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 44px 60px 36px;
+    overflow: hidden;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-border);
+    flex-shrink: 0;
+  }
+
+  .page-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: -0.02em;
+  }
+
+  .page-header-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--black);
+    border-radius: 50%;
+  }
+
+  .page-header-section {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray-light);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .page-footer-text {
+    font-size: 10px;
+    color: var(--gray-light);
+  }
+
+  /* ─── SECTION HEADING ─── */
+  .section-number {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--black);
+    line-height: 1.15;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .section-lead {
+    font-size: 13px;
+    color: var(--gray-mid);
+    line-height: 1.6;
+    max-width: 520px;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+  }
+
+  /* ─── INDEX ─── */
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+  }
+
+  .toc-item {
+    background: var(--gray-bg);
+    border: 1px solid var(--gray-border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .toc-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: #FFFFFF;
+    border: 1px solid var(--gray-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .toc-item-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+
+  .toc-item-desc {
+    font-size: 11px;
+    color: var(--gray-mid);
+    line-height: 1.45;
+  }
+
+  /* ─── FLOW STRIP ─── */
+  .flow-strip {
+    display: flex;
+    align-items: center;
+    background: var(--gray-bg);
+    border: 1px solid var(--gray-border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+  }
+
+  .flow-step {
+    flex: 1;
+    padding: 14px 10px;
+    text-align: center;
+    position: relative;
+  }
+
+  .flow-step + .flow-step::before {
+    content: '→';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--gray-light);
+  }
+
+  .flow-step-icon { font-size: 18px; margin-bottom: 5px; }
+  .flow-step-label { font-size: 10.5px; font-weight: 700; color: var(--black); letter-spacing: -0.01em; line-height: 1.3; }
+
+  /* ─── CARDS ─── */
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .info-card {
+    border: 1px solid var(--gray-border);
+    border-radius: 14px;
+    padding: 16px 17px;
+    background: #FFFFFF;
+  }
+
+  .info-card-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .info-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  .info-card-text {
+    font-size: 11.5px;
+    color: var(--gray-mid);
+    line-height: 1.55;
+  }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight-box {
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+
+  .highlight-box.green { background: var(--green-bg); border: 1px solid rgba(34,197,94,0.14); }
+  .highlight-box.blue  { background: var(--blue-bg);  border: 1px solid rgba(37,99,235,0.11); }
+  .highlight-box.orange{ background: var(--orange-bg);border: 1px solid rgba(234,88,12,0.11); }
+
+  .highlight-box-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  .highlight-box-title {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+  }
+
+  .highlight-box.green .highlight-box-title { color: var(--green); }
+  .highlight-box.blue  .highlight-box-title { color: var(--blue);  }
+  .highlight-box.orange .highlight-box-title { color: var(--orange);}
+
+  .highlight-box-text {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--gray-dark);
+  }
+
+  /* ─── STEPS ─── */
+  .steps-list { display: flex; flex-direction: column; }
+
+  .step-item { display: flex; gap: 16px; }
+
+  .step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--black);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-line {
+    width: 1.5px;
+    flex: 1;
+    background: var(--gray-border);
+    margin-top: 3px;
+    min-height: 16px;
+  }
+
+  .step-content { flex: 1; padding-bottom: 20px; }
+  .step-item:last-child .step-content { padding-bottom: 0; }
+  .step-item:last-child .step-line { display: none; }
+
+  .step-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--black);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+    margin-top: 5px;
+  }
+
+  .step-text { font-size: 12.5px; color: var(--gray-dark); line-height: 1.6; }
+
+  .step-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    background: var(--blue-bg);
+    border: 1px solid rgba(37,99,235,0.12);
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-size: 11.5px;
+    color: var(--blue);
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  /* ─── TAG ─── */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.dark  { background: var(--black); color: #FFF; }
+
+  /* ─── TABLE ─── */
+  .roles-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .roles-table th {
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+    padding: 0 14px 10px 14px;
+    border-bottom: 1px solid var(--gray-border);
+  }
+
+  .roles-table td {
+    font-size: 12px;
+    color: var(--gray-dark);
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--gray-border);
+    vertical-align: top;
+  }
+
+  .roles-table tr:last-child td { border-bottom: none; }
+  .roles-table td:first-child { font-weight: 600; color: var(--black); white-space: nowrap; }
+
+  /* ─── CHECKLIST ─── */
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--gray-bg);
+    border-radius: 11px;
+    border: 1px solid var(--gray-border);
+  }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--green-bg);
+    border: 1.5px solid rgba(34,197,94,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .check-label {
+    font-size: 12.5px;
+    color: var(--black);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════
+     PORTADA
+══════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-logo">
+      <div class="cover-logo-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="8" height="8" rx="2" fill="#0A0A0F"/>
+          <rect x="13" y="3" width="8" height="8" rx="2" fill="#0A0A0F"/>
+          <rect x="3" y="13" width="8" height="8" rx="2" fill="#0A0A0F"/>
+          <rect x="13" y="13" width="8" height="8" rx="2" fill="#0A0A0F"/>
+        </svg>
+      </div>
+      <span class="cover-logo-text">Nubapay</span>
+    </div>
+
+    <div>
+      <div class="cover-tag">Manual de uso</div>
+      <h1 class="cover-title">Vendé en tu evento<br/><span>sin efectivo.</span></h1>
+      <p class="cover-subtitle">Guía completa para organizadores: cómo crear tu cuenta, configurar tu evento, cargar productos y recibir pedidos en tiempo real.</p>
+    </div>
+
+    <div class="cover-footer">
+      <div>nubapay.app</div>
+      <div>Versión 1.0 · 2025</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     ÍNDICE
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Índice</div>
+    </div>
+
+    <div class="section-number">Contenido</div>
+    <h2 class="section-title">¿Qué vas a encontrar?</h2>
+    <p class="section-lead">Este manual cubre todo lo que necesitás para lanzar tu primer evento en Nubapay, desde crear tu cuenta hasta escanear los QR de retiro el día del evento.</p>
+
+    <div class="toc-grid">
+      <div class="toc-item">
+        <div class="toc-icon">💡</div>
+        <div>
+          <div class="toc-item-title">1 · ¿Qué es Nubapay?</div>
+          <div class="toc-item-desc">Plataforma de ventas digitales para eventos: catálogo, cobros y retiro con QR.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">👤</div>
+        <div>
+          <div class="toc-item-title">2 · Crear tu cuenta</div>
+          <div class="toc-item-desc">Registro, acceso y configuración inicial del perfil organizador.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">🎉</div>
+        <div>
+          <div class="toc-item-title">3 · Crear tu primer evento</div>
+          <div class="toc-item-desc">Nombre, lugar, fecha y publicación del evento.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">🍔</div>
+        <div>
+          <div class="toc-item-title">4 · Cargar el catálogo</div>
+          <div class="toc-item-desc">Productos, categorías, precios y disponibilidad.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">📍</div>
+        <div>
+          <div class="toc-item-title">5 · Puntos de retiro</div>
+          <div class="toc-item-desc">Configurar dónde los asistentes retiran sus pedidos.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">📦</div>
+        <div>
+          <div class="toc-item-title">6 · Gestionar pedidos</div>
+          <div class="toc-item-desc">Ver pedidos en tiempo real, cambiar estados y escanear QR.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">💳</div>
+        <div>
+          <div class="toc-item-title">7 · Pagos y reportes</div>
+          <div class="toc-item-desc">Ver ingresos, métodos de pago y exportar datos.</div>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-icon">👥</div>
+        <div>
+          <div class="toc-item-title">8 · Staff y permisos</div>
+          <div class="toc-item-desc">Invitar colaboradores con roles específicos al evento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">2</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 1 · QUÉ ES NUBAPAY
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 1</div>
+    </div>
+
+    <div class="section-number">Capítulo 01</div>
+    <h2 class="section-title">¿Qué es Nubapay?</h2>
+    <p class="section-lead">Nubapay es una plataforma de ventas digitales diseñada para eventos masivos. Los asistentes hacen sus pedidos desde el celular y los retiran con un código QR, sin filas ni efectivo.</p>
+
+    <div class="flow-strip">
+      <div class="flow-step">
+        <div class="flow-step-icon">📱</div>
+        <div class="flow-step-label">El asistente<br/>elige del catálogo</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon">💳</div>
+        <div class="flow-step-label">Paga<br/>online</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📬</div>
+        <div class="flow-step-label">Recibe<br/>su QR</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon">📍</div>
+        <div class="flow-step-label">Va al<br/>punto de retiro</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-icon">✅</div>
+        <div class="flow-step-label">Staff escanea<br/>y entrega</div>
+      </div>
+    </div>
+
+    <div class="card-grid" style="margin-bottom: 20px;">
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--green-bg);">📲</div>
+        <div class="info-card-title">Catálogo digital</div>
+        <div class="info-card-text">Los asistentes acceden al menú desde su celular escaneando un QR o con el link del evento. Sin apps adicionales.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--blue-bg);">💳</div>
+        <div class="info-card-title">Pagos integrados</div>
+        <div class="info-card-text">Pagos online seguros. El asistente paga al hacer el pedido, sin manejo de efectivo en el evento.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--purple-bg);">🔒</div>
+        <div class="info-card-title">QR antifraude</div>
+        <div class="info-card-text">Cada pedido tiene un código QR único. El staff lo escanea al momento de entregar para validar autenticidad.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--orange-bg);">📊</div>
+        <div class="info-card-title">Panel en tiempo real</div>
+        <div class="info-card-text">Ves los pedidos en el momento que llegan. Dashboard con métricas, ventas y estado de cada orden.</div>
+      </div>
+    </div>
+
+    <div class="highlight-box green">
+      <div class="highlight-box-icon">✅</div>
+      <div>
+        <div class="highlight-box-title">Diseñado para eventos grandes</div>
+        <div class="highlight-box-text">Nubapay escala sin problemas para festivales, recitales, conferencias y eventos corporativos. Menos filas, más ventas, cero confusión.</div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">3</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 2 · CREAR CUENTA
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 2</div>
+    </div>
+
+    <div class="section-number">Capítulo 02</div>
+    <h2 class="section-title">Crear tu cuenta</h2>
+    <p class="section-lead">El registro es rápido y gratuito. En menos de dos minutos tenés tu cuenta de organizador activa y lista para crear eventos.</p>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Ingresá a nubapay.app</div>
+          <div class="step-text">Abrí el sitio desde cualquier navegador en tu computadora o celular. En la pantalla de inicio vas a ver el formulario de acceso.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Hacé clic en "Crear cuenta"</div>
+          <div class="step-text">En la pantalla de login, seleccioná la opción <strong>Crear cuenta</strong>. Se va a mostrar el formulario de registro.</div>
+          <div class="step-tip">
+            <span>ℹ️</span>
+            <span>Si ya tenés cuenta, simplemente ingresá tu email y contraseña en el formulario de inicio.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Completá tus datos</div>
+          <div class="step-text">Ingresá tu <strong>nombre completo</strong>, <strong>dirección de email</strong> y una <strong>contraseña segura</strong> (mínimo 8 caracteres). Esos son los únicos datos necesarios para registrarte.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Confirmá y accedé</div>
+          <div class="step-text">Hacé clic en <strong>Registrarme</strong>. Tu cuenta se crea al instante y vas a ser redirigido automáticamente al panel de organizador.</div>
+          <div class="step-tip">
+            <span>🔑</span>
+            <span>Si olvidás tu contraseña, podés recuperarla desde la opción "¿Olvidaste tu contraseña?" en la pantalla de login.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div class="highlight-box blue">
+        <div class="highlight-box-icon">💡</div>
+        <div>
+          <div class="highlight-box-title">Tu sesión se mantiene activa</div>
+          <div class="highlight-box-text">Una vez que iniciás sesión, no necesitás volver a loguearte a menos que cierres la sesión manualmente. El token de acceso se guarda de forma segura en tu navegador.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">4</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 3 · CREAR EVENTO
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 3</div>
+    </div>
+
+    <div class="section-number">Capítulo 03</div>
+    <h2 class="section-title">Crear tu primer evento</h2>
+    <p class="section-lead">Cada evento en Nubapay tiene su propio panel con catálogo, pedidos, escáner y métricas independientes. Podés tener tantos eventos como quieras.</p>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Accedé a "Mis eventos"</div>
+          <div class="step-text">Luego de iniciar sesión, vas a llegar directamente a la sección <strong>Mis eventos</strong>. Acá se listan todos tus eventos actuales y pasados.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Hacé clic en "+ Nuevo evento"</div>
+          <div class="step-text">En la esquina superior derecha de la pantalla encontrás el botón. Hacé clic para abrir el panel lateral de creación.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Completá los datos del evento</div>
+          <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+            <div style="padding: 9px 12px; background: var(--gray-bg); border-radius: 9px; font-size: 11.5px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Nombre *</div>
+              <div style="color: var(--gray-mid);">Ej: "Festival Primavera 2025"</div>
+            </div>
+            <div style="padding: 9px 12px; background: var(--gray-bg); border-radius: 9px; font-size: 11.5px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Lugar</div>
+              <div style="color: var(--gray-mid);">Nombre del lugar o dirección (opcional)</div>
+            </div>
+            <div style="padding: 9px 12px; background: var(--gray-bg); border-radius: 9px; font-size: 11.5px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Descripción</div>
+              <div style="color: var(--gray-mid);">Info visible en el catálogo (opcional)</div>
+            </div>
+            <div style="padding: 9px 12px; background: var(--gray-bg); border-radius: 9px; font-size: 11.5px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Fecha</div>
+              <div style="color: var(--gray-mid);">Podés completarla después (opcional)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Hacé clic en "Crear evento"</div>
+          <div class="step-text">Al confirmar, el evento se crea en estado <span class="tag dark">Borrador</span>. Vas a ser llevado automáticamente al panel del evento para seguir configurándolo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div class="highlight-box orange">
+        <div class="highlight-box-icon">⚡</div>
+        <div>
+          <div class="highlight-box-title">El evento empieza en modo Borrador</div>
+          <div class="highlight-box-text">En estado Borrador, el catálogo no es visible para los asistentes. Esto te da tiempo para cargar productos y puntos de retiro antes de publicar. Cuando todo esté listo, cambiás el estado a <strong>Activo</strong> desde la configuración del evento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">5</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 4 · CATÁLOGO
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 4</div>
+    </div>
+
+    <div class="section-number">Capítulo 04</div>
+    <h2 class="section-title">Cargar el catálogo</h2>
+    <p class="section-lead">El catálogo es el menú digital que verán tus asistentes. Podés organizar productos en categorías, agregar fotos, precios y controlar la disponibilidad en tiempo real.</p>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Abrí la sección "Catálogo"</div>
+          <div class="step-text">Desde el panel de tu evento, hacé clic en <strong>Catálogo</strong> en el menú lateral. Acá vas a ver todos tus productos y podés crear categorías para organizarlos.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Creá tus categorías</div>
+          <div class="step-text">Antes de agregar productos, es recomendable crear las categorías. Por ejemplo: <em>Bebidas</em>, <em>Comidas</em>, <em>Combos</em>. Esto ayuda a los asistentes a navegar el menú más fácilmente.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Agregá tus productos</div>
+          <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px;">
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Nombre *</div>
+              <div style="color: var(--gray-mid);">Tal como aparece en el menú</div>
+            </div>
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Precio *</div>
+              <div style="color: var(--gray-mid);">Precio unitario del producto</div>
+            </div>
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Categoría</div>
+              <div style="color: var(--gray-mid);">A qué categoría pertenece</div>
+            </div>
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Imagen</div>
+              <div style="color: var(--gray-mid);">Foto (mejora la conversión)</div>
+            </div>
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Descripción</div>
+              <div style="color: var(--gray-mid);">Ingredientes, detalles, etc.</div>
+            </div>
+            <div style="padding: 9px 11px; background: var(--gray-bg); border-radius: 9px; font-size: 11px;">
+              <div style="font-weight: 700; color: var(--black); margin-bottom: 2px;">Disponibilidad</div>
+              <div style="color: var(--gray-mid);">Activar/pausar en tiempo real</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Manejá la disponibilidad en vivo</div>
+          <div class="step-text">Podés activar o pausar cualquier producto al instante. Si se agota un ítem durante el evento, lo desactivás con un clic y deja de aparecer en el catálogo.</div>
+          <div class="step-tip">
+            <span>💡</span>
+            <span>Podés modificar precios, nombres e imágenes en cualquier momento, incluso mientras el evento está activo.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">6</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 5 · PUNTOS DE RETIRO
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 5</div>
+    </div>
+
+    <div class="section-number">Capítulo 05</div>
+    <h2 class="section-title">Puntos de retiro</h2>
+    <p class="section-lead">Los puntos de retiro son los puestos físicos donde los asistentes van a buscar sus pedidos. Podés tener uno o varios según la distribución del evento.</p>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Abrí "Puntos de retiro"</div>
+          <div class="step-text">Desde el panel de tu evento, hacé clic en <strong>Puntos de retiro</strong> en el menú lateral izquierdo.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Creá un nuevo punto</div>
+          <div class="step-text">Hacé clic en <strong>Nuevo punto de retiro</strong> y asignale un nombre claro. Por ejemplo: "Puesto Norte", "Barra VIP", "Stand Principal". Podés agregar una descripción con indicaciones para que el asistente encuentre el puesto.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">El asistente elige dónde retirar</div>
+          <div class="step-text">Al hacer el checkout, el asistente puede seleccionar en cuál de los puntos disponibles va a retirar su pedido. Esto ayuda a distribuir la carga entre los puestos.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Asignar staff a un punto</div>
+          <div class="step-text">Cada punto de retiro puede tener colaboradores asignados. El staff del punto solo ve los pedidos dirigidos a ese puesto. Esto lo configurás desde la sección <strong>Staff</strong> del evento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div class="highlight-box blue">
+        <div class="highlight-box-icon">📍</div>
+        <div>
+          <div class="highlight-box-title">Recomendación para eventos grandes</div>
+          <div class="highlight-box-text">Creá al menos 2 puntos de retiro y nombralos con referencias claras del lugar físico (por ejemplo, por sector del predio). Esto reduce las consultas al staff y mejora notablemente la experiencia del asistente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">7</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 6 · PEDIDOS Y ESCÁNER
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulo 6</div>
+    </div>
+
+    <div class="section-number">Capítulo 06</div>
+    <h2 class="section-title">Gestionar pedidos y escáner QR</h2>
+    <p class="section-lead">Desde el panel de pedidos ves en tiempo real todo lo que están comprando los asistentes. El escáner QR permite validar y entregar los pedidos de forma rápida y segura.</p>
+
+    <div class="card-grid" style="margin-bottom: 22px;">
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--green-bg);">🟢</div>
+        <div class="info-card-title">Pedidos en vivo</div>
+        <div class="info-card-text">Los pedidos aparecen al instante. Podés ver el detalle de cada orden: qué pidieron, a qué puesto va y el estado actual.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--blue-bg);">🔄</div>
+        <div class="info-card-title">Estados del pedido</div>
+        <div class="info-card-text">Cada pedido avanza por estados: <strong>Pendiente → En preparación → Listo → Entregado</strong>. Podés cambiar el estado manualmente.</div>
+      </div>
+    </div>
+
+    <div style="font-size: 14px; font-weight: 700; color: var(--black); letter-spacing: -0.02em; margin-bottom: 14px;">Escáner QR de retiro</div>
+
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Accedé al escáner</div>
+          <div class="step-text">Desde el panel del evento, hacé clic en <strong>Escáner</strong> en el menú lateral. Funciona desde el celular del staff, directamente en el navegador. No requiere app.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Escaneá el QR del asistente</div>
+          <div class="step-text">El asistente muestra el QR que recibió en su celular. Apuntás la cámara y el sistema valida automáticamente si el pedido es auténtico y si no fue usado antes.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left"><div class="step-number">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">Confirmá la entrega</div>
+          <div class="step-text">Si el QR es válido, aparece el detalle del pedido. Confirmás la entrega con un toque y el pedido queda marcado como <span class="tag green">Entregado</span>.</div>
+          <div class="step-tip">
+            <span>🛡️</span>
+            <span>Si el QR ya fue escaneado, el sistema lo avisa con una alerta roja. Esto evita que se retiren pedidos duplicados.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">8</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CAP 7 + 8 · PAGOS Y STAFF
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Capítulos 7 y 8</div>
+    </div>
+
+    <div class="section-number">Capítulo 07</div>
+    <h2 class="section-title">Pagos y reportes</h2>
+    <p class="section-lead" style="margin-bottom: 18px;">Nubapay registra cada transacción automáticamente. Desde el panel de pagos podés ver los ingresos del evento con todo el detalle.</p>
+
+    <div class="card-grid" style="margin-bottom: 32px;">
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--green-bg);">💰</div>
+        <div class="info-card-title">Total recaudado</div>
+        <div class="info-card-text">El dashboard muestra el total acumulado en tiempo real, desglosado por producto y categoría.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--blue-bg);">🧾</div>
+        <div class="info-card-title">Detalle por transacción</div>
+        <div class="info-card-text">En la sección Pagos ves cada transacción: monto, estado, fecha y el pedido asociado.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--purple-bg);">📈</div>
+        <div class="info-card-title">Métricas del evento</div>
+        <div class="info-card-text">Cantidad de pedidos, ticket promedio y productos más vendidos.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="background: var(--orange-bg);">📤</div>
+        <div class="info-card-title">Exportación</div>
+        <div class="info-card-text">Exportá el listado de pedidos y pagos para el cierre de caja y la rendición de cuentas.</div>
+      </div>
+    </div>
+
+    <div class="section-number">Capítulo 08</div>
+    <h2 class="section-title">Staff y permisos</h2>
+    <p class="section-lead" style="margin-bottom: 14px;">Podés invitar colaboradores al evento con diferentes niveles de acceso.</p>
+
+    <table class="roles-table" style="margin-bottom: 18px;">
+      <thead>
+        <tr>
+          <th>Rol</th>
+          <th>Acceso</th>
+          <th>Crea eventos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Organizador</td>
+          <td>Acceso completo: configuración, catálogo, pedidos, pagos y staff.</td>
+          <td><span class="tag green">Sí</span></td>
+        </tr>
+        <tr>
+          <td>Staff</td>
+          <td>Ve los pedidos del evento al que fue invitado. Puede usar el escáner QR.</td>
+          <td style="color: var(--gray-light); font-weight: 400;">No</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box green">
+      <div class="highlight-box-icon">👥</div>
+      <div>
+        <div class="highlight-box-title">Cómo invitar staff</div>
+        <div class="highlight-box-text">Desde el panel del evento, ingresá a la sección <strong>Staff</strong>. Escribí el email del colaborador y asignale el rol. El colaborador accede al evento en su próximo login. No necesita crear cuenta nueva si ya tiene una.</div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app</div>
+      <div class="page-footer-text">9</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════
+     CIERRE / CHECKLIST
+══════════════════════════ -->
+<div class="page">
+  <div class="content-page">
+    <div class="page-header">
+      <div class="page-header-logo"><div class="page-header-dot"></div>Nubapay</div>
+      <div class="page-header-section">Checklist</div>
+    </div>
+
+    <div class="section-number">Antes de publicar</div>
+    <h2 class="section-title">¿Listo para activar tu evento?</h2>
+    <p class="section-lead">Seguí esta lista antes de cambiar el estado a Activo para asegurarte de que todo esté en orden.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 32px;">
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Cuenta de organizador creada y sesión activa</div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Evento creado con nombre, lugar y fecha</div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Categorías y productos cargados con precios e imágenes</div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Al menos un punto de retiro configurado</div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Staff invitado y asignado a los puntos de retiro</div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Estado del evento cambiado a <strong>Activo</strong></div></div>
+      <div class="check-item"><div class="check-box">✓</div><div class="check-label">Link o QR del catálogo compartido con los asistentes</div></div>
+    </div>
+
+    <div style="background: #0A0A0F; border-radius: 18px; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 7px;">¿Necesitás ayuda?</div>
+        <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em; margin-bottom: 5px;">Estamos para vos</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.5;">Nuestro equipo te acompaña desde la configuración hasta el día del evento.</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-bottom: 3px;">nubapay.app</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.35);">Ventas para eventos</div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-text">nubapay.app · Manual de uso v1.0</div>
+      <div class="page-footer-text">10</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -68,6 +68,15 @@ export function EventOrganizerShell({
   }, [])
 
   useEffect(() => {
+    const onEventUpdated = (e: Event) => {
+      const name = (e as CustomEvent<{ name: string }>).detail?.name
+      if (name) setEventMeta(prev => prev ? { ...prev, title: name } : prev)
+    }
+    window.addEventListener('nubapay-event-updated', onEventUpdated)
+    return () => window.removeEventListener('nubapay-event-updated', onEventUpdated)
+  }, [])
+
+  useEffect(() => {
     const syncBrand = () =>
       queueMicrotask(() => {
         const u = getAuthUser()
