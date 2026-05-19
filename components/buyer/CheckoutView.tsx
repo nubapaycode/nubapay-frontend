@@ -7,6 +7,7 @@ import { saveOrder } from '@/lib/hooks/useOrderHistory'
 import { formatPrice } from '@/lib/utils'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS } from '@/lib/buyerUi'
+import { catalogPaths } from '@/lib/api/paths'
 
 interface CheckoutViewProps {
   eventId: string

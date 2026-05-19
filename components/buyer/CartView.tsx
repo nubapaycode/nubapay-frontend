@@ -149,6 +149,8 @@ export function CartView({ eventId, catalogSlug }: CartViewProps) {
           </button>
         </div>
 
+      </div>
+
       <FloatingOrders eventId={eventId} catalogSlug={catalogSlug} />
     </div>
   )
