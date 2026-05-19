@@ -503,8 +503,8 @@ export default function PrivacidadPage() {
               </p>
               <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Escribinos a{' '}
-                <a href="mailto:privacidad@nubapay.com" style={{ color: '#C6FF00', textDecoration: 'none', fontWeight: 600 }}>
-                  privacidad@nubapay.com
+                <a href="mailto:privacidad@nubapay.app" style={{ color: '#C6FF00', textDecoration: 'none', fontWeight: 600 }}>
+                  privacidad@nubapay.app
                 </a>
                 . Te respondemos dentro de las 48 horas hábiles.
               </p>

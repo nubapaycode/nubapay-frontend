@@ -22,7 +22,7 @@ export default function NosotrosPage() {
       initial: 'AV',
       photo: '/images/angelito.jpeg',
       linkedin: 'https://linkedin.com',
-      email: 'angel@nubapay.com',
+      email: 'angel@nubapay.app',
     },
     {
       name: 'Facundo Girardi',
@@ -32,7 +32,7 @@ export default function NosotrosPage() {
       initial: 'FG',
       photo: '/images/facu.png',
       linkedin: 'https://linkedin.com',
-      email: 'facundo@nubapay.com',
+      email: 'facundo@nubapay.app',
     },
     {
       name: 'Alejo Vaquero',
@@ -42,7 +42,7 @@ export default function NosotrosPage() {
       initial: 'AV',
       photo: '/images/alejo.jpeg',
       linkedin: 'https://linkedin.com',
-      email: 'alejo@nubapay.com',
+      email: 'alejo@nubapay.app',
     },
   ]
 

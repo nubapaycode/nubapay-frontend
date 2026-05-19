@@ -19,7 +19,7 @@ const mockBrowserFetch = browserFetch as jest.MockedFunction<typeof browserFetch
 const demoUser = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Demo',
-  email: 'demo@nubapay.com',
+  email: 'demo@nubapay.app',
   role: 'ORGANIZER',
 }
 
@@ -36,7 +36,7 @@ beforeEach(() => {
             : String(input)
     if (u.includes('auth/login') && init?.method === 'POST') {
       const body = JSON.parse(String(init?.body ?? '{}')) as { email?: string; password?: string }
-      if (body.email === 'demo@nubapay.com' && body.password === 'demo123') {
+      if (body.email === 'demo@nubapay.app' && body.password === 'demo123') {
         return {
           ok: true,
           status: 200,
@@ -87,7 +87,7 @@ describe('LoginView', () => {
 
   it('redirige a eventos tras login exitoso y guarda token', async () => {
     render(<LoginView />)
-    await userEvent.type(screen.getByPlaceholderText('Email'), 'demo@nubapay.com')
+    await userEvent.type(screen.getByPlaceholderText('Email'), 'demo@nubapay.app')
     await userEvent.type(screen.getByPlaceholderText('Contraseña'), 'demo123')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))

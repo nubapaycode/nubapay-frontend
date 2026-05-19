@@ -247,7 +247,7 @@ const sections = [
   {
     num: '48',
     title: 'Contacto',
-    body: `Para cualquier consulta, reclamo o notificación relacionada con estos Términos, puede contactarnos en:\n\nNubapay\nEmail: legal@nubapay.com\nSitio web: www.nubapay.com\n\nÚltima actualización: Mayo 2025`,
+    body: `Para cualquier consulta, reclamo o notificación relacionada con estos Términos, puede contactarnos en:\n\nNubapay\nEmail: legal@nubapay.app\nSitio web: www.nubapay.app\n\nÚltima actualización: Mayo 2025`,
   },
 ]
 
@@ -455,8 +455,8 @@ export default function TerminosPage() {
               </p>
               <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
                 Si necesitás aclaraciones sobre alguno de estos términos, escribinos a{' '}
-                <a href="mailto:legal@nubapay.com" style={{ color: '#C6FF00', textDecoration: 'none', fontWeight: 600 }}>
-                  legal@nubapay.com
+                <a href="mailto:legal@nubapay.app" style={{ color: '#C6FF00', textDecoration: 'none', fontWeight: 600 }}>
+                  legal@nubapay.app
                 </a>
                 . Te respondemos dentro de las 48 horas hábiles.
               </p>

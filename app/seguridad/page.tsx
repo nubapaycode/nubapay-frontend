@@ -496,7 +496,7 @@ export default function SeguridadPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <a href="mailto:seguridad@nubapay.com" style={{
+            <a href="mailto:seguridad@nubapay.app" style={{
               textDecoration: 'none',
               background: '#C6FF00', color: '#0A0F00',
               borderRadius: '100px', padding: '14px 28px',

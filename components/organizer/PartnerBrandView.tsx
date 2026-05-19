@@ -786,7 +786,7 @@ export function PartnerBrandView() {
                     <span className="text-[11px] font-mono text-gray-500 truncate">
                       <span className="text-gray-400">https://</span>
                       <span className="font-semibold text-gray-800">{previewSubdomain}</span>
-                      <span className="text-gray-500">.nubapay.com</span>
+                      <span className="text-gray-500">.nubapay.app</span>
                     </span>
                   </div>
                 </div>
@@ -849,7 +849,7 @@ export function PartnerBrandView() {
         <div className="flex items-center justify-between">
           <div>
             <span className="font-semibold text-gray-900">Tu dirección en Nubapay:</span>{' '}
-            <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}.nubapay.com</code>
+            <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}.nubapay.app</code>
           </div>
           <button
             type="button"
@@ -912,7 +912,7 @@ export function PartnerBrandView() {
                 </div>
                 <div className="flex-1 flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1">
                   <Lock size={9} className="text-gray-400 shrink-0" />
-                  <span className="text-[10px] text-gray-500 font-mono truncate">{tenant.subdomain}.nubapay.com</span>
+                  <span className="text-[10px] text-gray-500 font-mono truncate">{tenant.subdomain}.nubapay.app</span>
                 </div>
               </div>
             </div></div></div>
@@ -946,11 +946,11 @@ export function PartnerBrandView() {
                         </p>
                         <div className="flex items-center gap-1.5">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-[#a8b8aa] shrink-0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          <span className="text-[11px] text-[#a8b8aa]">{tenant.subdomain}.nubapay.com</span>
+                          <span className="text-[11px] text-[#a8b8aa]">{tenant.subdomain}.nubapay.app</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-[#25d366] truncate">https://{tenant.subdomain}.nubapay.com</span>
+                        <span className="text-[11px] text-[#25d366] truncate">https://{tenant.subdomain}.nubapay.app</span>
                         <div className="flex items-center gap-1 ml-2 shrink-0">
                           <span className="text-[10px] text-[#a8b8aa]">12:34</span>
                           <svg width="16" height="11" viewBox="0 0 18 11" fill="none" className="text-[#53bdeb]">
