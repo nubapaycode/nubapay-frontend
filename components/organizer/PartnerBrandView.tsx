@@ -157,7 +157,7 @@ function ColorInput({
   const openPicker = () => {
     if (!swatchRef.current) return
     const rect = swatchRef.current.getBoundingClientRect()
-    setPopoverPos({ top: rect.bottom + window.scrollY + 8, left: rect.left + window.scrollX })
+    setPopoverPos({ top: rect.bottom + 8, left: rect.left })
     setOpen(true)
   }
 
