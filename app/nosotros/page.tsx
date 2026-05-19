@@ -189,9 +189,9 @@ export default function NosotrosPage() {
         {/* Stats strip */}
         <div className="nos-stats-grid" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
           {[
-            { val: '1%', label: 'Comisión por transacción', cls: 'nos-stat-item nos-stat-1' },
+            { val: '+3.000', label: 'Eventos gestionados', cls: 'nos-stat-item nos-stat-1' },
             { val: '0', label: 'Apps que descargar', cls: 'nos-stat-item nos-stat-2' },
-            { val: '5 seg', label: 'Para completar un pedido', cls: 'nos-stat-item nos-stat-3' },
+            { val: '+50K', label: 'Ventas realizadas activos', cls: 'nos-stat-item nos-stat-3' },
           ].map((s, i) => (
             <div key={s.label} className={`${s.cls} nos-stat-pad${i > 0 ? ' nos-stat-border' : ''}`} style={{
               padding: '40px 0 56px',

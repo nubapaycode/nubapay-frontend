@@ -401,13 +401,6 @@ export function LandingPage() {
                 ))}
               </div>
 
-              {/* Live counter */}
-              <div className="nb-stats" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px rgba(34,197,94,0.5)', animation: 'nb-dot 2s ease-in-out infinite', flexShrink: 0 }} />
-                <span style={{ fontSize: '12px', color: S.muted }}>
-                  <strong style={{ color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{liveOrders.toLocaleString('es-AR')}</strong> pedidos procesados hoy
-                </span>
-              </div>
             </div>
 
             {/* Phone mockup */}

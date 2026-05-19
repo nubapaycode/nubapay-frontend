@@ -531,7 +531,7 @@ export default function SeguridadPage() {
       {/* Footer */}
       <div className="sec-footer">
         <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
-          © 2025 Nubapay. Todos los derechos reservados.
+          © 2026 Nubapay. Todos los derechos reservados.
         </span>
         <div style={{ display: 'flex', gap: '20px' }}>
           <Link href="/terminos" style={{ fontSize: '13px', color: '#6B6B7A', textDecoration: 'none' }}>Términos</Link>

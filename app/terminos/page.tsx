@@ -477,7 +477,7 @@ export default function TerminosPage() {
       {/* Footer */}
       <div className="term-footer">
         <span style={{ fontSize: '13px', color: '#9A9AA8' }}>
-          © 2025 Nubapay. Todos los derechos reservados.
+          © 2026 Nubapay. Todos los derechos reservados.
         </span>
         <div style={{ display: 'flex', gap: '20px' }}>
           <Link href="/terminos" style={{ fontSize: '13px', color: '#0A0A0F', fontWeight: 600, textDecoration: 'none' }}>
