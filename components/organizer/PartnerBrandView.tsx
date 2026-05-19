@@ -58,14 +58,17 @@ function dnsNameLabel(hostname: string): string {
 
 function DnsRow({ type, name, value }: { type: string; name: string; value: string }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-[11px] leading-relaxed">
-      <div className="grid grid-cols-[40px_1fr] gap-x-3 gap-y-1">
-        <span className="font-semibold text-gray-500 uppercase tracking-wide">Tipo</span>
-        <code className="font-mono text-gray-900">{type}</code>
-        <span className="font-semibold text-gray-500 uppercase tracking-wide">Nombre</span>
-        <code className="font-mono text-gray-900 break-all">{name}</code>
-        <span className="font-semibold text-gray-500 uppercase tracking-wide">Valor</span>
-        <code className="font-mono text-gray-900 break-all">{value}</code>
+    <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+      <div className="grid grid-cols-[52px_1fr] text-[11px]">
+        {[['Tipo', type], ['Nombre', name], ['Valor', value]].map(([label, val], i) => (
+          <div key={label} className={`contents ${i < 2 ? 'border-b border-gray-100' : ''}`}>
+            <div className="px-3 py-2 font-semibold text-gray-400 bg-gray-50 border-r border-gray-100 flex items-center">{label}</div>
+            <div className="px-3 py-2 flex items-center justify-between gap-2 bg-white">
+              <code className="font-mono text-gray-800 break-all">{val}</code>
+              <CopyButton text={val} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1158,64 +1161,66 @@ export function PartnerBrandView() {
 
         <ul className="flex flex-col gap-3 mt-2">
           {tenant.domains.map(d => (
-            <li key={d.id} className="rounded-2xl border border-gray-200 bg-white p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{d.hostname}</p>
-                  <p className={`text-xs font-medium mt-1 ${d.verified ? 'text-green-700' : 'text-amber-700'}`}>
-                    {d.verified ? '✓ Verificado y activo' : 'Pendiente — agregá los registros DNS y luego verificá'}
-                  </p>
+            <li key={d.id} className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Globe size={14} className={`shrink-0 ${d.verified ? 'text-green-600' : 'text-amber-500'}`} />
+                  <span className="text-sm font-semibold text-gray-900 truncate">{d.hostname}</span>
+                  <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${d.verified ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                    {d.verified ? 'Activo' : 'Pendiente'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setDeleteTarget(d) }}
+                  className="shrink-0 ml-2 text-[11px] font-medium text-red-500 hover:text-red-700 transition"
+                >
+                  Eliminar
+                </button>
+              </div>
 
-                  {!d.verified && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      <DnsRow
-                        type={isApex(d.hostname) ? 'A' : 'CNAME'}
-                        name={dnsNameLabel(d.hostname)}
-                        value={isApex(d.hostname) ? '216.198.79.1' : 'cname.vercel-dns.com'}
-                      />
-                      {isApex(d.hostname) && (
-                        <DnsRow
-                          type="CNAME"
-                          name="www"
-                          value="cname.vercel-dns.com"
-                        />
-                      )}
-                      {challengeByHostname[d.hostname] ? (
-                        <DnsRow
-                          type="TXT"
-                          name={dnsNameLabel(d.hostname)}
-                          value={challengeByHostname[d.hostname]}
-                        />
-                      ) : (
-                        <p className="text-[11px] text-gray-400 italic">
-                          Recargá la página para volver a ver el valor TXT (guardalo antes de cerrar).
-                        </p>
-                      )}
-                    </div>
+              {/* DNS records */}
+              {!d.verified && (
+                <div className="px-4 py-3 flex flex-col gap-2">
+                  <p className="text-[11px] font-medium text-gray-400 mb-1">Registros DNS a configurar</p>
+                  <DnsRow
+                    type={isApex(d.hostname) ? 'A' : 'CNAME'}
+                    name={dnsNameLabel(d.hostname)}
+                    value={isApex(d.hostname) ? '216.198.79.1' : 'cname.vercel-dns.com'}
+                  />
+                  {isApex(d.hostname) && (
+                    <DnsRow type="CNAME" name="www" value="cname.vercel-dns.com" />
+                  )}
+                  {challengeByHostname[d.hostname] ? (
+                    <DnsRow
+                      type="TXT"
+                      name={dnsNameLabel(d.hostname)}
+                      value={challengeByHostname[d.hostname]}
+                    />
+                  ) : (
+                    <p className="text-[11px] text-gray-400 italic mt-1">
+                      Recargá la página para volver a ver el valor TXT (guardalo antes de cerrar).
+                    </p>
                   )}
                 </div>
+              )}
 
-                <div className="flex gap-2 shrink-0">
-                  {!d.verified && (
-                    <button
-                      type="button"
-                      onClick={() => void handleVerifyDomain(d.id)}
-                      disabled={verifyingId === d.id}
-                      className="rounded-full px-4 py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-50"
-                      style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
-                    >
-                      {verifyingId === d.id ? '…' : 'Verificar'}
-                    </button>
-                  )}
+              {/* Verificar footer */}
+              {!d.verified && (
+                <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                  <p className="text-[11px] text-gray-400 leading-relaxed">Una vez cargados los registros, presioná verificar.</p>
                   <button
                     type="button"
-                    onClick={() => { setDeleteTarget(d) }}
-                    className="rounded-full px-4 py-2 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100"
+                    onClick={() => void handleVerifyDomain(d.id)}
+                    disabled={verifyingId === d.id}
+                    className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition"
+                    style={{ backgroundColor: brandAccentBtn.bg, color: brandAccentBtn.fg }}
                   >
-                    Eliminar
+                    {verifyingId === d.id ? 'Verificando…' : 'Verificar'}
                   </button>
                 </div>
-              </div>
+              )}
             </li>
           ))}
         </ul>
