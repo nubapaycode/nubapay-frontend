@@ -58,18 +58,18 @@ function dnsNameLabel(hostname: string): string {
 
 function DnsRow({ type, name, value }: { type: string; name: string; value: string }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-      <div className="grid grid-cols-[52px_1fr] text-[11px]">
-        {[['Tipo', type], ['Nombre', name], ['Valor', value]].map(([label, val], i) => (
-          <div key={label} className={`contents ${i < 2 ? 'border-b border-gray-100' : ''}`}>
-            <div className="px-3 py-2 font-semibold text-gray-400 bg-gray-50 border-r border-gray-100 flex items-center">{label}</div>
-            <div className="px-3 py-2 flex items-center justify-between gap-2 bg-white">
-              <code className="font-mono text-gray-800 break-all">{val}</code>
-              <CopyButton text={val} />
-            </div>
+    <div className="rounded-xl border border-gray-100 overflow-hidden text-[11px]">
+      {([['Tipo', type], ['Nombre', name], ['Valor', value]] as [string, string][]).map(([label, val], i) => (
+        <div key={label} className={`flex items-center ${i < 2 ? 'border-b border-gray-100' : ''}`}>
+          <div className="w-14 shrink-0 px-3 py-2 font-semibold text-gray-400 bg-gray-50 border-r border-gray-100 self-stretch flex items-center">
+            {label}
           </div>
-        ))}
-      </div>
+          <div className="flex-1 px-3 py-2 flex items-center justify-between gap-2 bg-white min-w-0">
+            <code className="font-mono text-gray-800 break-all">{val}</code>
+            <CopyButton text={val} />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
