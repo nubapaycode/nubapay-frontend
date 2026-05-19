@@ -996,19 +996,15 @@ export function PartnerBrandView() {
               <ol className="flex flex-col gap-3">
                 <li className="flex gap-2.5">
                   <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">1</span>
-                  <span>Ingresá tu dominio en el campo de abajo y hacé click en <strong>Agregar</strong>. Vamos a darte un código de verificación.</span>
+                  <span>Ingresá tu dominio en el campo de abajo y hacé click en <strong>Agregar</strong>. Te vamos a dar los registros DNS que tenés que configurar en tu proveedor.</span>
                 </li>
                 <li className="flex gap-2.5">
                   <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">2</span>
-                  <span>Copiá ese código y pegalo como un registro <code className="bg-white border border-gray-200 rounded px-1">TXT</code> en el panel de tu proveedor de dominio (GoDaddy, Namecheap, Cloudflare, etc.).</span>
+                  <span>Ingresá esos registros en el panel de tu proveedor de dominio (GoDaddy, Namecheap, Cloudflare, etc.).</span>
                 </li>
                 <li className="flex gap-2.5">
                   <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">3</span>
-                  <span>También creá un registro <code className="bg-white border border-gray-200 rounded px-1">CNAME</code> que apunte tu dominio hacia <code className="bg-white border border-gray-200 rounded px-1 select-all">cname.vercel-dns.com</code>.</span>
-                </li>
-                <li className="flex gap-2.5">
-                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600">4</span>
-                  <span>Volvé acá y presioná <strong>Verificar</strong>. Puede tardar hasta 48 hs en activarse.</span>
+                  <span>Volvé acá y presioná <strong>Verificar</strong>. La propagación puede tardar hasta 48 hs.</span>
                 </li>
               </ol>
               <p className="text-[11px] text-gray-900 bg-gray-200 rounded-lg px-3 py-2">
