@@ -110,47 +110,145 @@ function ImagePreview({ url, label }: { url: string; label: string }) {
   )
 }
 
+function hexToHsv(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min
+  let h = 0
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6
+    else if (max === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h = Math.round(h * 60)
+    if (h < 0) h += 360
+  }
+  return [h, max === 0 ? 0 : d / max, max]
+}
+
+function hsvToHex(h: number, s: number, v: number): string {
+  const f = (n: number) => {
+    const k = (n + h / 60) % 6
+    return Math.round((v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255)
+  }
+  return `#${f(5).toString(16).padStart(2, '0')}${f(3).toString(16).padStart(2, '0')}${f(1).toString(16).padStart(2, '0')}`
+}
+
 function ColorInput({
   label,
   value,
   onChange,
-  placeholder,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
-  placeholder?: string
 }) {
-  const pickerRef = useRef<HTMLInputElement>(null)
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const gradientRef = useRef<HTMLDivElement>(null)
+  const hueRef = useRef<HTMLDivElement>(null)
   const canon = coerceBrandHex(value)
+  const [h, s, v] = canon ? hexToHsv(canon) : [0, 0, 0.9]
+  const hueHex = hsvToHex(h, 1, 1)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const applyGradientPos = (clientX: number, clientY: number) => {
+    if (!gradientRef.current) return
+    const rect = gradientRef.current.getBoundingClientRect()
+    const newS = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    const newV = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height))
+    onChange(hsvToHex(h, newS, newV))
+  }
+
+  const applyHuePos = (clientX: number) => {
+    if (!hueRef.current) return
+    const rect = hueRef.current.getBoundingClientRect()
+    const newH = Math.max(0, Math.min(359, ((clientX - rect.left) / rect.width) * 360))
+    onChange(hsvToHex(newH, s || 1, v || 1))
+  }
+
+  const startDrag = (onMove: (e: MouseEvent) => void) => {
+    const up = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', up) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', up)
+  }
 
   return (
-    <label className="block">
+    <div ref={containerRef} className="relative block">
       <span className="text-sm font-medium text-gray-700">{label}</span>
-      <div className="relative mt-2 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <button
           type="button"
           aria-label="Abrir selector de color"
-          onClick={() => pickerRef.current?.click()}
+          onClick={() => setOpen(v => !v)}
           className="shrink-0 h-10 w-10 rounded-lg border border-gray-200 shadow-sm transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900"
           style={{ backgroundColor: canon ?? '#e5e7eb' }}
-        />
-        <input
-          type="color"
-          ref={pickerRef}
-          className="sr-only"
-          value={canon ?? '#000000'}
-          onChange={e => { onChange(e.target.value) }}
         />
         <input
           type="text"
           className={inputClass + ' font-mono'}
           value={value}
           onChange={e => { onChange(e.target.value) }}
-          placeholder={placeholder ?? '#000000'}
+          placeholder="#000000"
         />
       </div>
-    </label>
+
+      {open && (
+        <div className="absolute z-50 top-[calc(100%+8px)] left-0 w-64 rounded-2xl border border-gray-200 bg-white shadow-xl p-3 flex flex-col gap-3">
+          {/* Gradient area */}
+          <div
+            ref={gradientRef}
+            className="relative w-full h-36 rounded-xl cursor-crosshair select-none overflow-hidden"
+            style={{ backgroundColor: hueHex }}
+            onMouseDown={e => { applyGradientPos(e.clientX, e.clientY); startDrag(e => applyGradientPos(e.clientX, e.clientY)) }}
+          >
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to right, #fff, transparent)' }} />
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(to bottom, transparent, #000)' }} />
+            {canon && (
+              <div
+                className="absolute w-[14px] h-[14px] rounded-full border-2 border-white shadow pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${s * 100}%`, top: `${(1 - v) * 100}%`, backgroundColor: canon }}
+              />
+            )}
+          </div>
+
+          {/* Hue slider */}
+          <div
+            ref={hueRef}
+            className="relative w-full h-3.5 rounded-full cursor-pointer select-none"
+            style={{ background: 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }}
+            onMouseDown={e => { applyHuePos(e.clientX); startDrag(e => applyHuePos(e.clientX)) }}
+          >
+            <div
+              className="absolute top-1/2 w-[18px] h-[18px] rounded-full border-2 border-white shadow -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ left: `${(h / 360) * 100}%`, backgroundColor: hueHex }}
+            />
+          </div>
+
+          {/* Hex input */}
+          <div className="flex items-center gap-2">
+            <div className="shrink-0 h-8 w-8 rounded-lg border border-gray-200" style={{ backgroundColor: canon ?? '#e5e7eb' }} />
+            <input
+              type="text"
+              className={inputClass + ' font-mono h-8 py-0 text-[12px]'}
+              value={value}
+              onChange={e => { onChange(e.target.value) }}
+              placeholder="#000000"
+            />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
