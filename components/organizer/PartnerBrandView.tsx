@@ -761,7 +761,11 @@ export function PartnerBrandView() {
             <span className="text-sm font-medium text-gray-700">Título en el navegador</span>
             <input className={`${inputClass} mt-2`} value={seoTitleSuffix} onChange={e => { setSeoTitleSuffix(e.target.value) }} placeholder="ej. · Festival Costa" />
             {/* Tab bar preview */}
-            <div className="mt-2 rounded-xl border border-gray-200 bg-[#e8eaed] overflow-hidden">
+            <div
+              className="grid transition-all duration-500 ease-in-out"
+              style={{ gridTemplateRows: seoTitleSuffix.trim() ? '1fr' : '0fr' }}
+            >
+            <div className="overflow-hidden"><div className="mt-2 rounded-xl border border-gray-200 bg-[#e8eaed] overflow-hidden">
               {/* Tab strip */}
               <div className="flex items-end px-2 pt-2 gap-0.5">
                 {/* Active tab */}
@@ -795,7 +799,7 @@ export function PartnerBrandView() {
                   <span className="text-[10px] text-gray-500 font-mono truncate">{tenant.subdomain}.nubapay.com</span>
                 </div>
               </div>
-            </div>
+            </div></div></div>
           </label>
 
           <label className="block">
