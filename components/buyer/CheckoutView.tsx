@@ -96,8 +96,31 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
       const data = await res.json()
       clearCart()
 
-      if (paymentMethod === 'mp' && data.checkout_url) {
-        window.location.href = data.checkout_url
+      if (paymentMethod === 'mp') {
+        let checkoutUrl: string | null = data.checkout_url ?? null
+
+        // La preferencia de MP se crea en background — hacer polling hasta que aparezca
+        if (!checkoutUrl) {
+          const deadline = Date.now() + 12_000
+          while (!checkoutUrl && Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 600))
+            try {
+              const poll = await fetch(catalogPaths.orderStatus(data.order_id), {
+                headers: { 'X-Branded-Host': window.location.host },
+              })
+              if (poll.ok) {
+                const pollData = await poll.json()
+                checkoutUrl = pollData.checkout_url ?? null
+              }
+            } catch { /* ignorar errores de red transitorios */ }
+          }
+        }
+
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl
+        } else {
+          router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
+        }
       } else {
         router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
       }

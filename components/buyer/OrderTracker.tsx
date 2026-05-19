@@ -65,6 +65,19 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
+  // Si llegamos a esta página con pago MP pendiente y aún no tenemos checkout_url,
+  // redirigir automáticamente en cuanto aparezca (fallback al polling del CheckoutView)
+  useEffect(() => {
+    if (
+      order?.payment_method === 'mp' &&
+      order.payment_status === 'pending' &&
+      order.checkout_url &&
+      !paymentResult
+    ) {
+      window.location.href = order.checkout_url
+    }
+  }, [order?.checkout_url, order?.payment_method, order?.payment_status, paymentResult])
+
   const isPaid = order?.payment_status === 'approved'
   const isPendingPayment = order?.status === 'pending_payment'
 
