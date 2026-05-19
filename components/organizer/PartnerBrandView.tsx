@@ -773,9 +773,7 @@ export function PartnerBrandView() {
                   {/* Favicon placeholder */}
                   <div className="shrink-0 h-3.5 w-3.5 rounded-sm bg-gray-200" />
                   <span className="text-[11px] text-gray-800 truncate font-medium leading-none">
-                    {seoTitleSuffix.trim()
-                      ? `Catálogo ${seoTitleSuffix.trim()}`
-                      : <span className="text-gray-400 italic">Catálogo</span>}
+                    {seoTitleSuffix.trim()}
                   </span>
                   <button type="button" tabIndex={-1} className="ml-1 shrink-0 rounded-full p-0.5 text-gray-400 hover:bg-gray-100 pointer-events-none">
                     <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
