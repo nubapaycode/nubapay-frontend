@@ -809,9 +809,27 @@ export function PartnerBrandView() {
               rows={3}
               placeholder="Describí brevemente tu organización o evento."
             />
-            <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">
-              Aparece en buscadores y al compartir el link del catálogo.
-            </p>
+            {/* Search result preview */}
+            <div
+              className="grid transition-all duration-500 ease-in-out"
+              style={{ gridTemplateRows: seoDescription.trim() ? '1fr' : '0fr' }}
+            >
+              <div className="overflow-hidden">
+                <div className="mt-2 rounded-xl border border-gray-200 bg-white px-4 py-3">
+                  <p className="text-[10px] text-gray-400 mb-2 font-medium">Vista previa en buscadores</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <div className="h-4 w-4 rounded-full bg-gray-100 shrink-0" />
+                    <span className="text-[11px] text-gray-500 truncate">{tenant.subdomain}.nubapay.com</span>
+                  </div>
+                  <p className="text-[15px] font-medium text-[#1a0dab] leading-snug truncate">
+                    {seoTitleSuffix.trim() || (displayName.trim() || tenant.subdomain)}
+                  </p>
+                  <p className="text-[12px] text-gray-600 leading-relaxed mt-0.5 line-clamp-2">
+                    {seoDescription.trim()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </label>
         </div>
 
