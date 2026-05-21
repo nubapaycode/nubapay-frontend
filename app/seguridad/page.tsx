@@ -2,10 +2,17 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteNavbar from '@/components/SiteNavbar'
 import SiteFooter from '@/components/SiteFooter'
+import { breadcrumbJsonLd } from '@/lib/seo'
 
 export const metadata: Metadata = {
-  title: 'Seguridad',
-  description: 'Conocé cómo Nubapay protege cada pedido, pago y retiro en tu evento.',
+  title: 'Seguridad — Nubapay',
+  description: 'Conocé cómo Nubapay protege cada pedido, pago y retiro en tu evento con QR único y validación antifraude.',
+  alternates: { canonical: 'https://nubapay.app/seguridad' },
+  openGraph: {
+    title: 'Seguridad — Nubapay',
+    description: 'Conocé cómo Nubapay protege cada pedido, pago y retiro en tu evento con QR único y validación antifraude.',
+    images: [{ url: '/images/og.png', width: 1200, height: 630, alt: 'Nubapay — Seguridad' }],
+  },
 }
 
 export default function SeguridadPage() {
@@ -26,6 +33,7 @@ export default function SeguridadPage() {
 
   return (
     <div style={{ fontFamily: font, background: '#FFFFFF', minHeight: '100vh' }}>
+      <script type="application/ld+json">{breadcrumbJsonLd([{ name: 'Seguridad', path: '/seguridad' }])}</script>
       <style>{`
         .sec-card { background: #FAFAFA; border: 1px solid rgba(0,0,0,0.07); border-radius: 20px; padding: 28px; transition: border-color 0.2s; }
         .sec-card:hover { border-color: rgba(0,0,0,0.14); }

@@ -34,9 +34,7 @@ const NAV = [
     title: 'Empresa',
     links: [
       { label: 'Sobre Nubapay', href: '/nosotros' },
-      { label: 'Blog', href: '#' },
-      { label: 'Contacto', href: '#' },
-      { label: 'Trabaja con nosotros', href: '#' },
+      { label: 'Contacto', href: '/nosotros#equipo' },
     ],
   },
   {
@@ -134,6 +132,22 @@ export default function SiteFooter() {
         <div style={{ padding: '20px 0' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', fontWeight: 400 }}>© 2026 Nubapay · Argentina</span>
+            <a
+              href="https://www.instagram.com/nubapay.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram de Nubapay (@nubapay.app)"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontSize: '13px', fontWeight: 500, transition: 'color 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#FFFFFF')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" />
+              </svg>
+              @nubapay.app
+            </a>
           </div>
         </div>
 

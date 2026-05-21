@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import SiteNavbar from '@/components/SiteNavbar'
 
 const TICKER = [
-  'Sin filas', 'Menú digital', 'QR antifraude', 'Pagos online',
+  'Sin cajas', 'Menú digital', 'QR antifraude', 'Pagos online',
   'IA integrada', 'Tiempo real', 'Eventos masivos',
 ]
 
@@ -369,10 +369,11 @@ export function LandingPage() {
                 <span className="nb-hw">PEDÍ.</span>
                 <span className="nb-hw">PAGÁ.</span>
                 <span className="nb-hw">RETIRÁ.</span>
+                <span className="sr-only"> Nubapay: menú digital, pagos móviles y retiro con QR para eventos y festivales.</span>
               </h1>
 
               <p className="nb-sub" style={{ fontSize: '18px', fontWeight: 400, color: '#000000', lineHeight: '1.65', maxWidth: '560px', margin: '0 0 48px 0' }}>
-                <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 6px 2px', borderRadius: '5px' }}>Menú digital</span>, pagos móviles y <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 6px 2px', borderRadius: '5px' }}>retiro con QR</span> para eventos y festivales. Cero filas. Cero caos.<br />
+                <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 6px 2px', borderRadius: '5px' }}>Menú digital</span>, pagos móviles y <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 6px 2px', borderRadius: '5px' }}>retiro con QR</span> para eventos y festivales. Sin cajas. Sin caos.<br />
                 <span style={{ background: '#C6FF00', color: '#0A0F00', padding: '0 8px 3px', borderRadius: '6px', display: 'inline-block', marginTop: '6px', fontWeight: 900, textTransform: 'uppercase' as const }}>Más ventas.</span>
               </p>
 
@@ -659,7 +660,7 @@ export function LandingPage() {
               Del escaneo<br />al retiro.
             </h2>
             <p className="nb-steps-sub" style={{ maxWidth: '360px', color: '#000000', fontSize: '20px', lineHeight: '1.7', textAlign: 'right', marginBottom: '4px' }}>
-              Escaneás, pedís, pagás y retirás.<br />Sin filas, sin caos, sin fricción.<br />El flujo más rápido del mercado.
+              Escaneás, pedís, pagás y retirás.<br />Sin cajas, sin caos, sin fricción.<br />El flujo más rápido del mercado.
             </p>
           </div>
 
@@ -668,7 +669,7 @@ export function LandingPage() {
               { n: '01', title: 'Escaneá el QR', desc: 'Entrás al menú digital del evento desde tu celular. Sin app. Sin cuenta.', icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" stroke="#0A0A0F" strokeWidth="1.5"/><rect x="12" y="2" width="8" height="8" rx="1.5" stroke="#0A0A0F" strokeWidth="1.5"/><rect x="2" y="12" width="8" height="8" rx="1.5" stroke="#0A0A0F" strokeWidth="1.5"/><rect x="14" y="14" width="2" height="2" fill="#0A0A0F"/><rect x="18" y="14" width="2" height="2" fill="#0A0A0F"/><rect x="14" y="18" width="2" height="2" fill="#0A0A0F"/><rect x="18" y="18" width="2" height="2" fill="#0A0A0F"/></svg>, highlight: false },
               { n: '02', title: 'Elegí y pedí', desc: 'Navegás el catálogo, agregás al carrito y confirmás el pedido en segundos.', icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 3h2l2.5 10h9l2-7H7" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="10" cy="19" r="1.5" fill="#0A0A0F"/><circle cx="17" cy="19" r="1.5" fill="#0A0A0F"/></svg>, highlight: false },
               { n: '03', title: 'Pagá online', desc: 'MercadoPago, transferencia o efectivo. 100% desde el celular, sin billetera.', icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="5" width="18" height="13" rx="2.5" stroke="#0A0A0F" strokeWidth="1.5"/><path d="M2 9h18" stroke="#0A0A0F" strokeWidth="1.5"/><rect x="5" y="13" width="4" height="2" rx="1" fill="#0A0A0F"/></svg>, highlight: false },
-              { n: '04', title: 'Retirá sin fila', desc: 'Mostrás el QR certificado en blockchain y te van el pedido listo en el acto.', icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11l5 5 9-9" stroke="#0A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, highlight: true },
+              { n: '04', title: 'Retirá sin fila', desc: 'Mostrás el QR en el punto de retiro y te entregan el pedido al instante, sin esperar.', icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11l5 5 9-9" stroke="#0A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, highlight: true },
             ].map(({ n, title, desc, icon, highlight }, i) => (
               <div key={n} className="nb-reveal" style={{
                 background: highlight ? '#C6FF00' : '#FAFAFA',
@@ -979,7 +980,7 @@ export function LandingPage() {
                 { q: '¿El QR se puede usar más de una vez?', a: 'No. Cada QR es único y cuenta con validación antifraude para evitar que un mismo pedido sea retirado más de una vez.' },
                 { q: '¿Puedo tener varios puntos de retiro?', a: 'Sí. Podés configurar diferentes barras o sectores —por ejemplo Barra Principal, Barra VIP, Patio o Sector Norte— y asignar productos específicos a cada punto.' },
                 { q: '¿Cuánto cuesta usar Nubapay?', a: 'El modelo puede adaptarse al tipo de evento. Una opción es cobrar una comisión por transacción, por ejemplo sobre cada venta realizada dentro de la plataforma. Sin costos fijos.' },
-                { q: '¿Nubapay reemplaza al personal de barra?', a: 'No. Nubapay no reemplaza al staff, lo ayuda a trabajar más ordenado. El sistema reduce la carga en caja, organiza los pedidos y permite que el equipo se enfoque en preparar y entregar más rápido.' },
+                { q: '¿Cuánto tarda en configurarse Nubapay para un evento?', a: 'Muy poco. Podés tener el menú, los puntos de retiro y los pagos listos en menos de 20 minutos. No necesitás hardware especial ni conocimientos técnicos.' },
               ].map(({ q, a }, i) => {
                 const isOpen = openFaq === i
                 return (
@@ -1030,7 +1031,7 @@ export function LandingPage() {
             <div style={{ position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: '60%', height: '80%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.08) 0%, transparent 65%)', pointerEvents: 'none' }} />
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '28px' }}>Para organizadores</div>
             <h2 style={{ fontSize: 'clamp(54px, 6.5vw, 96px)', fontWeight: 500, letterSpacing: '-0.055em', lineHeight: '0.88', margin: '0 0 28px 0', color: '#FFFFFF', maxWidth: '700px' }}>
-              Tu próximo<br />evento sin filas.
+              Tu próximo<br />evento sin cajas.
             </h2>
             <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.7', margin: '0 0 52px 0', maxWidth: '440px' }}>
               Registrate gratis, creá tu evento en minutos y empezá a vender. Sin costos fijos. Solo pagás cuando vendés.
@@ -1085,9 +1086,7 @@ export function LandingPage() {
                   title: 'Empresa',
                   links: [
                     { label: 'Sobre Nubapay', href: '/nosotros' },
-                    { label: 'Blog', href: '#' },
-                    { label: 'Contacto', href: '#' },
-                    { label: 'Trabaja con nosotros', href: '#' },
+                    { label: 'Contacto', href: '/nosotros#equipo' },
                   ],
                 },
                 {

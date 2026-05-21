@@ -22,7 +22,7 @@ export function EventOrganizerShell({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [eventMeta, setEventMeta] = useState<{ title: string; membership: 'owner' | 'staff' } | null>(null)
+  const [eventMeta, setEventMeta] = useState<{ title: string; membership: 'owner' | 'staff'; hasMpToken: boolean } | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [authNonce, setAuthNonce] = useState(0)
@@ -44,6 +44,7 @@ export function EventOrganizerShell({
         setEventMeta({
           title: body.event.name,
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
+          hasMpToken: body.event.has_mp_token ?? false,
         })
       }
     } catch {
@@ -74,6 +75,17 @@ export function EventOrganizerShell({
     }
     window.addEventListener('nubapay-event-updated', onEventUpdated)
     return () => window.removeEventListener('nubapay-event-updated', onEventUpdated)
+  }, [])
+
+  useEffect(() => {
+    const onMpConnected = () => setEventMeta(prev => prev ? { ...prev, hasMpToken: true } : prev)
+    const onMpDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasMpToken: false } : prev)
+    window.addEventListener('nubapay-mp-connected', onMpConnected)
+    window.addEventListener('nubapay-mp-disconnected', onMpDisconnected)
+    return () => {
+      window.removeEventListener('nubapay-mp-connected', onMpConnected)
+      window.removeEventListener('nubapay-mp-disconnected', onMpDisconnected)
+    }
   }, [])
 
   useEffect(() => {
@@ -190,6 +202,7 @@ export function EventOrganizerShell({
           router.replace('/')
         }}
         showPartnerBrand={brandNavEligible}
+        hasMpToken={eventMeta.hasMpToken}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">{children}</div>

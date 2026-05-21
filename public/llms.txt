@@ -1,0 +1,43 @@
+# Nubapay
+
+> Nubapay es una plataforma para eventos masivos que permite a los asistentes pedir, pagar y retirar productos desde el celular, sin cajas, sin filas y sin descargar ninguna app. Conecta asistentes, barras y organizadores en un único sistema operativo para el evento.
+
+Nubapay funciona como una web app responsive: el asistente escanea un QR o entra desde un link, arma su pedido, paga online y retira con un código QR único validado contra fraude. El organizador gestiona menú, puntos de retiro, pagos y ventas en tiempo real desde un panel.
+
+## Cómo funciona
+
+- El asistente escanea un QR o abre un link, sin instalar nada.
+- Elige productos de un menú digital y paga desde el celular.
+- Recibe un código QR único, irrepetible y de un solo uso, vinculado a ese pedido.
+- El staff escanea el QR en el punto de retiro; la app lo valida en tiempo real y lo invalida tras el uso.
+
+## Casos de uso
+
+Boliches, festivales, fiestas, recitales, eventos privados, ferias, estadios, eventos corporativos, barras móviles y food trucks.
+
+## Seguridad
+
+- QR de un solo uso que se invalida al escanearse, vinculado al pedido, evento y punto de retiro.
+- Verificación antifraude en tiempo real y bloqueo de QR duplicados.
+- Pagos vía PSPs certificados (ej. Mercado Pago); Nubapay no almacena datos de tarjeta.
+- Cifrado TLS 256-bit en tránsito.
+
+## Precios
+
+Sin costos fijos. El modelo se basa en una comisión por transacción sobre cada venta realizada en la plataforma.
+
+## Preguntas frecuentes
+
+- ¿Necesito descargar una app? No. Funciona desde una web app responsive.
+- ¿El QR se puede usar más de una vez? No. Cada QR es único, de un solo uso y con validación antifraude.
+- ¿Puedo tener varios puntos de retiro? Sí. Se configuran distintas barras o sectores con productos asignados.
+- ¿Cuánto tarda en configurarse? El menú, los puntos de retiro y los pagos pueden estar listos en menos de 20 minutos, sin hardware especial.
+
+## Enlaces
+
+- Inicio: https://nubapay.app
+- Nosotros: https://nubapay.app/nosotros
+- Seguridad: https://nubapay.app/seguridad
+- Términos: https://nubapay.app/terminos
+- Privacidad: https://nubapay.app/privacidad
+- Contacto: contacto@nubapay.app

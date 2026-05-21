@@ -4,10 +4,17 @@ import Image from 'next/image'
 import SiteNavbar from '@/components/SiteNavbar'
 import SiteFooter from '@/components/SiteFooter'
 import ScrollReveal from '@/components/ScrollReveal'
+import { breadcrumbJsonLd } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Nosotros — Nubapay',
-  description: 'Nubapay nace para resolver uno de los mayores problemas de los eventos masivos: las filas.',
+  description: 'Conocé al equipo detrás de Nubapay y la historia de cómo nació la plataforma para eventos masivos.',
+  alternates: { canonical: 'https://nubapay.app/nosotros' },
+  openGraph: {
+    title: 'Nosotros — Nubapay',
+    description: 'Conocé al equipo detrás de Nubapay y la historia de cómo nació la plataforma para eventos masivos.',
+    images: [{ url: '/images/og.png', width: 1200, height: 630, alt: 'Nubapay — El equipo' }],
+  },
 }
 
 export default function NosotrosPage() {
@@ -21,8 +28,8 @@ export default function NosotrosPage() {
       bio: 'Lidera la estrategia, la visión comercial y el crecimiento de Nubapay. Con foco en construir relaciones con organizadores, partners y el ecosistema de eventos masivos en Latinoamérica.',
       initial: 'AV',
       photo: '/images/angelito.jpeg',
-      linkedin: 'https://linkedin.com',
-      email: 'angel@nubapay.app',
+      linkedin: 'https://linkedin.com/in/angel-vaquero-7592a8194',
+      email: 'contacto@nubapay.app',
     },
     {
       name: 'Facundo Girardi',
@@ -31,8 +38,8 @@ export default function NosotrosPage() {
       bio: 'Lidera el desarrollo tecnológico, la arquitectura del sistema y la escalabilidad de la plataforma. Responsable de las decisiones técnicas que sostienen cada pedido, pago y retiro en tiempo real.',
       initial: 'FG',
       photo: '/images/facu.png',
-      linkedin: 'https://linkedin.com',
-      email: 'facundo@nubapay.app',
+      linkedin: 'https://linkedin.com/in/facugirardi',
+      email: 'contacto@nubapay.app',
     },
     {
       name: 'Alejo Vaquero',
@@ -41,8 +48,8 @@ export default function NosotrosPage() {
       bio: 'Lidera el producto, la experiencia de usuario, la definición funcional y la evolución de la plataforma. Traduce los problemas reales de asistentes y organizadores en decisiones de diseño y producto.',
       initial: 'AV',
       photo: '/images/alejo.jpeg',
-      linkedin: 'https://linkedin.com',
-      email: 'alejo@nubapay.app',
+      linkedin: 'https://linkedin.com/in/alejovaquero',
+      email: 'contacto@nubapay.app',
     },
   ]
 
@@ -71,6 +78,7 @@ export default function NosotrosPage() {
 
   return (
     <div style={{ fontFamily: font, background: '#FFFFFF', minHeight: '100vh', color: '#0A0A0F' }}>
+      <script type="application/ld+json">{breadcrumbJsonLd([{ name: 'Nosotros', path: '/nosotros' }])}</script>
       <style>{`
         /* ── Animaciones de carga (hero) ── */
         @keyframes nos-fade-up {
@@ -100,15 +108,18 @@ export default function NosotrosPage() {
         .sr-base { opacity: 0; transform: translateY(32px); transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1); }
         .sr-visible { opacity: 1; transform: translateY(0); }
 
-        /* ── Hover zoom en foto de fundador ── */
+        /* ── Hover zoom + color en foto de fundador ── */
         .nos-photo-wrap { overflow: hidden; }
-        .nos-photo-wrap img { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1) !important; }
-        .nos-photo-wrap:hover img { transform: scale(1.05) !important; }
+        .nos-photo-wrap img { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease !important; filter: grayscale(100%) !important; }
+        .nos-photo-wrap:hover img { transform: scale(1.05) !important; filter: grayscale(0%) !important; }
 
         /* ── Otros ── */
         .nos-founder-card { border-top: 1px solid rgba(0,0,0,0.1); padding: 40px 0; transition: none; }
         .nos-social-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: #F4F4F6; border: none; transition: background 0.15s; }
         .nos-social-btn:hover { background: #EAEAEC; }
+        .nos-social-btn.nos-linkedin:hover { background: #0A66C2; }
+        .nos-social-btn.nos-linkedin svg path { transition: fill 0.15s; }
+        .nos-social-btn.nos-linkedin:hover svg path { fill: #fff; }
         .nos-principle { border-top: 1px solid rgba(0,0,0,0.08); padding: 32px 0; display: grid; grid-template-columns: 64px 1fr 2fr; gap: 32px; align-items: start; }
         .nos-principle:last-child { border-bottom: 1px solid rgba(0,0,0,0.08); }
 
@@ -168,7 +179,7 @@ export default function NosotrosPage() {
           maxWidth: '900px',
         }}>
           <span className="nos-line-wrap nos-line-1"><span className="nos-line-inner">Terminamos con</span></span>
-          <span className="nos-line-wrap nos-line-2"><span className="nos-line-inner">las filas, de</span></span>
+          <span className="nos-line-wrap nos-line-2"><span className="nos-line-inner">las cajas, de</span></span>
           <span className="nos-line-wrap nos-line-3"><span className="nos-line-inner" style={{ color: '#C6FF00', WebkitTextStroke: '2px #0A0A0F' }}>una vez por todas</span></span>
         </h1>
 
@@ -181,9 +192,9 @@ export default function NosotrosPage() {
             margin: 0,
             fontWeight: 500,
             letterSpacing: '-0.02em',
-            maxWidth: '760px',
+            maxWidth: '1000px',
           }}>
-            <span style={{ color: '#0A0A0F' }}>Nubapay</span>{' '}nace para resolver uno de los mayores problemas de los{' '}<span style={{ color: '#0A0A0F' }}>eventos masivos</span>:{' '}<span style={{ color: '#0A0A0F' }}>las filas</span>. Creamos una{' '}<span style={{ color: '#0A0A0F' }}>plataforma simple y escalable</span>{' '}que permite{' '}<span style={{ color: '#0A0A0F' }}>pedir</span>,{' '}<span style={{ color: '#0A0A0F' }}>pagar</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>retirar productos desde el celular</span>, conectando{' '}<span style={{ color: '#0A0A0F' }}>asistentes</span>,{' '}<span style={{ color: '#0A0A0F' }}>barras</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>organizadores</span>{' '}en un{' '}<span style={{ color: '#0A0A0F' }}>único sistema operativo</span>.
+            <span style={{ color: '#0A0A0F' }}>Nubapay</span>{' '}nace para resolver uno de los mayores problemas de los{' '}<span style={{ color: '#0A0A0F' }}>eventos masivos</span>:{' '}<span style={{ color: '#0A0A0F' }}>las cajas</span>. Creamos una{' '}<span style={{ color: '#0A0A0F' }}>plataforma simple y escalable</span>{' '}que permite{' '}<span style={{ color: '#0A0A0F' }}>pedir</span>,{' '}<span style={{ color: '#0A0A0F' }}>pagar</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>retirar productos desde el celular</span>, conectando{' '}<span style={{ color: '#0A0A0F' }}>asistentes</span>,{' '}<span style={{ color: '#0A0A0F' }}>barras</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>organizadores</span>{' '}en un{' '}<span style={{ color: '#0A0A0F' }}>único sistema operativo</span>.
           </p>
         </div>
 
@@ -250,7 +261,7 @@ export default function NosotrosPage() {
       </ScrollReveal>
 
       {true && (
-      <div style={{ background: '#FFFFFF', padding: '96px 48px' }}>
+      <div id="equipo" style={{ background: '#FFFFFF', padding: '96px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '64px' }}>
@@ -317,7 +328,7 @@ export default function NosotrosPage() {
                     {f.bio}
                   </p>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <a href={f.linkedin} target="_blank" rel="noopener noreferrer" className="nos-social-btn" title="LinkedIn">
+                    <a href={f.linkedin} target="_blank" rel="noopener noreferrer" className="nos-social-btn nos-linkedin" title="LinkedIn">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path d="M2.5 5.5h2.5v8H2.5v-8ZM3.75 4.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5ZM6.5 5.5H9v1.1c.4-.7 1.3-1.3 2.5-1.3 2.2 0 3 1.5 3 3.5v4.7H12V9.2c0-1-.4-1.7-1.3-1.7-1 0-1.7.7-1.7 1.9v4.1H6.5v-8Z" fill="#3A3A4A"/>
                       </svg>

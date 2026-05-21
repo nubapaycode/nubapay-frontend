@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteNavbar from '@/components/SiteNavbar'
 import SiteFooter from '@/components/SiteFooter'
+import { breadcrumbJsonLd } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
   description: 'Política de privacidad y protección de datos personales de Nubapay.',
+  alternates: { canonical: 'https://nubapay.app/privacidad' },
 }
 
 type Section = { num: string; title: string; body: string; children?: { subtitle: string; body: string }[] }
@@ -310,6 +312,7 @@ export default function PrivacidadPage() {
 
   return (
     <div style={{ fontFamily: font, background: '#FFFFFF', minHeight: '100vh' }}>
+      <script type="application/ld+json">{breadcrumbJsonLd([{ name: 'Política de Privacidad', path: '/privacidad' }])}</script>
       <style>{`
         .nb-sidebar-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; text-decoration: none; font-size: 12px; color: #6B6B7A; font-weight: 500; line-height: 1.35; transition: background 0.12s, color 0.12s; }
         .nb-sidebar-link:hover { background: #F0F0F2; color: #0A0A0F; }
