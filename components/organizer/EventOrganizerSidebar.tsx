@@ -91,7 +91,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/scanner`,
       label: 'Escáner',
       icon: scannerIcon,
-      showDesktop: true,
+      showDesktop: false,
       mobileFab: true,
       tool: 'scanner',
       tourId: 'sidebar-scanner',
