@@ -146,7 +146,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
           }
           .nb-cell-num    { grid-area: num; }
           .nb-cell-items  { grid-area: items; }
-          .nb-cell-cust   { grid-area: cust; font-size: 12px !important; color: #6B7280 !important; }
+          .nb-cell-cust   { grid-area: cust; font-size: 13px !important; color: #0A0A0F !important; font-weight: 500 !important; }
+          .nb-cell-cust .nb-cust-label { display: inline !important; }
           .nb-cell-total  { grid-area: total; text-align: right; }
           .nb-cell-status { grid-area: status; align-self: center; }
           .nb-cell-eye    { grid-area: eye; align-self: center; }
@@ -391,8 +392,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 </div>
 
                 {/* Customer */}
-                <span className="nb-cell-cust" style={{ fontSize: '13px', color: order.customerName ? '#0A0A0F' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {order.customerName ?? '—'}
+                <span className="nb-cell-cust" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="nb-cust-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Cliente:</span>
+                  <span style={{ color: order.customerName ? undefined : '#C8C8D0' }}>{order.customerName ?? '—'}</span>
                 </span>
 
                 {/* Total */}

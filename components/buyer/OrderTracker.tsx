@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { Download } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
@@ -22,6 +22,7 @@ interface OrderData {
   customer_name: string | null
   payment_method: string | null
   checkout_url: string | null
+  processing: boolean
   items: { product_id: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
   created_at: string
 }
@@ -32,15 +33,18 @@ const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia',
 }
 
-const POLL_INTERVAL = 6000
+const POLL_FAST = 1500   // while processing === true
+const POLL_SLOW = 6000   // once processing is done
 
-export function OrderTracker({ orderId }: OrderTrackerProps) {
+export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const paymentResult = searchParams.get('payment_result')
 
   const [order, setOrder] = useState<OrderData | null>(null)
   const [loadError, setLoadError] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const processingRef = useRef<boolean>(true)
 
   const fetchOrder = async () => {
     try {
@@ -51,14 +55,22 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
       const data: OrderData = await res.json()
       setOrder(data)
       setLoadError(false)
+
+      // Switch from fast polling to slow as soon as the worker finishes.
+      if (processingRef.current && !data.processing) {
+        processingRef.current = false
+        if (pollRef.current) clearInterval(pollRef.current)
+        pollRef.current = setInterval(fetchOrder, POLL_SLOW)
+      }
     } catch {
       setLoadError(true)
     }
   }
 
   useEffect(() => {
+    processingRef.current = true
     fetchOrder()
-    pollRef.current = setInterval(fetchOrder, POLL_INTERVAL)
+    pollRef.current = setInterval(fetchOrder, POLL_FAST)
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
     }
@@ -97,6 +109,17 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
 
       {/* Top bar */}
       <div className="sticky top-0 z-10 bg-white flex items-center px-4 h-[60px] shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        {catalogSlug && (
+          <button
+            onClick={() => router.push(`/catalogo/${catalogSlug}`)}
+            className="w-9 h-9 rounded-full bg-[#F4F4F6] flex items-center justify-center shrink-0"
+            aria-label="Volver al catálogo"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M11 4L6 9l5 5" stroke="#0A0A0F" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
         <h1 className="text-[17px] font-bold absolute left-1/2 -translate-x-1/2 tracking-tight">
           Tu pedido
         </h1>
@@ -155,6 +178,20 @@ export function OrderTracker({ orderId }: OrderTrackerProps) {
         {loadError && !order && (
           <div className="bg-white rounded-2xl border border-gray-100 p-5 text-sm text-gray-400 text-center">
             No pudimos cargar tu pedido. Revisá tu conexión.
+          </div>
+        )}
+
+        {/* Procesando — el worker todavía está creando los items y el pago */}
+        {order?.processing && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center gap-3">
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '50%',
+              border: '3px solid #E5E7EB', borderTopColor: '#0A0A0F',
+              animation: 'spin 0.75s linear infinite',
+            }} />
+            <p className="text-[14px] font-semibold text-gray-900">Procesando tu pedido…</p>
+            <p className="text-xs text-gray-400 text-center">Esto tarda solo unos segundos.</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         )}
 
