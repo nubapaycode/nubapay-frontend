@@ -115,7 +115,7 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
 
           {/* Nombre */}
           <h1
-            className="text-[20px] font-semibold leading-[1.1]"
+            className="text-[17px] font-semibold leading-[1.2]"
             style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}
           >
             {item.name}
@@ -135,7 +135,7 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
           <div className="mt-5">
             <div className="flex items-baseline gap-3">
               <span
-                className="text-[32px] font-semibold tracking-tight"
+                className="text-[24px] font-semibold tracking-tight"
                 style={{ color: BUYER_COLORS.text, letterSpacing: '-0.04em' }}
               >
                 {formatPrice(item.price)}
@@ -152,17 +152,16 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
             {hasDiscount && (
               <div className="relative mt-4 inline-block">
                 <span
-                  className="inline-flex items-center rounded-[16px] px-4 py-2 text-[14px] font-semibold tracking-tight"
+                  className="absolute left-5 top-0 h-3 w-3 -translate-y-1/2 rotate-45"
+                  style={{ background: BUYER_COLORS.accent }}
+                  aria-hidden
+                />
+                <span
+                  className="relative z-10 inline-flex items-center rounded-[16px] px-4 py-2 text-[14px] font-semibold tracking-tight"
                   style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
                 >
                   {discount}% OFF
                 </span>
-                {/* Cola del speech bubble */}
-                <span
-                  className="absolute -top-2 left-5 h-3 w-3 rotate-45"
-                  style={{ background: BUYER_COLORS.accent }}
-                  aria-hidden
-                />
               </div>
             )}
           </div>
@@ -206,10 +205,10 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
         }}
       >
         <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-[20px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
+          <span className="text-[16px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
             {formatPrice(item.price * localQty)}
           </span>
-          <span className="text-[20px] font-semibold" style={{ color: BUYER_COLORS.text }}>
+          <span className="text-[16px] font-semibold" style={{ color: BUYER_COLORS.text }}>
             {localQty} {localQty === 1 ? 'producto' : 'productos'}
           </span>
         </div>
@@ -250,7 +249,7 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex h-[54px] flex-1 items-center justify-center rounded-full text-[20px] font-semibold tracking-tight transition-opacity active:opacity-85"
+            className="flex h-[54px] flex-1 items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85"
             style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
           >
             Agregar

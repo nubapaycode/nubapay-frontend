@@ -38,7 +38,7 @@ export const fetchPublicStorefront = cache(async (slug: string): Promise<Storefr
   let url = catalogPaths.storefrontBySlug(slug)
   url = await resolveInternalFetchUrl(url)
   const extra = await brandedRequestHeaders()
-  const res = await fetch(url, { cache: 'no-store', headers: extra })
+  const res = await fetch(url, { next: { revalidate: 30 }, headers: extra })
   if (!res.ok) return null
   return res.json() as Promise<StorefrontApiResponse>
 })
