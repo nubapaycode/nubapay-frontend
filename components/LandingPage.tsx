@@ -162,6 +162,9 @@ const CSS = `
   }
   .nb-tap-dot { animation: nb-tap-ripple 0.42s ease-out forwards; pointer-events: none; }
 
+  /* ── Eventos section ── */
+  .nb-eventos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
   /* ── Responsive ── */
   @media (max-width: 900px) {
     .nb-nav-inner { padding: 0 20px !important; }
@@ -176,7 +179,9 @@ const CSS = `
     .nb-atendium-section,
     .nb-blockchain-section,
     .nb-stats-section,
+    .nb-eventos-section,
     .nb-cta-section { padding-left: 24px !important; padding-right: 24px !important; }
+    .nb-eventos-grid { grid-template-columns: 1fr 1fr !important; }
     .nb-atendium-card { padding: 48px !important; grid-template-columns: 1fr !important; gap: 40px !important; }
     .nb-blockchain-grid { grid-template-columns: 1fr !important; }
     .nb-blockchain-left { border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; padding: 60px 48px !important; }
@@ -213,7 +218,9 @@ const CSS = `
     .nb-cta-btn { width: 100% !important; justify-content: center !important; }
     .nb-hero-cta { flex-direction: column !important; width: 100% !important; }
     .nb-hero-cta-btn { width: 100% !important; justify-content: center !important; padding-left: 24px !important; padding-right: 24px !important; }
-    .nb-faq-section { padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 80px !important; }
+    .nb-faq-section,
+    .nb-eventos-section { padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 80px !important; }
+    .nb-eventos-grid { grid-template-columns: 1fr !important; }
     .nb-faq-grid { gap: 32px !important; }
     .nb-faq-answer { padding-right: 0 !important; }
     .nb-footer { padding: 40px 20px 24px !important; }
@@ -956,6 +963,71 @@ export function LandingPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* ─── EVENTOS ─── */}
+        <section className="nb-eventos-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+
+          <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '72px' }}>
+            <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+              Para cada<br />tipo de evento.
+            </h2>
+            <p className="nb-steps-sub" style={{ maxWidth: '380px', color: S.muted, fontSize: '16px', lineHeight: '1.75', textAlign: 'right', marginBottom: '4px' }}>
+              Nubapay es la plataforma para eventos masivos de Argentina y Latinoamérica.
+              Cualquier organizador activa el menú digital, los cobros online y los puntos
+              de retiro con QR en menos de 20 minutos, sin hardware ni conocimientos técnicos.
+            </p>
+          </div>
+
+          <div className="nb-reveal nb-eventos-grid">
+            {([
+              {
+                cat: 'Festivales',
+                title: 'Festivales y recitales',
+                desc: 'Control total de barras de bebidas, comidas y merchandising durante el show. Escala a miles de pedidos simultáneos sin colapsar el punto de venta.',
+              },
+              {
+                cat: 'Boliches',
+                title: 'Boliches y discotecas',
+                desc: 'Venta de tragos, botella y barra sin interrumpir la fiesta. El asistente pide desde su lugar y retira en segundos con su QR único.',
+              },
+              {
+                cat: 'Corporativos',
+                title: 'Fiestas privadas y corporativas',
+                desc: 'Menú personalizado, control por sectores y visibilidad en tiempo real de cada venta y retiro durante el evento.',
+              },
+              {
+                cat: 'Estadios',
+                title: 'Estadios y venues deportivos',
+                desc: 'Miles de pedidos simultáneos con retiro instantáneo en múltiples barras, sin colas, sin efectivo y sin demoras entre pedido y entrega.',
+              },
+              {
+                cat: 'Ferias',
+                title: 'Ferias y mercados gastronómicos',
+                desc: 'Cada stand tiene su propio catálogo y punto de retiro. El organizador ve ventas y pedidos de todos los puestos en un solo panel.',
+              },
+              {
+                cat: 'Barras',
+                title: 'Food trucks y barras móviles',
+                desc: 'Sin hardware adicional. El staff opera desde cualquier dispositivo y el asistente retira sin esperar turno ni hacer fila.',
+              },
+            ] as { cat: string; title: string; desc: string }[]).map(({ cat, title, desc }) => (
+              <div key={title} style={{
+                background: '#FAFAFA',
+                border: '1px solid rgba(0,0,0,0.07)',
+                borderRadius: '20px',
+                padding: '28px 28px 32px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}>
+                <span style={{ fontSize: '10px', fontWeight: 800, color: S.faint, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{cat}</span>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', margin: 0 }}>{title}</h3>
+                <p style={{ fontSize: '13px', color: S.muted, lineHeight: '1.7', margin: 0 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+
         </section>
 
         {/* ─── FAQ ─── */}
