@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Combo } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
@@ -8,6 +9,7 @@ import { formatPrice } from '@/lib/utils'
 interface ComboCardProps {
   combo: Combo
   quantity: number
+  catalogSlug?: string
   onAdd: (combo: Combo) => void
   onUpdateQuantity: (comboId: string, quantity: number) => void
 }
@@ -23,17 +25,17 @@ function ComboPlaceholderIcon() {
   )
 }
 
-export function ComboCard({ combo, quantity, onAdd, onUpdateQuantity }: ComboCardProps) {
+export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQuantity }: ComboCardProps) {
+  const router = useRouter()
   const includedNames = combo.products.map(p => p.name).join(', ')
   const remote = Boolean(combo.imageUrl && combo.imageUrl.startsWith('http'))
-
-  const btnBase =
-    'flex items-center justify-center rounded-full transition-colors active:opacity-90'
+  const btnBase = 'flex items-center justify-center rounded-full transition-colors active:opacity-90'
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-[18px] bg-white"
+      className="flex cursor-pointer flex-col overflow-hidden rounded-[18px] bg-white"
       style={{ border: `1px solid ${BUYER_COLORS.border}` }}
+      onClick={() => catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${combo.id}`)}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
         {combo.promoLabel?.trim() ? (
@@ -61,7 +63,7 @@ export function ComboCard({ combo, quantity, onAdd, onUpdateQuantity }: ComboCar
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2">
+        <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
           {quantity === 0 ? (
             <button
               type="button"
@@ -105,12 +107,12 @@ export function ComboCard({ combo, quantity, onAdd, onUpdateQuantity }: ComboCar
         </div>
       </div>
 
-      <div className="border-t p-3" style={{ borderColor: BUYER_COLORS.border }}>
+      <div className="p-3">
         <h3 className="line-clamp-1 text-sm font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
           {combo.name}
         </h3>
         <p className="mt-0.5 line-clamp-2 text-xs leading-snug" style={{ color: BUYER_COLORS.muted }}>
-          Incluye: {includedNames}
+          {includedNames}
         </p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           {combo.listPrice != null && combo.listPrice > combo.price ? (

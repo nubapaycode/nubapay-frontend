@@ -50,15 +50,24 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [activeCategory, setActiveCategory] = useState('all')
   const { items, addItem, updateQuantity, total, count } = useCart()
 
+  const slug = catalogSlug ?? event.id
+
   const heroSrc = event.coverImageUrl && event.coverImageUrl.trim() !== '' ? event.coverImageUrl : '/images/Frame.jpg'
   const heroRemote = heroSrc.startsWith('http')
 
   const categories = [...new Set(event.products.map(p => p.category))]
 
+  const promoProducts = event.products.filter(p => p.promoLabel?.trim())
+
   const filteredProducts =
-    activeCategory === 'all'
-      ? event.products
-      : event.products.filter(p => p.category === activeCategory)
+    activeCategory === 'all' || activeCategory === 'descuentos'
+      ? event.products.filter(p => !p.promoLabel?.trim())
+      : event.products.filter(p => p.category === activeCategory && !p.promoLabel?.trim())
+
+  const filteredPromos =
+    activeCategory === 'all' || activeCategory === 'descuentos'
+      ? promoProducts
+      : promoProducts.filter(p => p.category === activeCategory)
 
   const getQuantity = (id: string) =>
     items.find(i => i.productId === id)?.quantity ?? 0
@@ -103,13 +112,14 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         />
 
         <div className="mt-5">
-          {activeCategory !== 'combos' && filteredProducts.length > 0 && (
-            <CatalogSection title="Productos">
-              {filteredProducts.map(product => (
+          {activeCategory !== 'combos' && filteredPromos.length > 0 && (
+            <CatalogSection title="Descuentos">
+              {filteredPromos.map(product => (
                 <ProductCard
                   key={product.id}
                   product={product}
                   quantity={getQuantity(product.id)}
+                  catalogSlug={slug}
                   onAdd={addItem}
                   onUpdateQuantity={updateQuantity}
                 />
@@ -124,6 +134,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
                   key={combo.id}
                   combo={combo}
                   quantity={getQuantity(combo.id)}
+                  catalogSlug={slug}
                   onAdd={addItem}
                   onUpdateQuantity={updateQuantity}
                 />
@@ -131,7 +142,22 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             </CatalogSection>
           )}
 
-          {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && (
+          {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProducts.length > 0 && (
+            <CatalogSection title="Productos">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  quantity={getQuantity(product.id)}
+                  catalogSlug={slug}
+                  onAdd={addItem}
+                  onUpdateQuantity={updateQuantity}
+                />
+              ))}
+            </CatalogSection>
+          )}
+
+          {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
             <EmptyState
               title="Sin productos en esta categoría"
               subtitle="Probá con otra categoría"

@@ -36,7 +36,7 @@ export function FloatingCart({ count, total, eventId, catalogSlug }: FloatingCar
     <>
       {/* Mobile: bottom bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t px-4 py-4 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between border-t px-5 py-5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] md:hidden"
         style={{
           background: BUYER_COLORS.surface,
           borderColor: BUYER_COLORS.border,
@@ -44,17 +44,17 @@ export function FloatingCart({ count, total, eventId, catalogSlug }: FloatingCar
         }}
       >
         <div style={{ fontFamily: BUYER_FONT }}>
-          <p className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
-            {count} {count === 1 ? 'producto' : 'productos'}
-          </p>
-          <p className="text-sm font-extrabold" style={{ color: BUYER_COLORS.text }}>
+          <p className="text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>
             {formatPrice(total)}
+          </p>
+          <p className="text-[18px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+            {count} {count === 1 ? 'producto' : 'productos'}
           </p>
         </div>
         <button
           type="button"
           onClick={goCart}
-          className="rounded-full px-6 py-3 text-[15px] font-extrabold tracking-tight transition-opacity active:opacity-90"
+          className="rounded-full px-14 py-3.5 text-[18px] font-semibold tracking-tight transition-opacity active:opacity-90"
           style={btnStyle}
         >
           Ver carrito
@@ -65,7 +65,7 @@ export function FloatingCart({ count, total, eventId, catalogSlug }: FloatingCar
       <button
         type="button"
         onClick={goCart}
-        className="fixed bottom-6 right-6 z-40 hidden items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold shadow-lg transition-opacity hover:opacity-95 md:flex"
+        className="fixed bottom-6 right-6 z-40 hidden items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition-opacity hover:opacity-95 md:flex"
         style={btnStyle}
       >
         <span>{label}</span>

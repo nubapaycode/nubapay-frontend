@@ -33,6 +33,7 @@ export interface CartItem {
   productId: string
   name: string
   price: number
+  listPrice?: number
   quantity: number
   subtotal?: number
   categoryName?: string | null

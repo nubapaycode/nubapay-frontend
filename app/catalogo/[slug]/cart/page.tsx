@@ -32,7 +32,7 @@ export default async function CatalogoCartPage({ params }: Props) {
   if (!data) notFound()
   return (
     <main className="min-h-screen bg-white">
-      <CartView eventId={data.event.id} catalogSlug={slug} />
+      <CartView eventId={data.event.id} catalogSlug={slug} products={data.products} />
     </main>
   )
 }

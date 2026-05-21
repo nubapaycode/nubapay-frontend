@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
@@ -8,6 +9,7 @@ import { formatPrice } from '@/lib/utils'
 interface ProductCardProps {
   product: Product
   quantity: number
+  catalogSlug?: string
   onAdd: (product: Product) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
 }
@@ -27,16 +29,16 @@ function PlaceholderIcon() {
   )
 }
 
-export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: ProductCardProps) {
+export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpdateQuantity }: ProductCardProps) {
+  const router = useRouter()
   const remote = Boolean(product.imageUrl && product.imageUrl.startsWith('http'))
-
-  const btnBase =
-    'flex items-center justify-center rounded-full transition-colors active:opacity-90'
+  const btnBase = 'flex items-center justify-center rounded-full transition-colors active:opacity-90'
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-[18px] bg-white"
+      className="flex cursor-pointer flex-col overflow-hidden rounded-[18px] bg-white"
       style={{ border: `1px solid ${BUYER_COLORS.border}` }}
+      onClick={() => catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${product.id}`)}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
         {product.promoLabel?.trim() ? (
@@ -64,7 +66,7 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2">
+        <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
           {quantity === 0 ? (
             <button
               type="button"
@@ -108,7 +110,7 @@ export function ProductCard({ product, quantity, onAdd, onUpdateQuantity }: Prod
         </div>
       </div>
 
-      <div className="border-t p-3" style={{ borderColor: BUYER_COLORS.border }}>
+      <div className="p-3">
         <h3 className="line-clamp-1 text-sm font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
           {product.name}
         </h3>

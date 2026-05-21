@@ -10,7 +10,7 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ categories, active, onChange }: CategoryFilterProps) {
-  const all = ['all', ...categories, 'combos']
+  const all = ['all', 'descuentos', ...categories, 'combos']
 
   return (
     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
@@ -26,7 +26,7 @@ export function CategoryFilter({ categories, active, onChange }: CategoryFilterP
               : { borderColor: BUYER_COLORS.chipInactiveBorder, background: BUYER_COLORS.chipInactiveBg, border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`, color: BUYER_COLORS.text }
           }
         >
-          {category === 'all' ? 'Todos' : category === 'combos' ? 'Combos' : category}
+          {category === 'all' ? 'Todos' : category === 'combos' ? 'Combos' : category === 'descuentos' ? 'Descuentos' : category}
         </button>
       ))}
     </div>

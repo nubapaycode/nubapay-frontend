@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { CartItem } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
 import { formatPrice } from '@/lib/utils'
@@ -10,78 +11,92 @@ interface CartItemRowProps {
 }
 
 export function CartItemRow({ item, onUpdateQuantity }: CartItemRowProps) {
-  const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+  const remote = Boolean(item.imageUrl?.startsWith('http'))
+  const btnBase = 'flex items-center justify-center rounded-full transition-colors active:opacity-75'
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '12px',
-      padding: '12px 16px',
-      borderBottom: '1px solid #F4F4F6',
-      fontFamily: font,
-    }}
-    className="last:border-0"
+    <div
+      className="flex items-center gap-3 px-4 py-3 last:border-0"
+      style={{ borderBottom: `1px solid ${BUYER_COLORS.border}` }}
     >
-      {/* Product image */}
-      <div style={{
-        width: '64px', height: '64px', borderRadius: '12px',
-        background: '#F4F4F6',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, overflow: 'hidden',
-      }}>
+      {/* Imagen */}
+      <div
+        className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[14px]"
+        style={{ background: BUYER_COLORS.subtleFill }}
+      >
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image
+            src={item.imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover"
+            sizes="68px"
+            unoptimized={remote}
+          />
         ) : (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M9 2a3 3 0 100 6 3 3 0 000-6zM3 14c0-3 2.7-5 6-5s6 2 6 5" stroke="#C4C4CF" strokeWidth="1.25" strokeLinecap="round"/>
-          </svg>
+          <div className="flex h-full w-full items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M6 10h12v10a2 2 0 01-2 2H8a2 2 0 01-2-2V10z" stroke={BUYER_COLORS.iconMuted} strokeWidth="1.25" strokeLinejoin="round" />
+              <path d="M6 12h12" stroke={BUYER_COLORS.iconMuted} strokeWidth="1.25" strokeLinecap="round" />
+            </svg>
+          </div>
         )}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0A0A0F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {/* Info */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <p
+          className="truncate text-[15px] font-semibold leading-tight"
+          style={{ color: BUYER_COLORS.text }}
+        >
           {item.name}
         </p>
-        <p style={{ margin: '2px 0 0', fontSize: '13px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '-0.01em' }}>
+        <p className="text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+          {formatPrice(item.price)} c/u
+        </p>
+        <p className="text-[15px] font-semibold" style={{ color: BUYER_COLORS.text }}>
           {formatPrice(item.price * item.quantity)}
         </p>
       </div>
 
-      {/* Quantity stepper */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+      {/* Stepper */}
+      <div
+        className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-1.5 py-1"
+        style={{ background: BUYER_COLORS.subtleFill, border: `1px solid ${BUYER_COLORS.border}` }}
+      >
         <button
+          type="button"
           onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
-          style={{
-            width: '30px', height: '30px', borderRadius: '50%',
-            border: '1.5px solid rgba(0,0,0,0.1)',
-            background: '#FFFFFF',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: '16px', color: '#0A0A0F',
-            fontFamily: font, lineHeight: 1,
-            transition: 'background 0.1s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F4F4F6' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF' }}
+          className={`${btnBase} h-7 w-7`}
+          style={{ background: BUYER_COLORS.surface, color: BUYER_COLORS.text }}
+          aria-label={item.quantity === 1 ? 'Eliminar' : 'Quitar uno'}
         >
-          −
+          {item.quantity === 1 ? (
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+              <path d="M2 3.5h9M5 3.5V2.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M10.5 3.5l-.5 7a1 1 0 01-1 .9H4a1 1 0 01-1-.9l-.5-7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+              <path d="M2 6h8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            </svg>
+          )}
         </button>
-        <span style={{ width: '20px', textAlign: 'center', fontSize: '15px', fontWeight: 700, color: '#0A0A0F' }}>
+        <span
+          className="min-w-[20px] text-center text-[15px] font-semibold"
+          style={{ color: BUYER_COLORS.text }}
+        >
           {item.quantity}
         </span>
         <button
+          type="button"
           onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-          style={{
-            width: '30px', height: '30px', borderRadius: '50%',
-            border: 'none',
-            background: BUYER_COLORS.accent,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: '16px', color: BUYER_COLORS.accentText,
-            fontFamily: font, lineHeight: 1,
-            transition: 'opacity 0.1s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          className={`${btnBase} h-7 w-7`}
+          style={{ background: BUYER_COLORS.surface, color: BUYER_COLORS.text }}
+          aria-label="Agregar uno"
         >
-          +
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
     </div>

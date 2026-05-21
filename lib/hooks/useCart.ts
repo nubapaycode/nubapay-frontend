@@ -45,6 +45,7 @@ export function useCart(): UseCart {
                 ...i,
                 quantity: i.quantity + 1,
                 price: item.price,
+                listPrice: item.listPrice,
                 name: item.name,
                 imageUrl: item.imageUrl,
               }
@@ -57,6 +58,7 @@ export function useCart(): UseCart {
           productId: item.id,
           name: item.name,
           price: item.price,
+          listPrice: item.listPrice,
           quantity: 1,
           imageUrl: item.imageUrl,
         },
