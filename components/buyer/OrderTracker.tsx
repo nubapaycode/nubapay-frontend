@@ -45,6 +45,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const [loadError, setLoadError] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const processingRef = useRef<boolean>(true)
+  const hasRedirectedRef = useRef(false)
 
   const fetchOrder = async () => {
     try {
@@ -69,6 +70,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
 
   useEffect(() => {
     processingRef.current = true
+    hasRedirectedRef.current = false
     fetchOrder()
     pollRef.current = setInterval(fetchOrder, POLL_FAST)
     return () => {
@@ -76,6 +78,20 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
+
+  useEffect(() => {
+    if (
+      !hasRedirectedRef.current &&
+      order &&
+      !order.processing &&
+      order.checkout_url &&
+      order.payment_status !== 'approved' &&
+      !paymentResult
+    ) {
+      hasRedirectedRef.current = true
+      window.location.href = order.checkout_url
+    }
+  }, [order, paymentResult])
 
 
   const isPaid = order?.payment_status === 'approved'

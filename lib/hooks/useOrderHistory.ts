@@ -29,11 +29,21 @@ export function saveOrder(order: SavedOrder): void {
   } catch {}
 }
 
+function isToday(isoString: string): boolean {
+  const d = new Date(isoString)
+  const now = new Date()
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  )
+}
+
 export function useOrderHistory(slug: string) {
   const [orders, setOrders] = useState<SavedOrder[]>([])
 
   useEffect(() => {
-    setOrders(readOrders().filter(o => o.slug === slug))
+    setOrders(readOrders().filter(o => o.slug === slug && isToday(o.createdAt)))
   }, [slug])
 
   return orders
