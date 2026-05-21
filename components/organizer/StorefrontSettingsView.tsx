@@ -8,6 +8,7 @@ import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerE
 import { catalogPublicPath, getPublicSiteOriginForUi } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
+import { getAuthUser } from '@/lib/authSession'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
@@ -49,7 +50,14 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     const id = window.requestAnimationFrame(() => setBrowserOrigin(window.location.origin))
     return () => window.cancelAnimationFrame(id)
   }, [])
-  const publicOriginUi = browserOrigin ?? getPublicSiteOriginForUi()
+
+  const user = getAuthUser()
+  const partnerOrigin =
+    user?.tenant_partner_whitelabel_enabled && user?.tenant_subdomain
+      ? `https://${user.tenant_subdomain}.nubapay.app`
+      : null
+
+  const publicOriginUi = partnerOrigin ?? browserOrigin ?? getPublicSiteOriginForUi()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
   const publicUrl =
     hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${catalogPublicPath(slugForUrl)}` : ''

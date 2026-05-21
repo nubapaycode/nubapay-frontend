@@ -2,7 +2,7 @@
 export const BUYER_FONT = "var(--font-dm-sans, 'DM Sans', sans-serif)"
 
 export const BUYER_COLORS = {
-  bg: '#F7F7FA',
+  bg: '#FFFFFF',
   surface: '#FFFFFF',
   text: '#0A0A0F',
   muted: '#9A9AA8',
