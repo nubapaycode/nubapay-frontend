@@ -1,8 +1,9 @@
 'use client'
 
-import { Copy, ImageUp, Link2, Trash2 } from 'lucide-react'
+import { Copy, Download, ImageUp, Link2, QrCode, Trash2 } from 'lucide-react'
 import Image from 'next/image'
-import { useCallback, useEffect, useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import { catalogPublicPath, getPublicSiteOriginForUi } from '@/lib/siteOrigin'
@@ -11,8 +12,31 @@ import type { OrganizerEventDetail } from '@/lib/types/organizer'
 import { getAuthUser } from '@/lib/authSession'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
+
+const CATALOG_QR_SIZE = 240
+
+function downloadSvgAsPng(svg: SVGSVGElement, filename: string, pixelSize = CATALOG_QR_SIZE) {
+  const svgData = new XMLSerializer().serializeToString(svg)
+  const img = new window.Image()
+  img.onload = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = pixelSize
+    canvas.height = pixelSize
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, pixelSize, pixelSize)
+    ctx.drawImage(img, 0, 0, pixelSize, pixelSize)
+    const link = document.createElement('a')
+    link.download = filename
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgData)}`
+}
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
@@ -24,6 +48,8 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const [savingSlug, setSavingSlug] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [copyMsg, setCopyMsg] = useState('')
+  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const qrContainerRef = useRef<HTMLDivElement>(null)
   const { show: showToast, ToastPortal } = useToast()
 
   const load = useCallback(async () => {
@@ -118,6 +144,16 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     } catch {
       showToast('No se pudo copiar. Copiá el enlace manualmente.', 'error')
     }
+  }
+
+  const handleDownloadQr = () => {
+    const svg = qrContainerRef.current?.querySelector('svg')
+    if (!svg) {
+      showToast('No se pudo generar la imagen del QR.', 'error')
+      return
+    }
+    const safeSlug = (slugForUrl || 'catalogo').replace(/[^a-z0-9-]/gi, '-')
+    downloadSvgAsPng(svg, `catalogo-${safeSlug}.png`)
   }
 
   if (loading) {
@@ -270,18 +306,30 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             </div>
 
             <div className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">Enlace para compartir</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                Enlace para compartir · Generar QR
+              </p>
               {publicUrl ? (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex flex-col gap-2">
                   <p className="text-sm text-gray-800 break-all font-mono">{publicUrl}</p>
-                  <button
-                    type="button"
-                    onClick={() => void handleCopyLink()}
-                    className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
-                  >
-                    <Copy className="h-3.5 w-3.5" aria-hidden />
-                    {copyMsg || 'Copiar'}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyLink()}
+                      className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                    >
+                      <Copy className="h-3.5 w-3.5" aria-hidden />
+                      {copyMsg || 'Copiar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQrModalOpen(true)}
+                      className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                    >
+                      <QrCode className="h-3.5 w-3.5" aria-hidden />
+                      Generar QR
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-gray-600">
@@ -292,6 +340,50 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           </>
         )}
       </section>
+
+      <Modal
+        isOpen={qrModalOpen && Boolean(publicUrl)}
+        onClose={() => setQrModalOpen(false)}
+        title="QR del catálogo"
+      >
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-sm text-gray-500 text-center">
+            Escaneá este código para abrir el menú público del evento.
+          </p>
+          <div
+            ref={qrContainerRef}
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+          >
+            {publicUrl ? (
+              <QRCodeSVG
+                value={publicUrl}
+                size={240}
+                bgColor="#ffffff"
+                fgColor="#111111"
+                level="M"
+              />
+            ) : null}
+          </div>
+          <p className="text-xs text-gray-400 font-mono break-all text-center max-w-full">{publicUrl}</p>
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleDownloadQr}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              <Download className="h-4 w-4" aria-hidden />
+              Descargar QR
+            </button>
+            <button
+              type="button"
+              onClick={() => setQrModalOpen(false)}
+              className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
