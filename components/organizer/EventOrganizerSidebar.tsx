@@ -262,7 +262,7 @@ export function EventOrganizerSidebar({
   )
   const moreOverflowActive = moreOverflowHrefPrefixes.some(h => pathname.startsWith(h))
 
-  const title = eventTitle ?? 'Evento'
+  const title = eventTitle
 
   const moreIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -316,8 +316,12 @@ export function EventOrganizerSidebar({
                   </svg>
                 </span>
                 <span className="shrink-0">Mis eventos</span>
-                <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.35)' : '#D1D5DB' }}>/</span>
-                <span className="font-semibold truncate" style={{ color: myEventsActive ? ORG_INK : '#111827' }}>{title}</span>
+                {title && (
+                  <>
+                    <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.35)' : '#D1D5DB' }}>/</span>
+                    <span className="font-semibold truncate" style={{ color: myEventsActive ? ORG_INK : '#111827' }}>{title}</span>
+                  </>
+                )}
               </Link>
             )
           })()}

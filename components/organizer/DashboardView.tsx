@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
@@ -21,6 +21,30 @@ const STATUS_CONFIG: { key: OrderStatus; label: string; dot: string }[] = [
   { key: 'delivered', label: 'Finalizados', dot: 'bg-gray-300' },
   { key: 'cancelled', label: 'Cancelados', dot: 'bg-red-300' },
 ]
+
+// Anima un número de 0 al valor objetivo con easing cubic-out
+function CountUp({ to, format = String, duration = 700 }: { to: number; format?: (n: number) => string; duration?: number }) {
+  const [val, setVal] = useState(0)
+  const rafRef = useRef<number>(0)
+
+  useEffect(() => {
+    setVal(0)
+    if (to === 0) return
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1)
+      const eased = 1 - (1 - t) ** 3
+      const next = Math.round(eased * to)
+      setVal(next)
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+      else setVal(to)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [to, duration])
+
+  return <>{format(val)}</>
+}
 
 function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
   const W = 400
@@ -58,6 +82,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [barsVisible, setBarsVisible] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError('')
@@ -76,6 +101,17 @@ export function DashboardView({ eventId }: { eventId: string }) {
     load()
   }, [load])
 
+  // Doble RAF para asegurar que las barras renderizan en 0 antes de transicionar
+  useEffect(() => {
+    if (!summary) { setBarsVisible(false); return }
+    setBarsVisible(false)
+    const id1 = requestAnimationFrame(() => {
+      const id2 = requestAnimationFrame(() => setBarsVisible(true))
+      return () => cancelAnimationFrame(id2)
+    })
+    return () => cancelAnimationFrame(id1)
+  }, [summary])
+
   const ordersLen = summary?.order_count ?? 0
   const byStatus = (k: OrderStatus) => summary?.by_status?.[k] ?? 0
 
@@ -85,6 +121,11 @@ export function DashboardView({ eventId }: { eventId: string }) {
   const topProducts = summary?.top_products ?? []
   const maxQty = topProducts[0]?.quantity ?? 1
   const hourlyData = summary?.hourly ?? []
+
+  const barStyle = (pct: number) => ({
+    width: barsVisible ? `${pct}%` : '0%',
+    transition: 'width 700ms cubic-bezier(0.4,0,0.2,1)',
+  })
 
   if (loading) {
     return (
@@ -102,10 +143,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-red-600">{loadError || 'Sin datos'}</div>
         <button
           type="button"
-          onClick={() => {
-            setLoading(true)
-            load()
-          }}
+          onClick={() => { setLoading(true); load() }}
           className="rounded-full border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
         >
           Reintentar
@@ -116,29 +154,38 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   return (
     <div className="space-y-4">
+      <style>{`
+        @keyframes nb-stat-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .nb-stat-card {
+          animation: nb-stat-in 320ms ease-out both;
+        }
+      `}</style>
 
       <OrganizerToolHeading
         title="Dashboard del evento"
         description="Métricas y pedidos solo para este evento."
       />
 
+      {/* Stat cards con fade+slide escalonado */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-400 mb-1">Recaudado</p>
-          <p className="text-lg font-medium text-gray-900">{formatPrice(summary.total_revenue)}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-400 mb-1">Pedidos</p>
-          <p className="text-lg font-medium text-gray-900">{summary.order_count}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-400 mb-1">Activos</p>
-          <p className="text-lg font-medium text-gray-900">{summary.active_orders}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <p className="text-xs text-gray-400 mb-1">Entregados</p>
-          <p className="text-lg font-medium text-gray-900">{summary.delivered_orders}</p>
-        </div>
+        {[
+          { label: 'Recaudado', value: <CountUp to={summary.total_revenue} format={formatPrice} duration={800} /> },
+          { label: 'Pedidos',   value: <CountUp to={summary.order_count} duration={600} /> },
+          { label: 'Activos',   value: <CountUp to={summary.active_orders} duration={500} /> },
+          { label: 'Entregados',value: <CountUp to={summary.delivered_orders} duration={500} /> },
+        ].map(({ label, value }, i) => (
+          <div
+            key={label}
+            className="nb-stat-card bg-white rounded-2xl border border-gray-100 p-4"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <p className="text-xs text-gray-400 mb-1">{label}</p>
+            <p className="text-lg font-medium text-gray-900">{value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -164,7 +211,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
                       </div>
                     </div>
                     <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-4">
-                      <div className={`h-full rounded-full ${dot}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full ${dot}`} style={barStyle(pct)} />
                     </div>
                   </div>
                 )
@@ -210,7 +257,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
                       </div>
                     </div>
                     <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-4">
-                      <div className={`h-full rounded-full ${dot}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full ${dot}`} style={barStyle(pct)} />
                     </div>
                   </div>
                 )
@@ -243,7 +290,10 @@ export function DashboardView({ eventId }: { eventId: string }) {
                       </div>
                     </div>
                     <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-5">
-                      <div className="h-full bg-gray-900 rounded-full" style={{ width: `${(product.quantity / maxQty) * 100}%` }} />
+                      <div
+                        className="h-full bg-gray-900 rounded-full"
+                        style={barStyle((product.quantity / maxQty) * 100)}
+                      />
                     </div>
                   </div>
                 ))}

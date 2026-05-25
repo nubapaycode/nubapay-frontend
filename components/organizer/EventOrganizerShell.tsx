@@ -192,7 +192,7 @@ export function EventOrganizerShell({
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-row overflow-hidden bg-gray-100">
       <EventOrganizerSidebar
-        eventTitle={eventMeta.title}
+        eventTitle={pathname === `${base}/all` ? null : eventMeta.title}
         basePath={base}
         pathname={pathname}
         workspaceMembership={eventMeta.membership}

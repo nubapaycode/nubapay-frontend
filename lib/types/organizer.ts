@@ -11,6 +11,10 @@ export type OrganizerEventRow = {
   is_active: boolean
   /** Dueño del evento o integrante invitado (staff). */
   membership?: 'owner' | 'staff'
+  /** Stats opcionales que el backend puede incluir en el listado. */
+  order_count?: number
+  active_orders?: number
+  total_revenue?: number
 }
 
 /** Respuesta de `GET /api/events/:id` (misma forma que un item de lista). */
