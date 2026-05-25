@@ -110,7 +110,7 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
           {items.map(item => (
             <div
               key={item.productId}
-              className="overflow-hidden rounded-[18px] bg-white"
+              className="overflow-hidden rounded-[18px]"
               style={{ border: `1px solid ${BUYER_COLORS.border}` }}
             >
               <CartItemRow item={item} onUpdateQuantity={updateQuantity} />

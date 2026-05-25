@@ -83,6 +83,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
   const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
   const [barsVisible, setBarsVisible] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const load = useCallback(async () => {
     setLoadError('')
@@ -92,14 +93,25 @@ export function DashboardView({ eventId }: { eventId: string }) {
       setSummary(null)
     } else {
       setSummary(res.data)
+      setLastUpdated(new Date())
     }
     setLoading(false)
+  }, [eventId])
+
+  const silentRefresh = useCallback(async () => {
+    const res = await fetchEventDashboard(eventId)
+    if (res.ok) { setSummary(res.data); setLastUpdated(new Date()) }
   }, [eventId])
 
   useEffect(() => {
     setLoading(true)
     load()
   }, [load])
+
+  useEffect(() => {
+    const id = setInterval(silentRefresh, 30_000)
+    return () => clearInterval(id)
+  }, [silentRefresh])
 
   // Doble RAF para asegurar que las barras renderizan en 0 antes de transicionar
   useEffect(() => {
@@ -167,6 +179,13 @@ export function DashboardView({ eventId }: { eventId: string }) {
       <OrganizerToolHeading
         title="Dashboard del evento"
         description="Métricas y pedidos solo para este evento."
+        actions={
+          lastUpdated ? (
+            <span className="text-xs text-gray-400 tabular-nums">
+              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          ) : undefined
+        }
       />
 
       {/* Stat cards con fade+slide escalonado */}

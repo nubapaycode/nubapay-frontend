@@ -242,7 +242,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
         {/* Finalizado */}
         {order && isDelivered && (
           <div
-            className="flex flex-col items-center gap-2 rounded-[18px] p-6 text-center"
+            className="flex flex-col items-center gap-3 rounded-[18px] p-6 text-center"
             style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: '#16A34A' }}>
@@ -252,6 +252,16 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             </div>
             <p className="text-[17px] font-bold" style={{ color: '#15803D' }}>¡Pedido finalizado!</p>
             <p className="text-[13px]" style={{ color: '#16A34A' }}>Tu pedido fue entregado. ¡Gracias!</p>
+            {catalogSlug && (
+              <button
+                type="button"
+                onClick={() => router.push(`/catalogo/${catalogSlug}`)}
+                className="mt-1 flex h-[44px] w-full items-center justify-center rounded-full text-[14px] font-bold transition-opacity active:opacity-80"
+                style={{ background: '#16A34A', color: '#fff' }}
+              >
+                Volver a pedir
+              </button>
+            )}
           </div>
         )}
 

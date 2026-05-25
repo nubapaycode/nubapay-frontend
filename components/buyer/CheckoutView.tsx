@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { catalogPaths } from '@/lib/api/paths'
@@ -38,6 +38,11 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('mp')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('nubapay_buyer_name')
+    if (saved) setName(saved)
+  }, [])
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -75,6 +80,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
       }
 
       const data = await res.json()
+      localStorage.setItem('nubapay_buyer_name', name.trim())
       clearCart()
       saveOrder({
         orderId: data.order_id,

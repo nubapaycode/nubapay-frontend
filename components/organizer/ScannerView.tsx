@@ -56,9 +56,11 @@ export function ScannerView({ eventId }: { eventId: string }) {
 
     const result = await scanQr(eventId, orderId)
     if (result.ok) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
       setOrder(result.order)
       setState('ready')
     } else {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(300)
       setErrorMsg(result.error)
       setState('error')
     }

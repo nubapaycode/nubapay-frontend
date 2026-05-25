@@ -695,7 +695,18 @@ export function StaffView({ eventId }: { eventId: string }) {
   const [editingRow, setEditingRow]   = useState<EventStaffRow | null>(null)
   const [confirmingRow, setConfirmingRow] = useState<EventStaffRow | null>(null)
   const [removeBusy, setRemoveBusy]   = useState(false)
+  const [linkCopied, setLinkCopied]   = useState(false)
   const { show, ToastPortal }         = useToast()
+
+  const copyAccessLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      show('No se pudo copiar el link', 'error')
+    }
+  }
 
   const load = useCallback(async () => {
     setListErr(''); setLoading(true)
@@ -761,16 +772,36 @@ export function StaffView({ eventId }: { eventId: string }) {
         title="Equipo"
         description="Invitá integrantes por email. Reciben acceso al panel con el rol y herramientas que elijas."
         actions={
-          <button
-            type="button"
-            onClick={() => setInviteOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Invitar integrante
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={copyAccessLink}
+              title="Copiar link de acceso al panel"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: linkCopied ? '#F0FDF4' : '#FFFFFF', color: linkCopied ? '#16A34A' : 'rgba(0,0,0,0.5)', border: `1px solid ${linkCopied ? '#BBF7D0' : 'rgba(0,0,0,0.1)'}`, borderRadius: '100px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s' }}
+            >
+              {linkCopied ? (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Copiado
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M5 2.5a2.5 2.5 0 000 5h2a2.5 2.5 0 000-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M7 4.5a2.5 2.5 0 000 5H5a2.5 2.5 0 000-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                  Copiar acceso
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              Invitar integrante
+            </button>
+          </div>
         }
       />
 
