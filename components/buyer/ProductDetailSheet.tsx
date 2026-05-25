@@ -49,6 +49,7 @@ export function ProductDetailSheet({
   if (!item) return null
 
   const remote = Boolean(item.imageUrl?.startsWith('http'))
+  const available = item.available !== false
   const hasDiscount = item.listPrice != null && item.listPrice > item.price
   const includedNames = isCombo(item) ? item.products.map(p => `${('quantity' in p ? (p as Product & { quantity?: number }).quantity ?? 1 : 1)}× ${p.name}`).join(' · ') : null
 
@@ -96,7 +97,7 @@ export function ProductDetailSheet({
             className="relative w-full flex-shrink-0 overflow-hidden rounded-t-[28px] md:w-[44%] md:rounded-l-[24px] md:rounded-tr-none"
             style={{ aspectRatio: '4/3', background: BUYER_COLORS.subtleFill }}
           >
-            {item.promoLabel?.trim() && (
+            {item.promoLabel?.trim() && available && (
               <div className="absolute left-3 top-3 z-[1]">
                 <span
                   className="inline-block rounded-full px-3 py-1 text-[12px] font-extrabold tracking-tight shadow-sm"
@@ -106,12 +107,19 @@ export function ProductDetailSheet({
                 </span>
               </div>
             )}
+            {!available && (
+              <div className="absolute left-3 top-3 z-[2]">
+                <span className="inline-block rounded-full bg-black/70 px-3 py-1 text-[12px] font-bold text-white">
+                  Agotado
+                </span>
+              </div>
+            )}
             {item.imageUrl ? (
               <Image
                 src={item.imageUrl}
                 alt={item.name}
                 fill
-                className="object-cover"
+                className={`object-cover ${!available ? 'grayscale' : ''}`}
                 sizes="(max-width: 768px) 100vw, 44vw"
                 unoptimized={remote}
                 priority
@@ -125,6 +133,7 @@ export function ProductDetailSheet({
                 </svg>
               </div>
             )}
+            {!available && <div className="absolute inset-0 bg-white/30" />}
           </div>
 
           {/* Info */}
@@ -187,7 +196,23 @@ export function ProductDetailSheet({
             paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
           }}
         >
-          {quantity === 0 ? (
+          {!available ? (
+            <div className="flex w-full flex-col items-center gap-2">
+              <div
+                className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-extrabold tracking-tight"
+                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.muted }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M6 9h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                No disponible
+              </div>
+              <p className="text-xs" style={{ color: BUYER_COLORS.muted }}>
+                Este producto no está disponible por el momento
+              </p>
+            </div>
+          ) : quantity === 0 ? (
             <button
               type="button"
               onClick={() => onAdd(item)}

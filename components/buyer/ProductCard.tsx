@@ -37,9 +37,9 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-[18px] bg-white ${available ? 'cursor-pointer' : 'cursor-default'}`}
+      className="flex cursor-pointer flex-col overflow-hidden rounded-[18px] bg-white"
       style={{ border: `1px solid ${BUYER_COLORS.border}`, opacity: available ? 1 : 0.75 }}
-      onClick={() => available && catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${product.id}`)}
+      onClick={() => catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${product.id}`)}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
         {product.promoLabel?.trim() && available ? (
