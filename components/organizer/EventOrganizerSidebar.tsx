@@ -451,29 +451,49 @@ export function EventOrganizerSidebar({
           {tabLeft && (
             <Link
               href={tabLeft.href}
-              className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabLeft.href) ? 'font-semibold' : 'text-gray-400'
-              }`}
-              style={
-                isRouteActive(pathname, tabLeft.href) ? { color: ORG_INK } : undefined
-              }
+              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
+              style={{ color: isRouteActive(pathname, tabLeft.href) ? ORG_INK : undefined }}
             >
-              {tabLeft.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabLeft.label}</span>
+              <span
+                className="flex items-center justify-center rounded-full transition-all"
+                style={
+                  isRouteActive(pathname, tabLeft.href)
+                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                    : { width: 36, height: 24, color: '#9CA3AF' }
+                }
+              >
+                {tabLeft.icon}
+              </span>
+              <span
+                className="text-[9px] font-medium leading-none text-center"
+                style={{ color: isRouteActive(pathname, tabLeft.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabLeft.href) ? 600 : 400 }}
+              >
+                {tabLeft.label}
+              </span>
             </Link>
           )}
           {tabMid && (
             <Link
               href={tabMid.href}
-              className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabMid.href) ? 'font-semibold' : 'text-gray-400'
-              }`}
-              style={
-                isRouteActive(pathname, tabMid.href) ? { color: ORG_INK } : undefined
-              }
+              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
+              style={{ color: isRouteActive(pathname, tabMid.href) ? ORG_INK : undefined }}
             >
-              {tabMid.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabMid.label}</span>
+              <span
+                className="flex items-center justify-center rounded-full transition-all"
+                style={
+                  isRouteActive(pathname, tabMid.href)
+                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                    : { width: 36, height: 24, color: '#9CA3AF' }
+                }
+              >
+                {tabMid.icon}
+              </span>
+              <span
+                className="text-[9px] leading-none text-center"
+                style={{ color: isRouteActive(pathname, tabMid.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabMid.href) ? 600 : 400 }}
+              >
+                {tabMid.label}
+              </span>
             </Link>
           )}
 
@@ -500,33 +520,52 @@ export function EventOrganizerSidebar({
           {tabRight && (
             <Link
               href={tabRight.href}
-              className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-                isRouteActive(pathname, tabRight.href) ? 'font-semibold' : 'text-gray-400'
-              }`}
-              style={
-                isRouteActive(pathname, tabRight.href) ? { color: ORG_INK } : undefined
-              }
+              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
+              style={{ color: isRouteActive(pathname, tabRight.href) ? ORG_INK : undefined }}
             >
-              {tabRight.icon}
-              <span className="text-[9px] font-medium leading-none text-center px-0.5">{tabRight.label}</span>
+              <span
+                className="flex items-center justify-center rounded-full transition-all"
+                style={
+                  isRouteActive(pathname, tabRight.href)
+                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                    : { width: 36, height: 24, color: '#9CA3AF' }
+                }
+              >
+                {tabRight.icon}
+              </span>
+              <span
+                className="text-[9px] leading-none text-center"
+                style={{ color: isRouteActive(pathname, tabRight.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabRight.href) ? 600 : 400 }}
+              >
+                {tabRight.label}
+              </span>
             </Link>
           )}
 
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
-            className={`flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors ${
-              moreOverflowActive ? 'font-semibold' : 'text-gray-400'
-            }`}
-            style={
-              moreOverflowActive ? { color: ORG_INK } : undefined
-            }
+            className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
             aria-label="Ver más herramientas"
           >
-            {moreIcon}
-            <span className="text-[8px] font-medium leading-tight text-center px-0.5">Ver más</span>
+            <span
+              className="flex items-center justify-center rounded-full transition-all"
+              style={
+                moreOverflowActive
+                  ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                  : { width: 36, height: 24, color: '#9CA3AF' }
+              }
+            >
+              {moreIcon}
+            </span>
+            <span
+              className="text-[9px] leading-none text-center"
+              style={{ color: moreOverflowActive ? ORG_INK : '#9CA3AF', fontWeight: moreOverflowActive ? 600 : 400 }}
+            >
+              Ver más
+            </span>
           </button>
         </div>
       </nav>
