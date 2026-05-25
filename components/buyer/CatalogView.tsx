@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { CategoryFilter } from './CategoryFilter'
+import { CategorySheet } from './CategorySheet'
 import { CatalogSection } from './CatalogSection'
 import { ProductCard } from './ProductCard'
 import { ComboCard } from './ComboCard'
@@ -19,15 +20,28 @@ interface CatalogViewProps {
   catalogSlug?: string
 }
 
-function EmptyState({
-  title,
-  subtitle,
-  icon,
-}: {
-  title: string
-  subtitle: string
-  icon: ReactNode
-}) {
+type SortOrder = 'default' | 'asc' | 'desc'
+
+function sortItems<T extends { price: number; available?: boolean }>(items: T[], order: SortOrder): T[] {
+  const sorted = order === 'default' ? [...items] : [...items].sort((a, b) => order === 'asc' ? a.price - b.price : b.price - a.price)
+  return sorted.sort((a, b) => {
+    const aAvail = a.available !== false ? 0 : 1
+    const bAvail = b.available !== false ? 0 : 1
+    return aAvail - bAvail
+  })
+}
+
+function SortIcon({ order }: { order: SortOrder }) {
+  if (order === 'asc') return <span>↑</span>
+  if (order === 'desc') return <span>↓</span>
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+      <path d="M6.5 2v9M3.5 4.5l3-3 3 3M3.5 8.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function EmptyState({ title, subtitle, icon }: { title: string; subtitle: string; icon: ReactNode }) {
   return (
     <div className="flex flex-col items-center py-16 px-4 text-center">
       <div
@@ -48,6 +62,8 @@ function EmptyState({
 
 export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [activeCategory, setActiveCategory] = useState('all')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('default')
+  const [sheetOpen, setSheetOpen] = useState(false)
   const { items, addItem, updateQuantity, total, count } = useCart()
 
   const slug = catalogSlug ?? event.id
@@ -56,21 +72,43 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const heroRemote = heroSrc.startsWith('http')
 
   const categories = [...new Set(event.products.map(p => p.category))]
-
   const promoProducts = event.products.filter(p => p.promoLabel?.trim())
 
-  const filteredProducts =
+  const counts: Record<string, number> = {
+    all: event.products.length + event.combos.length,
+    descuentos: promoProducts.length,
+    combos: event.combos.length,
+    ...Object.fromEntries(categories.map(c => [c, event.products.filter(p => p.category === c).length])),
+  }
+
+  const filteredProducts = sortItems(
     activeCategory === 'all' || activeCategory === 'descuentos'
       ? event.products.filter(p => !p.promoLabel?.trim())
-      : event.products.filter(p => p.category === activeCategory && !p.promoLabel?.trim())
+      : event.products.filter(p => p.category === activeCategory && !p.promoLabel?.trim()),
+    sortOrder,
+  )
 
-  const filteredPromos =
+  const filteredPromos = sortItems(
     activeCategory === 'all' || activeCategory === 'descuentos'
       ? promoProducts
-      : promoProducts.filter(p => p.category === activeCategory)
+      : promoProducts.filter(p => p.category === activeCategory),
+    sortOrder,
+  )
 
-  const getQuantity = (id: string) =>
-    items.find(i => i.productId === id)?.quantity ?? 0
+  const filteredCombos = sortItems(event.combos, sortOrder)
+
+  const hasActiveFilters = activeCategory !== 'all' || sortOrder !== 'default'
+
+  const cycleSortOrder = () => {
+    setSortOrder(prev => prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default')
+  }
+
+  const clearFilters = () => {
+    setActiveCategory('all')
+    setSortOrder('default')
+  }
+
+  const getQuantity = (id: string) => items.find(i => i.productId === id)?.quantity ?? 0
 
   const stroke = BUYER_COLORS.iconMuted
 
@@ -103,110 +141,167 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         </div>
       </div>
 
-      {/* Contenido */}
-      <div className="mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6 md:pt-6">
-        <CategoryFilter
-          categories={categories}
-          active={activeCategory}
-          onChange={setActiveCategory}
-        />
-
-        <div className="mt-5">
-          {activeCategory !== 'combos' && filteredPromos.length > 0 && (
-            <CatalogSection title="Descuentos">
-              {filteredPromos.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  quantity={getQuantity(product.id)}
-                  catalogSlug={slug}
-                  onAdd={addItem}
-                  onUpdateQuantity={updateQuantity}
-                />
-              ))}
-            </CatalogSection>
-          )}
-
-          {(activeCategory === 'all' || activeCategory === 'combos') && event.combos.length > 0 && (
-            <CatalogSection title="Combos">
-              {event.combos.map(combo => (
-                <ComboCard
-                  key={combo.id}
-                  combo={combo}
-                  quantity={getQuantity(combo.id)}
-                  catalogSlug={slug}
-                  onAdd={addItem}
-                  onUpdateQuantity={updateQuantity}
-                />
-              ))}
-            </CatalogSection>
-          )}
-
-          {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProducts.length > 0 && (
-            <CatalogSection title="Productos">
-              {filteredProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  quantity={getQuantity(product.id)}
-                  catalogSlug={slug}
-                  onAdd={addItem}
-                  onUpdateQuantity={updateQuantity}
-                />
-              ))}
-            </CatalogSection>
-          )}
-
-          {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
-            <EmptyState
-              title="Sin productos en esta categoría"
-              subtitle="Probá con otra categoría"
-              icon={
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-                  <circle cx="14" cy="14" r="7" stroke={stroke} strokeWidth="1.75" />
-                  <path d="M19 19l7 7" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" />
-                </svg>
-              }
+      {/* Barra de filtros sticky */}
+      <div
+        className="sticky top-0 z-20 bg-white"
+        style={{ borderBottom: `1px solid ${BUYER_COLORS.border}` }}
+      >
+        <div className="mx-auto max-w-5xl px-4 md:px-6">
+          <div className="flex items-center gap-3 py-3">
+            {/* Botón categorías */}
+            <CategoryFilter
+              active={activeCategory}
+              onOpen={() => setSheetOpen(true)}
             />
-          )}
 
-          {activeCategory === 'combos' && event.combos.length === 0 && (
-            <EmptyState
-              title="Sin combos disponibles"
-              subtitle="Este evento todavía no tiene combos"
-              icon={
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-                  <rect x="5" y="5" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
-                  <rect x="17" y="5" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
-                  <rect x="5" y="17" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
-                  <rect x="17" y="17" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
-                </svg>
+            {/* Botón sort */}
+            <button
+              type="button"
+              onClick={cycleSortOrder}
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors"
+              style={
+                sortOrder !== 'default'
+                  ? { background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText, border: 'none' }
+                  : {
+                      background: BUYER_COLORS.chipInactiveBg,
+                      border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`,
+                      color: BUYER_COLORS.text,
+                    }
               }
-            />
-          )}
+            >
+              <SortIcon order={sortOrder} />
+              Precio
+            </button>
+          </div>
 
-          {activeCategory === 'all' && filteredProducts.length === 0 && event.combos.length === 0 && (
-            <EmptyState
-              title="Sin productos disponibles"
-              subtitle="El organizador todavía no cargó productos"
-              icon={
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-                  <path
-                    d="M16 4L6 9v12l10 5 10-5V9L16 4z"
-                    stroke={stroke}
-                    strokeWidth="1.75"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M6 9l10 5 10-5" stroke={stroke} strokeWidth="1.75" strokeLinejoin="round" />
-                </svg>
-              }
-            />
+          {/* Fila limpiar — solo cuando hay filtros activos */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 pb-2.5">
+              <span className="text-xs" style={{ color: BUYER_COLORS.muted }}>
+                {activeCategory !== 'all' && sortOrder !== 'default'
+                  ? `${activeCategory === 'all' ? 'Todos' : activeCategory} · ${sortOrder === 'asc' ? 'menor precio' : 'mayor precio'}`
+                  : activeCategory !== 'all'
+                  ? activeCategory === 'descuentos' ? 'Descuentos' : activeCategory === 'combos' ? 'Combos' : activeCategory
+                  : sortOrder === 'asc' ? 'Menor precio primero' : 'Mayor precio primero'}
+              </span>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs font-semibold underline underline-offset-2"
+                style={{ color: BUYER_COLORS.text }}
+              >
+                Limpiar
+              </button>
+            </div>
           )}
         </div>
       </div>
 
+      {/* Productos */}
+      <div className="mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        {activeCategory !== 'combos' && filteredPromos.length > 0 && (
+          <CatalogSection title="Descuentos">
+            {filteredPromos.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                quantity={getQuantity(product.id)}
+                catalogSlug={slug}
+                onAdd={addItem}
+                onUpdateQuantity={updateQuantity}
+              />
+            ))}
+          </CatalogSection>
+        )}
+
+        {(activeCategory === 'all' || activeCategory === 'combos') && filteredCombos.length > 0 && (
+          <CatalogSection title="Combos">
+            {filteredCombos.map(combo => (
+              <ComboCard
+                key={combo.id}
+                combo={combo}
+                quantity={getQuantity(combo.id)}
+                catalogSlug={slug}
+                onAdd={addItem}
+                onUpdateQuantity={updateQuantity}
+              />
+            ))}
+          </CatalogSection>
+        )}
+
+        {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProducts.length > 0 && (
+          <CatalogSection title="Productos">
+            {filteredProducts.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                quantity={getQuantity(product.id)}
+                catalogSlug={slug}
+                onAdd={addItem}
+                onUpdateQuantity={updateQuantity}
+              />
+            ))}
+          </CatalogSection>
+        )}
+
+        {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
+          <EmptyState
+            title="Sin productos en esta categoría"
+            subtitle="Probá con otra categoría"
+            icon={
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
+                <circle cx="14" cy="14" r="7" stroke={stroke} strokeWidth="1.75" />
+                <path d="M19 19l7 7" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
+            }
+          />
+        )}
+
+        {activeCategory === 'combos' && filteredCombos.length === 0 && (
+          <EmptyState
+            title="Sin combos disponibles"
+            subtitle="Este evento todavía no tiene combos"
+            icon={
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
+                <rect x="5" y="5" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
+                <rect x="17" y="5" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
+                <rect x="5" y="17" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
+                <rect x="17" y="17" width="10" height="10" rx="2" stroke={stroke} strokeWidth="1.75" />
+              </svg>
+            }
+          />
+        )}
+
+        {activeCategory === 'all' && filteredProducts.length === 0 && event.combos.length === 0 && (
+          <EmptyState
+            title="Sin productos disponibles"
+            subtitle="El organizador todavía no cargó productos"
+            icon={
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
+                <path
+                  d="M16 4L6 9v12l10 5 10-5V9L16 4z"
+                  stroke={stroke}
+                  strokeWidth="1.75"
+                  strokeLinejoin="round"
+                />
+                <path d="M6 9l10 5 10-5" stroke={stroke} strokeWidth="1.75" strokeLinejoin="round" />
+              </svg>
+            }
+          />
+        )}
+      </div>
+
       <FloatingCart count={count} total={total} eventId={event.id} catalogSlug={catalogSlug} />
       <FloatingOrders eventId={event.id} catalogSlug={catalogSlug} />
+
+      <CategorySheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        categories={categories}
+        active={activeCategory}
+        onChange={setActiveCategory}
+        counts={counts}
+      />
     </div>
   )
 }

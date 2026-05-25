@@ -29,16 +29,17 @@ export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQu
   const router = useRouter()
   const includedNames = combo.products.map(p => p.name).join(', ')
   const remote = Boolean(combo.imageUrl && combo.imageUrl.startsWith('http'))
+  const available = combo.available !== false
   const btnBase = 'flex items-center justify-center rounded-full transition-colors active:opacity-90'
 
   return (
     <div
-      className="flex cursor-pointer flex-col overflow-hidden rounded-[18px] bg-white"
-      style={{ border: `1px solid ${BUYER_COLORS.border}` }}
-      onClick={() => catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${combo.id}`)}
+      className={`flex flex-col overflow-hidden rounded-[18px] bg-white ${available ? 'cursor-pointer' : 'cursor-default'}`}
+      style={{ border: `1px solid ${BUYER_COLORS.border}`, opacity: available ? 1 : 0.75 }}
+      onClick={() => available && catalogSlug && router.push(`/catalogo/${catalogSlug}/producto/${combo.id}`)}
     >
       <div className="relative aspect-[8/7] overflow-hidden rounded-b-[18px]" style={{ background: BUYER_COLORS.subtleFill }}>
-        {combo.promoLabel?.trim() ? (
+        {combo.promoLabel?.trim() && available ? (
           <div className="absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)]">
             <span
               className="inline-block truncate rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-tight shadow-sm"
@@ -48,12 +49,21 @@ export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQu
             </span>
           </div>
         ) : null}
+
+        {!available && (
+          <div className="absolute left-2 top-2 z-[2]">
+            <span className="inline-block rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white">
+              Agotado
+            </span>
+          </div>
+        )}
+
         {combo.imageUrl ? (
           <Image
             src={combo.imageUrl}
             alt={combo.name}
             fill
-            className="object-cover"
+            className={`object-cover ${!available ? 'grayscale' : ''}`}
             sizes="(max-width: 768px) 50vw, 25vw"
             unoptimized={remote}
           />
@@ -63,52 +73,61 @@ export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQu
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
-          {quantity === 0 ? (
-            <button
-              type="button"
-              onClick={() => onAdd(combo)}
-              className={`${btnBase} h-9 w-9 bg-white shadow-md`}
-              style={{ border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`, color: BUYER_COLORS.text }}
-              aria-label={`Agregar combo ${combo.name}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-          ) : (
-            <div
-              className="flex items-center gap-2 rounded-full px-2 py-1.5 shadow-md"
-              style={{ background: BUYER_COLORS.surface, border: `1px solid ${BUYER_COLORS.border}` }}
-            >
+        {!available && (
+          <div className="absolute inset-0 bg-white/40" />
+        )}
+
+        {available && (
+          <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
+            {quantity === 0 ? (
               <button
                 type="button"
-                onClick={() => onUpdateQuantity(combo.id, quantity - 1)}
-                className={`${btnBase} h-7 w-7 text-sm font-bold`}
-                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
-                aria-label="Quitar uno"
+                onClick={() => onAdd(combo)}
+                className={`${btnBase} h-9 w-9 bg-white shadow-md`}
+                style={{ border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`, color: BUYER_COLORS.text }}
+                aria-label={`Agregar combo ${combo.name}`}
               >
-                −
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </button>
-              <span className="min-w-[18px] text-center text-sm font-extrabold" style={{ color: BUYER_COLORS.text }}>
-                {quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => onUpdateQuantity(combo.id, quantity + 1)}
-                className={`${btnBase} h-7 w-7 text-sm font-bold`}
-                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
-                aria-label="Agregar uno"
+            ) : (
+              <div
+                className="flex items-center gap-2 rounded-full px-2 py-1.5 shadow-md"
+                style={{ background: BUYER_COLORS.surface, border: `1px solid ${BUYER_COLORS.border}` }}
               >
-                +
-              </button>
-            </div>
-          )}
-        </div>
+                <button
+                  type="button"
+                  onClick={() => onUpdateQuantity(combo.id, quantity - 1)}
+                  className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                  style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                  aria-label="Quitar uno"
+                >
+                  −
+                </button>
+                <span className="min-w-[18px] text-center text-sm font-extrabold" style={{ color: BUYER_COLORS.text }}>
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onUpdateQuantity(combo.id, quantity + 1)}
+                  className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                  style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                  aria-label="Agregar uno"
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="p-3">
-        <h3 className="line-clamp-1 text-sm font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
+        <h3
+          className="line-clamp-1 text-sm font-bold leading-tight"
+          style={{ color: available ? BUYER_COLORS.text : BUYER_COLORS.muted }}
+        >
           {combo.name}
         </h3>
         <p className="mt-0.5 line-clamp-2 text-xs leading-snug" style={{ color: BUYER_COLORS.muted }}>
@@ -120,7 +139,10 @@ export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQu
               {formatPrice(combo.listPrice)}
             </span>
           ) : null}
-          <span className="text-sm font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          <span
+            className="text-sm font-extrabold tracking-tight"
+            style={{ color: available ? BUYER_COLORS.text : BUYER_COLORS.muted }}
+          >
             {formatPrice(combo.price)}
           </span>
         </div>
