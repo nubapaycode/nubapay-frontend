@@ -483,28 +483,16 @@ export function EventOrganizerSidebar({
                 href={fabItem.href}
                 data-tour={fabItem.tourId}
                 className="flex flex-col items-center gap-1 -mt-7 transition-colors"
-                style={{ color: tintedShell ? ORG_INK : undefined }}
+                style={{ color: ORG_INK }}
                 aria-label={fabItem.label}
               >
                 <span
-                  className={`flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white shadow-lg transition-transform active:scale-95 ${
-                    tintedShell
-                      ? ''
-                      : `bg-gray-900 text-white ${isRouteActive(pathname, fabItem.href) ? 'bg-gray-950' : ''}`
-                  }`}
-                  style={
-                    tintedShell
-                      ? {
-                          backgroundColor: ORG_ACC,
-                          color: ORG_INK,
-                          borderColor: '#fff',
-                        }
-                      : undefined
-                  }
+                  className="flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white shadow-lg transition-transform active:scale-95"
+                  style={{ backgroundColor: ORG_ACC, color: ORG_INK, borderColor: '#fff' }}
                 >
                   {fabItem.icon}
                 </span>
-                <span className={`text-[9px] font-semibold leading-none ${tintedShell ? '' : 'text-gray-900'}`}>{fabItem.label}</span>
+                <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>{fabItem.label}</span>
               </Link>
             )}
           </div>
