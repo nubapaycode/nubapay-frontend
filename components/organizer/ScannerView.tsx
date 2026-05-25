@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { QrCode } from 'lucide-react'
 
-import { AccentButton } from '@/components/organizer/AccentButton'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { scanQr } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
@@ -151,9 +150,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <p className="text-sm text-gray-400 mt-1">Activá la cámara para validar un pedido</p>
           </div>
           {cameraError && <p className="text-red-500 text-sm">{cameraError}</p>}
-          <AccentButton onClick={startCamera} className="w-full py-3 hover:opacity-90">
+          <button
+            type="button"
+            onClick={startCamera}
+            className="w-full rounded-full bg-gray-900 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
             Activar cámara
-          </AccentButton>
+          </button>
         </div>
       )}
 
@@ -224,9 +227,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
               </div>
             )}
           </div>
-          <AccentButton onClick={reset} className="w-full py-3.5 hover:opacity-90">
+          <button
+            type="button"
+            onClick={reset}
+            className="w-full rounded-full bg-gray-900 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
             Escanear otro
-          </AccentButton>
+          </button>
         </div>
       )}
 
@@ -237,9 +244,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
           <div>
             <p className="text-base font-medium text-gray-900">{errorMsg || 'QR no válido'}</p>
           </div>
-          <AccentButton onClick={reset} className="w-full py-3 hover:opacity-90">
+          <button
+            type="button"
+            onClick={reset}
+            className="w-full rounded-full bg-gray-900 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
             Intentar de nuevo
-          </AccentButton>
+          </button>
         </div>
       )}
     </div>
