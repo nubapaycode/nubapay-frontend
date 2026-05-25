@@ -222,6 +222,10 @@ export function EventOrganizerSidebar({
   const [pill, setPill] = useState<{ top: number; height: number; ready: boolean }>({ top: 0, height: 0, ready: false })
   const [emailLabel, setEmailLabel] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
+  const [sheetDragY, setSheetDragY] = useState(0)
+  const sheetDragStart = useRef(0)
+  const sheetDragging = useRef(false)
+  const navSwipeStart = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     const syncEmail = () => queueMicrotask(() => setEmailLabel(getAuthUser()?.email ?? ''))
@@ -443,63 +447,97 @@ export function EventOrganizerSidebar({
         </div>
       </aside>
 
+      {/* mejora 1: swipe-up sobre la barra abre "Ver más" */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 overflow-visible bg-white border-t border-gray-100 pb-[env(safe-area-inset-bottom,0px)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 overflow-visible bg-white border-t border-gray-100"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-label="Navegación principal"
+        onTouchStart={e => {
+          navSwipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        }}
+        onTouchEnd={e => {
+          if (!navSwipeStart.current) return
+          const dx = Math.abs(e.changedTouches[0].clientX - navSwipeStart.current.x)
+          const dy = navSwipeStart.current.y - e.changedTouches[0].clientY
+          navSwipeStart.current = null
+          if (dy > 50 && dx < 40 && !moreOpen) {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8)
+            setMoreOpen(true)
+          }
+        }}
       >
         <div className="grid grid-cols-5 items-end min-h-[56px] overflow-visible px-0.5 pt-1">
-          {tabLeft && (
-            <Link
-              href={tabLeft.href}
-              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
-              style={{ color: isRouteActive(pathname, tabLeft.href) ? ORG_INK : undefined }}
-              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
-            >
-              <span
-                className="flex items-center justify-center rounded-full transition-all"
-                style={
-                  isRouteActive(pathname, tabLeft.href)
-                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                    : { width: 36, height: 24, color: '#9CA3AF' }
-                }
+          {tabLeft && (() => {
+            const active = isRouteActive(pathname, tabLeft.href)
+            return (
+              <Link
+                href={tabLeft.href}
+                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
               >
-                {tabLeft.icon}
-              </span>
-              <span
-                className="text-[9px] font-medium leading-none text-center"
-                style={{ color: isRouteActive(pathname, tabLeft.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabLeft.href) ? 600 : 400 }}
+                <span
+                  className="flex items-center justify-center rounded-full transition-all duration-150"
+                  style={
+                    active
+                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                      : { width: 36, height: 24, color: '#9CA3AF' }
+                  }
+                >
+                  {tabLeft.icon}
+                </span>
+                {/* mejora 2+3: label solo en activo, transición suave */}
+                <span
+                  className="text-[9px] leading-none text-center"
+                  style={{
+                    color: active ? ORG_INK : '#9CA3AF',
+                    fontWeight: active ? 600 : 400,
+                    opacity: active ? 1 : 0,
+                    transition: 'color 150ms, opacity 150ms',
+                  }}
+                >
+                  {tabLeft.label}
+                </span>
+              </Link>
+            )
+          })()}
+          {tabMid && (() => {
+            const active = isRouteActive(pathname, tabMid.href)
+            return (
+              <Link
+                href={tabMid.href}
+                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
               >
-                {tabLeft.label}
-              </span>
-            </Link>
-          )}
-          {tabMid && (
-            <Link
-              href={tabMid.href}
-              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
-              style={{ color: isRouteActive(pathname, tabMid.href) ? ORG_INK : undefined }}
-              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
-            >
-              <span
-                className="flex items-center justify-center rounded-full transition-all"
-                style={
-                  isRouteActive(pathname, tabMid.href)
-                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                    : { width: 36, height: 24, color: '#9CA3AF' }
-                }
-              >
-                {tabMid.icon}
-              </span>
-              <span
-                className="text-[9px] leading-none text-center"
-                style={{ color: isRouteActive(pathname, tabMid.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabMid.href) ? 600 : 400 }}
-              >
-                {tabMid.label}
-              </span>
-            </Link>
-          )}
+                <span
+                  className="flex items-center justify-center rounded-full transition-all duration-150"
+                  style={
+                    active
+                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                      : { width: 36, height: 24, color: '#9CA3AF' }
+                  }
+                >
+                  {tabMid.icon}
+                </span>
+                <span
+                  className="text-[9px] leading-none text-center"
+                  style={{
+                    color: active ? ORG_INK : '#9CA3AF',
+                    fontWeight: active ? 600 : 400,
+                    opacity: active ? 1 : 0,
+                    transition: 'color 150ms, opacity 150ms',
+                  }}
+                >
+                  {tabMid.label}
+                </span>
+              </Link>
+            )
+          })()}
 
-          <div className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1">
+          {/* mejora 5: FAB sube extra para no quedar hundido con el safe area */}
+          <div
+            className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) * 0.5 + 4px)' }}
+          >
             {fabItem && (() => {
               const fabActive = isRouteActive(pathname, fabItem.href)
               return (
@@ -537,43 +575,50 @@ export function EventOrganizerSidebar({
             })()}
           </div>
 
-          {tabRight && (
-            <Link
-              href={tabRight.href}
-              className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
-              style={{ color: isRouteActive(pathname, tabRight.href) ? ORG_INK : undefined }}
-              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
-            >
-              <span
-                className="flex items-center justify-center rounded-full transition-all"
-                style={
-                  isRouteActive(pathname, tabRight.href)
-                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                    : { width: 36, height: 24, color: '#9CA3AF' }
-                }
+          {tabRight && (() => {
+            const active = isRouteActive(pathname, tabRight.href)
+            return (
+              <Link
+                href={tabRight.href}
+                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
               >
-                {tabRight.icon}
-              </span>
-              <span
-                className="text-[9px] leading-none text-center"
-                style={{ color: isRouteActive(pathname, tabRight.href) ? ORG_INK : '#9CA3AF', fontWeight: isRouteActive(pathname, tabRight.href) ? 600 : 400 }}
-              >
-                {tabRight.label}
-              </span>
-            </Link>
-          )}
+                <span
+                  className="flex items-center justify-center rounded-full transition-all duration-150"
+                  style={
+                    active
+                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                      : { width: 36, height: 24, color: '#9CA3AF' }
+                  }
+                >
+                  {tabRight.icon}
+                </span>
+                <span
+                  className="text-[9px] leading-none text-center"
+                  style={{
+                    color: active ? ORG_INK : '#9CA3AF',
+                    fontWeight: active ? 600 : 400,
+                    opacity: active ? 1 : 0,
+                    transition: 'color 150ms, opacity 150ms',
+                  }}
+                >
+                  {tabRight.label}
+                </span>
+              </Link>
+            )
+          })()}
 
           <button
             type="button"
             onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8); setMoreOpen(true) }}
-            className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
+            className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
             aria-label="Ver más herramientas"
           >
             <span className="relative flex items-center justify-center">
               <span
-                className="flex items-center justify-center rounded-full transition-all"
+                className="flex items-center justify-center rounded-full transition-all duration-150"
                 style={
                   moreOverflowActive
                     ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
@@ -592,7 +637,12 @@ export function EventOrganizerSidebar({
             </span>
             <span
               className="text-[9px] leading-none text-center"
-              style={{ color: moreOverflowActive ? ORG_INK : '#9CA3AF', fontWeight: moreOverflowActive ? 600 : 400 }}
+              style={{
+                color: moreOverflowActive ? ORG_INK : '#9CA3AF',
+                fontWeight: moreOverflowActive ? 600 : 400,
+                opacity: moreOverflowActive ? 1 : 0,
+                transition: 'color 150ms, opacity 150ms',
+              }}
             >
               Ver más
             </span>
@@ -606,22 +656,45 @@ export function EventOrganizerSidebar({
             type="button"
             className="md:hidden fixed inset-0 z-[60] bg-black/45"
             aria-label="Cerrar menú"
-            onClick={() => setMoreOpen(false)}
+            onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
           />
+          {/* mejora 4: swipe-to-dismiss en el bottom sheet */}
           <div
-            className="md:hidden fixed bottom-0 left-0 right-0 z-[61] max-h-[min(78vh,520px)] flex flex-col rounded-t-2xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] pb-[env(safe-area-inset-bottom,12px)] pt-2"
+            className="md:hidden fixed bottom-0 left-0 right-0 z-[61] max-h-[min(78vh,520px)] flex flex-col rounded-t-2xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] pt-2"
+            style={{
+              paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)',
+              transform: `translateY(${sheetDragY}px)`,
+              transition: sheetDragging.current ? 'none' : 'transform 300ms cubic-bezier(0.32,0.72,0,1)',
+            }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="organizer-more-menu-title"
+            onTouchStart={e => {
+              sheetDragStart.current = e.touches[0].clientY
+              sheetDragging.current = true
+            }}
+            onTouchMove={e => {
+              const dy = Math.max(0, e.touches[0].clientY - sheetDragStart.current)
+              setSheetDragY(dy)
+            }}
+            onTouchEnd={() => {
+              sheetDragging.current = false
+              if (sheetDragY > 80) {
+                setMoreOpen(false)
+                setSheetDragY(0)
+              } else {
+                setSheetDragY(0)
+              }
+            }}
           >
-            <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-gray-200" aria-hidden />
+            <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-gray-200 cursor-grab" aria-hidden />
             <div className="px-4 pb-2 flex items-center justify-between shrink-0 border-b border-gray-100">
               <h2 id="organizer-more-menu-title" className="text-sm font-semibold text-gray-900">
                 Herramientas
               </h2>
               <button
                 type="button"
-                onClick={() => setMoreOpen(false)}
+                onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
                 className="rounded-full px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               >
                 Cerrar
@@ -635,7 +708,7 @@ export function EventOrganizerSidebar({
                     <li key={`more-${item.href}`}>
                       <Link
                         href={item.href}
-                        onClick={() => setMoreOpen(false)}
+                        onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
                         className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${
                           active ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                         }`}
