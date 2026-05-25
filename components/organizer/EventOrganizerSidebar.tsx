@@ -453,6 +453,7 @@ export function EventOrganizerSidebar({
               href={tabLeft.href}
               className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
               style={{ color: isRouteActive(pathname, tabLeft.href) ? ORG_INK : undefined }}
+              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
             >
               <span
                 className="flex items-center justify-center rounded-full transition-all"
@@ -477,6 +478,7 @@ export function EventOrganizerSidebar({
               href={tabMid.href}
               className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
               style={{ color: isRouteActive(pathname, tabMid.href) ? ORG_INK : undefined }}
+              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
             >
               <span
                 className="flex items-center justify-center rounded-full transition-all"
@@ -498,23 +500,41 @@ export function EventOrganizerSidebar({
           )}
 
           <div className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1">
-            {fabItem && (
-              <Link
-                href={fabItem.href}
-                data-tour={fabItem.tourId}
-                className="flex flex-col items-center gap-1 -mt-7 transition-colors"
-                style={{ color: ORG_INK }}
-                aria-label={fabItem.label}
-              >
-                <span
-                  className="flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 border-white shadow-lg transition-transform active:scale-95"
-                  style={{ backgroundColor: ORG_ACC, color: ORG_INK, borderColor: '#fff' }}
+            {fabItem && (() => {
+              const fabActive = isRouteActive(pathname, fabItem.href)
+              return (
+                <Link
+                  href={fabItem.href}
+                  data-tour={fabItem.tourId}
+                  className="flex flex-col items-center gap-1 -mt-7 transition-colors"
+                  style={{ color: ORG_INK }}
+                  aria-label={fabItem.label}
+                  onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
                 >
-                  {fabItem.icon}
-                </span>
-                <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>{fabItem.label}</span>
-              </Link>
-            )}
+                  <span className="relative">
+                    {fabActive && (
+                      <span
+                        className="absolute inset-0 rounded-full animate-ping"
+                        style={{ backgroundColor: ORG_ACC, opacity: 0.35 }}
+                        aria-hidden
+                      />
+                    )}
+                    <span
+                      className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 shadow-lg transition-transform active:scale-95"
+                      style={{
+                        backgroundColor: ORG_ACC,
+                        color: ORG_INK,
+                        borderColor: '#fff',
+                        boxShadow: fabActive ? `0 0 0 3px color-mix(in srgb, ${ORG_ACC} 40%, transparent), 0 4px 12px rgba(0,0,0,0.18)` : undefined,
+                      }}
+                    >
+                      {fabItem.icon}
+                    </span>
+                  </span>
+                  <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>{fabItem.label}</span>
+                </Link>
+              )
+            })()}
           </div>
 
           {tabRight && (
@@ -522,6 +542,7 @@ export function EventOrganizerSidebar({
               href={tabRight.href}
               className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
               style={{ color: isRouteActive(pathname, tabRight.href) ? ORG_INK : undefined }}
+              onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
             >
               <span
                 className="flex items-center justify-center rounded-full transition-all"
@@ -544,21 +565,30 @@ export function EventOrganizerSidebar({
 
           <button
             type="button"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8); setMoreOpen(true) }}
             className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px] transition-colors"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
             aria-label="Ver más herramientas"
           >
-            <span
-              className="flex items-center justify-center rounded-full transition-all"
-              style={
-                moreOverflowActive
-                  ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                  : { width: 36, height: 24, color: '#9CA3AF' }
-              }
-            >
-              {moreIcon}
+            <span className="relative flex items-center justify-center">
+              <span
+                className="flex items-center justify-center rounded-full transition-all"
+                style={
+                  moreOverflowActive
+                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                    : { width: 36, height: 24, color: '#9CA3AF' }
+                }
+              >
+                {moreIcon}
+              </span>
+              {moreOverflowActive && (
+                <span
+                  className="absolute top-0 right-0 size-[7px] rounded-full border border-white"
+                  style={{ backgroundColor: ORG_ACC }}
+                  aria-hidden
+                />
+              )}
             </span>
             <span
               className="text-[9px] leading-none text-center"
