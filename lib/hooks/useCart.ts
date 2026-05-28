@@ -6,6 +6,11 @@ import type { CartItem, Product, Combo } from '@/types'
 
 const CART_KEY = 'nubapay_cart'
 
+function getCartStorage(): Storage | null {
+  if (typeof window === 'undefined') return null
+  return window.sessionStorage
+}
+
 interface UseCart {
   items: CartItem[]
   addItem: (item: Product | Combo) => void
@@ -22,8 +27,18 @@ export function useCart(): UseCart {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(CART_KEY)
-      if (stored) setItems(JSON.parse(stored))
+      const storage = getCartStorage()
+      if (!storage) {
+        setIsLoaded(true)
+        return
+      }
+      const stored = storage.getItem(CART_KEY)
+      if (stored) {
+        setItems(JSON.parse(stored))
+      } else {
+        // One-time cleanup of carts persisted in localStorage before session-only storage.
+        localStorage.removeItem(CART_KEY)
+      }
     } catch {
       // ignore malformed data
     }
@@ -32,7 +47,13 @@ export function useCart(): UseCart {
 
   useEffect(() => {
     if (!isLoaded) return
-    localStorage.setItem(CART_KEY, JSON.stringify(items))
+    const storage = getCartStorage()
+    if (!storage) return
+    if (items.length === 0) {
+      storage.removeItem(CART_KEY)
+    } else {
+      storage.setItem(CART_KEY, JSON.stringify(items))
+    }
   }, [items, isLoaded])
 
   const addItem = (item: Product | Combo) => {
@@ -82,6 +103,8 @@ export function useCart(): UseCart {
 
   const clearCart = () => {
     setItems([])
+    getCartStorage()?.removeItem(CART_KEY)
+    localStorage.removeItem(CART_KEY)
   }
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)

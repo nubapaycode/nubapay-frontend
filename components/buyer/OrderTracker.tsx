@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { Download } from 'lucide-react'
+import { Spinner } from '@/components/ui/Spinner'
 import { formatPrice } from '@/lib/utils'
 import { catalogPaths } from '@/lib/api/paths'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
@@ -92,6 +93,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const isPaid = order?.payment_status === 'approved'
   const isDelivered = order?.status === 'delivered'
   const isPendingPayment = order?.status === 'pending_payment'
+  const awaitingMpCheckout =
+    !isPaid &&
+    !paymentResult &&
+    (!order || isPendingPayment || order.processing)
+  const mpCheckoutReady = Boolean(order?.checkout_url)
 
   const formattedDate = order?.created_at
     ? new Date(order.created_at).toLocaleString('es-AR', {
@@ -194,7 +200,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
         )}
 
         {/* Pago pendiente MP */}
-        {isPendingPayment && order?.checkout_url && (
+        {awaitingMpCheckout && !loadError && (
           <div
             className="flex flex-col gap-3 rounded-[18px] p-4"
             style={{ background: '#fff', border: `1px solid rgba(0,158,227,0.3)` }}
@@ -205,11 +211,19 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             </div>
             <button
               type="button"
-              onClick={() => { window.location.href = order.checkout_url! }}
-              className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full text-[15px] font-bold text-white"
+              disabled={!mpCheckoutReady}
+              onClick={() => { if (order?.checkout_url) window.location.href = order.checkout_url }}
+              className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full text-[15px] font-bold text-white transition-opacity disabled:opacity-90"
               style={{ background: '#009EE3' }}
             >
-              Pagar con Mercado Pago
+              {mpCheckoutReady ? (
+                'Pagar con Mercado Pago'
+              ) : (
+                <>
+                  <Spinner size="sm" className="text-white" />
+                  Preparando Mercado Pago…
+                </>
+              )}
             </button>
           </div>
         )}
@@ -224,8 +238,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           </div>
         )}
 
-        {/* Procesando */}
-        {order?.processing && (
+        {/* Procesando (solo si no estamos en el flujo de pago MP) */}
+        {order?.processing && !awaitingMpCheckout && (
           <div
             className="flex flex-col items-center gap-3 rounded-[18px] p-6"
             style={{ background: '#fff', border: `1px solid ${BUYER_COLORS.border}` }}

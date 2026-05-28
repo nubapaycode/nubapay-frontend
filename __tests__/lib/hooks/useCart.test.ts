@@ -22,6 +22,7 @@ const mockProduct2: Product = {
 }
 
 beforeEach(() => {
+  sessionStorage.clear()
   localStorage.clear()
 })
 
