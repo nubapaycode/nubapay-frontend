@@ -37,14 +37,18 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('mp')
 
   useEffect(() => {
-    const saved = localStorage.getItem('nubapay_buyer_name')
-    if (saved) setName(saved)
+    const savedName = localStorage.getItem('nubapay_buyer_name')
+    if (savedName) setName(savedName)
+    const savedEmail = localStorage.getItem('nubapay_buyer_email')
+    if (savedEmail) setEmail(savedEmail)
   }, [])
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
+  const [emailFocused, setEmailFocused] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const listTotal = items.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
@@ -52,6 +56,8 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
 
   const handleConfirm = async () => {
     if (name.trim() === '') { setError('Ingresá tu nombre para continuar'); return }
+    if (email.trim() === '') { setError('Ingresá tu email para continuar'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Ingresá un email válido'); return }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
     if (items.length === 0) return
 
@@ -68,6 +74,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
         },
         body: JSON.stringify({
           customer_name: name.trim(),
+          customer_email: email.trim(),
           payment_method: paymentMethod,
           items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
         }),
@@ -81,6 +88,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
 
       const data = await res.json()
       localStorage.setItem('nubapay_buyer_name', name.trim())
+      localStorage.setItem('nubapay_buyer_email', email.trim())
       clearCart()
       saveOrder({
         orderId: data.order_id,
@@ -225,6 +233,34 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
             className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
             style={{
               border: `1.5px solid ${focused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
+              background: BUYER_COLORS.subtleFill,
+              color: BUYER_COLORS.text,
+              fontFamily: BUYER_FONT,
+            }}
+          />
+        </div>
+
+        {/* Email */}
+        <div>
+          <label
+            htmlFor="checkout-email"
+            className="mb-3 block text-[18px] font-bold"
+            style={{ color: BUYER_COLORS.text }}
+          >
+            Tu email
+          </label>
+          <input
+            id="checkout-email"
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); if (error) setError('') }}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
+            placeholder="Ej: juan@email.com"
+            className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
+            style={{
+              border: `1.5px solid ${emailFocused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
               background: BUYER_COLORS.subtleFill,
               color: BUYER_COLORS.text,
               fontFamily: BUYER_FONT,
