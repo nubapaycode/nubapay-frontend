@@ -8,6 +8,12 @@ import { authPaths } from '@/lib/api'
 import { authHeadersJson, clearAuthSession, getAuthToken, setAuthSession, type AuthUser } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 
+/** Si la ruta es /events/{uuid}/products, devuelve la URL del catálogo público. */
+function _publicFallback(pathname: string): string | null {
+  const m = pathname.match(/^\/events\/([^/]+)\/products$/)
+  return m ? `/catalogo/${m[1]}` : null
+}
+
 export function OrganizerGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -16,7 +22,7 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = getAuthToken()
     if (!token) {
-      router.replace('/login')
+      router.replace(_publicFallback(pathname) ?? '/login')
       return
     }
 
@@ -25,7 +31,7 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
         const res = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
         if (!res.ok) {
           clearAuthSession()
-          router.replace('/login')
+          router.replace(_publicFallback(pathname) ?? '/login')
           return
         }
         const body = (await res.json()) as {
