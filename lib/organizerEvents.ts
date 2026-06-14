@@ -25,6 +25,7 @@ export async function patchOrganizerEvent(
     ends_at: string | null
     status: string
     is_active: boolean
+    notify_pickup_point: boolean
     /** String para guardar el token; null o "" para eliminarlo. */
     mp_access_token: string | null
   }>,

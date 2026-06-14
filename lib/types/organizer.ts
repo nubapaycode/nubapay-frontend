@@ -9,6 +9,7 @@ export type OrganizerEventRow = {
   ends_at: string | null
   status: string
   is_active: boolean
+  notify_pickup_point: boolean
   /** Dueño del evento o integrante invitado (staff). */
   membership?: 'owner' | 'staff'
   /** Stats opcionales que el backend puede incluir en el listado. */

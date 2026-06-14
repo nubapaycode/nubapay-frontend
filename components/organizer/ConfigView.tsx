@@ -37,6 +37,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
   const [startsAtDraft, setStartsAtDraft] = useState('')
   const [endsAtDraft, setEndsAtDraft] = useState('')
   const [isActiveDraft, setIsActiveDraft] = useState(false)
+  const [notifyPickupPointDraft, setNotifyPickupPointDraft] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -49,6 +50,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
       setStartsAtDraft(toDatetimeLocal(ev.starts_at))
       setEndsAtDraft(toDatetimeLocal(ev.ends_at))
       setIsActiveDraft(ev.is_active)
+      setNotifyPickupPointDraft(ev.notify_pickup_point)
     } else {
       showToast(res.error, 'error')
     }
@@ -67,6 +69,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
       starts_at: fromDatetimeLocal(startsAtDraft),
       ends_at: fromDatetimeLocal(endsAtDraft),
       is_active: isActiveDraft,
+      notify_pickup_point: notifyPickupPointDraft,
     })
     setSaving(false)
     if (!res.ok) { showToast(res.error, 'error'); return }
@@ -81,7 +84,8 @@ export function ConfigView({ eventId }: { eventId: string }) {
       (descDraft.trim() || null) !== event.description ||
       fromDatetimeLocal(startsAtDraft) !== event.starts_at ||
       fromDatetimeLocal(endsAtDraft) !== event.ends_at ||
-      isActiveDraft !== event.is_active
+      isActiveDraft !== event.is_active ||
+      notifyPickupPointDraft !== event.notify_pickup_point
     )
 
   if (loading) {
@@ -200,6 +204,31 @@ export function ConfigView({ eventId }: { eventId: string }) {
               <span
                 className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
                   isActiveDraft ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Toggle notify_pickup_point */}
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Avisar punto de retiro en email</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Cuando está activo, el email de confirmación del pedido incluye el nombre del punto de retiro asignado
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={notifyPickupPointDraft}
+              onClick={() => setNotifyPickupPointDraft(v => !v)}
+              className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 ${
+                notifyPickupPointDraft ? 'bg-gray-900' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                  notifyPickupPointDraft ? 'translate-x-4' : 'translate-x-0.5'
                 }`}
               />
             </button>
