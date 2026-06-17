@@ -1192,10 +1192,6 @@ export function LandingPage() {
               </a>
             </div>
             <div className="nb-blockchain-right" style={{ padding: '80px 64px', position: 'relative' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(198,255,0,0.08)', border: '1px solid rgba(198,255,0,0.2)', borderRadius: '100px', padding: '6px 13px 6px 11px', marginBottom: '36px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#C6FF00', boxShadow: '0 0 6px #C6FF00' }} />
-                <span style={{ fontSize: '11px', fontWeight: 700, color: S.accentText, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Proceso de certificación</span>
-              </div>
               <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                 {[
                   { step: 'Pedido confirmado', detail: 'ORDER_ID: 9f2e1a…c4b' },
@@ -1399,10 +1395,6 @@ export function LandingPage() {
         <section className="nb-cta-section" style={{ padding: '0 40px 160px', maxWidth: '1280px', margin: '0 auto' }}>
           <div className="nb-reveal nb-cta-inner" style={{ background: '#0A0A0F', borderRadius: '36px', padding: '100px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
             <div className="nb-cta-glow" style={{ position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: '60%', height: '80%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.08) 0%, transparent 65%)', pointerEvents: 'none' }} />
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(198,255,0,0.08)', border: '1px solid rgba(198,255,0,0.2)', borderRadius: '100px', padding: '6px 13px 6px 11px', marginBottom: '28px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#C6FF00', boxShadow: '0 0 6px #C6FF00' }} />
-              <span style={{ fontSize: '11px', fontWeight: 700, color: S.accentText, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Para organizadores</span>
-            </div>
             <h2 style={{ fontSize: 'clamp(54px, 6.5vw, 96px)', fontWeight: 500, letterSpacing: '-0.055em', lineHeight: '0.88', margin: '0 0 28px 0', color: '#FFFFFF', maxWidth: '700px' }}>
               Tu próximo<br />evento <span className="nb-marker-line">sin cajas.</span>
             </h2>
