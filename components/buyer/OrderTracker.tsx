@@ -611,7 +611,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           >
             <div className="flex flex-col items-center gap-1 text-center">
               <p className="text-[16px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
-                Presentá este QR en la barra
+                Presentá este QR en el punto indicado
               </p>
               <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
                 El personal escaneará el código para entregarte tu pedido
