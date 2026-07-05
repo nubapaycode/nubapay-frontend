@@ -157,14 +157,18 @@ export async function patchOrderStatus(
 export async function scanQr(
   eventId: string,
   orderId: string,
-): Promise<{ ok: true; order: Order } | { ok: false; error: string }> {
+): Promise<{ ok: true; order: Order } | { ok: false; error: string; alreadyScanned?: boolean; order?: Order }> {
   const res = await browserFetch(workspacePath(eventId, 'scan-qr'), {
     method: 'POST',
     headers: authHeadersJson(),
     body: JSON.stringify({ order_id: orderId }),
   })
   const body = (await res.json()) as { order?: Order; error?: string }
-  if (!res.ok || !body.order) return { ok: false, error: body.error ?? 'Error al escanear' }
+  if (!res.ok) {
+    const alreadyScanned = body.error === 'Este QR ya fue escaneado'
+    return { ok: false, error: body.error ?? 'Error al escanear', alreadyScanned, order: body.order }
+  }
+  if (!body.order) return { ok: false, error: body.error ?? 'Error al escanear' }
   return { ok: true, order: body.order }
 }
 
@@ -355,13 +359,15 @@ export async function deleteWorkspaceProduct(
 
 export async function fetchWorkspacePayments(
   eventId: string,
-  opts?: { page?: number; pageSize?: number },
+  opts?: { page?: number; pageSize?: number; status?: string },
 ): Promise<
   { ok: true; payments: WorkspacePayment[]; pagination: PaginationMeta } | { ok: false; error: string }
 > {
   const page = opts?.page ?? 1
   const pageSize = opts?.pageSize ?? 20
-  const res = await browserFetch(workspacePath(eventId, 'payments', { page, page_size: pageSize }), {
+  const query: Record<string, string | number | boolean | undefined> = { page, page_size: pageSize }
+  if (opts?.status) query.status = opts.status
+  const res = await browserFetch(workspacePath(eventId, 'payments', query), {
     headers: authHeadersJson(),
   })
   const body = (await res.json()) as {
@@ -372,6 +378,25 @@ export async function fetchWorkspacePayments(
   if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
   const payments = body.payments ?? []
   return { ok: true, payments, pagination: readPagination(body, payments.length) }
+}
+
+export async function fetchAllApprovedPayments(
+  eventId: string,
+): Promise<{ ok: true; payments: WorkspacePayment[] } | { ok: false; error: string }> {
+  const pageSize = 200
+  let page = 1
+  const payments: WorkspacePayment[] = []
+  let total = 0
+  for (;;) {
+    const res = await fetchWorkspacePayments(eventId, { page, pageSize, status: 'approved' })
+    if (!res.ok) return res
+    total = res.pagination.total
+    payments.push(...res.payments)
+    if (payments.length >= total || res.payments.length === 0) break
+    page += 1
+    if (page > 50) break
+  }
+  return { ok: true, payments }
 }
 
 export async function fetchPickupPoints(

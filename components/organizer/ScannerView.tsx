@@ -6,14 +6,9 @@ import { QrCode } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { scanQr } from '@/lib/organizerWorkspace'
-import { formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
 
-type ScanState = 'idle' | 'scanning' | 'loading' | 'ready' | 'error'
-
-const paymentLabels: Record<string, string> = {
-  mp: 'Mercado Pago', cash: 'Efectivo', transfer: 'Transferencia',
-}
+type ScanState = 'idle' | 'scanning' | 'loading' | 'ready' | 'already_scanned' | 'error'
 
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -58,6 +53,10 @@ export function ScannerView({ eventId }: { eventId: string }) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
       setOrder(result.order)
       setState('ready')
+    } else if (result.alreadyScanned) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
+      setOrder(result.order ?? null)
+      setState('already_scanned')
     } else {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(300)
       setErrorMsg(result.error)
@@ -193,37 +192,45 @@ export function ScannerView({ eventId }: { eventId: string }) {
       {state === 'ready' && order && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-green-100 p-4">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-sm">✓</div>
-              <div>
-                <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Pedido finalizado</p>
-                {order.customerName && (
-                  <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
-                )}
-              </div>
-              {order.orderNumber && (
-                <span className="ml-auto text-xs font-mono text-gray-400">#{order.orderNumber}</span>
-              )}
+              <p className="text-xs font-medium text-green-700 uppercase tracking-wider">Pedido verificado</p>
             </div>
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="flex flex-col gap-2">
               {order.items.map((item, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
-                    <span className="text-sm text-gray-800">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</span>
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
+                  <span className="text-sm text-gray-800">{item.name}</span>
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-              <span className="text-sm text-gray-500">Total</span>
-              <span className="text-lg font-medium text-gray-900">{formatPrice(order.total)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={reset}
+            className="w-full rounded-full bg-gray-900 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
+            Escanear otro
+          </button>
+        </div>
+      )}
+
+      {/* Already scanned */}
+      {state === 'already_scanned' && (
+        <div className="flex flex-col gap-3">
+          <div className="bg-white rounded-2xl border border-amber-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 text-sm">⚠</div>
+              <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">QR ya verificado</p>
             </div>
-            {order.paymentMethod && (
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-sm text-gray-500">Pago</span>
-                <span className="text-sm font-medium text-gray-900">{paymentLabels[order.paymentMethod] ?? order.paymentMethod}</span>
+            {order && (
+              <div className="flex flex-col gap-2">
+                {order.items.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
+                    <span className="text-sm text-gray-800">{item.name}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>

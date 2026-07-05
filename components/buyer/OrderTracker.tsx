@@ -595,6 +595,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   </>
                 )}
               </button>
+              {!mpCheckoutReady && (
+                <p className="text-center text-[12px]" style={{ color: BUYER_COLORS.muted }}>
+                  Podés seguir disfrutando y volver en unos instantes.
+                </p>
+              )}
               <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
                 Si no completás el pago, el pedido se cancelará automáticamente.
               </p>
