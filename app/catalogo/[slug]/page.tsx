@@ -51,16 +51,17 @@ export default async function CatalogoSlugPage({ params }: Props) {
   const data = await fetchPublicStorefront(slug)
   if (!data) notFound()
 
-  // Si el evento pertenece a un partner con subdominio propio, redirigir al subdominio.
-  const theme = data.theme
-  if (theme && theme.inherit === false && theme.subdomain && !theme.dedicated_partner_host) {
+  // Si el evento pertenece a un tenant con subdominio propio y se accede desde
+  // el dominio incorrecto, redirigir al subdominio canónico del evento.
+  const canonicalSub = data.event_canonical_subdomain
+  if (canonicalSub) {
     const h = await headers()
     const currentHost = (h.get('x-forwarded-host') ?? h.get('host') ?? '').split(':')[0]
-    const apexHost = new URL(SITE_URL).hostname
-    if (currentHost === apexHost || currentHost === 'localhost') {
-      const apexUrl = new URL(SITE_URL)
-      const subdomainUrl = `${apexUrl.protocol}//${theme.subdomain}.${apexHost}/catalogo/${slug}`
-      redirect(subdomainUrl)
+    const apexUrl = new URL(SITE_URL)
+    const apexHost = apexUrl.hostname
+    const expectedHost = `${canonicalSub}.${apexHost}`
+    if (currentHost !== expectedHost) {
+      redirect(`${apexUrl.protocol}//${expectedHost}/catalogo/${slug}`)
     }
   }
 

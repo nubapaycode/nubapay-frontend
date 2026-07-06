@@ -18,6 +18,8 @@ export type StorefrontApiResponse = {
   products: Product[]
   combos: Combo[]
   theme?: TenantThemePayload
+  /** Subdominio del tenant al que pertenece el evento (distinto del host actual). Presente solo cuando el acceso viene desde el dominio incorrecto. */
+  event_canonical_subdomain?: string | null
 }
 
 export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
