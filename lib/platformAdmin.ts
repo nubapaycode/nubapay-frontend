@@ -2,6 +2,12 @@ import { platformAdminPaths } from '@/lib/api'
 import { authHeadersJson } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 
+export type PlatformPagination = {
+  page: number
+  page_size: number
+  total: number
+}
+
 export type PlatformAdminUser = {
   id: string
   name: string
@@ -24,7 +30,11 @@ export type PlatformAdminEvent = {
   ends_at: string | null
   tenant_subdomain: string | null
   organizer: { id: string; name: string; email: string } | null
-  stats: { order_count: number; total_revenue: number }
+  stats: {
+    order_count: number
+    total_revenue: number
+    commission_amount: number
+  }
 }
 
 export type PlatformAdminOrder = {
@@ -50,23 +60,26 @@ export type PlatformRevenueByEvent = {
   tenant_subdomain: string | null
   order_count: number
   total_revenue: number
+  commission_amount: number
+}
+
+export type PlatformAdminSummary = {
+  total_users: number
+  total_events: number
+  total_orders: number
+  total_revenue: number
+  total_commission: number
 }
 
 export type PlatformAdminOverview = {
-  summary: {
-    total_users: number
-    total_events: number
-    total_orders: number
-    total_revenue: number
-  }
-  users: PlatformAdminUser[]
-  events: PlatformAdminEvent[]
-  orders: PlatformAdminOrder[]
-  upcoming_events: PlatformAdminEvent[]
-  revenue_by_event: PlatformRevenueByEvent[]
+  summary: PlatformAdminSummary
 }
 
 type Result<T> = { ok: true; data: T } | { ok: false; error: string }
+
+type PaginatedResult<T> = Result<T & { pagination: PlatformPagination }>
+
+const DEFAULT_PAGE_SIZE = 20
 
 async function parseJson<T>(res: Response): Promise<Result<T>> {
   let body: unknown
@@ -91,3 +104,55 @@ export async function fetchPlatformOverview(): Promise<Result<PlatformAdminOverv
   })
   return parseJson<PlatformAdminOverview>(res)
 }
+
+export async function fetchPlatformUsers(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ users: PlatformAdminUser[] }>> {
+  const res = await browserFetch(platformAdminPaths.users({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchPlatformEvents(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ events: PlatformAdminEvent[] }>> {
+  const res = await browserFetch(platformAdminPaths.events({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchPlatformOrders(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ orders: PlatformAdminOrder[] }>> {
+  const res = await browserFetch(platformAdminPaths.orders({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchPlatformRevenueByEvent(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ revenue_by_event: PlatformRevenueByEvent[] }>> {
+  const res = await browserFetch(platformAdminPaths.revenueByEvent({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchPlatformUpcomingEvents(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ events: PlatformAdminEvent[] }>> {
+  const res = await browserFetch(platformAdminPaths.upcomingEvents({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export { DEFAULT_PAGE_SIZE as PLATFORM_ADMIN_PAGE_SIZE }

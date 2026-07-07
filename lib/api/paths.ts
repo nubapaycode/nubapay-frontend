@@ -78,6 +78,22 @@ export const platformAdminPaths = {
     const s = q.toString()
     return s ? `${base}?${s}` : base
   },
+  revenueByEvent: (opts?: { page?: number; page_size?: number }) => {
+    const base = apiUrl('/platform/revenue-by-event')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
+  upcomingEvents: (opts?: { page?: number; page_size?: number }) => {
+    const base = apiUrl('/platform/events/upcoming')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
 }
 
 export const eventsPaths = {
