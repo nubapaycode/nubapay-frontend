@@ -51,6 +51,35 @@ export const publicPaths = {
   tenantByHost: () => apiUrl('/public/tenant-by-host'),
 }
 
+export const platformAdminPaths = {
+  overview: () => apiUrl('/platform/overview'),
+  users: (opts?: { page?: number; page_size?: number; q?: string }) => {
+    const base = apiUrl('/platform/users')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    if (opts?.q) q.set('q', opts.q)
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
+  events: (opts?: { page?: number; page_size?: number }) => {
+    const base = apiUrl('/platform/events')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
+  orders: (opts?: { page?: number; page_size?: number }) => {
+    const base = apiUrl('/platform/orders')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
+}
+
 export const eventsPaths = {
   list: (opts?: { page?: number; page_size?: number }) => {
     const base = apiUrl('/events')

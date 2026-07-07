@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 import { LoginView } from '@/components/LoginView'
 import { OrganizerThemeBridge } from '@/components/organizer/OrganizerThemeBridge'
@@ -35,7 +36,9 @@ export default async function LoginPage() {
   const theme = await fetchTenantThemeForRequest()
   return (
     <OrganizerThemeBridge theme={theme}>
-      <LoginView initialMode="login" />
+      <Suspense fallback={null}>
+        <LoginView initialMode="login" />
+      </Suspense>
     </OrganizerThemeBridge>
   )
 }

@@ -28,6 +28,7 @@ export type AuthUser = {
   tenant_partner_whitelabel_enabled?: boolean
   staff_memberships?: StaffMembership[]
   onboarding_completed?: boolean
+  is_platform_admin?: boolean
 }
 const TOKEN_KEY = 'nubapay_token'
 const USER_KEY = 'nubapay_user'

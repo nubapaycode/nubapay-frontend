@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 
@@ -12,6 +12,16 @@ import { browserFetch } from '@/lib/browserFetch'
 import { FetchError } from '@/lib/fetcher'
 
 type Mode = 'login' | 'register'
+
+function safeNextPath(raw: string | null): string | null {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null
+  return raw
+}
+
+function adminRedirectPath(next: string | null): string {
+  const target = safeNextPath(next)
+  return target?.startsWith('/admin') ? target : '/admin'
+}
 
 const ACCENT = 'var(--organizer-accent, #C6FF00)'
 const ACCENT_INK = 'var(--organizer-accent-ink, #0A0F00)'
@@ -31,6 +41,8 @@ const inputStyle: React.CSSProperties = {
 
 export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next')
   const pubTheme = useOrganizerPublicTheme()
   const tenantLogin = !!pubTheme?.dedicated_partner_host
   const whitelabel = !!(pubTheme && !pubTheme.inherit)
@@ -64,6 +76,19 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
     let cancelled = false
     ;(async () => {
       try {
+        const meRes = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
+        if (meRes.ok) {
+          const meBody = (await meRes.json()) as { user?: AuthUser }
+          if (!cancelled && meBody.user?.is_platform_admin) {
+            router.replace(adminRedirectPath(next))
+            return
+          }
+          const target = safeNextPath(next)
+          if (!cancelled && target && !target.startsWith('/admin')) {
+            router.replace(target)
+            return
+          }
+        }
         const res = await browserFetch(eventsPaths.list({ page: 1, page_size: 1 }), {
           headers: authHeadersJson(),
         })
@@ -79,10 +104,19 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [router, next])
 
   const finishAuth = async (token: string, user: AuthUser) => {
     setAuthSession(token, user)
+    if (user.is_platform_admin) {
+      router.push(adminRedirectPath(next))
+      return
+    }
+    const target = safeNextPath(next)
+    if (target) {
+      router.push(target)
+      return
+    }
     try {
       const res = await browserFetch(eventsPaths.list({ page: 1, page_size: 1 }), {
         headers: authHeadersJson(),
