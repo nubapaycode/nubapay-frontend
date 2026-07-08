@@ -2,10 +2,13 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
+import { catalogPaths } from '@/lib/api/paths'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
+import { cartItemsKey, loadPendingOrder, savePendingOrder } from '@/lib/pendingOrder'
 import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/types'
 
@@ -21,8 +24,45 @@ interface CartViewProps {
 export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity, total } = useCart()
+  const [goingToCheckout, setGoingToCheckout] = useState(false)
   const catalogPath = buyerFlowPath(eventId, { catalogSlug })
   const checkoutPath = buyerFlowPath(eventId, { catalogSlug, path: 'checkout' })
+
+  // Encola la orden ya mismo (sin nombre/email: se adjuntan en el checkout vía
+  // PATCH). Así el backend procesa Mercado Pago mientras el usuario tipea sus
+  // datos. Si falla, el checkout cae al flujo clásico de crear al Pagar.
+  const handleGoToCheckout = async () => {
+    if (goingToCheckout) return
+    setGoingToCheckout(true)
+    const slug = catalogSlug ?? eventId
+    const itemsKey = cartItemsKey(items)
+    try {
+      if (!loadPendingOrder(slug, itemsKey)) {
+        const res = await fetch(catalogPaths.createOrder(slug), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Branded-Host': window.location.host,
+          },
+          body: JSON.stringify({
+            customer_name: localStorage.getItem('nubapay_buyer_name') ?? '',
+            customer_email: localStorage.getItem('nubapay_buyer_email') ?? '',
+            payment_method: 'mp',
+            items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
+            idempotency_key: crypto.randomUUID(),
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          savePendingOrder({ orderId: data.order_id, slug, itemsKey, createdAt: Date.now() })
+        }
+      }
+    } catch {
+      // sin orden pre-creada, el checkout la crea al confirmar
+    } finally {
+      router.push(checkoutPath)
+    }
+  }
 
   if (items.length === 0) {
     return (
@@ -276,8 +316,9 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
             </div>
             <button
               type="button"
-              onClick={() => router.push(checkoutPath)}
-              className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85"
+              onClick={handleGoToCheckout}
+              disabled={goingToCheckout}
+              className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-70"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
               Ir a pagar

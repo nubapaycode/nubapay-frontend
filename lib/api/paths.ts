@@ -36,6 +36,10 @@ export const catalogPaths = {
   orderStatus: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}`)
   },
+  /** Adjunta nombre/email a una orden creada sin datos (checkout en dos pasos). */
+  updateOrderCustomer: (orderId: string) => {
+    return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/customer`)
+  },
 }
 
 export const partnerTenantPaths = {

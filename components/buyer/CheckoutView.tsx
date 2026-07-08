@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { catalogPaths } from '@/lib/api/paths'
@@ -8,6 +8,7 @@ import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
+import { cartItemsKey, clearPendingOrder, loadPendingOrder } from '@/lib/pendingOrder'
 import { formatPrice } from '@/lib/utils'
 
 interface CheckoutViewProps {
@@ -51,6 +52,44 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const [emailFocused, setEmailFocused] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Orden pre-creada desde el carrito: mientras el usuario tipea sus datos,
+  // el backend ya está generando el link de Mercado Pago. Se pollea acá para
+  // poder redirigir directo a MP al confirmar, sin pasar por el tracker.
+  const pendingOrderIdRef = useRef<string | null>(null)
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (items.length === 0) return
+    const slug = catalogSlug ?? eventId
+    const pending = loadPendingOrder(slug, cartItemsKey(items))
+    pendingOrderIdRef.current = pending?.orderId ?? null
+    if (!pending) return
+
+    let cancelled = false
+    let intervalId: ReturnType<typeof setInterval> | null = null
+    const poll = async () => {
+      try {
+        const res = await fetch(catalogPaths.orderStatus(pending.orderId), {
+          headers: { 'X-Branded-Host': window.location.host },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data.checkout_url) {
+          setCheckoutUrl(data.checkout_url)
+          if (intervalId) clearInterval(intervalId)
+        }
+      } catch {
+        // la orden sigue en cola; el tracker retoma el polling si hace falta
+      }
+    }
+    poll()
+    intervalId = setInterval(poll, 2000)
+    return () => {
+      cancelled = true
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [items, catalogSlug, eventId])
+
   const listTotal = items.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
   const hasDiscount = listTotal > total
 
@@ -63,45 +102,91 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
 
     setLoading(true)
     setError('')
+    let redirectingToMp = false
 
     try {
       const slug = catalogSlug ?? eventId
-      const res = await fetch(catalogPaths.createOrder(slug), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Branded-Host': window.location.host,
-        },
-        body: JSON.stringify({
-          customer_name: name.trim(),
-          customer_email: email.trim(),
-          payment_method: paymentMethod,
-          items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
-        }),
-      })
+      let orderId = pendingOrderIdRef.current
+      let orderNumber: number | null = null
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        setError(body.error ?? 'Error al crear la orden. Intentá de nuevo.')
-        return
+      if (orderId) {
+        // Orden ya encolada desde el carrito: solo adjuntamos los datos.
+        // El PATCH además promueve la orden a la cola prioritaria del backend.
+        const res = await fetch(catalogPaths.updateOrderCustomer(orderId), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Branded-Host': window.location.host,
+          },
+          body: JSON.stringify({
+            customer_name: name.trim(),
+            customer_email: email.trim(),
+          }),
+        })
+        if (!res.ok && res.status !== 409) {
+          if (res.status === 404) {
+            // La orden pre-creada expiró o se perdió — caemos al flujo clásico
+            clearPendingOrder()
+            pendingOrderIdRef.current = null
+            orderId = null
+          } else {
+            const body = await res.json().catch(() => ({}))
+            setError(body.error ?? 'Error al confirmar tus datos. Intentá de nuevo.')
+            return
+          }
+        }
       }
 
-      const data = await res.json()
+      if (!orderId) {
+        const res = await fetch(catalogPaths.createOrder(slug), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Branded-Host': window.location.host,
+          },
+          body: JSON.stringify({
+            customer_name: name.trim(),
+            customer_email: email.trim(),
+            payment_method: paymentMethod,
+            items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
+          }),
+        })
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          setError(body.error ?? 'Error al crear la orden. Intentá de nuevo.')
+          return
+        }
+
+        const data = await res.json()
+        orderId = data.order_id as string
+        orderNumber = data.order_number ?? null
+      }
+
       localStorage.setItem('nubapay_buyer_name', name.trim())
       localStorage.setItem('nubapay_buyer_email', email.trim())
       clearCart()
+      clearPendingOrder()
       saveOrder({
-        orderId: data.order_id,
-        orderNumber: data.order_number ?? null,
-        slug: catalogSlug ?? eventId,
+        orderId,
+        orderNumber,
+        slug,
         total,
         createdAt: new Date().toISOString(),
       })
-      router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${data.order_id}` }))
+
+      if (checkoutUrl) {
+        // El link de MP ya está listo: vamos directo, sin pasar por el tracker
+        redirectingToMp = true
+        window.location.href = checkoutUrl
+        return
+      }
+      router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${orderId}` }))
     } catch {
       setError('Error de conexión. Verificá tu internet e intentá de nuevo.')
     } finally {
-      setLoading(false)
+      // Al ir directo a MP dejamos el overlay hasta que el navegador navegue
+      if (!redirectingToMp) setLoading(false)
     }
   }
 

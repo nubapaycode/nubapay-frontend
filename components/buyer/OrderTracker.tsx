@@ -25,6 +25,8 @@ interface OrderData {
   payment_method: string | null
   checkout_url: string | null
   processing: boolean
+  /** Estimación de pedidos delante en la cola (solo mientras processing). */
+  queue_depth?: number
   items: { product_id: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
   created_at: string
 }
@@ -169,6 +171,16 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     (!order || isPendingPayment || order.processing)
   const mpCheckoutReady = Boolean(order?.checkout_url)
 
+  // Copy honesto bajo carga: pasados unos segundos sin link de pago, avisamos
+  // que hay demanda (con la profundidad de cola si el backend la reporta).
+  const [waitedLong, setWaitedLong] = useState(false)
+  useEffect(() => {
+    if (!awaitingMpCheckout || mpCheckoutReady) return
+    const t = setTimeout(() => setWaitedLong(true), 8000)
+    return () => clearTimeout(t)
+  }, [awaitingMpCheckout, mpCheckoutReady])
+  const queueDepth = order?.queue_depth ?? 0
+
   const formattedDate = order?.created_at
     ? new Date(order.created_at).toLocaleString('es-AR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -230,15 +242,30 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
       titleColor: '#6B21A8',
       subtitleColor: '#9333EA',
     }
-    if (order.processing) return {
-      icon: null,
-      iconBg: BUYER_COLORS.text,
-      title: 'Procesando pedido…',
-      subtitle: 'Esto tarda solo unos segundos.',
-      heroBg: '#fff',
-      heroBorder: BUYER_COLORS.border,
-      titleColor: BUYER_COLORS.text,
-      subtitleColor: BUYER_COLORS.muted,
+    if (order.processing) {
+      // Checkpoint real: order_number asignado significa que el pedido ya está
+      // insertado y reservado — solo falta el link de pago. Mostrarlo como paso
+      // completado baja la ansiedad frente a un spinner sin señales.
+      if (order.order_number) return {
+        icon: <path d="M4 11l5 5 9-9" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />,
+        iconBg: '#16A34A',
+        title: `Pedido #${order.order_number} reservado`,
+        subtitle: 'Estamos generando tu link de pago…',
+        heroBg: '#F0FDF4',
+        heroBorder: '#BBF7D0',
+        titleColor: '#15803D',
+        subtitleColor: '#16A34A',
+      }
+      return {
+        icon: null,
+        iconBg: BUYER_COLORS.text,
+        title: 'Procesando pedido…',
+        subtitle: 'Esto tarda solo unos segundos.',
+        heroBg: '#fff',
+        heroBorder: BUYER_COLORS.border,
+        titleColor: BUYER_COLORS.text,
+        subtitleColor: BUYER_COLORS.muted,
+      }
     }
     // pending payment
     return null
@@ -597,7 +624,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               </button>
               {!mpCheckoutReady && (
                 <p className="text-center text-[12px]" style={{ color: BUYER_COLORS.muted }}>
-                  Podés seguir disfrutando y volver en unos instantes.
+                  {waitedLong
+                    ? queueDepth > 20
+                      ? `Hay mucha demanda: ~${queueDepth} pedidos en proceso. Tu lugar está asegurado.`
+                      : 'Hay mucha demanda en este momento. Tu pedido está reservado y no pierde su lugar.'
+                    : 'Podés seguir disfrutando y volver en unos instantes.'}
                 </p>
               )}
               <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
