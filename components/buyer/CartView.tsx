@@ -13,7 +13,6 @@ import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/types'
 
 import { CartItemRow } from './CartItemRow'
-import { FloatingOrders } from './FloatingOrders'
 
 interface CartViewProps {
   eventId: string
@@ -328,7 +327,6 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
         </div>
       </div>
 
-      <FloatingOrders eventId={eventId} catalogSlug={catalogSlug} />
     </div>
   )
 }
