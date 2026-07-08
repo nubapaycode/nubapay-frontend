@@ -41,12 +41,6 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const [email, setEmail] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('mp')
 
-  useEffect(() => {
-    const savedName = localStorage.getItem('nubapay_buyer_name')
-    if (savedName) setName(savedName)
-    const savedEmail = localStorage.getItem('nubapay_buyer_email')
-    if (savedEmail) setEmail(savedEmail)
-  }, [])
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
@@ -163,8 +157,6 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
         orderNumber = data.order_number ?? null
       }
 
-      localStorage.setItem('nubapay_buyer_name', name.trim())
-      localStorage.setItem('nubapay_buyer_email', email.trim())
       clearCart()
       clearPendingOrder()
       saveOrder({

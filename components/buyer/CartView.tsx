@@ -44,8 +44,10 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
             'X-Branded-Host': window.location.host,
           },
           body: JSON.stringify({
-            customer_name: localStorage.getItem('nubapay_buyer_name') ?? '',
-            customer_email: localStorage.getItem('nubapay_buyer_email') ?? '',
+            // Sin datos del cliente: se piden en el checkout cada vez y se
+            // adjuntan vía PATCH — no se autocompletan de compras anteriores.
+            customer_name: '',
+            customer_email: '',
             payment_method: 'mp',
             items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
             idempotency_key: crypto.randomUUID(),
