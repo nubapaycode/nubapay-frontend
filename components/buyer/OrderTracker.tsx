@@ -165,10 +165,14 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const isCancelled = order?.payment_status === 'cancelled'
   const isRefunded = order?.payment_status === 'refunded'
 
+  // Requiere `order` cargado (evita que esta tarjeta se solape con "Cargando tu
+  // pedido…") y se basa en el estado real del backend, no en `payment_result`
+  // de la URL — volver de MP con `?payment_result=failure` no debe bloquear el
+  // reintento de pago si el pedido sigue pendiente en el servidor.
   const awaitingMpCheckout =
     !isPaid &&
-    !paymentResult &&
-    (!order || isPendingPayment || order.processing)
+    Boolean(order) &&
+    (isPendingPayment || order!.processing)
   const mpCheckoutReady = Boolean(order?.checkout_url)
 
   // Copy honesto bajo carga: pasados unos segundos sin link de pago, avisamos
@@ -176,7 +180,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const [waitedLong, setWaitedLong] = useState(false)
   useEffect(() => {
     if (!awaitingMpCheckout || mpCheckoutReady) return
-    const t = setTimeout(() => setWaitedLong(true), 8000)
+    const t = setTimeout(() => setWaitedLong(true), 10000)
     return () => clearTimeout(t)
   }, [awaitingMpCheckout, mpCheckoutReady])
   const queueDepth = order?.queue_depth ?? 0
@@ -242,32 +246,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
       titleColor: '#6B21A8',
       subtitleColor: '#9333EA',
     }
-    if (order.processing) {
-      // Checkpoint real: order_number asignado significa que el pedido ya está
-      // insertado y reservado — solo falta el link de pago. Mostrarlo como paso
-      // completado baja la ansiedad frente a un spinner sin señales.
-      if (order.order_number) return {
-        icon: <path d="M4 11l5 5 9-9" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />,
-        iconBg: '#16A34A',
-        title: `Pedido #${order.order_number} reservado`,
-        subtitle: 'Estamos generando tu link de pago…',
-        heroBg: '#F0FDF4',
-        heroBorder: '#BBF7D0',
-        titleColor: '#15803D',
-        subtitleColor: '#16A34A',
-      }
-      return {
-        icon: null,
-        iconBg: BUYER_COLORS.text,
-        title: 'Procesando pedido…',
-        subtitle: 'Esto tarda solo unos segundos.',
-        heroBg: '#fff',
-        heroBorder: BUYER_COLORS.border,
-        titleColor: BUYER_COLORS.text,
-        subtitleColor: BUYER_COLORS.muted,
-      }
-    }
-    // pending payment
+    // Mientras se procesa el pedido y se prepara el link de pago, la tarjeta
+    // "awaitingMpCheckout" de abajo es el único loader — evitamos duplicarlo acá.
     return null
   })()
 
@@ -588,10 +568,10 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               </div>
               <div>
                 <p className="text-[15px] font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
-                  Tu pedido está reservado
+                  {order?.order_number ? `Pedido #${order.order_number} reservado` : 'Estamos procesando tu orden'}
                 </p>
                 <p className="text-[12px] mt-0.5" style={{ color: BUYER_COLORS.muted }}>
-                  Completá el pago para confirmar tu lugar.
+                  {mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
                 </p>
               </div>
             </div>
@@ -618,18 +598,31 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 ) : (
                   <>
                     <Spinner size="sm" className="text-white" />
-                    Preparando Mercado Pago…
+                    Estamos procesando tu orden…
                   </>
                 )}
               </button>
               {!mpCheckoutReady && (
-                <p className="text-center text-[12px]" style={{ color: BUYER_COLORS.muted }}>
-                  {waitedLong
-                    ? queueDepth > 20
-                      ? `Hay mucha demanda: ~${queueDepth} pedidos en proceso. Tu lugar está asegurado.`
-                      : 'Hay mucha demanda en este momento. Tu pedido está reservado y no pierde su lugar.'
-                    : 'Podés seguir disfrutando y volver en unos instantes.'}
-                </p>
+                waitedLong ? (
+                  <div
+                    className="flex items-center gap-2.5 rounded-[14px] px-3.5 py-3"
+                    style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}
+                  >
+                    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full" style={{ background: '#D97706' }}>
+                      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden>
+                        <path d="M7 4v4m0 2.5h.01" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <p className="text-[12px] font-semibold" style={{ color: '#92400E' }}>
+                      Hay mucha gente ahora mismo, aguardá un instante — tu pedido está reservado y no pierde su lugar
+                      {queueDepth > 20 ? ` (~${queueDepth} pedidos en proceso)` : ''}.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-center text-[12px]" style={{ color: BUYER_COLORS.muted }}>
+                    Podés seguir disfrutando y volver en unos instantes.
+                  </p>
+                )
               )}
               <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
                 Si no completás el pago, el pedido se cancelará automáticamente.
