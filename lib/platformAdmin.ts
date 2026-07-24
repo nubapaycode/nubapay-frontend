@@ -156,3 +156,129 @@ export async function fetchPlatformUpcomingEvents(
 }
 
 export { DEFAULT_PAGE_SIZE as PLATFORM_ADMIN_PAGE_SIZE }
+
+// ---------------------------------------------------------------------------
+// Load testing
+// ---------------------------------------------------------------------------
+
+export const LOAD_TEST_TARGETS = [100, 500, 1000, 2000] as const
+export type LoadTestTarget = (typeof LOAD_TEST_TARGETS)[number]
+export type LoadTestPaymentMethod = 'mp' | 'cash' | 'transfer'
+
+export type LoadTestProduct = {
+  id: string
+  name: string
+  price: number
+  currency: string
+  type: string
+}
+
+export type LoadTestStat = {
+  avg: number | null
+  p50: number | null
+  p95: number | null
+  p99: number | null
+  max: number | null
+  count: number
+}
+
+export type LoadTestSummary = {
+  target: number
+  created: number
+  checkout_ok: number
+  errors: number
+  create_error_rate: number | null
+  checkout_error_rate: number | null
+  duration_s: number
+  throughput_per_s: number | null
+  create_ms: LoadTestStat
+  checkout_ms: LoadTestStat
+  total_ms: LoadTestStat
+}
+
+export type LoadTestRun = {
+  id: string
+  event_id: string | null
+  event_name: string | null
+  event_slug: string
+  product_name: string | null
+  branded_host: string
+  payment_method: LoadTestPaymentMethod
+  target_count: number
+  status: 'running' | 'completed' | 'failed'
+  created_count: number
+  checkout_count: number
+  error_count: number
+  started_at: string | null
+  finished_at: string | null
+  summary: LoadTestSummary | null
+  created_by_name: string | null
+  purged_at: string | null
+  purged_count: number | null
+}
+
+export async function fetchEventProducts(eventId: string): Promise<Result<{ products: LoadTestProduct[] }>> {
+  const res = await browserFetch(platformAdminPaths.eventProducts(eventId), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchLoadTests(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<{ runs: LoadTestRun[] }>> {
+  const res = await browserFetch(platformAdminPaths.loadTests({ page, page_size: pageSize }), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function fetchLoadTest(runId: string): Promise<Result<LoadTestRun>> {
+  const res = await browserFetch(platformAdminPaths.loadTest(runId), {
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+export async function startLoadTest(input: {
+  event_id: string
+  product_id: string
+  target_count: LoadTestTarget
+  payment_method: LoadTestPaymentMethod
+}): Promise<Result<{ run_id: string; status: string }>> {
+  const res = await browserFetch(platformAdminPaths.loadTests(), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(input),
+  })
+  return parseJson(res)
+}
+
+export async function purgeLoadTest(runId: string): Promise<Result<{ ok: boolean; deleted: number }>> {
+  const res = await browserFetch(platformAdminPaths.loadTestPurge(runId), {
+    method: 'POST',
+    headers: authHeadersJson(),
+  })
+  return parseJson(res)
+}
+
+/** Descarga el log de una corrida como archivo .txt (dispara el diálogo "guardar como"). */
+export async function downloadLoadTestLog(runId: string): Promise<Result<true>> {
+  const res = await browserFetch(platformAdminPaths.loadTestLog(runId), {
+    headers: authHeadersJson(),
+  })
+  if (!res.ok) {
+    return { ok: false, error: `Error ${res.status}` }
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `load_test_${runId}.txt`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  return { ok: true, data: true }
+}

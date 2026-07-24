@@ -98,6 +98,18 @@ export const platformAdminPaths = {
     const s = q.toString()
     return s ? `${base}?${s}` : base
   },
+  eventProducts: (eventId: string) => apiUrl(`/platform/events/${encodeURIComponent(eventId)}/products`),
+  loadTests: (opts?: { page?: number; page_size?: number }) => {
+    const base = apiUrl('/platform/load-tests')
+    const q = new URLSearchParams()
+    if (opts?.page !== undefined) q.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
+  loadTest: (runId: string) => apiUrl(`/platform/load-tests/${encodeURIComponent(runId)}`),
+  loadTestLog: (runId: string) => apiUrl(`/platform/load-tests/${encodeURIComponent(runId)}/log`),
+  loadTestPurge: (runId: string) => apiUrl(`/platform/load-tests/${encodeURIComponent(runId)}/purge`),
 }
 
 export const eventsPaths = {

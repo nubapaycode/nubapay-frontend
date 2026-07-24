@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
+import { LoadTestsView } from '@/components/admin/LoadTestsView'
 import { Spinner } from '@/components/ui/Spinner'
 import { clearAuthSession, getAuthUser } from '@/lib/authSession'
 import {
@@ -354,8 +355,14 @@ function usePaginatedFetch<T>(
   return { loading, error, data, pagination }
 }
 
+const TABS = [
+  { key: 'overview' as const, label: 'Resumen' },
+  { key: 'load-tests' as const, label: 'Load tests' },
+]
+
 export function AdminDashboardView() {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['key']>('overview')
   const [summaryLoading, setSummaryLoading] = useState(true)
   const [summaryError, setSummaryError] = useState('')
   const [summary, setSummary] = useState<PlatformAdminOverview['summary'] | null>(null)
@@ -459,77 +466,102 @@ export function AdminDashboardView() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 md:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <SummaryCard label="Usuarios" value={String(summary.total_users)} />
-          <SummaryCard label="Eventos" value={String(summary.total_events)} />
-          <SummaryCard label="Órdenes" value={String(summary.total_orders)} />
-          <SummaryCard label="Facturación total" value={formatPrice(summary.total_revenue)} />
-          <SummaryCard label="A cobrar (1%)" value={formatPrice(summary.total_commission)} />
+      <nav className="border-b border-white/10 bg-[#0A0A0F]">
+        <div className="mx-auto flex max-w-7xl gap-1 px-4 md:px-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? 'border-[#C6FF00] text-white'
+                  : 'border-transparent text-white/50 hover:text-white/80'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </nav>
 
-        <PaginatedSection
-          title="Próximos eventos"
-          description="Eventos con fecha de inicio futura"
-          page={upcomingPage}
-          pagination={upcoming.pagination}
-          loading={upcoming.loading}
-          error={upcoming.error}
-          onPageChange={setUpcomingPage}
-          emptyMessage="No hay eventos próximos"
-        >
-          <UpcomingTable events={upcoming.data?.events ?? []} />
-        </PaginatedSection>
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 md:px-6">
+        {activeTab === 'load-tests' ? (
+          <LoadTestsView />
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <SummaryCard label="Usuarios" value={String(summary.total_users)} />
+              <SummaryCard label="Eventos" value={String(summary.total_events)} />
+              <SummaryCard label="Órdenes" value={String(summary.total_orders)} />
+              <SummaryCard label="Facturación total" value={formatPrice(summary.total_revenue)} />
+              <SummaryCard label="A cobrar (1%)" value={formatPrice(summary.total_commission)} />
+            </div>
 
-        <PaginatedSection
-          title="Facturación por evento"
-          description="Ordenado por monto facturado · comisión del 1%"
-          page={revenuePage}
-          pagination={revenue.pagination}
-          loading={revenue.loading}
-          error={revenue.error}
-          onPageChange={setRevenuePage}
-          emptyMessage="Sin datos de facturación"
-        >
-          <RevenueTable rows={revenue.data?.revenue_by_event ?? []} />
-        </PaginatedSection>
+            <PaginatedSection
+              title="Próximos eventos"
+              description="Eventos con fecha de inicio futura"
+              page={upcomingPage}
+              pagination={upcoming.pagination}
+              loading={upcoming.loading}
+              error={upcoming.error}
+              onPageChange={setUpcomingPage}
+              emptyMessage="No hay eventos próximos"
+            >
+              <UpcomingTable events={upcoming.data?.events ?? []} />
+            </PaginatedSection>
 
-        <PaginatedSection
-          title="Usuarios"
-          page={usersPage}
-          pagination={users.pagination}
-          loading={users.loading}
-          error={users.error}
-          onPageChange={setUsersPage}
-          emptyMessage="Sin usuarios"
-        >
-          <UsersTable users={users.data?.users ?? []} />
-        </PaginatedSection>
+            <PaginatedSection
+              title="Facturación por evento"
+              description="Ordenado por monto facturado · comisión del 1%"
+              page={revenuePage}
+              pagination={revenue.pagination}
+              loading={revenue.loading}
+              error={revenue.error}
+              onPageChange={setRevenuePage}
+              emptyMessage="Sin datos de facturación"
+            >
+              <RevenueTable rows={revenue.data?.revenue_by_event ?? []} />
+            </PaginatedSection>
 
-        <PaginatedSection
-          title="Eventos"
-          page={eventsPage}
-          pagination={events.pagination}
-          loading={events.loading}
-          error={events.error}
-          onPageChange={setEventsPage}
-          emptyMessage="Sin eventos"
-        >
-          <EventsTable events={events.data?.events ?? []} />
-        </PaginatedSection>
+            <PaginatedSection
+              title="Usuarios"
+              page={usersPage}
+              pagination={users.pagination}
+              loading={users.loading}
+              error={users.error}
+              onPageChange={setUsersPage}
+              emptyMessage="Sin usuarios"
+            >
+              <UsersTable users={users.data?.users ?? []} />
+            </PaginatedSection>
 
-        <PaginatedSection
-          title="Órdenes"
-          description="Sin órdenes de test"
-          page={ordersPage}
-          pagination={orders.pagination}
-          loading={orders.loading}
-          error={orders.error}
-          onPageChange={setOrdersPage}
-          emptyMessage="Sin órdenes"
-        >
-          <OrdersTable orders={orders.data?.orders ?? []} />
-        </PaginatedSection>
+            <PaginatedSection
+              title="Eventos"
+              page={eventsPage}
+              pagination={events.pagination}
+              loading={events.loading}
+              error={events.error}
+              onPageChange={setEventsPage}
+              emptyMessage="Sin eventos"
+            >
+              <EventsTable events={events.data?.events ?? []} />
+            </PaginatedSection>
+
+            <PaginatedSection
+              title="Órdenes"
+              description="Sin órdenes de test"
+              page={ordersPage}
+              pagination={orders.pagination}
+              loading={orders.loading}
+              error={orders.error}
+              onPageChange={setOrdersPage}
+              emptyMessage="Sin órdenes"
+            >
+              <OrdersTable orders={orders.data?.orders ?? []} />
+            </PaginatedSection>
+          </>
+        )}
       </main>
     </div>
   )
