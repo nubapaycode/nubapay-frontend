@@ -16,7 +16,6 @@ const PAYMENT_CONFIG = [
 ] as const
 
 const STATUS_CONFIG: { key: OrderStatus; label: string; dot: string }[] = [
-  { key: 'pending', label: 'Pendientes de pago', dot: 'bg-amber-400' },
   { key: 'paid', label: 'Pagados', dot: 'bg-blue-400' },
   { key: 'delivered', label: 'Finalizados', dot: 'bg-gray-300' },
   { key: 'cancelled', label: 'Cancelados', dot: 'bg-red-300' },
