@@ -468,7 +468,7 @@ function InviteModal({
       {/* Header */}
       <div className="mb-5 pb-4 border-b border-black/[0.06]">
         <h2 className="text-[15px] font-semibold text-gray-900">Invitar integrante</h2>
-        <p className="text-[12px] text-gray-400 mt-0.5">Recibirán acceso por email con contraseña temporal si son nuevos en Nubapay.</p>
+        <p className="text-[12px] text-gray-400 mt-0.5">Podés invitar a alguien que ya esté en otro evento. Si es nuevo en Nubapay, recibe acceso por email con contraseña temporal.</p>
       </div>
 
       <div className="flex flex-col gap-3">
