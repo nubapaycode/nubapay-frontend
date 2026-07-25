@@ -1,3 +1,5 @@
+import type { OrganizerStaffTools } from '@/lib/authSession'
+
 export type OrganizerEventRow = {
   id: string
   name: string
@@ -26,4 +28,6 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   created_at: string | null
   updated_at: string | null
   membership?: 'owner' | 'staff'
+  /** Permisos efectivos del usuario actual en este evento (dueño = todas). */
+  tools?: OrganizerStaffTools
 }

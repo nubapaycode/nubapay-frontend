@@ -211,7 +211,7 @@ export function EventOrganizerSidebar({
     return allItems.filter(it => {
       if (it.partnerBrand && !showPartnerBrand) return false
       if (it.ownerOnly) return workspaceMembership === 'owner'
-      if (it.tool) return tools[it.tool]
+      if (it.tool) return Boolean(tools[it.tool])
       return false
     })
   }, [allItems, tools, workspaceMembership, showPartnerBrand])
@@ -225,9 +225,28 @@ export function EventOrganizerSidebar({
     [items],
   )
   const fabItem = useMemo(() => items.find(i => i.mobileFab), [items])
-  const tabLeft = mobileTabs[0]
-  const tabMid = mobileTabs[1]
-  const tabRight = mobileTabs[2]
+  /** Tabs a la izquierda / derecha del FAB; el FAB solo si hay permiso de escáner. */
+  const tabsBeforeFab = useMemo(
+    () => mobileTabs.filter(t => (t.mobileTabOrder ?? 0) < 2),
+    [mobileTabs],
+  )
+  const tabsAfterFab = useMemo(
+    () => mobileTabs.filter(t => (t.mobileTabOrder ?? 0) >= 2),
+    [mobileTabs],
+  )
+  type MobileSlot =
+    | { kind: 'tab'; item: NavItem }
+    | { kind: 'fab'; item: NavItem }
+    | { kind: 'more' }
+  const mobileSlots = useMemo((): MobileSlot[] => {
+    const slots: MobileSlot[] = [
+      ...tabsBeforeFab.map(item => ({ kind: 'tab' as const, item })),
+    ]
+    if (fabItem) slots.push({ kind: 'fab', item: fabItem })
+    slots.push(...tabsAfterFab.map(item => ({ kind: 'tab' as const, item })))
+    slots.push({ kind: 'more' })
+    return slots
+  }, [tabsBeforeFab, tabsAfterFab, fabItem])
 
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -478,121 +497,108 @@ export function EventOrganizerSidebar({
           }
         }}
       >
-        <div className="grid grid-cols-5 items-end min-h-[56px] overflow-visible px-0.5 pt-1">
-          {tabLeft && (() => {
-            const active = isRouteActive(pathname, tabLeft.href)
-            return (
-              <Link
-                href={tabLeft.href}
-                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
-                onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
-              >
-                <span
-                  className="flex items-center justify-center rounded-full transition-all duration-150"
-                  style={
-                    active
-                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                      : { width: 36, height: 24, color: '#9CA3AF' }
-                  }
-                >
-                  {tabLeft.icon}
-                </span>
-                {/* mejora 2+3: label solo en activo, transición suave */}
-                <span
-                  className="text-[9px] leading-none text-center"
-                  style={{
-                    color: active ? ORG_INK : '#9CA3AF',
-                    fontWeight: active ? 600 : 400,
-                    opacity: active ? 1 : 0,
-                    transition: 'color 150ms, opacity 150ms',
-                  }}
-                >
-                  {tabLeft.label}
-                </span>
-              </Link>
-            )
-          })()}
-          {tabMid && (() => {
-            const active = isRouteActive(pathname, tabMid.href)
-            return (
-              <Link
-                href={tabMid.href}
-                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
-                onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
-              >
-                <span
-                  className="flex items-center justify-center rounded-full transition-all duration-150"
-                  style={
-                    active
-                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                      : { width: 36, height: 24, color: '#9CA3AF' }
-                  }
-                >
-                  {tabMid.icon}
-                </span>
-                <span
-                  className="text-[9px] leading-none text-center"
-                  style={{
-                    color: active ? ORG_INK : '#9CA3AF',
-                    fontWeight: active ? 600 : 400,
-                    opacity: active ? 1 : 0,
-                    transition: 'color 150ms, opacity 150ms',
-                  }}
-                >
-                  {tabMid.label}
-                </span>
-              </Link>
-            )
-          })()}
-
-          {/* mejora 5: FAB sube extra para no quedar hundido con el safe area */}
-          <div
-            className="relative z-10 flex flex-col items-center justify-end overflow-visible pb-1"
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) * 0.5 + 4px)' }}
-          >
-            {fabItem && (() => {
-              const fabActive = isRouteActive(pathname, fabItem.href)
+        <div className="flex w-full items-end justify-center min-h-[56px] overflow-visible px-1 pt-1">
+          {mobileSlots.map(slot => {
+            if (slot.kind === 'fab') {
+              const fabActive = isRouteActive(pathname, slot.item.href)
               return (
-                <Link
-                  href={fabItem.href}
-                  data-tour={fabItem.tourId}
-                  className="flex flex-col items-center gap-1 -mt-7 transition-colors"
-                  style={{ color: ORG_INK }}
-                  aria-label={fabItem.label}
-                  onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
+                <div
+                  key={`fab-${slot.item.href}`}
+                  className="relative z-10 flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-end overflow-visible pb-1"
+                  style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) * 0.5 + 4px)' }}
                 >
-                  <span className="relative">
-                    {fabActive && (
+                  <Link
+                    href={slot.item.href}
+                    data-tour={slot.item.tourId}
+                    className="flex flex-col items-center gap-1 -mt-7 transition-colors"
+                    style={{ color: ORG_INK }}
+                    aria-label={slot.item.label}
+                    onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
+                  >
+                    <span className="relative">
+                      {fabActive && (
+                        <span
+                          className="absolute inset-0 rounded-full animate-ping"
+                          style={{ backgroundColor: ORG_ACC, opacity: 0.35 }}
+                          aria-hidden
+                        />
+                      )}
                       <span
-                        className="absolute inset-0 rounded-full animate-ping"
-                        style={{ backgroundColor: ORG_ACC, opacity: 0.35 }}
+                        className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 shadow-lg transition-transform active:scale-95"
+                        style={{
+                          backgroundColor: ORG_ACC,
+                          color: ORG_INK,
+                          borderColor: '#fff',
+                          boxShadow: fabActive
+                            ? `0 0 0 3px color-mix(in srgb, ${ORG_ACC} 40%, transparent), 0 4px 12px rgba(0,0,0,0.18)`
+                            : undefined,
+                        }}
+                      >
+                        {slot.item.icon}
+                      </span>
+                    </span>
+                    <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>
+                      {slot.item.label}
+                    </span>
+                  </Link>
+                </div>
+              )
+            }
+
+            if (slot.kind === 'more') {
+              return (
+                <button
+                  key="more"
+                  type="button"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8)
+                    setMoreOpen(true)
+                  }}
+                  className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                  aria-expanded={moreOpen}
+                  aria-haspopup="dialog"
+                  aria-label="Ver más herramientas"
+                >
+                  <span className="relative flex items-center justify-center">
+                    <span
+                      className="flex items-center justify-center rounded-full transition-all duration-150"
+                      style={
+                        moreOverflowActive
+                          ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
+                          : { width: 36, height: 24, color: '#9CA3AF' }
+                      }
+                    >
+                      {moreIcon}
+                    </span>
+                    {moreOverflowActive && (
+                      <span
+                        className="absolute top-0 right-0 size-[7px] rounded-full border border-white"
+                        style={{ backgroundColor: ORG_ACC }}
                         aria-hidden
                       />
                     )}
-                    <span
-                      className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 shadow-lg transition-transform active:scale-95"
-                      style={{
-                        backgroundColor: ORG_ACC,
-                        color: ORG_INK,
-                        borderColor: '#fff',
-                        boxShadow: fabActive ? `0 0 0 3px color-mix(in srgb, ${ORG_ACC} 40%, transparent), 0 4px 12px rgba(0,0,0,0.18)` : undefined,
-                      }}
-                    >
-                      {fabItem.icon}
-                    </span>
                   </span>
-                  <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>{fabItem.label}</span>
-                </Link>
+                  <span
+                    className="text-[9px] leading-none text-center"
+                    style={{
+                      color: moreOverflowActive ? ORG_INK : '#9CA3AF',
+                      fontWeight: moreOverflowActive ? 600 : 400,
+                      opacity: moreOverflowActive ? 1 : 0,
+                      transition: 'color 150ms, opacity 150ms',
+                    }}
+                  >
+                    Ver más
+                  </span>
+                </button>
               )
-            })()}
-          </div>
+            }
 
-          {tabRight && (() => {
-            const active = isRouteActive(pathname, tabRight.href)
+            const active = isRouteActive(pathname, slot.item.href)
             return (
               <Link
-                href={tabRight.href}
-                className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                key={slot.item.href}
+                href={slot.item.href}
+                className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
                 onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
               >
                 <span
@@ -603,7 +609,7 @@ export function EventOrganizerSidebar({
                       : { width: 36, height: 24, color: '#9CA3AF' }
                   }
                 >
-                  {tabRight.icon}
+                  {slot.item.icon}
                 </span>
                 <span
                   className="text-[9px] leading-none text-center"
@@ -614,51 +620,11 @@ export function EventOrganizerSidebar({
                     transition: 'color 150ms, opacity 150ms',
                   }}
                 >
-                  {tabRight.label}
+                  {slot.item.label}
                 </span>
               </Link>
             )
-          })()}
-
-          <button
-            type="button"
-            onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8); setMoreOpen(true) }}
-            className="flex flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
-            aria-expanded={moreOpen}
-            aria-haspopup="dialog"
-            aria-label="Ver más herramientas"
-          >
-            <span className="relative flex items-center justify-center">
-              <span
-                className="flex items-center justify-center rounded-full transition-all duration-150"
-                style={
-                  moreOverflowActive
-                    ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                    : { width: 36, height: 24, color: '#9CA3AF' }
-                }
-              >
-                {moreIcon}
-              </span>
-              {moreOverflowActive && (
-                <span
-                  className="absolute top-0 right-0 size-[7px] rounded-full border border-white"
-                  style={{ backgroundColor: ORG_ACC }}
-                  aria-hidden
-                />
-              )}
-            </span>
-            <span
-              className="text-[9px] leading-none text-center"
-              style={{
-                color: moreOverflowActive ? ORG_INK : '#9CA3AF',
-                fontWeight: moreOverflowActive ? 600 : 400,
-                opacity: moreOverflowActive ? 1 : 0,
-                transition: 'color 150ms, opacity 150ms',
-              }}
-            >
-              Ver más
-            </span>
-          </button>
+          })}
         </div>
       </nav>
 

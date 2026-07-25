@@ -22,7 +22,12 @@ export function EventOrganizerShell({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [eventMeta, setEventMeta] = useState<{ title: string; membership: 'owner' | 'staff'; hasMpToken: boolean } | null>(null)
+  const [eventMeta, setEventMeta] = useState<{
+    title: string
+    membership: 'owner' | 'staff'
+    hasMpToken: boolean
+    tools?: OrganizerStaffTools
+  } | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [authNonce, setAuthNonce] = useState(0)
@@ -45,6 +50,7 @@ export function EventOrganizerShell({
           title: body.event.name,
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
           hasMpToken: body.event.has_mp_token ?? false,
+          tools: body.event.tools,
         })
       }
     } catch {
@@ -108,7 +114,12 @@ export function EventOrganizerShell({
     if (!eventMeta) {
       return workspaceToolsForEvent(undefined, eventId, getAuthUser()?.staff_memberships)
     }
-    return workspaceToolsForEvent(eventMeta.membership, eventId, getAuthUser()?.staff_memberships)
+    return workspaceToolsForEvent(
+      eventMeta.membership,
+      eventId,
+      getAuthUser()?.staff_memberships,
+      eventMeta.tools,
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- authNonce refleja `nubapay-auth-change` (staff memberships).
   }, [eventMeta, eventId, authNonce])
 
@@ -122,6 +133,7 @@ export function EventOrganizerShell({
       eventMeta.membership,
       eventId,
       getAuthUser()?.staff_memberships,
+      eventMeta.tools,
     )
     const segment = pathname.slice(base.length + 1).split('/')[0] ?? 'all'
     if (segment === 'all') return
