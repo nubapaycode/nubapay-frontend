@@ -61,6 +61,20 @@ export type WorkspacePickupPoint = {
   }[]
 }
 
+export type WorkspaceCatalogBlock = {
+  id: string
+  title: string
+  banner_image_url: string | null
+  sort_order: number
+  is_active: boolean
+  products: {
+    product_id: string
+    name: string
+    type: string
+    is_active: boolean
+  }[]
+}
+
 export type PaginationMeta = {
   page: number
   page_size: number
@@ -151,6 +165,24 @@ export async function patchOrderStatus(
   })
   const body = (await res.json()) as { order?: Order; error?: string }
   if (!res.ok || !body.order) return { ok: false, error: body.error ?? 'No se pudo actualizar' }
+  return { ok: true, order: body.order }
+}
+
+export async function previewQr(
+  eventId: string,
+  orderId: string,
+): Promise<{ ok: true; order: Order } | { ok: false; error: string; alreadyScanned?: boolean; order?: Order }> {
+  const res = await browserFetch(workspacePath(eventId, 'scan-qr/preview'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ order_id: orderId }),
+  })
+  const body = (await res.json()) as { order?: Order; error?: string }
+  if (!res.ok) {
+    const alreadyScanned = body.error === 'Este QR ya fue escaneado'
+    return { ok: false, error: body.error ?? 'Error al escanear', alreadyScanned, order: body.order }
+  }
+  if (!body.order) return { ok: false, error: body.error ?? 'Error al escanear' }
   return { ok: true, order: body.order }
 }
 
@@ -475,6 +507,74 @@ export async function putPickupPointProducts(
   const body = (await res.json()) as { pickup_point?: WorkspacePickupPoint; error?: string }
   if (!res.ok || !body.pickup_point) return { ok: false, error: body.error ?? 'Error' }
   return { ok: true, pickup_point: body.pickup_point }
+}
+
+export async function fetchCatalogBlocks(
+  eventId: string,
+): Promise<{ ok: true; blocks: WorkspaceCatalogBlock[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'blocks'), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { blocks?: WorkspaceCatalogBlock[]; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, blocks: body.blocks ?? [] }
+}
+
+export async function createCatalogBlock(
+  eventId: string,
+  payload: { title: string; is_active?: boolean; product_ids?: string[] },
+): Promise<{ ok: true; block: WorkspaceCatalogBlock } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'blocks'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { block?: WorkspaceCatalogBlock; error?: string }
+  if (!res.ok || !body.block) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, block: body.block }
+}
+
+export async function patchCatalogBlock(
+  eventId: string,
+  blockId: string,
+  payload: Partial<{ title: string; is_active: boolean }>,
+): Promise<{ ok: true; block: WorkspaceCatalogBlock } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `blocks/${blockId}`), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { block?: WorkspaceCatalogBlock; error?: string }
+  if (!res.ok || !body.block) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, block: body.block }
+}
+
+export async function deleteCatalogBlock(
+  eventId: string,
+  blockId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `blocks/${blockId}`), {
+    method: 'DELETE',
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true }
+}
+
+export async function putCatalogBlockProducts(
+  eventId: string,
+  blockId: string,
+  productIds: string[],
+): Promise<{ ok: true; block: WorkspaceCatalogBlock } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `blocks/${blockId}/products`), {
+    method: 'PUT',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ product_ids: productIds }),
+  })
+  const body = (await res.json()) as { block?: WorkspaceCatalogBlock; error?: string }
+  if (!res.ok || !body.block) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, block: body.block }
 }
 
 export type WorkspaceProductPromotion = {

@@ -242,6 +242,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               <div style={{ textAlign: 'center' }}>
                 <p style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: 0 }}>{uploadingCover ? 'Subiendo…' : 'Subir imagen'}</p>
                 <p style={{ fontSize: '12px', color: '#9A9AA8', margin: '3px 0 0 0' }}>JPG, PNG o WEBP · Tocá para elegir</p>
+                <p style={{ fontSize: '11px', color: '#C8C8D0', margin: '2px 0 0 0' }}>Medida recomendada: 1600 × 600 px</p>
               </div>
             </div>
           </label>

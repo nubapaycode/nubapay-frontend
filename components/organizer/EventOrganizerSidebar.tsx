@@ -68,6 +68,13 @@ function navItems(basePath: string): NavItem[] {
   )
   const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
+  const blocksIcon = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="1.5" y="2.5" width="13" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="1.5" y="10.5" width="5.5" height="3" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="9" y="10.5" width="5.5" height="3" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
 
   return [
     {
@@ -86,6 +93,13 @@ function navItems(basePath: string): NavItem[] {
       mobileTabOrder: 1,
       tool: 'products',
       tourId: 'sidebar-catalog',
+    },
+    {
+      href: `${basePath}/blocks`,
+      label: 'Bloques',
+      icon: blocksIcon,
+      showDesktop: true,
+      tool: 'products',
     },
     {
       href: `${basePath}/scanner`,

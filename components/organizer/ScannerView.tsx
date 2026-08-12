@@ -5,10 +5,10 @@ import jsQR from 'jsqr'
 import { QrCode } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
-import { scanQr } from '@/lib/organizerWorkspace'
+import { previewQr, scanQr } from '@/lib/organizerWorkspace'
 import type { Order } from '@/types'
 
-type ScanState = 'idle' | 'scanning' | 'loading' | 'ready' | 'already_scanned' | 'error'
+type ScanState = 'idle' | 'scanning' | 'loading' | 'confirming' | 'confirm_loading' | 'ready' | 'already_scanned' | 'error'
 
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -18,6 +18,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
 
   const [state, setState] = useState<ScanState>('idle')
   const [order, setOrder] = useState<Order | null>(null)
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
 
@@ -48,7 +49,27 @@ export function ScannerView({ eventId }: { eventId: string }) {
       return
     }
 
-    const result = await scanQr(eventId, orderId)
+    const result = await previewQr(eventId, orderId)
+    if (result.ok) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(100)
+      setOrder(result.order)
+      setPendingOrderId(orderId)
+      setState('confirming')
+    } else if (result.alreadyScanned) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
+      setOrder(result.order ?? null)
+      setState('already_scanned')
+    } else {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(300)
+      setErrorMsg(result.error)
+      setState('error')
+    }
+  }, [eventId, stopCamera])
+
+  const confirmScan = useCallback(async () => {
+    if (!pendingOrderId) return
+    setState('confirm_loading')
+    const result = await scanQr(eventId, pendingOrderId)
     if (result.ok) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
       setOrder(result.order)
@@ -62,7 +83,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setErrorMsg(result.error)
       setState('error')
     }
-  }, [eventId, stopCamera])
+  }, [eventId, pendingOrderId])
 
   const scan = useCallback(() => {
     const video = videoRef.current
@@ -109,10 +130,17 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const reset = useCallback(() => {
     stopCamera()
     setOrder(null)
+    setPendingOrderId(null)
     setErrorMsg('')
     setCameraError('')
     setState('idle')
   }, [stopCamera])
+
+  const cancelScan = useCallback(() => {
+    setOrder(null)
+    setPendingOrderId(null)
+    startCamera()
+  }, [startCamera])
 
   useEffect(() => () => stopCamera(), [stopCamera])
 
@@ -185,6 +213,44 @@ export function ScannerView({ eventId }: { eventId: string }) {
         <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-4 text-center">
           <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
           <p className="text-sm text-gray-400">Verificando pedido…</p>
+        </div>
+      )}
+
+      {/* Confirming — show scanned product before consuming the QR */}
+      {(state === 'confirming' || state === 'confirm_loading') && order && (
+        <div className="flex flex-col gap-3">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-sm">?</div>
+              <p className="text-xs font-medium text-blue-700 uppercase tracking-wider">¿Es este el pedido?</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {order.items.map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
+                  <span className="text-sm text-gray-800">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={cancelScan}
+              disabled={state === 'confirm_loading'}
+              className="flex-1 rounded-full border border-gray-200 py-3.5 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmScan}
+              disabled={state === 'confirm_loading'}
+              className="flex-1 rounded-full bg-gray-900 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {state === 'confirm_loading' ? 'Confirmando…' : 'Aceptar'}
+            </button>
+          </div>
         </div>
       )}
 

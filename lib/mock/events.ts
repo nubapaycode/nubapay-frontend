@@ -9,5 +9,6 @@ export const mockEvents: Event[] = [
     venue: 'Estadio Único, La Plata',
     products: [],
     combos: [],
+    blocks: [],
   },
 ]

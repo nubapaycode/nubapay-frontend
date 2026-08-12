@@ -57,6 +57,15 @@ export interface Order {
   paymentMethod?: 'mp' | 'cash' | 'transfer'
 }
 
+/** Sección curada del catálogo: banner propio + productos/combos elegidos a mano por el organizador. */
+export interface CatalogBlock {
+  id: string
+  title: string
+  bannerImageUrl?: string | null
+  products: Product[]
+  combos: Combo[]
+}
+
 export interface Event {
   id: string
   name: string
@@ -67,6 +76,7 @@ export interface Event {
   coverImageUrl?: string
   products: Product[]
   combos: Combo[]
+  blocks: CatalogBlock[]
 }
 
 export interface QRToken {

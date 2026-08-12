@@ -9,6 +9,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { CategoryFilter } from './CategoryFilter'
 import { CategorySheet } from './CategorySheet'
 import { CatalogSection } from './CatalogSection'
+import { CatalogBlockSection } from './CatalogBlockSection'
 import { ProductCard } from './ProductCard'
 import { ComboCard } from './ComboCard'
 import { FloatingCart } from './FloatingCart'
@@ -265,6 +266,17 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
 
       {/* Productos */}
       <div className="mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        {event.blocks.map(block => (
+          <CatalogBlockSection
+            key={block.id}
+            block={block}
+            catalogSlug={slug}
+            getQuantity={getQuantity}
+            onAdd={addItem}
+            onUpdateQuantity={updateQuantity}
+          />
+        ))}
+
         {activeCategory !== 'combos' && filteredPromos.length > 0 && (
           <CatalogSection title="Descuentos">
             {filteredPromos.map(product => (

@@ -3,7 +3,7 @@ import { cache } from 'react'
 import { catalogPaths } from '@/lib/api'
 import { brandedRequestHeaders } from '@/lib/server/brandedRequestHeaders'
 import { resolveInternalFetchUrl } from '@/lib/server/resolveInternalFetchUrl'
-import type { Combo, Event, Product } from '@/types'
+import type { CatalogBlock, Combo, Event, Product } from '@/types'
 import type { TenantThemePayload } from '@/lib/types/tenantTheme'
 
 export type StorefrontApiResponse = {
@@ -17,6 +17,7 @@ export type StorefrontApiResponse = {
   }
   products: Product[]
   combos: Combo[]
+  blocks?: CatalogBlock[]
   theme?: TenantThemePayload
   /** Subdominio del tenant al que pertenece el evento (distinto del host actual). Presente solo cuando el acceso viene desde el dominio incorrecto. */
   event_canonical_subdomain?: string | null
@@ -33,6 +34,7 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     coverImageUrl: event.coverImageUrl ?? undefined,
     products: data.products ?? [],
     combos: data.combos ?? [],
+    blocks: data.blocks ?? [],
   }
 }
 

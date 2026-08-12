@@ -133,4 +133,5 @@ export const mockEvent: Event = {
       ],
     },
   ],
+  blocks: [],
 }
