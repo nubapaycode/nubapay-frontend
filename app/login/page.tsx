@@ -17,7 +17,18 @@ export async function generateMetadata(): Promise<Metadata> {
     description: LOGIN_DESCRIPTION,
   })
   if (!theme.inherit) {
-    return augmentMetadataWithTenant(base, theme, 'Iniciar sesión')
+    const fav =
+      typeof theme.branding.faviconUrl === 'string' && theme.branding.faviconUrl.trim()
+        ? theme.branding.faviconUrl.trim()
+        : null
+    const enriched: Metadata = fav
+      ? {
+          ...base,
+          openGraph: { ...base.openGraph, images: [{ url: fav }] },
+          twitter: { ...base.twitter, images: [fav] },
+        }
+      : base
+    return augmentMetadataWithTenant(enriched, theme, 'Iniciar sesión')
   }
   if (theme.dedicated_partner_host) {
     const label =
