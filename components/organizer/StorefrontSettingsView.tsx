@@ -5,11 +5,13 @@ import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { partnerTenantPaths } from '@/lib/api'
+import { authHeadersJson, getAuthUser } from '@/lib/authSession'
+import { browserFetch } from '@/lib/browserFetch'
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import { catalogPublicPath, getPublicSiteOriginForUi } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
-import { getAuthUser } from '@/lib/authSession'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
@@ -83,7 +85,23 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
       ? `https://${user.tenant_subdomain}.nubapay.app`
       : null
 
-  const publicOriginUi = partnerOrigin ?? browserOrigin ?? getPublicSiteOriginForUi()
+  const [verifiedDomain, setVerifiedDomain] = useState<string | null>(null)
+  useEffect(() => {
+    if (!user?.tenant_partner_whitelabel_enabled) return
+    let cancelled = false
+    void (async () => {
+      const res = await browserFetch(partnerTenantPaths.tenant(), { headers: authHeadersJson() })
+      if (!res.ok) return
+      const body = (await res.json()) as { tenant?: { domains?: { hostname: string; verified: boolean }[] } }
+      const verified = body.tenant?.domains?.find(d => d.verified)
+      if (!cancelled && verified) setVerifiedDomain(verified.hostname)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.tenant_partner_whitelabel_enabled]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const publicOriginUi = verifiedDomain ? `https://${verifiedDomain}` : partnerOrigin ?? browserOrigin ?? getPublicSiteOriginForUi()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
   const publicUrl =
     hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${catalogPublicPath(slugForUrl)}` : ''
