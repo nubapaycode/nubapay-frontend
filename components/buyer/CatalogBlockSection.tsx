@@ -2,6 +2,7 @@ import Image from 'next/image'
 
 import type { CatalogBlock, Combo, Product } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
+import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { ComboCard } from './ComboCard'
 import { ProductCard } from './ProductCard'
 
@@ -13,25 +14,8 @@ interface CatalogBlockSectionProps {
   onUpdateQuantity: (productId: string, quantity: number) => void
 }
 
-/** Agrupa preservando el orden de aparición (ya viene ordenado por `sort_order` del bloque). */
-function groupByCategory(products: Product[]): { category: string; items: Product[] }[] {
-  const groups: { category: string; items: Product[] }[] = []
-  const indexByCategory = new Map<string, number>()
-  for (const product of products) {
-    const key = product.category || 'Sin categoría'
-    let idx = indexByCategory.get(key)
-    if (idx === undefined) {
-      idx = groups.length
-      indexByCategory.set(key, idx)
-      groups.push({ category: key, items: [] })
-    }
-    groups[idx].items.push(product)
-  }
-  return groups
-}
-
 export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, onUpdateQuantity }: CatalogBlockSectionProps) {
-  const productGroups = groupByCategory(block.products)
+  const productGroups = groupProductsByCategory(block.products)
   const hasCombos = block.combos.length > 0
   const showSubheadings = productGroups.length + (hasCombos ? 1 : 0) > 1
 

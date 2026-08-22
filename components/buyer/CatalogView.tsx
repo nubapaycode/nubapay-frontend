@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
+import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { useCart } from '@/lib/hooks/useCart'
 import { CategoryFilter } from './CategoryFilter'
 import { CategorySheet } from './CategorySheet'
@@ -87,13 +88,17 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const q = searchQuery.trim().toLowerCase()
   const matchesQuery = (name: string) => !q || name.toLowerCase().includes(q)
 
-  const filteredProducts = sortItems(
-    (activeCategory === 'all' || activeCategory === 'descuentos'
-      ? event.products.filter(p => !p.promoLabel?.trim())
-      : event.products.filter(p => p.category === activeCategory && !p.promoLabel?.trim())
-    ).filter(p => matchesQuery(p.name)),
-    sortOrder,
-  )
+  const baseFilteredProducts = (activeCategory === 'all' || activeCategory === 'descuentos'
+    ? event.products.filter(p => !p.promoLabel?.trim())
+    : event.products.filter(p => p.category === activeCategory && !p.promoLabel?.trim())
+  ).filter(p => matchesQuery(p.name))
+
+  const filteredProducts = sortItems(baseFilteredProducts, sortOrder)
+
+  const filteredProductGroups = groupProductsByCategory(baseFilteredProducts).map(group => ({
+    category: group.category,
+    items: sortItems(group.items, sortOrder),
+  }))
 
   const filteredPromos = sortItems(
     (activeCategory === 'all' || activeCategory === 'descuentos'
@@ -307,9 +312,9 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           </CatalogSection>
         )}
 
-        {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProducts.length > 0 && (
-          <CatalogSection title="Productos">
-            {filteredProducts.map(product => (
+        {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProductGroups.map(group => (
+          <CatalogSection key={group.category} title={group.category}>
+            {group.items.map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -320,7 +325,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
               />
             ))}
           </CatalogSection>
-        )}
+        ))}
 
         {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
           <EmptyState
