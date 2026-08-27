@@ -1277,64 +1277,6 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
 
       <div className="min-w-0">
-        {/* Tabs */}
-        <div
-          className="mb-5"
-          style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px' }}
-          role="tablist"
-          aria-label="Tipo de ítem del catálogo"
-        >
-          {/* Sliding pill */}
-          <span
-            aria-hidden
-            style={{
-              position: 'absolute',
-              top: '4px',
-              bottom: '4px',
-              left: '4px',
-              width: 'calc(50% - 6px)',
-              background: '#FFFFFF',
-              borderRadius: '100px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              transform: catalogTab === 'combos' ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
-              transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
-            }}
-          />
-          {([
-            { key: 'products' as const, label: 'Productos' },
-            { key: 'combos' as const, label: 'Combos' },
-          ]).map(({ key, label }) => {
-            const active = catalogTab === key
-            return (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                id={`catalog-tab-${key}`}
-                aria-controls={`catalog-panel-${key}`}
-                onClick={() => setCatalogTab(key)}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  background: 'transparent',
-                  color: active ? '#0A0A0F' : '#9A9AA8',
-                  border: 'none',
-                  borderRadius: '100px',
-                  padding: '7px 22px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  letterSpacing: '-0.01em',
-                  transition: 'color 0.2s ease',
-                }}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-
         {/* Search + filter */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-5">
           <div className="relative flex-1 min-w-[12rem]">
@@ -1364,7 +1306,66 @@ export function ProductsView({ eventId }: { eventId: string }) {
               ...categories.map(c => ({ value: c.id, label: c.name })),
             ]}
           />
-          <div style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '100px', flexShrink: 0 }}>
+
+          {/* Tabs */}
+          <div
+            style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px', flexShrink: 0 }}
+            role="tablist"
+            aria-label="Tipo de ítem del catálogo"
+          >
+            {/* Sliding pill */}
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: '4px',
+                bottom: '4px',
+                left: '4px',
+                width: 'calc(50% - 6px)',
+                background: '#FFFFFF',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                transform: catalogTab === 'combos' ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
+                transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+              }}
+            />
+            {([
+              { key: 'products' as const, label: 'Productos' },
+              { key: 'combos' as const, label: 'Combos' },
+            ]).map(({ key, label }) => {
+              const active = catalogTab === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  id={`catalog-tab-${key}`}
+                  aria-controls={`catalog-panel-${key}`}
+                  onClick={() => setCatalogTab(key)}
+                  style={{
+                    position: 'relative',
+                    zIndex: 1,
+                    background: 'transparent',
+                    color: active ? '#0A0A0F' : '#9A9AA8',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '7px 18px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    transition: 'color 0.2s ease',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px', flexShrink: 0 }}>
             {/* Sliding pill */}
             <span
               aria-hidden
@@ -1375,7 +1376,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 left: '4px',
                 width: 'calc(33.333% - 6px)',
                 background: '#FFFFFF',
-                borderRadius: '100px',
+                borderRadius: '8px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 transform: filterStatus === 'active' ? 'translateX(calc(100% + 4px))' : filterStatus === 'paused' ? 'translateX(calc(200% + 8px))' : 'translateX(0)',
                 transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
@@ -1396,7 +1397,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   zIndex: 1,
                   background: 'transparent',
                   border: 'none',
-                  borderRadius: '100px',
+                  borderRadius: '8px',
                   padding: '6px 12px',
                   fontSize: '12px',
                   fontWeight: filterStatus === key ? 600 : 500,
