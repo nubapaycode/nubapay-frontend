@@ -86,6 +86,10 @@ export interface Event {
   products: Product[]
   combos: Combo[]
   blocks: CatalogBlock[]
+  /** Categorías activas con productos, en el orden configurado por el organizador. */
+  categories: string[]
+  /** Si está activo, /catalogo muestra primero botones de categoría antes de la lista de productos. */
+  showCategoryShortcuts: boolean
 }
 
 export interface QRToken {

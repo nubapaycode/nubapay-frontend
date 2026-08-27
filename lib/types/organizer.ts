@@ -12,6 +12,7 @@ export type OrganizerEventRow = {
   status: string
   is_active: boolean
   notify_pickup_point: boolean
+  show_category_shortcuts: boolean
   /** Dueño del evento o integrante invitado (staff). */
   membership?: 'owner' | 'staff'
   /** Stats opcionales que el backend puede incluir en el listado. */

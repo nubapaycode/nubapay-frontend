@@ -14,10 +14,12 @@ export type StorefrontApiResponse = {
     coverImageUrl: string | null
     startsAt: string | null
     venue: string
+    showCategoryShortcuts?: boolean
   }
   products: Product[]
   combos: Combo[]
   blocks?: CatalogBlock[]
+  categories?: string[]
   theme?: TenantThemePayload
   /** Subdominio del tenant al que pertenece el evento (distinto del host actual). Presente solo cuando el acceso viene desde el dominio incorrecto. */
   event_canonical_subdomain?: string | null
@@ -35,6 +37,8 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     products: data.products ?? [],
     combos: data.combos ?? [],
     blocks: data.blocks ?? [],
+    categories: data.categories ?? [],
+    showCategoryShortcuts: event.showCategoryShortcuts ?? false,
   }
 }
 

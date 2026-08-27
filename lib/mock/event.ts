@@ -134,4 +134,6 @@ export const mockEvent: Event = {
     },
   ],
   blocks: [],
+  categories: ['Bebidas'],
+  showCategoryShortcuts: false,
 }

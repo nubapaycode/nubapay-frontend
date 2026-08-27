@@ -8,6 +8,7 @@ import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { useCart } from '@/lib/hooks/useCart'
 import { CategoryFilter } from './CategoryFilter'
+import { CategoryShortcuts } from './CategoryShortcuts'
 import { CategorySheet } from './CategorySheet'
 import { CatalogSection } from './CatalogSection'
 import { CatalogBlockSection } from './CatalogBlockSection'
@@ -68,6 +69,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>('default')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [gateOpen, setGateOpen] = useState(event.showCategoryShortcuts && event.categories.length > 0)
   const { items, addItem, updateQuantity, total, count } = useCart()
 
   const slug = catalogSlug ?? event.id
@@ -155,6 +157,14 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         </div>
       </div>
 
+      {gateOpen ? (
+        <CategoryShortcuts
+          categories={event.categories}
+          onSelect={cat => { setActiveCategory(cat); setGateOpen(false) }}
+          onViewAll={() => setGateOpen(false)}
+        />
+      ) : (
+      <>
       {/* Barra de filtros sticky */}
       <div
         className="sticky top-0 z-20 bg-white"
@@ -373,6 +383,8 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           />
         )}
       </div>
+      </>
+      )}
 
       <FloatingCart count={count} total={total} eventId={event.id} catalogSlug={catalogSlug} />
       <FloatingOrders eventId={event.id} catalogSlug={catalogSlug} />

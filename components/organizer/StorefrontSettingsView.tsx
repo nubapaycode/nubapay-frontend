@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Download, ImageUp, Link2, QrCode, Trash2 } from 'lucide-react'
+import { Copy, Download, ImageUp, LayoutGrid, Link2, QrCode, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -49,6 +49,8 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(true)
   const [savingSlug, setSavingSlug] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [showShortcutsDraft, setShowShortcutsDraft] = useState(false)
+  const [savingShortcuts, setSavingShortcuts] = useState(false)
   const [copyMsg, setCopyMsg] = useState('')
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const qrContainerRef = useRef<HTMLDivElement>(null)
@@ -62,6 +64,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     } else {
       setEvent(res.event)
       setSlugDraft(res.event.slug)
+      setShowShortcutsDraft(res.event.show_category_shortcuts)
     }
     setLoading(false)
   }, [eventId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -147,6 +150,20 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     const res = await patchOrganizerEvent(eventId, { cover_image_url: null })
     setUploadingCover(false)
     if (!res.ok) {
+      showToast(res.error, 'error')
+      return
+    }
+    setEvent(res.event)
+  }
+
+  const handleToggleShortcuts = async () => {
+    const next = !showShortcutsDraft
+    setShowShortcutsDraft(next)
+    setSavingShortcuts(true)
+    const res = await patchOrganizerEvent(eventId, { show_category_shortcuts: next })
+    setSavingShortcuts(false)
+    if (!res.ok) {
+      setShowShortcutsDraft(!next)
       showToast(res.error, 'error')
       return
     }
@@ -284,6 +301,37 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             </label>
           </div>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-2">
+            <LayoutGrid className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" aria-hidden />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Presentación de categorías</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Al activarlo, el catálogo público muestra primero botones de categoría; el
+                comprador elige una (o "Ver todos") antes de ver los productos.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showShortcutsDraft}
+            onClick={() => void handleToggleShortcuts()}
+            disabled={savingShortcuts}
+            className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+              showShortcutsDraft ? 'bg-gray-900' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                showShortcutsDraft ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
       </section>
 
       <section
