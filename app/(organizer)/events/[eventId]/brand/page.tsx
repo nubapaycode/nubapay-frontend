@@ -19,7 +19,7 @@ export async function generateMetadata({
 export default async function OrganizerBrandPage({ params }: { params: Promise<{ eventId: string }> }) {
   await params
   return (
-    <main className="p-4 pt-6 md:p-6 md:pl-[35px] md:pt-[64px]">
+    <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
       <PartnerBrandView />
     </main>
   )

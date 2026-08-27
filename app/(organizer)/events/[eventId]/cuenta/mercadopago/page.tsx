@@ -17,7 +17,7 @@ export default async function MercadoPagoSetupPage({
 }) {
   const { eventId } = await params
   return (
-    <main className="p-4 pt-6 md:p-6 md:pl-[35px] md:pt-[64px]">
+    <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
       <MercadoPagoSetupView eventId={eventId} />
     </main>
   )

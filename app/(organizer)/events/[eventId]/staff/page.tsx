@@ -15,7 +15,7 @@ export async function generateMetadata({
 export default async function EventStaffPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params
   return (
-    <main className="p-4 pt-6 md:p-6 md:px-8 md:pt-[64px] min-w-0">
+    <main className="p-4 pt-10 md:p-6 md:px-8 md:pt-[64px] min-w-0">
       <StaffView eventId={eventId} />
     </main>
   )

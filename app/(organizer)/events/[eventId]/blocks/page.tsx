@@ -22,7 +22,7 @@ export default async function EventBlocksPage({
 }) {
   const { eventId } = await params
   return (
-    <main className="w-full min-w-0 max-w-none p-4 pt-6 md:p-6 md:pl-[35px] md:pr-8 md:pt-[64px]">
+    <main className="w-full min-w-0 max-w-none p-4 pt-10 md:p-6 md:pl-[35px] md:pr-8 md:pt-[64px]">
       <BlocksView eventId={eventId} />
     </main>
   )
