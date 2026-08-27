@@ -8,6 +8,7 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   paid: 'Pagado',
   preparing: 'En preparación',
   ready: 'Listo',
+  partially_delivered: 'Entrega parcial',
   delivered: 'Finalizado',
   cancelled: 'Cancelado',
 }
@@ -17,6 +18,7 @@ const STATUS_BADGE: Record<OrderStatus, string> = {
   paid: 'bg-blue-100 text-blue-800',
   preparing: 'bg-blue-100 text-blue-800',
   ready: 'bg-green-100 text-green-800',
+  partially_delivered: 'bg-purple-100 text-purple-800',
   delivered: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-100 text-red-800',
 }
@@ -109,6 +111,9 @@ export function OrderList({ orders, onMarkReady, onMarkDelivered }: OrderListPro
                   )}
                   {order.status === 'delivered' && (
                     <span className="text-xs font-medium text-green-600 self-center">Entregado ✓</span>
+                  )}
+                  {order.status === 'partially_delivered' && (
+                    <span className="text-xs font-medium text-purple-600 self-center">Entrega parcial</span>
                   )}
                   {order.status === 'cancelled' && (
                     <span className="text-xs text-gray-400 self-center">—</span>

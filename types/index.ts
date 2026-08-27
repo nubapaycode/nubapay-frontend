@@ -1,6 +1,13 @@
 // types/index.ts
 
-export type OrderStatus = 'pending' | 'paid' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+export type OrderStatus =
+  | 'pending'
+  | 'paid'
+  | 'preparing'
+  | 'ready'
+  | 'partially_delivered'
+  | 'delivered'
+  | 'cancelled'
 
 export interface Product {
   id: string
@@ -30,6 +37,7 @@ export interface Combo {
 }
 
 export interface CartItem {
+  id?: string
   productId: string
   name: string
   price: number
@@ -38,6 +46,7 @@ export interface CartItem {
   subtotal?: number
   categoryName?: string | null
   imageUrl?: string
+  redeemedAt?: string | null
 }
 
 export interface Order {

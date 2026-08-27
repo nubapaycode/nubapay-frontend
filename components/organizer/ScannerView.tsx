@@ -8,7 +8,7 @@ import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeadin
 import { previewQr, scanQr } from '@/lib/organizerWorkspace'
 import type { Order } from '@/types'
 
-type ScanState = 'idle' | 'scanning' | 'loading' | 'confirming' | 'confirm_loading' | 'ready' | 'already_scanned' | 'error'
+type ScanState = 'idle' | 'scanning' | 'loading' | 'confirming' | 'confirm_loading' | 'ready' | 'partial' | 'already_scanned' | 'error'
 
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -19,8 +19,18 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [state, setState] = useState<ScanState>('idle')
   const [order, setOrder] = useState<Order | null>(null)
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current)
@@ -54,6 +64,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(100)
       setOrder(result.order)
       setPendingOrderId(orderId)
+      setSelectedIds(new Set())
       setState('confirming')
     } else if (result.alreadyScanned) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
@@ -67,13 +78,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
   }, [eventId, stopCamera])
 
   const confirmScan = useCallback(async () => {
-    if (!pendingOrderId) return
+    if (!pendingOrderId || selectedIds.size === 0) return
     setState('confirm_loading')
-    const result = await scanQr(eventId, pendingOrderId)
+    const result = await scanQr(eventId, pendingOrderId, Array.from(selectedIds))
     if (result.ok) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
       setOrder(result.order)
-      setState('ready')
+      setState(result.order.status === 'delivered' ? 'ready' : 'partial')
     } else if (result.alreadyScanned) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
       setOrder(result.order ?? null)
@@ -83,7 +94,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setErrorMsg(result.error)
       setState('error')
     }
-  }, [eventId, pendingOrderId])
+  }, [eventId, pendingOrderId, selectedIds])
 
   const scan = useCallback(() => {
     const video = videoRef.current
@@ -131,6 +142,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
     stopCamera()
     setOrder(null)
     setPendingOrderId(null)
+    setSelectedIds(new Set())
     setErrorMsg('')
     setCameraError('')
     setState('idle')
@@ -139,6 +151,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const cancelScan = useCallback(() => {
     setOrder(null)
     setPendingOrderId(null)
+    setSelectedIds(new Set())
     startCamera()
   }, [startCamera])
 
@@ -216,21 +229,43 @@ export function ScannerView({ eventId }: { eventId: string }) {
         </div>
       )}
 
-      {/* Confirming — show scanned product before consuming the QR */}
+      {/* Confirming — pick which products are being handed over now */}
       {(state === 'confirming' || state === 'confirm_loading') && order && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-sm">?</div>
-              <p className="text-xs font-medium text-blue-700 uppercase tracking-wider">¿Es este el pedido?</p>
+              <p className="text-xs font-medium text-blue-700 uppercase tracking-wider">¿Qué productos entregás ahora?</p>
             </div>
             <div className="flex flex-col gap-2">
-              {order.items.map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
-                  <span className="text-sm text-gray-800">{item.name}</span>
-                </div>
-              ))}
+              {order.items.map((item, i) => {
+                const id = item.id ?? String(i)
+                const redeemed = Boolean(item.redeemedAt)
+                const checked = redeemed || selectedIds.has(id)
+                return (
+                  <div key={id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => !redeemed && toggleSelected(id)}
+                      disabled={redeemed || state === 'confirm_loading'}
+                      aria-checked={checked}
+                      role="checkbox"
+                      className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+                        checked ? 'bg-gray-900' : 'border border-gray-300 bg-white'
+                      } ${redeemed ? 'opacity-50' : 'cursor-pointer'}`}
+                    >
+                      {checked && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500 shrink-0">{item.quantity}</span>
+                    <span className={`text-sm ${redeemed ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{item.name}</span>
+                    {redeemed && <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Ya entregado</span>}
+                  </div>
+                )
+              })}
             </div>
           </div>
           <div className="flex gap-3">
@@ -245,16 +280,18 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <button
               type="button"
               onClick={confirmScan}
-              disabled={state === 'confirm_loading'}
+              disabled={state === 'confirm_loading' || selectedIds.size === 0}
               className="flex-1 rounded-full bg-gray-900 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {state === 'confirm_loading' ? 'Confirmando…' : 'Aceptar'}
+              {state === 'confirm_loading'
+                ? 'Confirmando…'
+                : `Marcar ${selectedIds.size || ''} producto${selectedIds.size === 1 ? '' : 's'} entregado${selectedIds.size === 1 ? '' : 's'}`}
             </button>
           </div>
         </div>
       )}
 
-      {/* Ready — order marked as delivered */}
+      {/* Ready — order fully delivered */}
       {state === 'ready' && order && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-green-100 p-4">
@@ -281,13 +318,49 @@ export function ScannerView({ eventId }: { eventId: string }) {
         </div>
       )}
 
+      {/* Partial — some products delivered now, others left for a later scan */}
+      {state === 'partial' && order && (
+        <div className="flex flex-col gap-3">
+          <div className="bg-white rounded-2xl border border-purple-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-sm">✓</div>
+              <p className="text-xs font-medium text-purple-700 uppercase tracking-wider">Entrega parcial registrada</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {order.items.map((item, i) => {
+                const redeemed = Boolean(item.redeemedAt)
+                return (
+                  <div key={item.id ?? i} className="flex items-center gap-2">
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${redeemed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {redeemed ? '✓' : item.quantity}
+                    </span>
+                    <span className={`text-sm ${redeemed ? 'text-gray-800' : 'text-gray-400'}`}>{item.name}</span>
+                    {!redeemed && <span className="text-[10px] font-medium text-amber-600 uppercase tracking-wide">Pendiente</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 text-center px-2">
+            Quedan productos pendientes. Podés volver a escanear este mismo QR más tarde para entregarlos.
+          </p>
+          <button
+            type="button"
+            onClick={reset}
+            className="w-full rounded-full bg-gray-900 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
+            Escanear otro
+          </button>
+        </div>
+      )}
+
       {/* Already scanned */}
       {state === 'already_scanned' && (
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-amber-200 p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 text-sm">⚠</div>
-              <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">QR ya verificado</p>
+              <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">Todo el pedido ya fue entregado</p>
             </div>
             {order && (
               <div className="flex flex-col gap-2">

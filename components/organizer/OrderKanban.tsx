@@ -10,10 +10,11 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { key: 'pending',   label: 'Pendiente',     accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)'  },
-  { key: 'preparing', label: 'En preparación', accent: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
-  { key: 'ready',     label: 'Listo',          accent: ORGANIZER_ACCENT_BACKGROUND, bg: `color-mix(in srgb, ${ORGANIZER_ACCENT_BACKGROUND} 12%, transparent)` },
-  { key: 'delivered', label: 'Entregado',      accent: '#9A9AA8', bg: 'rgba(154,154,168,0.08)' },
+  { key: 'pending',             label: 'Pendiente',      accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)'  },
+  { key: 'preparing',           label: 'En preparación', accent: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
+  { key: 'ready',               label: 'Listo',          accent: ORGANIZER_ACCENT_BACKGROUND, bg: `color-mix(in srgb, ${ORGANIZER_ACCENT_BACKGROUND} 12%, transparent)` },
+  { key: 'partially_delivered', label: 'Entrega parcial', accent: '#A855F7', bg: 'rgba(168,85,247,0.08)' },
+  { key: 'delivered',           label: 'Entregado',      accent: '#9A9AA8', bg: 'rgba(154,154,168,0.08)' },
 ]
 
 interface OrderKanbanProps {
@@ -26,7 +27,7 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(4, 1fr)',
+      gridTemplateColumns: 'repeat(5, 1fr)',
       gap: '12px',
       fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
     }}>

@@ -153,6 +153,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
 
   const isPaid = order?.payment_status === 'approved'
   const isDelivered = order?.status === 'delivered'
+  const isPartiallyDelivered = order?.status === 'partially_delivered'
 
   useEffect(() => {
     if (isPaid && order && !order.processing && !flashedRef.current) {
@@ -215,6 +216,16 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
       heroBorder: '#BBF7D0',
       titleColor: '#15803D',
       subtitleColor: '#16A34A',
+    }
+    if (isPartiallyDelivered) return {
+      icon: <path d="M4 11l5 5 9-9" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />,
+      iconBg: '#9333EA',
+      title: 'Retiraste parte de tu pedido',
+      subtitle: 'Mostrá el mismo QR en la barra para retirar el resto.',
+      heroBg: '#FAF5FF',
+      heroBorder: '#E9D5FF',
+      titleColor: '#6B21A8',
+      subtitleColor: '#9333EA',
     }
     if (isPaid) return {
       icon: <path d="M4 11l5 5 9-9" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />,

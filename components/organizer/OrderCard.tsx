@@ -131,6 +131,11 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             Entregado
           </span>
         )}
+        {order.status === 'partially_delivered' && (
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#A855F7' }}>
+            Entrega parcial
+          </span>
+        )}
       </div>
     </div>
   )
