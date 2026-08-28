@@ -47,6 +47,7 @@ export interface CartItem {
   categoryName?: string | null
   imageUrl?: string
   redeemedAt?: string | null
+  redeemedQuantity?: number
 }
 
 export interface Order {

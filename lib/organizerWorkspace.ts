@@ -189,12 +189,12 @@ export async function previewQr(
 export async function scanQr(
   eventId: string,
   orderId: string,
-  itemIds: string[],
+  itemQuantities: Record<string, number>,
 ): Promise<{ ok: true; order: Order } | { ok: false; error: string; alreadyScanned?: boolean; order?: Order }> {
   const res = await browserFetch(workspacePath(eventId, 'scan-qr'), {
     method: 'POST',
     headers: authHeadersJson(),
-    body: JSON.stringify({ order_id: orderId, item_ids: itemIds }),
+    body: JSON.stringify({ order_id: orderId, item_quantities: itemQuantities }),
   })
   const body = (await res.json()) as { order?: Order; error?: string }
   if (!res.ok) {

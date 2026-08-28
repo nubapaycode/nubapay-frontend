@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import jsQR from 'jsqr'
-import { AlertTriangle, Camera, Check, PackageCheck, QrCode, X } from 'lucide-react'
+import { AlertTriangle, Camera, Check, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
@@ -62,16 +62,21 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [state, setState] = useState<ScanState>('idle')
   const [order, setOrder] = useState<Order | null>(null)
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectedQty, setSelectedQty] = useState<Record<string, number>>({})
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
 
-  const toggleSelected = useCallback((id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
+  const incQty = useCallback((id: string, max: number) => {
+    setSelectedQty(prev => {
+      const next = Math.min(max, (prev[id] ?? 0) + 1)
+      return { ...prev, [id]: next }
+    })
+  }, [])
+
+  const decQty = useCallback((id: string) => {
+    setSelectedQty(prev => {
+      const next = Math.max(0, (prev[id] ?? 0) - 1)
+      return { ...prev, [id]: next }
     })
   }, [])
 
@@ -107,7 +112,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(100)
       setOrder(result.order)
       setPendingOrderId(orderId)
-      setSelectedIds(new Set())
+      setSelectedQty({})
       setState('confirming')
     } else if (result.alreadyScanned) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
@@ -121,9 +126,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
   }, [eventId, stopCamera])
 
   const confirmScan = useCallback(async () => {
-    if (!pendingOrderId || selectedIds.size === 0) return
+    const itemQuantities = Object.fromEntries(
+      Object.entries(selectedQty).filter(([, qty]) => qty > 0),
+    )
+    if (!pendingOrderId || Object.keys(itemQuantities).length === 0) return
     setState('confirm_loading')
-    const result = await scanQr(eventId, pendingOrderId, Array.from(selectedIds))
+    const result = await scanQr(eventId, pendingOrderId, itemQuantities)
     if (result.ok) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
       setOrder(result.order)
@@ -137,7 +145,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setErrorMsg(result.error)
       setState('error')
     }
-  }, [eventId, pendingOrderId, selectedIds])
+  }, [eventId, pendingOrderId, selectedQty])
 
   const scan = useCallback(() => {
     const video = videoRef.current
@@ -185,7 +193,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
     stopCamera()
     setOrder(null)
     setPendingOrderId(null)
-    setSelectedIds(new Set())
+    setSelectedQty({})
     setErrorMsg('')
     setCameraError('')
     setState('idle')
@@ -194,13 +202,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const cancelScan = useCallback(() => {
     setOrder(null)
     setPendingOrderId(null)
-    setSelectedIds(new Set())
+    setSelectedQty({})
     startCamera()
   }, [startCamera])
 
   useEffect(() => () => stopCamera(), [stopCamera])
 
-  const selectedCount = selectedIds.size
+  const selectedCount = Object.values(selectedQty).reduce((sum, qty) => sum + qty, 0)
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -296,40 +304,54 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <div className="flex flex-col gap-1">
                 {order.items.map((item, i) => {
                   const id = item.id ?? String(i)
-                  const redeemed = Boolean(item.redeemedAt)
-                  const checked = redeemed || selectedIds.has(id)
+                  const redeemedQty = item.redeemedQuantity ?? 0
+                  const remaining = item.quantity - redeemedQty
+                  const fullyRedeemed = remaining <= 0
+                  const qty = selectedQty[id] ?? 0
                   return (
-                    <button
+                    <div
                       key={id}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={checked}
-                      aria-label={item.name}
-                      onClick={() => !redeemed && toggleSelected(id)}
-                      disabled={redeemed || state === 'confirm_loading'}
-                      className={cn(
-                        'flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors',
-                        redeemed ? 'opacity-60' : 'hover:bg-gray-50 active:bg-gray-100',
-                      )}
+                      className={cn('flex items-center gap-3 rounded-xl px-2.5 py-2.5', fullyRedeemed && 'opacity-60')}
                     >
-                      <span
-                        className={cn(
-                          'flex size-5 shrink-0 items-center justify-center rounded-md',
-                          checked ? 'bg-gray-900' : 'border border-gray-300 bg-white',
-                        )}
-                      >
-                        {checked && <Check size={12} strokeWidth={3} className="text-white" aria-hidden />}
-                      </span>
                       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500">
                         {item.quantity}
                       </span>
-                      <span className={cn('flex-1 text-sm', redeemed ? 'text-gray-400 line-through' : 'text-gray-800')}>
-                        {item.name}
+                      <span className="flex-1 min-w-0">
+                        <span className={cn('block text-sm', fullyRedeemed ? 'text-gray-400 line-through' : 'text-gray-800')}>
+                          {item.name}
+                        </span>
+                        {redeemedQty > 0 && !fullyRedeemed && (
+                          <span className="block text-[10px] font-medium text-amber-600 uppercase tracking-wide">
+                            {redeemedQty}/{item.quantity} ya entregado
+                          </span>
+                        )}
                       </span>
-                      {redeemed && (
+                      {fullyRedeemed ? (
                         <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Entregado</span>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            aria-label={`Restar ${item.name}`}
+                            onClick={() => decQty(id)}
+                            disabled={qty <= 0 || state === 'confirm_loading'}
+                            className="flex size-7 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors active:bg-gray-100 disabled:opacity-30"
+                          >
+                            <Minus size={13} strokeWidth={2.5} aria-hidden />
+                          </button>
+                          <span className="w-5 shrink-0 text-center text-sm font-semibold text-gray-900">{qty}</span>
+                          <button
+                            type="button"
+                            aria-label={`Sumar ${item.name}`}
+                            onClick={() => incQty(id, remaining)}
+                            disabled={qty >= remaining || state === 'confirm_loading'}
+                            className="flex size-7 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors active:bg-gray-100 disabled:opacity-30"
+                          >
+                            <Plus size={13} strokeWidth={2.5} aria-hidden />
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -398,19 +420,26 @@ export function ScannerView({ eventId }: { eventId: string }) {
               </StatusChip>
               <div className="flex flex-col gap-2">
                 {order.items.map((item, i) => {
-                  const redeemed = Boolean(item.redeemedAt)
+                  const redeemedQty = item.redeemedQuantity ?? 0
+                  const fullyRedeemed = redeemedQty >= item.quantity
+                  const partiallyRedeemed = redeemedQty > 0 && !fullyRedeemed
                   return (
                     <div key={item.id ?? i} className="flex items-center gap-2">
                       <span
                         className={cn(
                           'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
-                          redeemed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
+                          fullyRedeemed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
                         )}
                       >
-                        {redeemed ? <Check size={11} strokeWidth={3} aria-hidden /> : item.quantity}
+                        {fullyRedeemed ? <Check size={11} strokeWidth={3} aria-hidden /> : item.quantity - redeemedQty}
                       </span>
-                      <span className={cn('text-sm', redeemed ? 'text-gray-800' : 'text-gray-400')}>{item.name}</span>
-                      {!redeemed && (
+                      <span className={cn('text-sm', fullyRedeemed ? 'text-gray-800' : 'text-gray-400')}>{item.name}</span>
+                      {partiallyRedeemed && (
+                        <span className="text-[10px] font-medium text-gray-400">
+                          ({redeemedQty}/{item.quantity} entregado)
+                        </span>
+                      )}
+                      {!fullyRedeemed && (
                         <span className="text-[10px] font-medium text-amber-600 uppercase tracking-wide">Pendiente</span>
                       )}
                     </div>
