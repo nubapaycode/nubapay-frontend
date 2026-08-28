@@ -776,11 +776,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 <span
                   className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                   style={{
-                    background: isDelivered ? '#F0FDF4' : isPaid ? '#EFF6FF' : (isRejected || isCancelled) ? '#FEF2F2' : isRefunded ? '#FAF5FF' : '#FFFBEB',
-                    color: isDelivered ? '#16A34A' : isPaid ? '#2563EB' : (isRejected || isCancelled) ? '#DC2626' : isRefunded ? '#9333EA' : '#D97706',
+                    background: isDelivered ? '#F0FDF4' : isPartiallyDelivered ? '#FAF5FF' : isPaid ? '#EFF6FF' : (isRejected || isCancelled) ? '#FEF2F2' : isRefunded ? '#FAF5FF' : '#FFFBEB',
+                    color: isDelivered ? '#16A34A' : isPartiallyDelivered ? '#9333EA' : isPaid ? '#2563EB' : (isRejected || isCancelled) ? '#DC2626' : isRefunded ? '#9333EA' : '#D97706',
                   }}
                 >
-                  {isDelivered ? 'Finalizado' : isPaid ? 'Pagado' : isRejected ? 'Rechazado' : isCancelled ? 'Cancelado' : isRefunded ? 'Reintegrado' : 'Pendiente de pago'}
+                  {isDelivered ? 'Finalizado' : isPartiallyDelivered ? 'Entrega parcial' : isPaid ? 'Pagado' : isRejected ? 'Rechazado' : isCancelled ? 'Cancelado' : isRefunded ? 'Reintegrado' : 'Pendiente de pago'}
                 </span>
               </InfoRow>
             </div>

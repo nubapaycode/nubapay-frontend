@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
 import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
-import { fetchAllCategories, fetchWorkspaceOrders } from '@/lib/organizerWorkspace'
+import { fetchAllCategories, fetchWorkspaceOrders, patchOrderStatus } from '@/lib/organizerWorkspace'
 import type { PaginationMeta, WorkspaceCategory } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
@@ -18,17 +18,21 @@ const POLL_INTERVAL = 15_000
 
 
 const STATUS_LABEL: Record<string, string> = {
-  pending:   'Pagado',
-  preparing: 'Pagado',
-  ready:     'Pagado',
-  delivered: 'Entregado',
+  pending:             'Pagado',
+  preparing:           'Pagado',
+  ready:               'Pagado',
+  delivered:           'Entregado',
+  partially_delivered: 'Entrega parcial',
+  cancelled:           'Cancelado',
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  pending:   { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  preparing: { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  ready:     { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  delivered: { bg: 'rgba(107,114,128,0.08)', color: '#4B5563' },
+  pending:             { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
+  preparing:           { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
+  ready:               { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
+  delivered:           { bg: 'rgba(107,114,128,0.08)', color: '#4B5563' },
+  partially_delivered: { bg: 'rgba(168,85,247,0.08)',  color: '#7E22CE' },
+  cancelled:           { bg: 'rgba(220,38,38,0.08)',   color: '#DC2626' },
 }
 
 const PAY_LABEL: Record<string, string> = {
@@ -54,6 +58,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [searchQ, setSearchQ] = useState('')
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const [detailOrder, setDetailOrder] = useState<Order | null>(null)
+  const [cancelStage, setCancelStage] = useState<'none' | 'first' | 'second'>('none')
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState('')
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
   const [selectedCats, setSelectedCats] = useState<Set<string>>(new Set())
   const [catDropdownOpen, setCatDropdownOpen] = useState(false)
@@ -90,6 +97,27 @@ export function OrdersView({ eventId }: { eventId: string }) {
   }, [eventId, page, searchQ])
 
   useEffect(() => { void load() }, [load])
+
+  const closeDetail = useCallback(() => {
+    setDetailOrder(null)
+    setCancelStage('none')
+    setCancelError('')
+  }, [])
+
+  const handleCancelOrder = useCallback(async () => {
+    if (!detailOrder) return
+    setCancelling(true)
+    setCancelError('')
+    const res = await patchOrderStatus(eventId, detailOrder.id, 'cancelled')
+    setCancelling(false)
+    if (!res.ok) {
+      setCancelError(res.error)
+      return
+    }
+    setDetailOrder(res.order)
+    setCancelStage('none')
+    setOrders(prev => prev.map(o => (o.id === res.order.id ? res.order : o)))
+  }, [detailOrder, eventId])
 
   useEffect(() => {
     pollRef.current = setInterval(() => void load(true), POLL_INTERVAL)
@@ -425,7 +453,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 <button
                   type="button"
                   className="nb-cell-eye"
-                  onClick={() => setDetailOrder(order)}
+                  onClick={() => { setDetailOrder(order); setCancelStage('none'); setCancelError('') }}
                   aria-label="Ver detalle"
                   style={{
                     width: '30px', height: '30px', borderRadius: '8px',
@@ -472,7 +500,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       {/* Order detail modal */}
       <Modal
         isOpen={detailOrder !== null}
-        onClose={() => setDetailOrder(null)}
+        onClose={closeDetail}
         containerClassName="z-[70]"
         className="!p-0 overflow-hidden max-w-md w-full"
       >
@@ -557,6 +585,81 @@ export function OrdersView({ eventId }: { eventId: string }) {
                   )}
                 </div>
               </div>
+
+              {/* Cancelación */}
+              {o.status !== 'cancelled' && o.status !== 'delivered' && (
+                <div style={{ padding: '0 20px 20px' }}>
+                  {cancelError && (
+                    <p style={{ fontSize: '12px', color: '#DC2626', margin: '0 0 10px 0' }}>{cancelError}</p>
+                  )}
+
+                  {cancelStage === 'none' && (
+                    <button
+                      type="button"
+                      onClick={() => { setCancelError(''); setCancelStage('first') }}
+                      style={{
+                        width: '100%', fontSize: '13px', fontWeight: 600, color: '#DC2626',
+                        background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)',
+                        borderRadius: '12px', padding: '10px 14px', cursor: 'pointer',
+                      }}
+                    >
+                      Cancelar pedido
+                    </button>
+                  )}
+
+                  {cancelStage === 'first' && (
+                    <div style={{ background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#991B1B', margin: 0 }}>¿Cancelar este pedido?</p>
+                      <p style={{ fontSize: '12px', color: '#7F1D1D', margin: 0 }}>
+                        El QR dejará de ser válido y no se podrá usar para retirar productos.
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setCancelStage('none')}
+                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#6B7280', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', padding: '9px', cursor: 'pointer' }}
+                        >
+                          Volver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCancelStage('second')}
+                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#FFFFFF', background: '#DC2626', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer' }}
+                        >
+                          Sí, cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {cancelStage === 'second' && (
+                    <div style={{ background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#991B1B', margin: 0 }}>Confirmá una vez más</p>
+                      <p style={{ fontSize: '12px', color: '#7F1D1D', margin: 0 }}>
+                        Esta acción es permanente y no se puede deshacer. El pedido quedará marcado como cancelado.
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setCancelStage('none')}
+                          disabled={cancelling}
+                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#6B7280', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', padding: '9px', cursor: cancelling ? 'not-allowed' : 'pointer' }}
+                        >
+                          Volver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCancelOrder()}
+                          disabled={cancelling}
+                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#FFFFFF', background: '#DC2626', border: 'none', borderRadius: '10px', padding: '9px', cursor: cancelling ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.7 : 1 }}
+                        >
+                          {cancelling ? 'Cancelando…' : 'Sí, cancelar definitivamente'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )
         })()}
