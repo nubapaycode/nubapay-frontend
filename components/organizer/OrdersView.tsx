@@ -392,10 +392,17 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 </div>
 
                 {/* Customer */}
-                <span className="nb-cell-cust" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span className="nb-cust-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Cliente:</span>
-                  <span style={{ color: order.customerName ? undefined : '#C8C8D0' }}>{order.customerName ?? '—'}</span>
-                </span>
+                <div className="nb-cell-cust" style={{ minWidth: 0 }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                    <span className="nb-cust-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Cliente:</span>
+                    <span style={{ color: order.customerName ? undefined : '#C8C8D0' }}>{order.customerName ?? '—'}</span>
+                  </span>
+                  {order.customerEmail && (
+                    <span style={{ display: 'block', fontSize: '11px', color: '#9A9AA8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {order.customerEmail}
+                    </span>
+                  )}
+                </div>
 
                 {/* Total */}
                 <span className="nb-cell-total" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
@@ -534,6 +541,12 @@ export function OrdersView({ eventId }: { eventId: string }) {
                     <div>
                       <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Teléfono</p>
                       <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0 }}>{o.customerPhone}</p>
+                    </div>
+                  )}
+                  {o.customerEmail && (
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Email</p>
+                      <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0, overflowWrap: 'anywhere' }}>{o.customerEmail}</p>
                     </div>
                   )}
                   {o.paymentMethod && (

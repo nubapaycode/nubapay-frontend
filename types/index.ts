@@ -56,6 +56,7 @@ export interface Order {
   eventId: string
   customerName?: string | null
   customerPhone?: string | null
+  customerEmail?: string | null
   items: CartItem[]
   total: number
   status: OrderStatus
