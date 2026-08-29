@@ -66,6 +66,14 @@ function navItems(basePath: string): NavItem[] {
       <circle cx="8" cy="5" r="1.25" fill="currentColor" />
     </svg>
   )
+  const scansIcon = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <rect x="9.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <rect x="1.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10.5 11h4M12.5 9v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
   const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const blocksIcon = (
@@ -118,6 +126,13 @@ function navItems(basePath: string): NavItem[] {
       mobileTabOrder: 2,
       tool: 'orders',
       tourId: 'sidebar-orders',
+    },
+    {
+      href: `${basePath}/scans`,
+      label: 'Escaneos',
+      icon: scansIcon,
+      showDesktop: true,
+      tool: 'orders',
     },
     {
       href: `${basePath}/pickup-points`,

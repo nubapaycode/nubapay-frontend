@@ -151,6 +151,7 @@ export function EventOrganizerShell({
       products: 'products',
       scanner: 'scanner',
       orders: 'orders',
+      scans: 'orders',
       'pickup-points': 'pickup_points',
       payments: 'payments',
     }

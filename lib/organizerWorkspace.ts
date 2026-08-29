@@ -153,6 +153,23 @@ export async function fetchWorkspaceOrders(
   return { ok: true, orders, pagination: readPagination(body, orders.length) }
 }
 
+export type ProductScanSummaryItem = {
+  name: string
+  purchased: number
+  scanned: number
+}
+
+export async function fetchProductScanSummary(
+  eventId: string,
+): Promise<{ ok: true; products: ProductScanSummaryItem[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'products/scan-summary'), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { products?: ProductScanSummaryItem[]; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error al cargar escaneos' }
+  return { ok: true, products: body.products ?? [] }
+}
+
 export async function patchOrderStatus(
   eventId: string,
   orderId: string,
