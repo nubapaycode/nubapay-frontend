@@ -14,6 +14,8 @@ import { formatPrice } from '@/lib/utils'
 interface CheckoutViewProps {
   eventId: string
   catalogSlug?: string
+  /** Switch global de plataforma: si es false, no se puede completar el pago. */
+  paymentsEnabled?: boolean
 }
 
 const paymentMethods = [
@@ -34,7 +36,7 @@ const paymentMethods = [
   },
 ]
 
-export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
+export function CheckoutView({ eventId, catalogSlug, paymentsEnabled = true }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
@@ -88,6 +90,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
   const hasDiscount = listTotal > total
 
   const handleConfirm = async () => {
+    if (!paymentsEnabled) { setError('Compra inhabilitada. No es posible completar el pago en este momento.'); return }
     if (name.trim() === '') { setError('Ingresá tu nombre para continuar'); return }
     if (email.trim() === '') { setError('Ingresá tu email para continuar'); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Ingresá un email válido'); return }
@@ -239,6 +242,15 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
 
       {/* Contenido */}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-5 pb-36">
+
+        {!paymentsEnabled && (
+          <div
+            className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
+          >
+            Compra inhabilitada temporalmente. No es posible completar el pago en este momento.
+          </div>
+        )}
 
         {/* Tu pedido */}
         <p className="text-[18px] font-bold" style={{ color: BUYER_COLORS.text }}>Tu pedido</p>
@@ -476,7 +488,7 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={items.length === 0 || loading}
+            disabled={items.length === 0 || loading || !paymentsEnabled}
             className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
             style={{
               background: BUYER_COLORS.accent,
@@ -484,7 +496,13 @@ export function CheckoutView({ eventId, catalogSlug }: CheckoutViewProps) {
               fontFamily: BUYER_FONT,
             }}
           >
-            {loading ? 'Procesando...' : items.length > 0 ? 'Pagar' : 'Carrito vacío'}
+            {!paymentsEnabled
+              ? 'Compra inhabilitada'
+              : loading
+              ? 'Procesando...'
+              : items.length > 0
+              ? 'Pagar'
+              : 'Carrito vacío'}
           </button>
         </div>
       </div>

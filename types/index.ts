@@ -92,6 +92,8 @@ export interface Event {
   categories: string[]
   /** Si está activo, /catalogo muestra primero botones de categoría antes de la lista de productos. */
   showCategoryShortcuts: boolean
+  /** Switch global de plataforma (panel de admin): si es false, no se permite agregar al carrito ni pagar. */
+  paymentsEnabled: boolean
 }
 
 export interface QRToken {

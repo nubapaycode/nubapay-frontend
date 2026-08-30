@@ -18,9 +18,11 @@ interface CartViewProps {
   eventId: string
   catalogSlug?: string
   products?: Product[]
+  /** Switch global de plataforma: si es false, no se puede agregar al carrito ni pagar. */
+  paymentsEnabled?: boolean
 }
 
-export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps) {
+export function CartView({ eventId, catalogSlug, products = [], paymentsEnabled = true }: CartViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity, total } = useCart()
   const [goingToCheckout, setGoingToCheckout] = useState(false)
@@ -31,7 +33,7 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
   // PATCH). Así el backend procesa Mercado Pago mientras el usuario tipea sus
   // datos. Si falla, el checkout cae al flujo clásico de crear al Pagar.
   const handleGoToCheckout = async () => {
-    if (goingToCheckout) return
+    if (goingToCheckout || !paymentsEnabled) return
     setGoingToCheckout(true)
     const slug = catalogSlug ?? eventId
     const itemsKey = cartItemsKey(items)
@@ -146,6 +148,15 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
       {/* Contenido */}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 px-4 py-4 pb-[180px]">
 
+        {!paymentsEnabled && (
+          <div
+            className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
+          >
+            Compra inhabilitada temporalmente. No es posible pagar en este momento.
+          </div>
+        )}
+
         {/* Lista de productos */}
         <div className="flex flex-col gap-3">
           {items.map(item => (
@@ -209,19 +220,21 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
                           </div>
                         )}
                         {/* Botón agregar sobre la imagen */}
-                        <div className="absolute bottom-2 right-2 z-[1]" onClick={e => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => addItem(product)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full shadow-md transition-colors active:opacity-75"
-                            style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
-                            aria-label={`Agregar ${product.name}`}
-                          >
-                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
-                              <path d="M6.5 2v9M2 6.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
-                          </button>
-                        </div>
+                        {paymentsEnabled && (
+                          <div className="absolute bottom-2 right-2 z-[1]" onClick={e => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => addItem(product)}
+                              className="flex h-8 w-8 items-center justify-center rounded-full shadow-md transition-colors active:opacity-75"
+                              style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+                              aria-label={`Agregar ${product.name}`}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+                                <path d="M6.5 2v9M2 6.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div
                         className="cursor-pointer px-2.5 pb-2.5 pt-2"
@@ -318,11 +331,11 @@ export function CartView({ eventId, catalogSlug, products = [] }: CartViewProps)
             <button
               type="button"
               onClick={handleGoToCheckout}
-              disabled={goingToCheckout}
-              className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-70"
+              disabled={goingToCheckout || !paymentsEnabled}
+              className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
-              Ir a pagar
+              {paymentsEnabled ? 'Ir a pagar' : 'Compra inhabilitada'}
             </button>
           </div>
 

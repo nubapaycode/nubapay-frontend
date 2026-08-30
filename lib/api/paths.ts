@@ -57,6 +57,7 @@ export const publicPaths = {
 
 export const platformAdminPaths = {
   overview: () => apiUrl('/platform/overview'),
+  settings: () => apiUrl('/platform/settings'),
   users: (opts?: { page?: number; page_size?: number; q?: string }) => {
     const base = apiUrl('/platform/users')
     const q = new URLSearchParams()

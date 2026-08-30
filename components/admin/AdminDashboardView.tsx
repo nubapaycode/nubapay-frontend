@@ -11,9 +11,11 @@ import {
   fetchPlatformOrders,
   fetchPlatformOverview,
   fetchPlatformRevenueByEvent,
+  fetchPlatformSettings,
   fetchPlatformUpcomingEvents,
   fetchPlatformUsers,
   PLATFORM_ADMIN_PAGE_SIZE,
+  updatePlatformSettings,
   type PlatformAdminEvent,
   type PlatformAdminOrder,
   type PlatformAdminOverview,
@@ -24,6 +26,67 @@ import {
 import { formatDate, formatPrice } from '@/lib/utils'
 
 const PAGE_SIZE = PLATFORM_ADMIN_PAGE_SIZE
+
+function PaymentsSwitch() {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    ;(async () => {
+      const result = await fetchPlatformSettings()
+      if (result.ok) {
+        setEnabled(result.data.payments_enabled)
+      } else {
+        setError(result.error)
+      }
+    })()
+  }, [])
+
+  const handleToggle = async () => {
+    if (enabled === null || saving) return
+    const next = !enabled
+    setSaving(true)
+    setError('')
+    const result = await updatePlatformSettings(next)
+    if (result.ok) {
+      setEnabled(result.data.payments_enabled)
+    } else {
+      setError(result.error)
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div className="flex items-center gap-3 border-b border-white/10 bg-[#12121A] px-4 py-3 md:px-6">
+      <div className="flex-1">
+        <p className="text-sm font-medium text-white">Pagos y compras</p>
+        <p className="text-xs text-white/50">
+          {enabled === null
+            ? 'Cargando...'
+            : enabled
+            ? 'Habilitado: los compradores pueden agregar al carrito y pagar'
+            : 'Inhabilitado: no se puede agregar al carrito ni crear órdenes'}
+        </p>
+        {error && <p className="mt-1 text-xs text-red-300">{error}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled ?? false}
+        disabled={enabled === null || saving}
+        onClick={handleToggle}
+        className="relative h-7 w-12 flex-shrink-0 rounded-full transition-colors disabled:opacity-50"
+        style={{ background: enabled ? '#C6FF00' : 'rgba(255,255,255,0.15)' }}
+      >
+        <span
+          className="absolute top-0.5 h-6 w-6 rounded-full bg-white transition-transform"
+          style={{ transform: enabled ? 'translateX(22px)' : 'translateX(2px)' }}
+        />
+      </button>
+    </div>
+  )
+}
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
@@ -465,6 +528,8 @@ export function AdminDashboardView() {
           </div>
         </div>
       </header>
+
+      <PaymentsSwitch />
 
       <nav className="border-b border-white/10 bg-[#0A0A0F]">
         <div className="mx-auto flex max-w-7xl gap-1 px-4 md:px-6">

@@ -12,5 +12,6 @@ export const mockEvents: Event[] = [
     blocks: [],
     categories: [],
     showCategoryShortcuts: false,
+    paymentsEnabled: true,
   },
 ]

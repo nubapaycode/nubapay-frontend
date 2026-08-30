@@ -23,6 +23,8 @@ export type StorefrontApiResponse = {
   theme?: TenantThemePayload
   /** Subdominio del tenant al que pertenece el evento (distinto del host actual). Presente solo cuando el acceso viene desde el dominio incorrecto. */
   event_canonical_subdomain?: string | null
+  /** Switch global de plataforma: si es false, el comprador no puede agregar al carrito ni pagar. */
+  payments_enabled?: boolean
 }
 
 export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
@@ -39,6 +41,7 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     blocks: data.blocks ?? [],
     categories: data.categories ?? [],
     showCategoryShortcuts: event.showCategoryShortcuts ?? false,
+    paymentsEnabled: data.payments_enabled ?? true,
   }
 }
 

@@ -10,9 +10,10 @@ interface CatalogBlockSectionProps {
   getQuantity: (id: string) => number
   onAdd: (item: Product | Combo) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
+  cartDisabled?: boolean
 }
 
-export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, onUpdateQuantity }: CatalogBlockSectionProps) {
+export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, onUpdateQuantity, cartDisabled = false }: CatalogBlockSectionProps) {
   return (
     <section className="mb-10">
       <h2
@@ -42,6 +43,7 @@ export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, on
             catalogSlug={catalogSlug}
             onAdd={onAdd}
             onUpdateQuantity={onUpdateQuantity}
+            cartDisabled={cartDisabled}
           />
         ))}
         {block.combos.map(combo => (
@@ -52,6 +54,7 @@ export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, on
             catalogSlug={catalogSlug}
             onAdd={onAdd}
             onUpdateQuantity={onUpdateQuantity}
+            cartDisabled={cartDisabled}
           />
         ))}
       </div>

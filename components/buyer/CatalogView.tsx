@@ -71,6 +71,8 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [gateOpen, setGateOpen] = useState(event.showCategoryShortcuts && event.categories.length > 0)
   const { items, addItem, updateQuantity, total, count } = useCart()
+  const paymentsEnabled = event.paymentsEnabled
+  const handleAdd = paymentsEnabled ? addItem : () => {}
 
   const slug = catalogSlug ?? event.id
 
@@ -279,6 +281,18 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         </div>
       </div>
 
+      {/* Aviso: compra inhabilitada desde el panel de admin */}
+      {!paymentsEnabled && (
+        <div className="mx-auto max-w-5xl px-4 pt-4 md:px-6">
+          <div
+            className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
+          >
+            Compra inhabilitada temporalmente. No es posible agregar productos ni pagar en este momento.
+          </div>
+        </div>
+      )}
+
       {/* Productos */}
       <div className="mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         {event.blocks.map(block => (
@@ -287,8 +301,9 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             block={block}
             catalogSlug={slug}
             getQuantity={getQuantity}
-            onAdd={addItem}
+            onAdd={handleAdd}
             onUpdateQuantity={updateQuantity}
+            cartDisabled={!paymentsEnabled}
           />
         ))}
 
@@ -300,8 +315,9 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
                 product={product}
                 quantity={getQuantity(product.id)}
                 catalogSlug={slug}
-                onAdd={addItem}
+                onAdd={handleAdd}
                 onUpdateQuantity={updateQuantity}
+                cartDisabled={!paymentsEnabled}
               />
             ))}
           </CatalogSection>
@@ -315,8 +331,9 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
                 combo={combo}
                 quantity={getQuantity(combo.id)}
                 catalogSlug={slug}
-                onAdd={addItem}
+                onAdd={handleAdd}
                 onUpdateQuantity={updateQuantity}
+                cartDisabled={!paymentsEnabled}
               />
             ))}
           </CatalogSection>
@@ -330,8 +347,9 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
                 product={product}
                 quantity={getQuantity(product.id)}
                 catalogSlug={slug}
-                onAdd={addItem}
+                onAdd={handleAdd}
                 onUpdateQuantity={updateQuantity}
+                cartDisabled={!paymentsEnabled}
               />
             ))}
           </CatalogSection>

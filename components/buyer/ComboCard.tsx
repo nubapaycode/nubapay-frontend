@@ -12,6 +12,8 @@ interface ComboCardProps {
   catalogSlug?: string
   onAdd: (combo: Combo) => void
   onUpdateQuantity: (comboId: string, quantity: number) => void
+  /** Switch global de pagos inhabilitado: oculta los controles de agregar. */
+  cartDisabled?: boolean
 }
 
 function ComboPlaceholderIcon() {
@@ -25,7 +27,7 @@ function ComboPlaceholderIcon() {
   )
 }
 
-export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQuantity }: ComboCardProps) {
+export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQuantity, cartDisabled = false }: ComboCardProps) {
   const router = useRouter()
   const includedNames = combo.products.map(p => p.name).join(', ')
   const remote = Boolean(combo.imageUrl && combo.imageUrl.startsWith('http'))
@@ -77,7 +79,7 @@ export function ComboCard({ combo, quantity, catalogSlug = '', onAdd, onUpdateQu
           <div className="absolute inset-0 bg-white/40" />
         )}
 
-        {available && (
+        {available && !cartDisabled && (
           <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
             {quantity === 0 ? (
               <button

@@ -105,6 +105,28 @@ export async function fetchPlatformOverview(): Promise<Result<PlatformAdminOverv
   return parseJson<PlatformAdminOverview>(res)
 }
 
+export type PlatformSettings = {
+  payments_enabled: boolean
+}
+
+export async function fetchPlatformSettings(): Promise<Result<PlatformSettings>> {
+  const res = await browserFetch(platformAdminPaths.settings(), {
+    headers: authHeadersJson(),
+  })
+  return parseJson<PlatformSettings>(res)
+}
+
+export async function updatePlatformSettings(
+  paymentsEnabled: boolean,
+): Promise<Result<PlatformSettings>> {
+  const res = await browserFetch(platformAdminPaths.settings(), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ payments_enabled: paymentsEnabled }),
+  })
+  return parseJson<PlatformSettings>(res)
+}
+
 export async function fetchPlatformUsers(
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,

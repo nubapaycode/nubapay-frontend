@@ -32,7 +32,11 @@ export default async function CatalogoCheckoutPage({ params }: Props) {
   if (!data) notFound()
   return (
     <main className="min-h-screen bg-white">
-      <CheckoutView eventId={data.event.id} catalogSlug={slug} />
+      <CheckoutView
+        eventId={data.event.id}
+        catalogSlug={slug}
+        paymentsEnabled={data.payments_enabled ?? true}
+      />
     </main>
   )
 }

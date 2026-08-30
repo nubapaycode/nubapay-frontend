@@ -12,6 +12,8 @@ interface ProductCardProps {
   catalogSlug?: string
   onAdd: (product: Product) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
+  /** Switch global de pagos inhabilitado: oculta los controles de agregar. */
+  cartDisabled?: boolean
 }
 
 function PlaceholderIcon() {
@@ -29,7 +31,7 @@ function PlaceholderIcon() {
   )
 }
 
-export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpdateQuantity }: ProductCardProps) {
+export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpdateQuantity, cartDisabled = false }: ProductCardProps) {
   const router = useRouter()
   const remote = Boolean(product.imageUrl && product.imageUrl.startsWith('http'))
   const available = product.available !== false
@@ -80,7 +82,7 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
           <div className="absolute inset-0 bg-white/40" />
         )}
 
-        {available && (
+        {available && !cartDisabled && (
           <div className="absolute bottom-2 right-2" onClick={e => e.stopPropagation()}>
             {quantity === 0 ? (
               <button

@@ -14,5 +14,5 @@ export default async function ProductoPage({ params }: Props) {
   const item = product ?? combo
   if (!item) notFound()
 
-  return <ProductDetailView item={item} slug={slug} />
+  return <ProductDetailView item={item} slug={slug} paymentsEnabled={data.payments_enabled ?? true} />
 }

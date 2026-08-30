@@ -13,13 +13,15 @@ type Item = Product | Combo
 interface ProductDetailViewProps {
   item: Item
   slug: string
+  /** Switch global de plataforma: si es false, no se puede agregar al carrito. */
+  paymentsEnabled?: boolean
 }
 
 function isCombo(item: Item): item is Combo {
   return 'products' in item
 }
 
-export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
+export function ProductDetailView({ item, slug, paymentsEnabled = true }: ProductDetailViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity } = useCart()
 
@@ -32,6 +34,7 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
   }, [cartQty])
 
   const handleConfirm = () => {
+    if (!paymentsEnabled) return
     // Functional updates se procesan en orden: addItem primero, luego updateQuantity
     // recibe el estado resultante del addItem como prev
     addItem(item as Product & Combo)
@@ -249,10 +252,11 @@ export function ProductDetailView({ item, slug }: ProductDetailViewProps) {
           <button
             type="button"
             onClick={handleConfirm}
-            className="flex h-[54px] flex-1 items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85"
+            disabled={!paymentsEnabled}
+            className="flex h-[54px] flex-1 items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
             style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
           >
-            Agregar
+            {paymentsEnabled ? 'Agregar' : 'Compra inhabilitada'}
           </button>
         </div>
       </div>
