@@ -1,22 +1,22 @@
 import type { Metadata } from 'next'
 
-import { LoginView } from '@/components/LoginView'
 import { OrganizerThemeBridge } from '@/components/organizer/OrganizerThemeBridge'
+import { RegisterRequestForm } from '@/components/RegisterRequestForm'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { SITE_NAME, pageMeta } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
 const REGISTER_DESCRIPTION =
-  'Registrate en Nubapay y empezá a crear eventos con menú digital, cobros online y retiro con código QR.'
+  'Contactanos y te ayudamos a crear tu cuenta de Nubapay: menú digital, cobros online y retiro con código QR.'
 
 export async function generateMetadata(): Promise<Metadata> {
   const theme = await fetchTenantThemeForRequest()
   const base = pageMeta({
-    title: 'Crear cuenta',
+    title: 'Contacto',
     description: REGISTER_DESCRIPTION,
   })
   if (!theme.inherit) {
-    return augmentMetadataWithTenant(base, theme, 'Crear cuenta')
+    return augmentMetadataWithTenant(base, theme, 'Contacto')
   }
   if (theme.dedicated_partner_host) {
     const label =
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
         ? theme.resolved_subdomain.trim()
         : SITE_NAME
     return pageMeta({
-      title: `Crear cuenta · ${label}`,
+      title: `Contacto · ${label}`,
       description: REGISTER_DESCRIPTION,
     })
   }
@@ -35,7 +35,7 @@ export default async function RegisterPage() {
   const theme = await fetchTenantThemeForRequest()
   return (
     <OrganizerThemeBridge theme={theme}>
-      <LoginView initialMode="register" />
+      <RegisterRequestForm />
     </OrganizerThemeBridge>
   )
 }

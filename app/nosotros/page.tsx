@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 }
 
 export default function NosotrosPage() {
-  const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+  const font = "var(--font-bricolage, 'Bricolage Grotesque', 'DM Sans', sans-serif)"
 
   const founders = [
     {
@@ -62,7 +62,7 @@ export default function NosotrosPage() {
     {
       num: '02',
       title: 'Tecnología con propósito',
-      desc: 'Usamos tecnología porque resuelve problemas reales, no para seguir tendencias.',
+      desc: 'Registramos cada ticket en blockchain porque vuelve imposible falsificarlo, no porque suene bien. Si no resuelve un problema real, no lo usamos.',
     },
     {
       num: '03',
@@ -96,6 +96,65 @@ export default function NosotrosPage() {
         .nos-line-1 .nos-line-inner { animation-delay: 0.05s; }
         .nos-line-2 .nos-line-inner { animation-delay: 0.18s; }
         .nos-line-3 .nos-line-inner { animation-delay: 0.30s; }
+
+        /* Resaltado tipo marcador (mismo tratamiento que la landing) */
+        .nos-marker {
+          position: relative;
+          display: inline-block;
+          color: #0A0F00;
+          padding: 2px 10px 6px;
+          transform: rotate(-0.8deg);
+          z-index: 0;
+        }
+        .nos-marker::before {
+          content: '';
+          position: absolute;
+          inset: -2px -4px;
+          z-index: -1;
+          background-image:
+            linear-gradient(101deg, rgba(198,255,0,0) 1%, rgba(198,255,0,0.95) 4%, rgba(198,255,0,0.95) 96%, rgba(198,255,0,0) 99%),
+            linear-gradient(98deg, rgba(198,255,0,0) 2%, rgba(198,255,0,0.6) 6%, rgba(198,255,0,0.6) 94%, rgba(198,255,0,0) 98%);
+          background-repeat: no-repeat, no-repeat;
+          background-size: 100% 70%, 100% 86%;
+          background-position: 0 92%, 0 55%;
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='44'%3E%3Cfilter%20id='r'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.014%200.15'%20numOctaves='2'%20seed='7'%20result='n'/%3E%3CfeDisplacementMap%20in='SourceGraphic'%20in2='n'%20scale='8'/%3E%3C/filter%3E%3Crect%20x='6'%20y='7'%20width='108'%20height='30'%20rx='9'%20fill='black'%20filter='url(%23r)'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='44'%3E%3Cfilter%20id='r'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.014%200.15'%20numOctaves='2'%20seed='7'%20result='n'/%3E%3CfeDisplacementMap%20in='SourceGraphic'%20in2='n'%20scale='8'/%3E%3C/filter%3E%3Crect%20x='6'%20y='7'%20width='108'%20height='30'%20rx='9'%20fill='black'%20filter='url(%23r)'/%3E%3C/svg%3E");
+          -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+        }
+        /* En pantallas chicas el titular parte en dos líneas: el trazo con máscara
+           no puede seguir cada renglón, así que se degrada a un resaltado por línea. */
+        @media (max-width: 720px) {
+          .nos-marker {
+            display: inline;
+            padding: 0 4px;
+            transform: none;
+            background-image: linear-gradient(transparent 52%, rgba(198,255,0,0.92) 52%, rgba(198,255,0,0.92) 93%, transparent 93%);
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+          }
+          .nos-marker::before { display: none; }
+        }
+
+        /* CTA primario: mismo comportamiento que los botones de la landing */
+        .nos-cta-primary {
+          transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s cubic-bezier(0.16,1,0.3,1), background 0.35s ease;
+        }
+        .nos-cta-primary:hover {
+          transform: scale(1.02);
+          background: #D4FF3D !important;
+          box-shadow: 0 8px 20px -10px rgba(198,255,0,0.3);
+        }
+        .nos-cta-primary .nos-cta-arrow {
+          transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        .nos-cta-primary:hover .nos-cta-arrow { transform: translateX(6px); }
+        @media (prefers-reduced-motion: reduce) {
+          .nos-cta-primary:hover { transform: none; }
+          .nos-cta-primary:hover .nos-cta-arrow { transform: none; }
+        }
 
         /* Subtexto y stats del hero */
         .nos-hero-text { animation: nos-fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.42s both; }
@@ -170,17 +229,17 @@ export default function NosotrosPage() {
 
         {/* Headline — líneas con clip reveal */}
         <h1 style={{
-          fontSize: 'clamp(52px, 8vw, 112px)',
+          fontSize: 'clamp(44px, 6.4vw, 90px)',
           fontWeight: 800,
           color: '#0A0A0F',
           letterSpacing: '-0.05em',
           lineHeight: 0.95,
           margin: '0 0 80px',
-          maxWidth: '900px',
+          maxWidth: '980px',
         }}>
           <span className="nos-line-wrap nos-line-1"><span className="nos-line-inner">Terminamos con</span></span>
           <span className="nos-line-wrap nos-line-2"><span className="nos-line-inner">las cajas, de</span></span>
-          <span className="nos-line-wrap nos-line-3"><span className="nos-line-inner" style={{ color: '#C6FF00', WebkitTextStroke: '2px #0A0A0F' }}>una vez por todas</span></span>
+          <span className="nos-line-wrap nos-line-3"><span className="nos-line-inner"><span className="nos-marker">una vez por todas</span></span></span>
         </h1>
 
         {/* Misión */}
@@ -194,16 +253,16 @@ export default function NosotrosPage() {
             letterSpacing: '-0.02em',
             maxWidth: '1000px',
           }}>
-            <span style={{ color: '#0A0A0F' }}>Nubapay</span>{' '}nace para resolver uno de los mayores problemas de los{' '}<span style={{ color: '#0A0A0F' }}>eventos masivos</span>:{' '}<span style={{ color: '#0A0A0F' }}>las cajas</span>. Creamos una{' '}<span style={{ color: '#0A0A0F' }}>plataforma simple y escalable</span>{' '}que permite{' '}<span style={{ color: '#0A0A0F' }}>pedir</span>,{' '}<span style={{ color: '#0A0A0F' }}>pagar</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>retirar productos desde el celular</span>, conectando{' '}<span style={{ color: '#0A0A0F' }}>asistentes</span>,{' '}<span style={{ color: '#0A0A0F' }}>barras</span>{' '}y{' '}<span style={{ color: '#0A0A0F' }}>organizadores</span>{' '}en un{' '}<span style={{ color: '#0A0A0F' }}>único sistema operativo</span>.
+            Nubapay nace para resolver uno de los mayores problemas de los eventos masivos:{' '}<span style={{ color: '#0A0A0F' }}>las cajas</span>. Creamos una plataforma simple y escalable que permite{' '}<span style={{ color: '#0A0A0F' }}>pedir, pagar y retirar productos desde el celular</span>, conectando asistentes, barras y organizadores en{' '}<span style={{ color: '#0A0A0F' }}>un mismo sistema</span>.
           </p>
         </div>
 
         {/* Stats strip */}
         <div className="nos-stats-grid" style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingLeft: '40px' }}>
           {[
-            { val: '+3.000', label: 'Eventos gestionados', cls: 'nos-stat-item nos-stat-1' },
+            { val: '+20', label: 'Eventos gestionados', cls: 'nos-stat-item nos-stat-1' },
             { val: '0', label: 'Apps que descargar', cls: 'nos-stat-item nos-stat-2' },
-            { val: '+50K', label: 'Ventas realizadas activos', cls: 'nos-stat-item nos-stat-3' },
+            { val: '+15K', label: 'Ventas realizadas', cls: 'nos-stat-item nos-stat-3' },
           ].map((s, i) => (
             <div key={s.label} className={`${s.cls} nos-stat-pad${i > 0 ? ' nos-stat-border' : ''}`} style={{
               paddingTop: '40px',
@@ -435,7 +494,7 @@ export default function NosotrosPage() {
               },
               {
                 icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="0.5" stroke="#C6FF00" strokeWidth="1.3"/><rect x="2.5" y="2.5" width="2" height="2" fill="#C6FF00"/><rect x="8" y="1" width="5" height="5" rx="0.5" stroke="#C6FF00" strokeWidth="1.3"/><rect x="9.5" y="2.5" width="2" height="2" fill="#C6FF00"/><rect x="1" y="8" width="5" height="5" rx="0.5" stroke="#C6FF00" strokeWidth="1.3"/><rect x="2.5" y="9.5" width="2" height="2" fill="#C6FF00"/><path d="M8 8h1.5M11.5 8H13M8 10h2M8 12h1.5M10.5 10h2.5M11.5 12H13" stroke="#C6FF00" strokeWidth="1.3" strokeLinecap="round"/></svg>,
-                text: 'QR listo en minutos',
+                text: 'QR listo en segundos',
               },
               {
                 icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1.5" stroke="#C6FF00" strokeWidth="1.3"/><path d="M1 6h12" stroke="#C6FF00" strokeWidth="1.3"/><path d="M4 9h2" stroke="#C6FF00" strokeWidth="1.5" strokeLinecap="round"/></svg>,
@@ -473,25 +532,29 @@ export default function NosotrosPage() {
             <div className="nos-cta-buttons" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <Link href="/seguridad" className="nos-cta-btn" style={{
                 display: 'inline-flex', alignItems: 'center',
-                color: 'rgba(255,255,255,0.45)',
-                padding: '14px 24px', borderRadius: '100px',
-                fontSize: '14px', fontWeight: 600, textDecoration: 'none',
+                height: '58px', boxSizing: 'border-box',
+                color: '#FFFFFF',
+                padding: '0 30px', borderRadius: '100px',
+                fontSize: '15px', fontWeight: 400, textDecoration: 'none',
                 border: '1px solid rgba(255,255,255,0.1)',
                 whiteSpace: 'nowrap',
               }}>
                 Ver seguridad
               </Link>
-              <Link href="/" className="nos-cta-btn" style={{
+              <Link href="/register" className="nos-cta-btn nos-cta-primary" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: '#C6FF00', color: '#0A0A0F',
-                padding: '14px 28px', borderRadius: '100px',
-                fontSize: '14px', fontWeight: 700, textDecoration: 'none',
-                letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+                height: '58px', boxSizing: 'border-box',
+                background: '#C6FF00', color: '#0A0F00',
+                padding: '0 8px 0 32px', borderRadius: '100px',
+                fontSize: '16px', fontWeight: 400, textDecoration: 'none',
+                letterSpacing: '-0.02em', whiteSpace: 'nowrap',
               }}>
                 Empezar ahora
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 7h10M8 3l4 4-4 4" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <span className="nos-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '100px', background: '#0A0F00' }}>
+                  <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="#C6FF00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
               </Link>
             </div>
           </div>

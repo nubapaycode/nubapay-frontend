@@ -7,6 +7,21 @@ const CSS = `
   .nb-footer-top { display: grid; grid-template-columns: 1.2fr 2fr; gap: 80px; }
   .nb-footer-links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
 
+  /* CTA primario: mismo comportamiento que los botones de la landing */
+  .nb-footer-cta {
+    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s cubic-bezier(0.16,1,0.3,1), background 0.35s ease;
+  }
+  .nb-footer-cta:hover {
+    transform: scale(1.02);
+    background: #D4FF3D;
+    box-shadow: 0 8px 20px -10px rgba(198,255,0,0.3);
+  }
+  .nb-footer-cta-arrow { transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+  .nb-footer-cta:hover .nb-footer-cta-arrow { transform: translateX(6px); }
+  @media (prefers-reduced-motion: reduce) {
+    .nb-footer-cta:hover, .nb-footer-cta:hover .nb-footer-cta-arrow { transform: none; }
+  }
+
   @media (max-width: 900px) {
     .nb-footer-top { grid-template-columns: 1fr 1fr !important; gap: 40px !important; }
     .nb-footer-links-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
@@ -25,8 +40,9 @@ const NAV = [
     title: 'Producto',
     links: [
       { label: 'Cómo funciona', href: '/#como-funciona' },
-      { label: 'Atendium IA', href: '#' },
-      { label: 'Blockchain QR', href: '#' },
+      { label: 'QR antifraude', href: '/#qr-antifraude' },
+      { label: 'Tipos de evento', href: '/#eventos' },
+      { label: 'Preguntas frecuentes', href: '/#faq' },
       { label: 'Para organizadores', href: '/register' },
     ],
   },
@@ -63,11 +79,13 @@ export default function SiteFooter() {
               <p style={{ fontSize: '15px', color: '#FFFFFF', lineHeight: '1.7', margin: '0 0 32px 0', maxWidth: '340px' }}>
                 Más ventas, menos filas. Para los que organizan eventos que la gente recuerda.
               </p>
-              <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '12px 22px', borderRadius: '100px', textDecoration: 'none', fontSize: '14px', fontWeight: 700, letterSpacing: '-0.01em' }}>
+              <Link href="/register" className="nb-footer-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '58px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 400, letterSpacing: '-0.02em' }}>
                 Empezá ahora
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 7h10M8 3l4 4-4 4" stroke="#0A0F00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span className="nb-footer-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '100px', background: '#0A0F00' }}>
+                  <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="#C6FF00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
               </Link>
             </div>
           </div>

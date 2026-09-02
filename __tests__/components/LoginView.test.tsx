@@ -7,6 +7,7 @@ import { getAuthToken } from '@/lib/authSession'
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 jest.mock('@/lib/browserFetch', () => ({
@@ -69,15 +70,15 @@ afterEach(() => {
 describe('LoginView', () => {
   it('muestra el formulario de login', async () => {
     render(<LoginView />)
-    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Contraseña')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
   })
 
   it('muestra error con credenciales incorrectas', async () => {
     render(<LoginView />)
-    await userEvent.type(screen.getByPlaceholderText('Email'), 'malo@test.com')
-    await userEvent.type(screen.getByPlaceholderText('Contraseña'), 'wrong')
+    await userEvent.type(screen.getByLabelText('Email'), 'malo@test.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'wrong')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
     await waitFor(() =>
       expect(screen.getByText('Credenciales incorrectas')).toBeInTheDocument(),
@@ -87,8 +88,8 @@ describe('LoginView', () => {
 
   it('redirige a eventos tras login exitoso y guarda token', async () => {
     render(<LoginView />)
-    await userEvent.type(screen.getByPlaceholderText('Email'), 'demo@nubapay.app')
-    await userEvent.type(screen.getByPlaceholderText('Contraseña'), 'demo123')
+    await userEvent.type(screen.getByLabelText('Email'), 'demo@nubapay.app')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'demo123')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))
     expect(getAuthToken()).toBe('test-jwt')
@@ -102,9 +103,9 @@ describe('LoginView', () => {
 
   it('registro crea sesión y va a eventos', async () => {
     render(<LoginView initialMode="register" />)
-    await userEvent.type(screen.getByPlaceholderText('Nombre completo'), 'Nuevo Usuario')
-    await userEvent.type(screen.getByPlaceholderText('Email'), 'new@test.com')
-    await userEvent.type(screen.getByPlaceholderText(/mín\. 8/), 'password12')
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Nuevo Usuario')
+    await userEvent.type(screen.getByLabelText('Email'), 'new@test.com')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password12')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta y entrar/i }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))
     expect(getAuthToken()).toBe('reg-jwt')

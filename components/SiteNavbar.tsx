@@ -7,8 +7,7 @@ import { getAuthToken } from '@/lib/authSession'
 
 const navLinks = [
   { label: 'Cómo funciona', href: '/#como-funciona' },
-  { label: 'Atendium', href: '/#atendium' },
-  { label: 'QR antifraude', href: '/#qr-antifraude' },
+  { label: 'Casos', href: '/#caso-landia' },
   { label: 'Nosotros', href: '/nosotros' },
 ]
 
@@ -28,6 +27,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
   const [loggedIn, setLoggedIn]         = useState<boolean | null>(null)
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [reduceMotion, setReduceMotion]   = useState(false)
+  const [hovered, setHovered]             = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -105,6 +105,10 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
     if (href.includes('#') && activeSection) return href.endsWith(`#${activeSection}`)
     return false
   }
+
+  // Sombra base del pill + glow lima al pasar el mouse
+  const baseShadow = scrolled ? '0 8px 32px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.05)'
+  const glowShadow = '0 0 30px rgba(198,255,0,0.14), 0 8px 56px -12px rgba(198,255,0,0.18)'
 
   return (
     <>
@@ -275,22 +279,26 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
         <div style={{ width: '100%', maxWidth: '1280px' }}>
 
           {/* Pill principal */}
-          <div style={{
+          <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             height: scrolled ? '52px' : '56px', padding: '0 14px 0 24px',
             background: scrolled ? 'rgba(245,245,240,0.92)' : 'rgba(245,245,240,0.75)',
             backdropFilter: 'blur(24px) saturate(1.8)',
             WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-            border: scrolled ? '1px solid rgba(0,0,0,0.14)' : '1px solid rgba(0,0,0,0.09)',
+            border: hovered
+              ? '1px solid rgba(150,190,0,0.22)'
+              : scrolled ? '1px solid rgba(0,0,0,0.14)' : '1px solid rgba(0,0,0,0.09)',
             borderRadius: '100px',
-            transition: reduceMotion ? 'none' : 'height 0.55s cubic-bezier(0.16,1,0.3,1), background 0.55s cubic-bezier(0.16,1,0.3,1), box-shadow 0.55s cubic-bezier(0.16,1,0.3,1), border-color 0.55s cubic-bezier(0.16,1,0.3,1)',
-            boxShadow: scrolled ? '0 8px 32px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.05)',
+            transition: reduceMotion ? 'none' : 'height 0.55s cubic-bezier(0.16,1,0.3,1), background 0.55s cubic-bezier(0.16,1,0.3,1), box-shadow 0.7s cubic-bezier(0.33,1,0.68,1), border-color 0.7s cubic-bezier(0.33,1,0.68,1)',
+            boxShadow: hovered ? `${baseShadow}, ${glowShadow}` : baseShadow,
           }}>
 
             {/* Logo */}
             <Link href="/" onClick={closeMenu} className="snb-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: '8px', flexShrink: 0, transform: scrolled ? 'scale(0.93)' : 'scale(1)' }}>
               <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.03em', color: '#0A0A0F' }}>nubapay</span>
-              <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.4)', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px' }}>beta</span>
             </Link>
 
             {/* Links — solo desktop */}

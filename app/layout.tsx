@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Inter } from 'next/font/google'
+import { Bricolage_Grotesque, DM_Sans, Inter } from 'next/font/google'
 import './globals.css'
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL, resolveMetadataBase } from '@/lib/seo'
 
@@ -9,6 +9,12 @@ const dmSans = DM_Sans({
   display: 'swap',
   variable: '--font-dm-sans',
   weight: ['300', '400', '500', '600', '700', '800', '900'],
+})
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-bricolage',
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -113,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // ORG_JSONLD is a static string built from a hardcoded object — safe for script injection
   const jsonLdHtml = { __html: ORG_JSONLD }
   return (
-    <html lang="es" className={dmSans.variable}>
+    <html lang="es" className={`${dmSans.variable} ${bricolage.variable}`}>
       <body className={`${inter.className} bg-gray-50 text-gray-900`} style={{ fontFamily: "-apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter', sans-serif" }}>
         {/* eslint-disable-next-line react/no-danger */}
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdHtml} />
