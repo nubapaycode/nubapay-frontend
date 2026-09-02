@@ -342,8 +342,7 @@ const CSS = `
     .nb-nav-login { display: none !important; }
     .nb-hero-h1 { font-size: clamp(38px, 9.5vw, 64px) !important; }
     .nb-hero-section { padding-top: 50px !important; padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 24px !important; }
-    .nb-hero-media { margin-top: 70px !important; }
-    .nb-hero-mock { border-radius: 14px !important; }
+    .nb-hero-media { display: none !important; }
     .nb-steps-grid { grid-template-columns: 1fr !important; grid-template-areas: "a" "b" "c" "d" !important; }
     .nb-howit-section,
     .nb-blockchain-section,

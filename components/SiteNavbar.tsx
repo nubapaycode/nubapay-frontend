@@ -260,7 +260,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
                   onClick={closeMenu}
                   style={{ display: 'block', textAlign: 'center', fontSize: '16px', fontWeight: 400, background: '#C6FF00', color: '#0A0F00', padding: '16px', borderRadius: '100px', textDecoration: 'none' }}
                 >
-                  Crear evento
+                  Probá gratis
                 </Link>
                 <Link
                   href="/login"
@@ -324,7 +324,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
                 <>
                   <Link href="/login" className="snb-login">Iniciar sesión</Link>
                   <Link href="/register" className="snb-cta">
-                    Crear evento
+                    Probá gratis
                     <CtaArrow />
                   </Link>
                 </>

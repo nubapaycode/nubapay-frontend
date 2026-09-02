@@ -186,10 +186,29 @@ export default function NosotrosPage() {
         .nos-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
         .nos-stat-border { border-left: 1px solid rgba(0,0,0,0.08); padding-left: 40px; }
 
+        @media (max-width: 900px) {
+          .nos-stats-grid { padding-left: 24px !important; }
+          .nos-stat-border { padding-left: 24px !important; }
+          .nos-stat-pad { padding-top: 32px !important; padding-bottom: 40px !important; }
+        }
         @media (max-width: 640px) {
-          .nos-stats-grid { grid-template-columns: 1fr !important; }
+          .nos-stats-grid { grid-template-columns: 1fr !important; padding-left: 0 !important; }
           .nos-stat-border { border-left: none !important; padding-left: 0 !important; border-top: 1px solid rgba(0,0,0,0.08) !important; }
           .nos-stat-pad { padding: 28px 0 !important; }
+        }
+
+        /* ── Responsive: Equipo ── */
+        @media (max-width: 900px) {
+          .nos-equipo { padding: 80px 32px !important; }
+          .nos-equipo-grid { gap: 28px !important; }
+          .nos-equipo-head { margin-bottom: 48px !important; }
+        }
+        @media (max-width: 720px) {
+          .nos-equipo-grid { grid-template-columns: 1fr !important; gap: 44px !important; max-width: 400px; margin: 0 auto; }
+        }
+        @media (max-width: 620px) {
+          .nos-equipo { padding: 56px 20px !important; }
+          .nos-equipo-head { margin-bottom: 36px !important; }
         }
 
         /* ── Responsive: Qué hacemos ── */
@@ -320,10 +339,10 @@ export default function NosotrosPage() {
       </ScrollReveal>
 
       {true && (
-      <div id="equipo" style={{ background: '#FFFFFF', padding: '96px 48px' }}>
+      <div id="equipo" className="nos-equipo" style={{ background: '#FFFFFF', padding: '96px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '64px' }}>
+          <div className="nos-equipo-head" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '64px' }}>
             <h2 style={{
               fontSize: 'clamp(28px, 3.5vw, 48px)',
               fontWeight: 800, color: '#0A0A0F',
@@ -336,7 +355,7 @@ export default function NosotrosPage() {
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px' }}>
+          <div className="nos-equipo-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px' }}>
             {founders.map((f, i) => (
               <ScrollReveal key={f.name} delay={i * 120}>
                 <div className="nos-photo-wrap" style={{
