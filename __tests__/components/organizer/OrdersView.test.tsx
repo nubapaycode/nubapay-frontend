@@ -52,7 +52,14 @@ beforeEach(() => {
 describe('OrdersView', () => {
   it('muestra el título "Pedidos"', async () => {
     render(<OrdersView eventId="demo-event" />)
-    await waitFor(() => expect(screen.getByText('Pedidos')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Pedidos' })).toBeInTheDocument())
+  })
+
+  it('muestra las pestañas Pedidos y Escaneos', async () => {
+    render(<OrdersView eventId="demo-event" />)
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Pedidos' })).toBeInTheDocument())
+    expect(screen.getByRole('tab', { name: 'Pedidos' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Escaneos' })).toBeInTheDocument()
   })
 
   it('muestra el campo de búsqueda', async () => {
@@ -62,14 +69,6 @@ describe('OrdersView', () => {
         screen.getByPlaceholderText(/Buscar por cliente, producto/),
       ).toBeInTheDocument(),
     )
-  })
-
-  it('muestra las tabs de estado (Todos, Pagados, Entregados)', async () => {
-    render(<OrdersView eventId="demo-event" />)
-    await waitFor(() => expect(screen.getByText('Pedidos')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'Todos' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Pagados' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Entregados' })).toBeInTheDocument()
   })
 
   it('muestra los pedidos en la tabla', async () => {

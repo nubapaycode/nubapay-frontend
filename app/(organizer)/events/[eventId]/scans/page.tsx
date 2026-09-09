@@ -1,29 +1,14 @@
-import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 
-import { ProductScanSummaryView } from '@/components/organizer/ProductScanSummaryView'
-import { organizerEventSectionMeta } from '@/lib/seo'
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ eventId: string }>
-}): Promise<Metadata> {
-  await params
-  return organizerEventSectionMeta(
-    'Escaneos',
-    'Productos comprados vs. escaneados en el evento.',
-  )
-}
-
-export default async function EventProductScansPage({
+/**
+ * La vista de Escaneos se fusionó con Pedidos (pestaña "Escaneos" en `/orders`).
+ * Se mantiene esta ruta solo para redirigir enlaces antiguos.
+ */
+export default async function EventScansPage({
   params,
 }: {
   params: Promise<{ eventId: string }>
 }) {
   const { eventId } = await params
-  return (
-    <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
-      <ProductScanSummaryView eventId={eventId} />
-    </main>
-  )
+  redirect(`/events/${eventId}/orders`)
 }

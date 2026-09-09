@@ -8,7 +8,18 @@ import { Spinner } from '@/components/ui/Spinner'
 import { fetchProductScanSummary } from '@/lib/organizerWorkspace'
 import type { ProductScanSummaryItem } from '@/lib/organizerWorkspace'
 
-export function ProductScanSummaryView({ eventId }: { eventId: string }) {
+export function ProductScanSummaryView({
+  eventId,
+  embedded = false,
+  query = '',
+}: {
+  eventId: string
+  /** Cuando se renderiza dentro de otra vista (p. ej. la pestaña de Pedidos)
+   * se omite el encabezado y el buscador propios: el contenedor los aporta. */
+  embedded?: boolean
+  /** Búsqueda controlada desde el contenedor (solo en modo `embedded`). */
+  query?: string
+}) {
   const [products, setProducts] = useState<ProductScanSummaryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -34,7 +45,7 @@ export function ProductScanSummaryView({ eventId }: { eventId: string }) {
 
   useEffect(() => { void load() }, [load])
 
-  const q = searchInput.trim().toLowerCase()
+  const q = (embedded ? query : searchInput).trim().toLowerCase()
   const displayProducts = q
     ? products.filter(p => p.name.toLowerCase().includes(q))
     : products
@@ -57,60 +68,64 @@ export function ProductScanSummaryView({ eventId }: { eventId: string }) {
         }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Escaneos"
-        description={
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Comprados vs. escaneados por producto
-            {lastRefresh && (
-              <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>
-                · última: {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
-          </p>
-        }
-        actions={
-          <button
-            onClick={() => void load(true)}
-            disabled={refreshing || loading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '100px', padding: '7px 14px',
-              fontSize: '13px', fontWeight: 500, color: '#6B7280',
-              cursor: refreshing || loading ? 'not-allowed' : 'pointer',
-              opacity: refreshing ? 0.6 : 1,
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
-            Actualizar
-          </button>
-        }
-      />
+      {!embedded && (
+        <OrganizerToolHeading
+          title="Escaneos"
+          description={
+            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
+              Comprados vs. escaneados por producto
+              {lastRefresh && (
+                <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>
+                  · última: {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              )}
+            </p>
+          }
+          actions={
+            <button
+              onClick={() => void load(true)}
+              disabled={refreshing || loading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
+                borderRadius: '100px', padding: '7px 14px',
+                fontSize: '13px', fontWeight: 500, color: '#6B7280',
+                cursor: refreshing || loading ? 'not-allowed' : 'pointer',
+                opacity: refreshing ? 0.6 : 1,
+              }}
+            >
+              <RefreshCw size={13} style={{ animation: refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
+              Actualizar
+            </button>
+          }
+        />
+      )}
 
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ position: 'relative' }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-            style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9A9AA8', pointerEvents: 'none' }}>
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          <input
-            type="text"
-            className="nb-search-input"
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            placeholder="Buscar producto…"
-            style={{
-              width: '100%', maxWidth: '360px', boxSizing: 'border-box',
-              paddingLeft: '38px', paddingRight: '14px', paddingTop: '10px', paddingBottom: '10px',
-              border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
-              fontSize: '13px', color: '#0A0A0F', background: '#FFFFFF',
-              transition: 'border-color 0.15s, box-shadow 0.15s',
-            }}
-          />
+      {!embedded && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ position: 'relative', maxWidth: '360px' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+              style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9A9AA8', pointerEvents: 'none' }}>
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="text"
+              className="nb-search-input"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              placeholder="Buscar producto…"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                paddingLeft: '38px', paddingRight: '14px', paddingTop: '10px', paddingBottom: '10px',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                fontSize: '13px', color: '#0A0A0F', background: '#FFFFFF',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>

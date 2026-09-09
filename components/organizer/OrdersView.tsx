@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { ProductScanSummaryView } from '@/components/organizer/ProductScanSummaryView'
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
@@ -47,7 +48,38 @@ function fmtDate(iso: string) {
     ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
 }
 
+type ScanState = 'full' | 'partial' | 'none'
+
+const SCAN_UI: Record<ScanState, { color: string; label: string }> = {
+  full:    { color: '#047857', label: 'Escaneado' },
+  partial: { color: '#B45309', label: 'Escaneado parcial' },
+  none:    { color: '#9A9AA8', label: 'Sin escanear' },
+}
+
+/** Unidades compradas vs. escaneadas de un pedido. Usa los datos por ítem
+ * (`redeemedQuantity`) si están disponibles; si no, cae al `status`. */
+function scanInfo(order: Order): { units: number; redeemed: number | null; state: ScanState } {
+  const units = order.items.reduce((s, i) => s + (i.quantity ?? 0), 0)
+  const hasItemData = order.items.some(i => i.redeemedQuantity != null)
+  if (hasItemData) {
+    const redeemed = order.items.reduce((s, i) => s + (i.redeemedQuantity ?? 0), 0)
+    return { units, redeemed, state: redeemed <= 0 ? 'none' : redeemed >= units ? 'full' : 'partial' }
+  }
+  if (order.status === 'delivered') return { units, redeemed: units, state: 'full' }
+  if (order.status === 'partially_delivered') return { units, redeemed: null, state: 'partial' }
+  return { units, redeemed: 0, state: 'none' }
+}
+
+/** Columnas de la tabla de pedidos (desktop). Debe coincidir header + filas. */
+const ORDERS_GRID = '48px minmax(120px,1.6fr) minmax(96px,1fr) minmax(150px,1.5fr) 96px 92px 100px 32px'
+
+const HEAD_CELL = { fontSize: '11px', fontWeight: 600, color: '#9A9AA8' } as const
+
+type OrdersTab = 'orders' | 'scans'
+
 export function OrdersView({ eventId }: { eventId: string }) {
+  const [tab, setTab] = useState<OrdersTab>('orders')
+  const [scanRefresh, setScanRefresh] = useState(0)
   const [orders, setOrders] = useState<Order[]>([])
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: PAGE_SIZE, total: 0 })
@@ -74,6 +106,11 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
   useEffect(() => { setPage(1) }, [searchQ])
 
+  const changeTab = useCallback((next: OrdersTab) => {
+    setTab(next)
+    setSearchInput('')
+  }, [])
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
     else setRefreshing(true)
@@ -95,6 +132,11 @@ export function OrdersView({ eventId }: { eventId: string }) {
     setLoading(false)
     setRefreshing(false)
   }, [eventId, page, searchQ])
+
+  const handleRefresh = useCallback(() => {
+    if (tab === 'orders') void load(true)
+    else setScanRefresh(n => n + 1)
+  }, [tab, load])
 
   useEffect(() => { void load() }, [load])
 
@@ -120,9 +162,10 @@ export function OrdersView({ eventId }: { eventId: string }) {
   }, [detailOrder, eventId])
 
   useEffect(() => {
+    if (tab !== 'orders') return
     pollRef.current = setInterval(() => void load(true), POLL_INTERVAL)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [load])
+  }, [load, tab])
 
   useEffect(() => {
     fetchAllCategories(eventId).then(res => {
@@ -149,7 +192,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
       <style>{`
         @keyframes nb-spin { to { transform: rotate(360deg); } }
         @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .nb-order-row { transition: background 0.12s; }
+        .nb-orders-scroll { overflow-x: auto; }
+        .nb-orders-table-header { min-width: 760px; }
+        .nb-order-row { transition: background 0.12s; min-width: 760px; }
         .nb-order-row:hover { background: #FAFAFA !important; }
         .nb-search-input:focus { outline: none; border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
         .nb-select-opt:hover { background: #F5F5F7 !important; }
@@ -163,19 +208,26 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
           .nb-orders-table-header { display: none !important; }
 
+          .nb-orders-scroll { overflow-x: visible; }
           .nb-order-row {
+            min-width: 0 !important;
             grid-template-columns: 1fr auto auto !important;
             grid-template-areas:
               "num    status eye"
               "items  items  items"
-              "cust   total  total" !important;
+              "scan   scan   scan"
+              "name   total  total"
+              "email  email  email" !important;
             padding: 14px 16px !important;
             gap: 6px 10px !important;
           }
           .nb-cell-num    { grid-area: num; }
           .nb-cell-items  { grid-area: items; }
-          .nb-cell-cust   { grid-area: cust; font-size: 13px !important; color: #0A0A0F !important; font-weight: 500 !important; }
-          .nb-cell-cust .nb-cust-label { display: inline !important; }
+          .nb-cell-scan   { grid-area: scan; }
+          .nb-cell-scan .nb-scan-label { display: inline !important; }
+          .nb-cell-name   { grid-area: name; font-size: 13px !important; color: #0A0A0F !important; font-weight: 500 !important; }
+          .nb-cell-email  { grid-area: email; font-size: 11px !important; color: #9A9AA8 !important; }
+          .nb-cell-name .nb-name-label, .nb-cell-email .nb-email-label { display: inline !important; }
           .nb-cell-total  { grid-area: total; text-align: right; }
           .nb-cell-status { grid-area: status; align-self: center; }
           .nb-cell-eye    { grid-area: eye; align-self: center; }
@@ -189,37 +241,43 @@ export function OrdersView({ eventId }: { eventId: string }) {
       <OrganizerToolHeading
         title="Pedidos"
         description={
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            Actualización automática cada 15 s
-            {lastRefresh && (
-              <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>
-                · última: {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
-          </p>
+          tab === 'orders' ? (
+            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
+              Actualización automática cada 15 s
+              {lastRefresh && (
+                <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>
+                  · última: {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              )}
+            </p>
+          ) : (
+            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
+              Comprados vs. escaneados por producto
+            </p>
+          )
         }
         actions={
           <button
-            onClick={() => void load(true)}
-            disabled={refreshing || loading}
+            onClick={handleRefresh}
+            disabled={tab === 'orders' && (refreshing || loading)}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '100px', padding: '7px 14px',
               fontSize: '13px', fontWeight: 500, color: '#6B7280',
-              cursor: refreshing || loading ? 'not-allowed' : 'pointer',
-              opacity: refreshing ? 0.6 : 1,
+              cursor: tab === 'orders' && (refreshing || loading) ? 'not-allowed' : 'pointer',
+              opacity: tab === 'orders' && refreshing ? 0.6 : 1,
             }}
           >
-            <RefreshCw size={13} style={{ animation: refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
+            <RefreshCw size={13} style={{ animation: tab === 'orders' && refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
             Actualizar
           </button>
         }
       />
 
-      {/* Filters */}
+      {/* Filtros + pestañas (Pedidos / Escaneos a la derecha del buscador) */}
       <div className="nb-orders-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        {/* Search */}
+        {/* Search — compartido por Pedidos y Escaneos */}
         <div className="nb-orders-search" style={{ position: 'relative', flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
             style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9A9AA8', pointerEvents: 'none' }}>
@@ -231,7 +289,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
             className="nb-search-input"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            placeholder="Buscar por cliente, producto o nº de pedido…"
+            placeholder={tab === 'orders' ? 'Buscar por cliente, producto o nº de pedido…' : 'Buscar producto…'}
             style={{
               width: '100%', boxSizing: 'border-box',
               paddingLeft: '38px', paddingRight: '14px', paddingTop: '10px', paddingBottom: '10px',
@@ -243,7 +301,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
         </div>
 
         {/* Category multi-select */}
-        {categories.length > 0 && (
+        {tab === 'orders' && categories.length > 0 && (
           <div ref={catDropdownRef} className="nb-orders-cats" style={{ position: 'relative', flexShrink: 0, minWidth: '160px' }}>
             <button
               type="button"
@@ -341,9 +399,66 @@ export function OrdersView({ eventId }: { eventId: string }) {
           </div>
         )}
 
-
+        {/* Pestañas: Pedidos / Escaneos — mismo toggle animado que el resto del panel */}
+        <div
+          className="nb-orders-tabs"
+          role="tablist"
+          aria-label="Vista de pedidos"
+          style={{
+            position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr',
+            gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px',
+            flexShrink: 0, marginLeft: 'auto',
+          }}
+        >
+          {/* Pastilla deslizante */}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute', top: '4px', bottom: '4px', left: '4px',
+              width: 'calc(50% - 6px)',
+              background: '#FFFFFF', borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+              transform: tab === 'scans' ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
+              transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+              pointerEvents: 'none',
+            }}
+          />
+          {([['orders', 'Pedidos'], ['scans', 'Escaneos']] as const).map(([key, label]) => {
+            const active = tab === key
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => changeTab(key)}
+                style={{
+                  position: 'relative', zIndex: 1,
+                  background: 'transparent', border: 'none', borderRadius: '8px',
+                  padding: '7px 18px', fontSize: '13px', fontWeight: 600,
+                  letterSpacing: '-0.01em', whiteSpace: 'nowrap', cursor: 'pointer',
+                  color: active ? '#0A0A0F' : '#9A9AA8',
+                  transition: 'color 0.2s ease',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
+      {tab === 'scans' && (
+        <ProductScanSummaryView
+          key={scanRefresh}
+          eventId={eventId}
+          embedded
+          query={searchInput}
+        />
+      )}
+
+      {tab === 'orders' && (
+      <>
       {error && (
         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
           {error}
@@ -371,22 +486,26 @@ export function OrdersView({ eventId }: { eventId: string }) {
       ) : (
         <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
           {refreshing && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.06)' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.06)', zIndex: 2 }} />
           )}
 
+          <div className="nb-orders-scroll">
           {/* Header row */}
-          <div className="nb-orders-table-header" style={{ display: 'grid', gridTemplateColumns: '80px 1fr 140px 110px 110px 36px', gap: '0', padding: '10px 16px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}># Pedido</span>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Productos</span>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Cliente</span>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Total</span>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Estado</span>
+          <div className="nb-orders-table-header" style={{ display: 'grid', gridTemplateColumns: ORDERS_GRID, gap: '12px', padding: '11px 16px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <span style={HEAD_CELL}>#</span>
+            <span style={HEAD_CELL}>Productos</span>
+            <span style={HEAD_CELL}>Nombre</span>
+            <span style={HEAD_CELL}>Email</span>
+            <span style={{ ...HEAD_CELL, justifySelf: 'end' }}>Total</span>
+            <span style={HEAD_CELL}>Escaneado</span>
+            <span style={HEAD_CELL}>Estado</span>
             <span />
           </div>
 
           {displayOrders.map((order, idx) => {
             const statusStyle = STATUS_STYLE[order.status] ?? STATUS_STYLE.pending
             const statusLabel = STATUS_LABEL[order.status] ?? order.status
+            const scan = scanInfo(order)
 
             return (
               <div
@@ -394,9 +513,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 className="nb-order-row"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '80px 1fr 140px 110px 110px 36px',
-                  gap: '0',
-                  padding: '14px 16px',
+                  gridTemplateColumns: ORDERS_GRID,
+                  gap: '12px',
+                  padding: '13px 16px',
                   borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.04)',
                   background: '#FFFFFF',
                   alignItems: 'center',
@@ -419,23 +538,37 @@ export function OrdersView({ eventId }: { eventId: string }) {
                   )}
                 </div>
 
-                {/* Customer */}
-                <div className="nb-cell-cust" style={{ minWidth: 0 }}>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                    <span className="nb-cust-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Cliente:</span>
-                    <span style={{ color: order.customerName ? undefined : '#C8C8D0' }}>{order.customerName ?? '—'}</span>
-                  </span>
-                  {order.customerEmail && (
-                    <span style={{ display: 'block', fontSize: '11px', color: '#9A9AA8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {order.customerEmail}
-                    </span>
-                  )}
+                {/* Nombre */}
+                <div className="nb-cell-name" style={{ minWidth: 0, fontSize: '13px', color: order.customerName ? '#0A0A0F' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="nb-name-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Nombre:</span>
+                  {order.customerName ?? '—'}
+                </div>
+
+                {/* Email */}
+                <div className="nb-cell-email" style={{ minWidth: 0, fontSize: '12px', color: order.customerEmail ? '#6B7280' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="nb-email-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Email:</span>
+                  {order.customerEmail ?? '—'}
                 </div>
 
                 {/* Total */}
-                <span className="nb-cell-total" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
+                <span className="nb-cell-total" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', justifySelf: 'end', fontVariantNumeric: 'tabular-nums' }}>
                   {formatPrice(order.total)}
                 </span>
+
+                {/* Escaneado */}
+                <div className="nb-cell-scan" style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {order.status === 'cancelled' ? (
+                    <span style={{ fontSize: '12px', color: '#C8C8D0' }}>—</span>
+                  ) : (
+                    <>
+                      <span aria-hidden style={{ width: '7px', height: '7px', borderRadius: '50%', background: SCAN_UI[scan.state].color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: SCAN_UI[scan.state].color, fontVariantNumeric: 'tabular-nums' }}>
+                        <span className="nb-scan-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Escaneado:</span>
+                        {scan.redeemed ?? '?'}/{scan.units}
+                      </span>
+                    </>
+                  )}
+                </div>
 
                 {/* Status badge */}
                 <div className="nb-cell-status">
@@ -483,6 +616,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
               </div>
             )
           })}
+          </div>
         </div>
       )}
 
@@ -496,6 +630,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
           />
         </div>
       )}
+      </>
+      )}
 
       {/* Order detail modal */}
       <Modal
@@ -508,6 +644,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           const o = detailOrder
           const statusStyle = STATUS_STYLE[o.status] ?? STATUS_STYLE.pending
           const statusLabel = STATUS_LABEL[o.status] ?? o.status
+          const scan = scanInfo(o)
           return (
             <div>
               {/* Header */}
@@ -542,6 +679,16 @@ export function OrdersView({ eventId }: { eventId: string }) {
                         {item.categoryName && (
                           <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0' }}>{item.categoryName}</p>
                         )}
+                        {item.redeemedQuantity != null && (
+                          <p style={{
+                            fontSize: '11px', fontWeight: 600, margin: '2px 0 0 0',
+                            color: item.redeemedQuantity >= item.quantity ? '#047857' : item.redeemedQuantity > 0 ? '#B45309' : '#9A9AA8',
+                          }}>
+                            {item.redeemedQuantity >= item.quantity
+                              ? 'Escaneado'
+                              : `Escaneado ${item.redeemedQuantity}/${item.quantity}`}
+                          </p>
+                        )}
                       </div>
                       <span style={{ fontSize: '13px', color: '#6B7280', fontVariantNumeric: 'tabular-nums', flexShrink: 0, paddingTop: '1px' }}>
                         {formatPrice(item.subtotal ?? item.price * item.quantity)}
@@ -549,6 +696,14 @@ export function OrdersView({ eventId }: { eventId: string }) {
                     </div>
                   ))}
                 </div>
+                {o.status !== 'cancelled' && (
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#9A9AA8' }}>Escaneado</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: SCAN_UI[scan.state].color, fontVariantNumeric: 'tabular-nums' }}>
+                      {SCAN_UI[scan.state].label} · {scan.redeemed ?? '?'}/{scan.units} unidades
+                    </span>
+                  </div>
+                )}
                 <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F' }}>Total</span>
                   <span style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{formatPrice(o.total)}</span>
