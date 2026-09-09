@@ -1411,19 +1411,6 @@ export function ProductsView({ eventId }: { eventId: string }) {
               </button>
             ))}
           </div>
-          {hasCatalogFilters && (
-            <button
-              type="button"
-              onClick={() => {
-                setCatalogSearchInput('')
-                setFilterCategoryId('')
-                setFilterStatus('all')
-              }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', padding: '8px 4px', whiteSpace: 'nowrap' }}
-            >
-              Limpiar
-            </button>
-          )}
         </div>
 
         <div style={{ position: 'relative', minHeight: '120px' }}>
