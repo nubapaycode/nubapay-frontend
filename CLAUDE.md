@@ -16,7 +16,6 @@ Para correr un solo test:
 ```bash
 npx jest __tests__/components/buyer/CartView.test.tsx
 ```
-
 ## Variables de entorno
 
 | Variable | Propósito |
