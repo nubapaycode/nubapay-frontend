@@ -26,6 +26,8 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   user_id: string
   /** true si el evento tiene un token de MP propio configurado. El valor nunca se devuelve. */
   has_mp_token: boolean
+  /** true si el evento tiene credenciales de Sipago propias configuradas. El valor nunca se devuelve. */
+  has_sipago_credentials: boolean
   created_at: string | null
   updated_at: string | null
   membership?: 'owner' | 'staff'

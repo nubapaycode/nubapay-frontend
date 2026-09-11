@@ -36,6 +36,7 @@ export default async function CatalogoCheckoutPage({ params }: Props) {
         eventId={data.event.id}
         catalogSlug={slug}
         paymentsEnabled={data.payments_enabled ?? true}
+        availablePaymentMethods={data.available_payment_methods ?? ['mp']}
       />
     </main>
   )

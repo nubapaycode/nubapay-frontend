@@ -564,7 +564,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
     showToast('Cuenta desconectada.', 'success')
   }
 
-  const backHref = `/events/${eventId}/cuenta`
+  const backHref = `/events/${eventId}/metodos-pago`
 
   if (loading) {
     return (
@@ -594,7 +594,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
       >
         <ChevronLeft size={15} aria-hidden />
-        Volver a Cuenta
+        Volver a Métodos de pago
       </Link>
 
       {/* Header */}

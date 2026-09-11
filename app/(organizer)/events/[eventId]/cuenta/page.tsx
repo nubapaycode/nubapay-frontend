@@ -11,19 +11,14 @@ export async function generateMetadata({
   await params
   return organizerEventSectionMeta(
     'Cuenta',
-    'Gestioná tu cuenta y método de cobro del evento.',
+    'Tu sesión activa.',
   )
 }
 
-export default async function EventCuentaPage({
-  params,
-}: {
-  params: Promise<{ eventId: string }>
-}) {
-  const { eventId } = await params
+export default async function EventCuentaPage() {
   return (
     <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
-      <CuentaView eventId={eventId} />
+      <CuentaView />
     </main>
   )
 }

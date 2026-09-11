@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import Image from 'next/image'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
@@ -64,12 +64,43 @@ function EmptyState({ title, subtitle, icon }: { title: string; subtitle: string
   )
 }
 
+/** Una vez elegida una categoría (o "ver todo"), no volver a mostrar el gate
+ * en este tab/sesión — evita que reaparezca al remontar CatalogView (volver
+ * del detalle de producto, etc.), que no siempre preserva el estado en memoria. */
+function gateDismissedKey(eventId: string) {
+  return `nubapay:category-gate-dismissed:${eventId}`
+}
+
+function wasGateDismissed(eventId: string): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.sessionStorage.getItem(gateDismissedKey(eventId)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function dismissGate(eventId: string): void {
+  try {
+    window.sessionStorage.setItem(gateDismissedKey(eventId), '1')
+  } catch {
+    // sessionStorage no disponible (Safari privado, etc.) — el gate puede
+    // reaparecer en ese caso, no es crítico.
+  }
+}
+
 export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const [activeCategory, setActiveCategory] = useState('all')
   const [sortOrder, setSortOrder] = useState<SortOrder>('default')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [gateOpen, setGateOpen] = useState(event.showCategoryShortcuts && event.categories.length > 0)
+  // Corrige después de montar (sessionStorage no existe en el render de servidor,
+  // así que leerlo acá evita un mismatch de hidratación).
+  useLayoutEffect(() => {
+    if (gateOpen && wasGateDismissed(event.id)) setGateOpen(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.id])
   const { items, addItem, updateQuantity, total, count } = useCart()
   const paymentsEnabled = event.paymentsEnabled
   const handleAdd = paymentsEnabled ? addItem : () => {}
@@ -162,8 +193,8 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
       {gateOpen ? (
         <CategoryShortcuts
           categories={event.categories}
-          onSelect={cat => { setActiveCategory(cat); setGateOpen(false) }}
-          onViewAll={() => setGateOpen(false)}
+          onSelect={cat => { setActiveCategory(cat); dismissGate(event.id); setGateOpen(false) }}
+          onViewAll={() => { dismissGate(event.id); setGateOpen(false) }}
         />
       ) : (
       <>

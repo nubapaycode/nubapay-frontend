@@ -26,6 +26,7 @@ export function EventOrganizerShell({
     title: string
     membership: 'owner' | 'staff'
     hasMpToken: boolean
+    hasSipagoCredentials: boolean
     tools?: OrganizerStaffTools
   } | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -50,6 +51,7 @@ export function EventOrganizerShell({
           title: body.event.name,
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
           hasMpToken: body.event.has_mp_token ?? false,
+          hasSipagoCredentials: body.event.has_sipago_credentials ?? false,
           tools: body.event.tools,
         })
       }
@@ -86,11 +88,17 @@ export function EventOrganizerShell({
   useEffect(() => {
     const onMpConnected = () => setEventMeta(prev => prev ? { ...prev, hasMpToken: true } : prev)
     const onMpDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasMpToken: false } : prev)
+    const onSipagoConnected = () => setEventMeta(prev => prev ? { ...prev, hasSipagoCredentials: true } : prev)
+    const onSipagoDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasSipagoCredentials: false } : prev)
     window.addEventListener('nubapay-mp-connected', onMpConnected)
     window.addEventListener('nubapay-mp-disconnected', onMpDisconnected)
+    window.addEventListener('nubapay-sipago-connected', onSipagoConnected)
+    window.addEventListener('nubapay-sipago-disconnected', onSipagoDisconnected)
     return () => {
       window.removeEventListener('nubapay-mp-connected', onMpConnected)
       window.removeEventListener('nubapay-mp-disconnected', onMpDisconnected)
+      window.removeEventListener('nubapay-sipago-connected', onSipagoConnected)
+      window.removeEventListener('nubapay-sipago-disconnected', onSipagoDisconnected)
     }
   }, [])
 
@@ -216,6 +224,7 @@ export function EventOrganizerShell({
         }}
         showPartnerBrand={brandNavEligible}
         hasMpToken={eventMeta.hasMpToken}
+        hasSipagoCredentials={eventMeta.hasSipagoCredentials}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">{children}</div>

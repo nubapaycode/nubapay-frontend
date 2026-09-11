@@ -25,6 +25,8 @@ export type StorefrontApiResponse = {
   event_canonical_subdomain?: string | null
   /** Switch global de plataforma: si es false, el comprador no puede agregar al carrito ni pagar. */
   payments_enabled?: boolean
+  /** Métodos de pago online realmente configurados para este evento (ej. ['mp', 'sipago']). */
+  available_payment_methods?: string[]
 }
 
 export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {

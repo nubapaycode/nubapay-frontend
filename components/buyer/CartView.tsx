@@ -20,14 +20,27 @@ interface CartViewProps {
   products?: Product[]
   /** Switch global de plataforma: si es false, no se puede agregar al carrito ni pagar. */
   paymentsEnabled?: boolean
+  /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
+  availablePaymentMethods?: string[]
 }
 
-export function CartView({ eventId, catalogSlug, products = [], paymentsEnabled = true }: CartViewProps) {
+export function CartView({
+  eventId,
+  catalogSlug,
+  products = [],
+  paymentsEnabled = true,
+  availablePaymentMethods = ['mp'],
+}: CartViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity, total } = useCart()
   const [goingToCheckout, setGoingToCheckout] = useState(false)
   const catalogPath = buyerFlowPath(eventId, { catalogSlug })
   const checkoutPath = buyerFlowPath(eventId, { catalogSlug, path: 'checkout' })
+
+  // Sólo tiene sentido pre-crear con MP si es la única opción — si el evento
+  // también tiene Sipago (o sólo Sipago), el usuario todavía tiene que elegir
+  // en el checkout, y una orden pre-creada con 'mp' pisaría esa elección.
+  const canPrewarmMp = availablePaymentMethods.length === 1 && availablePaymentMethods[0] === 'mp'
 
   // Encola la orden ya mismo (sin nombre/email: se adjuntan en el checkout vía
   // PATCH). Así el backend procesa Mercado Pago mientras el usuario tipea sus
@@ -38,7 +51,7 @@ export function CartView({ eventId, catalogSlug, products = [], paymentsEnabled 
     const slug = catalogSlug ?? eventId
     const itemsKey = cartItemsKey(items)
     try {
-      if (!loadPendingOrder(slug, itemsKey)) {
+      if (canPrewarmMp && !loadPendingOrder(slug, itemsKey)) {
         const res = await fetch(catalogPaths.createOrder(slug), {
           method: 'POST',
           headers: {

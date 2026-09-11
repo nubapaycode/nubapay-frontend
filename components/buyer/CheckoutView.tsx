@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 import { catalogPaths } from '@/lib/api/paths'
@@ -16,6 +17,8 @@ interface CheckoutViewProps {
   catalogSlug?: string
   /** Switch global de plataforma: si es false, no se puede completar el pago. */
   paymentsEnabled?: boolean
+  /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
+  availablePaymentMethods?: string[]
 }
 
 const paymentMethods = [
@@ -34,14 +37,46 @@ const paymentMethods = [
     ),
     color: '#009EE3',
   },
+  {
+    id: 'sipago',
+    label: 'Sipago',
+    sub: 'Tarjetas de crédito o débito',
+    icon: (
+      <Image
+        src="/images/sipagologo.png"
+        alt="Sipago"
+        width={36}
+        height={36}
+        className="rounded-[10px] object-cover"
+      />
+    ),
+    color: '#4E358B',
+  },
 ]
 
-export function CheckoutView({ eventId, catalogSlug, paymentsEnabled = true }: CheckoutViewProps) {
+export function CheckoutView({
+  eventId,
+  catalogSlug,
+  paymentsEnabled = true,
+  availablePaymentMethods = ['mp'],
+}: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('mp')
+
+  const enabledMethods = useMemo(
+    () => paymentMethods.filter(m => availablePaymentMethods.includes(m.id)),
+    [availablePaymentMethods],
+  )
+  const [paymentMethod, setPaymentMethod] = useState(() => availablePaymentMethods[0] ?? 'mp')
+
+  useEffect(() => {
+    if (!availablePaymentMethods.includes(paymentMethod)) {
+      setPaymentMethod(availablePaymentMethods[0] ?? 'mp')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePaymentMethods])
 
   const [error, setError] = useState('')
   const [focused, setFocused] = useState(false)
@@ -103,7 +138,10 @@ export function CheckoutView({ eventId, catalogSlug, paymentsEnabled = true }: C
 
     try {
       const slug = catalogSlug ?? eventId
-      let orderId = pendingOrderIdRef.current
+      // La orden pre-creada desde el carrito siempre se crea con payment_method
+      // 'mp' (ver CartView) — si el usuario terminó eligiendo otro método acá,
+      // esa orden no sirve: se ignora y se crea una nueva con el método correcto.
+      let orderId = paymentMethod === 'mp' ? pendingOrderIdRef.current : null
       let orderNumber: number | null = null
 
       if (orderId) {
@@ -170,7 +208,7 @@ export function CheckoutView({ eventId, catalogSlug, paymentsEnabled = true }: C
         createdAt: new Date().toISOString(),
       })
 
-      if (checkoutUrl) {
+      if (checkoutUrl && paymentMethod === 'mp') {
         // El link de MP ya está listo: vamos directo, sin pasar por el tracker
         redirectingToMp = true
         window.location.href = checkoutUrl
@@ -363,7 +401,7 @@ export function CheckoutView({ eventId, catalogSlug, paymentsEnabled = true }: C
             Método de pago
           </p>
           <div className="flex flex-col gap-2">
-            {paymentMethods.map(method => {
+            {enabledMethods.map(method => {
               const selected = paymentMethod === method.id
               return (
                 <button

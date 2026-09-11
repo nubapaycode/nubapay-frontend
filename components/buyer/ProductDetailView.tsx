@@ -12,7 +12,6 @@ type Item = Product | Combo
 
 interface ProductDetailViewProps {
   item: Item
-  slug: string
   /** Switch global de plataforma: si es false, no se puede agregar al carrito. */
   paymentsEnabled?: boolean
 }
@@ -21,7 +20,7 @@ function isCombo(item: Item): item is Combo {
   return 'products' in item
 }
 
-export function ProductDetailView({ item, slug, paymentsEnabled = true }: ProductDetailViewProps) {
+export function ProductDetailView({ item, paymentsEnabled = true }: ProductDetailViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity } = useCart()
 
@@ -39,7 +38,7 @@ export function ProductDetailView({ item, slug, paymentsEnabled = true }: Produc
     // recibe el estado resultante del addItem como prev
     addItem(item as Product & Combo)
     updateQuantity(item.id, localQty)
-    router.push(`/catalogo/${slug}`)
+    router.back()
   }
 
   const remote = Boolean(item.imageUrl?.startsWith('http'))

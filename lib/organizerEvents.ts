@@ -29,6 +29,10 @@ export async function patchOrganizerEvent(
     show_category_shortcuts: boolean
     /** String para guardar el token; null o "" para eliminarlo. */
     mp_access_token: string | null
+    /** String para guardar el client_id de Sipago; null o "" para eliminarlo. */
+    sipago_client_id: string | null
+    /** String para guardar el client_secret de Sipago; null o "" para eliminarlo. */
+    sipago_client_secret: string | null
   }>,
 ): Promise<{ ok: true; event: OrganizerEventDetail } | { ok: false; error: string }> {
   const res = await browserFetch(eventsPaths.detail(eventId), {
