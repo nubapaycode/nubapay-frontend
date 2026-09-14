@@ -326,13 +326,6 @@ const CSS = `
   /* La descripción solo se despliega en la pestaña activa */
   .nb-pass-tab-desc { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.45s cubic-bezier(0.16,1,0.3,1); }
   .nb-pass-tab[aria-pressed="true"] .nb-pass-tab-desc { grid-template-rows: 1fr; }
-  /* Barra de progreso de la rotación automática */
-  .nb-pass-progress {
-    position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 2px;
-    background: #C6FF00; transform: scaleX(0); transform-origin: left center;
-    animation: nb-pass-progress linear forwards;
-  }
-  @keyframes nb-pass-progress { to { transform: scaleX(1); } }
 
   .nb-pass-stage { position: relative; min-height: 440px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .nb-pass-stack { position: relative; width: 100%; max-width: 380px; height: 310px; touch-action: pan-y; }
@@ -387,7 +380,6 @@ const CSS = `
   @media (prefers-reduced-motion: reduce) {
     .nb-pass, .nb-pass-tab, .nb-pass-tab-desc, .nb-pass-card, .nb-pass-card > * { transition: none; }
     .nb-pass--leaving { animation: none; }
-    .nb-pass-progress { display: none; }
   }
 
   /* ── Responsive ── */
@@ -419,7 +411,6 @@ const CSS = `
     .nb-pass-tab-text { flex: 0 0 auto !important; padding-top: 0 !important; }
     .nb-pass-tab-label { font-size: 14px !important; white-space: nowrap; }
     .nb-pass-tab-desc { display: none !important; }
-    .nb-pass-progress { left: 16px; right: 16px; bottom: 1px; }
     .nb-pass-mobile-desc { display: block !important; }
     .nb-pass-note { padding: 0 !important; margin-top: 16px !important; }
     .nb-landia-strip { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
@@ -1351,7 +1342,6 @@ function EventPasses() {
     setLeaving(active)
     setActive(i)
   }
-  const rotating = auto && inView && !hovered
 
   /* Tilt del pase activo: se escribe directo en el DOM para no re-renderizar en cada movimiento */
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -1412,9 +1402,6 @@ function EventPasses() {
                     </span>
                   </span>
                 </span>
-                {isActive && rotating && (
-                  <span key={active} aria-hidden="true" className="nb-pass-progress" style={{ animationDuration: `${PASS_ROTATE_MS}ms` }} />
-                )}
               </button>
             )
           })}
