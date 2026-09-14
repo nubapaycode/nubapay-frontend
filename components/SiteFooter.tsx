@@ -41,6 +41,7 @@ const NAV = [
     links: [
       { label: 'Cómo funciona', href: '/#como-funciona' },
       { label: 'QR antifraude', href: '/#qr-antifraude' },
+      { label: 'Entradas y parking', href: '/#entradas-y-parking' },
       { label: 'Tipos de evento', href: '/#eventos' },
       { label: 'Preguntas frecuentes', href: '/#faq' },
       { label: 'Para organizadores', href: '/register' },

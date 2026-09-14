@@ -7,7 +7,7 @@ import SiteNavbar from '@/components/SiteNavbar'
 import SiteFooter from '@/components/SiteFooter'
 
 const TICKER = [
-  'Sin cajas', 'Menú digital', 'QR antifraude', 'Pagos online',
+  'Sin cajas', 'Menú digital', 'Entradas y parking', 'QR antifraude', 'Pagos online',
   'IA integrada', 'Tiempo real', 'Eventos masivos',
 ]
 
@@ -305,6 +305,91 @@ const CSS = `
     .nb-landia-card:hover { transform: none; box-shadow: none; }
   }
 
+  /* ── Entradas, parking y más ── */
+  .nb-passes-box {
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 1.05fr; gap: 48px;
+    background: #FAFAFA; border: 1px solid rgba(0,0,0,0.07); border-radius: 36px;
+    padding: 56px;
+  }
+  .nb-pass-tab {
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-start; gap: 14px; width: 100%;
+    padding: 14px 18px 16px; text-align: left; cursor: pointer;
+    background: transparent; border: 1px solid transparent; border-radius: 16px;
+    font-family: inherit;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .nb-pass-tab:hover { background: rgba(10,10,15,0.03); }
+  .nb-pass-tab[aria-pressed="true"] { background: #FFFFFF; border-color: rgba(0,0,0,0.07); box-shadow: 0 10px 26px -16px rgba(10,15,0,0.22); }
+  .nb-pass-tab:focus-visible { outline: 2px solid #8CC800; outline-offset: 2px; }
+  /* La descripción solo se despliega en la pestaña activa */
+  .nb-pass-tab-desc { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.45s cubic-bezier(0.16,1,0.3,1); }
+  .nb-pass-tab[aria-pressed="true"] .nb-pass-tab-desc { grid-template-rows: 1fr; }
+  /* Barra de progreso de la rotación automática */
+  .nb-pass-progress {
+    position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 2px;
+    background: #C6FF00; transform: scaleX(0); transform-origin: left center;
+    animation: nb-pass-progress linear forwards;
+  }
+  @keyframes nb-pass-progress { to { transform: scaleX(1); } }
+
+  .nb-pass-stage { position: relative; min-height: 440px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .nb-pass-stack { position: relative; width: 100%; max-width: 380px; height: 310px; touch-action: pan-y; }
+  /* Pila de pases: el activo adelante y el resto asoma por arriba. La posición va en
+     variables para poder animar la salida del frente y el hover de las franjas. */
+  .nb-pass {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    transform-origin: center top;
+    transform: translateY(calc(var(--nb-y, 0px) - var(--nb-lift, 0px))) rotate(0deg) scale(var(--nb-s, 1));
+    opacity: var(--nb-o, 1);
+    filter: drop-shadow(0 14px 22px rgba(10,15,0,0.12));
+    transition: transform 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.45s ease;
+  }
+  /* Tilt 3D del pase activo siguiendo el mouse (vars seteadas en .nb-pass-stack) */
+  .nb-pass--front { transform: perspective(900px) rotateX(var(--nb-rx, 0deg)) rotateY(var(--nb-ry, 0deg)); }
+  .nb-pass-stack[data-tilt] .nb-pass--front { transition: transform 0.15s ease-out, opacity 0.45s ease; }
+  .nb-pass--back { cursor: pointer; }
+  .nb-pass--back:hover { --nb-lift: 8px; }
+  /* Salida del frente: baja y se desvanece, y reaparece al fondo de la pila */
+  @keyframes nb-pass-leave {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; z-index: 10; }
+    38%  { transform: translateY(64px) rotate(-3deg) scale(0.96); opacity: 0; z-index: 10; }
+    39%  { transform: translateY(calc(var(--nb-y) - 18px)) rotate(0deg) scale(var(--nb-s)); opacity: 0; z-index: 0; }
+    100% { transform: translateY(var(--nb-y)) rotate(0deg) scale(var(--nb-s)); opacity: var(--nb-o); z-index: 0; }
+  }
+  .nb-pass--leaving { animation: nb-pass-leave 0.9s cubic-bezier(0.16,1,0.3,1); }
+  /* Forma de ticket: dos muescas laterales a la altura del troquel (160px) */
+  .nb-pass-card {
+    position: relative; height: 244px; box-sizing: border-box;
+    display: flex; flex-direction: column;
+    padding: 20px 22px; border-radius: 20px;
+    -webkit-mask: radial-gradient(circle at 0 160px, transparent 11px, #000 11.5px) left / 51% 100% no-repeat,
+                  radial-gradient(circle at 100% 160px, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
+    mask: radial-gradient(circle at 0 160px, transparent 11px, #000 11.5px) left / 51% 100% no-repeat,
+          radial-gradient(circle at 100% 160px, transparent 11px, #000 11.5px) right / 51% 100% no-repeat;
+    clip-path: inset(0 0 0 0 round 20px);
+    transition: clip-path 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+  /* Los pases de atrás se recortan a su franja: así las muescas del activo dejan ver
+     el fondo y no el pase de atrás. El que sale se recorta recién cuando ya es invisible. */
+  .nb-pass--back .nb-pass-card { clip-path: inset(0 0 calc(100% - 46px) 0 round 20px); }
+  .nb-pass--leaving .nb-pass-card { transition-delay: 0.35s; }
+  .nb-pass-card > * { transition: opacity 0.35s ease; }
+  .nb-pass--back .nb-pass-card > :not(.nb-pass-peek) { opacity: 0; }
+  /* Etiqueta que se ve en la franja de los pases de atrás */
+  .nb-pass-peek {
+    position: absolute; top: 5px; left: 22px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; line-height: 12px;
+    opacity: 0;
+  }
+  .nb-pass--back .nb-pass-peek { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .nb-pass, .nb-pass-tab, .nb-pass-tab-desc, .nb-pass-card, .nb-pass-card > * { transition: none; }
+    .nb-pass--leaving { animation: none; }
+    .nb-pass-progress { display: none; }
+  }
+
   /* ── Responsive ── */
   @media (max-width: 900px) {
     .nb-nav-inner { padding: 0 20px !important; }
@@ -320,6 +405,23 @@ const CSS = `
     .nb-cta-section { padding-left: 24px !important; padding-right: 24px !important; }
     .nb-eventos-grid { grid-template-columns: 1fr 1fr !important; grid-template-areas: "a a" "b c" "d e" "f f" !important; }
     .nb-landia-section { padding-left: 24px !important; padding-right: 24px !important; }
+    .nb-passes-section { padding-left: 24px !important; padding-right: 24px !important; }
+    .nb-passes-box { grid-template-columns: minmax(0, 1fr) !important; gap: 28px !important; padding: 40px 28px !important; }
+    .nb-pass-stage { order: -1; min-height: 0 !important; }
+    .nb-pass-eyebrow { margin-left: 0 !important; }
+    .nb-pass-tabs { flex-direction: row !important; gap: 8px !important; overflow-x: auto; padding: 3px; margin: -3px; scroll-snap-type: x proximity; scrollbar-width: none; }
+    .nb-pass-tabs::-webkit-scrollbar { display: none; }
+    .nb-pass-tab { width: auto !important; flex: 0 0 auto; align-items: center !important; gap: 10px !important; padding: 6px 14px 6px 6px !important; border-radius: 100px !important; background: #FFFFFF; border-color: rgba(0,0,0,0.07) !important; box-shadow: none !important; scroll-snap-align: start; }
+    .nb-pass-tab[aria-pressed="true"] { background: #0A0A0F !important; border-color: #0A0A0F !important; }
+    .nb-pass-tab[aria-pressed="true"] .nb-pass-tab-label { color: #FFFFFF !important; }
+    .nb-pass-tab[aria-pressed="true"] .nb-pass-new { background: #C6FF00 !important; color: #0A0F00 !important; }
+    .nb-pass-tab-icon { width: 32px !important; height: 32px !important; border-radius: 100px !important; }
+    .nb-pass-tab-text { flex: 0 0 auto !important; padding-top: 0 !important; }
+    .nb-pass-tab-label { font-size: 14px !important; white-space: nowrap; }
+    .nb-pass-tab-desc { display: none !important; }
+    .nb-pass-progress { left: 16px; right: 16px; bottom: 1px; }
+    .nb-pass-mobile-desc { display: block !important; }
+    .nb-pass-note { padding: 0 !important; margin-top: 16px !important; }
     .nb-landia-strip { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
     .nb-landia-card { flex: 0 0 218px; scroll-snap-align: start; margin-top: 0 !important; }
     .nb-landia-card--feat { flex: 0 0 252px; }
@@ -364,6 +466,10 @@ const CSS = `
     .nb-eventos-grid { grid-template-columns: 1fr !important; grid-template-areas: "a" "b" "c" "d" "e" "f" !important; }
     .nb-faq-grid { gap: 32px !important; }
     .nb-faq-answer { padding-right: 0 !important; }
+    .nb-passes-section { padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 80px !important; }
+    .nb-passes-box { padding: 28px 14px !important; border-radius: 28px !important; }
+    .nb-pass-card { padding: 18px !important; }
+    .nb-pass-peek { left: 18px; }
   }
 `
 
@@ -517,7 +623,7 @@ export function LandingPage() {
                   <span style={{ whiteSpace: 'nowrap' }}>menos filas</span>,{' '}
                   <span style={{ whiteSpace: 'nowrap' }}><span className="nb-marker-line nb-marker-draw">mejores eventos.</span></span>
                 </span>
-                <span className="sr-only"> Nubapay: menú digital, pagos móviles y retiro con QR para eventos y festivales.</span>
+                <span className="sr-only"> Nubapay: venta de entradas, parking, menú digital, pagos móviles y retiro con QR para eventos y festivales.</span>
               </h1>
 
               <p className="nb-sub" style={{ fontSize: '18px', fontWeight: 400, color: 'rgba(0,0,0,0.5)', lineHeight: '1.65', maxWidth: '560px', margin: '0 auto 30px' }}>
@@ -700,8 +806,8 @@ export function LandingPage() {
               </h2>
             </div>
             <p className="nb-steps-sub" style={{ maxWidth: '380px', color: S.muted, fontSize: '16px', lineHeight: '1.75', textAlign: 'right', marginBottom: '4px' }}>
-              Nubapay en vivo en un festival real en Córdoba: la gente pidió desde el celular,
-              pagó online y retiró su pedido mostrando el QR. Sin filas, sin efectivo.
+              Nubapay en un festival de Córdoba: la gente pidió desde el celular,
+              pagó online y retiró su pedido mostrando el QR. Sin hacer colas, sin efectivo.
             </p>
           </div>
 
@@ -709,7 +815,7 @@ export function LandingPage() {
             {([
               { type: 'img', src: '/images/landia1.jpeg', alt: 'Escenario principal de Landia antes de abrir puertas', title: 'El escenario, listo', sub: 'Landia · Córdoba' },
               { type: 'video', src: '/videos/landiavideo3.mp4', alt: 'Asistentes llegando a Landia al atardecer', title: 'La previa', sub: 'Puertas abiertas, cae el sol' },
-              { type: 'video', src: '/videos/landiavideo2.mp4', alt: 'Un asistente mostrando el QR de retiro de Nubapay en su celular durante el evento', title: 'Retiro real con QR', sub: 'Pagó desde el celular, retiró sin fila', featured: true },
+              { type: 'video', src: '/videos/landiavideo2.mp4', alt: 'Un asistente mostrando el QR de retiro de Nubapay en su celular durante el evento', title: 'Retiro con QR', sub: 'Pagó desde el celular, retiró sin fila', featured: true },
               { type: 'img', src: '/images/landia2.jpeg', alt: 'Público frente al escenario de Landia al atardecer', title: 'El público, en el show', sub: 'Nadie haciendo fila' },
               { type: 'video', src: '/videos/landiavideo1.mp4', alt: 'Show nocturno en el escenario principal de Landia', title: 'El show', sub: 'Pedidos toda la noche' },
             ] as { type: 'img' | 'video'; src: string; alt: string; title: string; sub: string; featured?: boolean }[]).map(({ type, src, alt, title, sub, featured }, i) => (
@@ -806,6 +912,28 @@ export function LandingPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* ─── ENTRADAS, PARKING Y MÁS ─── */}
+        <section id="entradas-y-parking" className="nb-passes-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+
+          <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '64px' }}>
+            <div>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 16px 0' }}>Más que consumos</p>
+              <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+                Entradas, parking<br />y <span className="nb-marker-line" style={{ marginLeft: '-0.12em' }}>mucho más.</span>
+              </h2>
+            </div>
+            <p className="nb-steps-sub" style={{ maxWidth: '380px', color: S.muted, fontSize: '16px', lineHeight: '1.75', textAlign: 'right', marginBottom: '4px' }}>
+              Vendé todo tu evento desde la misma página: la entrada, el estacionamiento,
+              los consumos y el merch. Cada compra con su propio QR antifraude.
+            </p>
+          </div>
+
+          <div className="nb-reveal">
+            <EventPasses />
+          </div>
+
         </section>
 
         {/* ─── EVENTOS ─── */}
@@ -918,7 +1046,7 @@ export function LandingPage() {
                 { q: '¿Qué tipo de eventos pueden usar Nubapay?', a: 'Puede usarse en boliches, festivales, fiestas, recitales, eventos privados, ferias, estadios o cualquier evento con venta de productos y puntos de retiro.' },
                 { q: '¿El QR se puede usar más de una vez?', a: 'No. Cada QR es único y cuenta con validación antifraude para evitar que un mismo pedido sea retirado más de una vez.' },
                 { q: '¿Puedo tener varios puntos de retiro?', a: 'Sí. Podés configurar diferentes barras o sectores —por ejemplo Barra Principal, Barra VIP, Patio o Sector Norte— y asignar productos específicos a cada punto.' },
-                { q: '¿Cuánto cuesta usar Nubapay?', a: 'El modelo puede adaptarse al tipo de evento. Una opción es cobrar una comisión por transacción, por ejemplo sobre cada venta realizada dentro de la plataforma. Sin costos fijos.' },
+                { q: '¿Puedo vender entradas y parking con Nubapay?', a: 'Sí. Además de consumos, podés vender entradas, estacionamiento, merchandising y otros extras desde la misma página del evento. Cada compra genera su propio QR para validar el acceso o el retiro.' },
                 { q: '¿Cuánto tarda en configurarse Nubapay para un evento?', a: 'Muy poco. Podés tener el menú, los puntos de retiro y los pagos listos en menos de 20 minutos. No necesitás hardware especial ni conocimientos técnicos.' },
               ].map(({ q, a }, i) => {
                 const isOpen = openFaq === i
@@ -1112,4 +1240,302 @@ function QRPattern({ value = 'https://nubapay.com', size = 76 }: { value?: strin
       style={{ display: 'block' }}
     />
   )
+}
+
+/* ── Entradas, parking y más ── */
+type PassTone = 'lime' | 'dark' | 'light'
+
+const PASS_TONES: Record<PassTone, { bg: string; fg: string; sub: string; line: string; pill: string; pillFg: string }> = {
+  lime:  { bg: '#C6FF00', fg: '#0A0F00', sub: 'rgba(10,15,0,0.55)',     line: 'rgba(10,15,0,0.28)',    pill: 'rgba(10,15,0,0.1)',    pillFg: '#0A0F00' },
+  dark:  { bg: '#0A0A0F', fg: '#FFFFFF', sub: 'rgba(255,255,255,0.45)', line: 'rgba(255,255,255,0.2)', pill: 'rgba(198,255,0,0.14)', pillFg: '#C6FF00' },
+  light: { bg: '#FFFFFF', fg: '#0A0A0F', sub: '#9A9AA8',                line: 'rgba(0,0,0,0.14)',      pill: 'rgba(10,10,15,0.05)',  pillFg: '#0A0A0F' },
+}
+
+type EventPass = {
+  key: string
+  label: string
+  desc: string
+  isNew?: boolean
+  icon: React.ReactNode
+  cart: { label: string; price: number }
+  pass: { kind: string; title: string; meta: [string, string][]; code: string; tone: PassTone }
+}
+
+const EVENT_PASSES: EventPass[] = [
+  {
+    key: 'entradas',
+    label: 'Entradas',
+    desc: 'Generales, VIP o por día. Cada entrada tiene su QR único y se valida en la puerta en segundos.',
+    isNew: true,
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5h11A1.5 1.5 0 0117 6.5V8a2 2 0 000 4v1.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 13.5V12a2 2 0 000-4z" stroke="#0A0A0F" strokeWidth="1.5" strokeLinejoin="round"/><path d="M12.5 5.5v1.5M12.5 9.25v1.5M12.5 13v1.5" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    cart: { label: 'Entrada', price: 20000 },
+    pass: { kind: 'Entrada', title: 'General', meta: [['Fecha', '18 OCT · 20 h'], ['Acceso', 'Puerta 3']], code: 'NB-T-2231', tone: 'lime' },
+  },
+  {
+    key: 'parking',
+    label: 'Parking',
+    desc: 'Vendé lugares por playón y horario. El auto entra mostrando el QR, sin tickets de papel.',
+    isNew: true,
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="3.5" stroke="#0A0A0F" strokeWidth="1.5"/><path d="M8 14V6h2.8a2.3 2.3 0 010 4.6H8" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    cart: { label: 'Parking', price: 5000 },
+    pass: { kind: 'Parking', title: 'Playón Norte', meta: [['Patente', 'AE 482 KD'], ['Ingreso', 'Desde 18 h']], code: 'NB-P-0187', tone: 'dark' },
+  },
+  {
+    key: 'consumos',
+    label: 'Consumos',
+    desc: 'Menú digital y retiro en barra con QR, como siempre. Sin cajas ni filas.',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 3h10l-1.2 13a1.5 1.5 0 01-1.5 1.4H7.7a1.5 1.5 0 01-1.5-1.4z" stroke="#0A0A0F" strokeWidth="1.5" strokeLinejoin="round"/><path d="M5.5 8h9" stroke="#0A0A0F" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    cart: { label: '2 Birras', price: 7000 },
+    pass: { kind: 'Consumo', title: '2 × Birra artesanal', meta: [['Retiro', 'Barra Principal'], ['Estado', 'Listo']], code: 'NB-0049', tone: 'light' },
+  },
+  {
+    key: 'extras',
+    label: 'Merch y extras',
+    desc: 'Remeras, lockers, upgrades o lo que tu evento necesite vender. Todo en el mismo carrito.',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 3L3 5.5l1.8 3.2L6.5 8v9h7V8l1.7.7L17 5.5 13 3a3 3 0 01-6 0z" stroke="#0A0A0F" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+    cart: { label: 'Remera', price: 6000 },
+    pass: { kind: 'Merch', title: 'Remera oficial', meta: [['Talle', 'M'], ['Retiro', 'Stand Merch']], code: 'NB-M-0312', tone: 'light' },
+  },
+]
+
+const PASS_COUNT = EVENT_PASSES.length
+const PASS_ROTATE_MS = 4200
+const PASS_CART_TOTAL = EVENT_PASSES.reduce((sum, { cart }) => sum + cart.price, 0)
+
+const formatARS = (n: number) => `$${n.toLocaleString('es-AR')}`
+
+/* Los pases rotan solos mientras la sección está en pantalla; se pausa con hover
+   y se detiene del todo cuando el usuario elige uno (pestaña, franja o swipe). */
+function EventPasses() {
+  const [active, setActive] = useState(0)
+  const [leaving, setLeaving] = useState<number | null>(null)
+  const [auto, setAuto] = useState(true)
+  const [inView, setInView] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const stackRef = useRef<HTMLDivElement>(null)
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.35 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!auto || !inView || hovered) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setTimeout(() => {
+      setLeaving(active)
+      setActive((active + 1) % PASS_COUNT)
+    }, PASS_ROTATE_MS)
+    return () => clearTimeout(id)
+  }, [active, auto, inView, hovered])
+
+  /* En mobile las pestañas son una fila de chips con scroll: se lleva el activo a la vista
+     moviendo solo la fila (en desktop la columna no scrollea y no hace nada) */
+  useEffect(() => {
+    const row = tabsRef.current
+    const chip = row?.children[active] as HTMLElement | undefined
+    if (!row || !chip || row.scrollWidth <= row.clientWidth) return
+    const left = chip.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft - 3
+    row.scrollTo({ left, behavior: 'smooth' })
+  }, [active])
+
+  const select = (i: number) => {
+    setAuto(false)
+    if (i === active) return
+    setLeaving(active)
+    setActive(i)
+  }
+  const rotating = auto && inView && !hovered
+
+  /* Tilt del pase activo: se escribe directo en el DOM para no re-renderizar en cada movimiento */
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = stackRef.current
+    if (!el || e.pointerType !== 'mouse') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const r = el.getBoundingClientRect()
+    const px = (e.clientX - r.left) / r.width - 0.5
+    const py = (e.clientY - r.top) / r.height - 0.5
+    el.dataset.tilt = ''
+    el.style.setProperty('--nb-rx', `${(-py * 6).toFixed(2)}deg`)
+    el.style.setProperty('--nb-ry', `${(px * 10).toFixed(2)}deg`)
+  }
+  const onPointerLeave = () => {
+    const el = stackRef.current
+    if (!el) return
+    delete el.dataset.tilt
+    el.style.setProperty('--nb-rx', '0deg')
+    el.style.setProperty('--nb-ry', '0deg')
+  }
+
+  /* Swipe horizontal en touch: izquierda → siguiente, derecha → anterior */
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return
+    select((active + (dx < 0 ? 1 : PASS_COUNT - 1)) % PASS_COUNT)
+  }
+
+  return (
+    <div ref={ref} className="nb-passes-box" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <div aria-hidden="true" style={{ position: 'absolute', top: '-30%', right: '-12%', width: '62%', height: '130%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.22) 0%, transparent 62%)', pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <p className="nb-pass-eyebrow" style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 14px 18px' }}>Qué podés vender</p>
+        <div ref={tabsRef} className="nb-pass-tabs" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {EVENT_PASSES.map(({ key, label, desc, icon, isNew }, i) => {
+            const isActive = i === active
+            return (
+              <button key={key} type="button" className="nb-pass-tab" aria-pressed={isActive} onClick={() => select(i)}>
+                <span aria-hidden="true" className="nb-pass-tab-icon" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? '#C6FF00' : 'rgba(10,10,15,0.04)', border: `1px solid ${isActive ? 'rgba(140,200,0,0.5)' : 'rgba(0,0,0,0.06)'}`, transition: 'background 0.3s, border-color 0.3s' }}>{icon}</span>
+                <span className="nb-pass-tab-text" style={{ flex: 1, minWidth: 0, paddingTop: '9px' }}>
+                  <span className="nb-pass-tab-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', transition: 'color 0.3s' }}>
+                    {label}
+                    {isNew && <span className="nb-pass-new" style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: '1.2', color: '#C6FF00', background: '#0A0A0F', padding: '3px 7px', borderRadius: '100px' }}>Nuevo</span>}
+                  </span>
+                  <span className="nb-pass-tab-desc">
+                    <span style={{ overflow: 'hidden', minHeight: 0 }}>
+                      <span style={{ display: 'block', paddingTop: '6px', fontSize: '13px', color: S.muted, lineHeight: '1.65' }}>{desc}</span>
+                    </span>
+                  </span>
+                </span>
+                {isActive && rotating && (
+                  <span key={active} aria-hidden="true" className="nb-pass-progress" style={{ animationDuration: `${PASS_ROTATE_MS}ms` }} />
+                )}
+              </button>
+            )
+          })}
+        </div>
+        {/* En mobile las pestañas son chips sin descripción: se muestra la de la activa acá */}
+        <p className="nb-pass-mobile-desc" style={{ display: 'none', margin: '14px 0 0', fontSize: '14px', color: S.muted, lineHeight: '1.6' }}>{EVENT_PASSES[active].desc}</p>
+        <p className="nb-pass-note" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', margin: '24px 0 0', padding: '0 18px', fontSize: '13px', color: S.muted, lineHeight: '1.6' }}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M9 2l5.5 2.2v3.6c0 3.3-2.3 6-5.5 7.2-3.2-1.2-5.5-3.9-5.5-7.2V4.2L9 2z" stroke="#8CC800" strokeWidth="1.5" strokeLinejoin="round"/><path d="M6.5 9l1.8 1.8 3.2-3.6" stroke="#8CC800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Cada compra genera su propio QR, con la misma validación antifraude que tus consumos.
+        </p>
+      </div>
+
+      <div className="nb-pass-stage" aria-hidden="true">
+        <div
+          ref={stackRef}
+          className="nb-pass-stack"
+          onPointerMove={onPointerMove}
+          onPointerLeave={onPointerLeave}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          {EVENT_PASSES.map(({ key, pass }, i) => {
+            const depth = (i - active + PASS_COUNT) % PASS_COUNT
+            const tone = PASS_TONES[pass.tone]
+            const vars = {
+              '--nb-y': `${-22 * depth}px`,
+              '--nb-s': String(1 - depth * 0.05),
+              '--nb-o': depth === PASS_COUNT - 1 ? '0.55' : '1',
+            } as React.CSSProperties
+            return (
+              <div
+                key={key}
+                className={`nb-pass ${depth ? 'nb-pass--back' : 'nb-pass--front'}${i === leaving ? ' nb-pass--leaving' : ''}`}
+                onClick={() => select(i)}
+                onAnimationEnd={e => { if (e.animationName === 'nb-pass-leave') setLeaving(null) }}
+                style={{ ...vars, zIndex: PASS_COUNT - depth }}
+              >
+                <div className="nb-pass-card" style={{ background: tone.bg, color: tone.fg }}>
+                  <span className="nb-pass-peek" style={{ color: tone.sub }}>{pass.kind}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.pillFg, background: tone.pill, padding: '4px 10px', borderRadius: '100px' }}>{pass.kind}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: tone.sub }}>Tu evento · Nubapay</span>
+                  </div>
+                  <div style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: '1.1', margin: '14px 0 12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pass.title}</div>
+                  <div style={{ display: 'flex', gap: '28px' }}>
+                    {pass.meta.map(([k, v]) => (
+                      <div key={k}>
+                        <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.sub, marginBottom: '3px' }}>{k}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 600 }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ position: 'absolute', left: '18px', right: '18px', top: '160px', borderTop: `1.5px dashed ${tone.line}` }} />
+                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontFamily: 'monospace', color: tone.sub }}>#{pass.code}</div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, marginTop: '3px' }}>QR de un solo uso</div>
+                    </div>
+                    <div style={{ background: '#FFFFFF', borderRadius: '8px', padding: '5px', boxShadow: pass.tone === 'light' ? 'inset 0 0 0 1px rgba(0,0,0,0.06)' : 'none' }}>
+                      <QRPattern value={`https://nubapay.com/p/${pass.code}`} size={42} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Carrito: los ítems entran de a uno, el total cuenta hasta el final y se resalta el pase activo */}
+        <div style={{ position: 'relative', marginTop: '28px', width: '100%', maxWidth: '380px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '12px 12px 12px 16px', boxSizing: 'border-box', boxShadow: '0 10px 24px -16px rgba(10,15,0,0.25)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: S.muted }}>Tu carrito</span>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}><CartTotal to={PASS_CART_TOTAL} /></span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#C6FF00', fontSize: '11px', fontWeight: 700, padding: '7px 12px', borderRadius: '100px' }}>
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="#C6FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Pagado
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+            {EVENT_PASSES.map(({ key, cart }, i) => {
+              const isActive = i === active
+              return (
+                <span key={key} className="nb-pop" style={{ animationDelay: `${0.25 + i * 0.15}s`, fontSize: '11px', fontWeight: 600, padding: '5px 10px', borderRadius: '100px', color: isActive ? '#0A0F00' : S.muted, background: isActive ? '#C6FF00' : 'rgba(10,10,15,0.04)', transition: 'background 0.3s, color 0.3s' }}>
+                  {cart.label}
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* Total del carrito: cuenta desde $0 al entrar en pantalla, a la par de los ítems */
+function CartTotal({ to }: { to: number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let raf = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const obs = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      obs.disconnect()
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setVal(to); return }
+      timer = setTimeout(() => {
+        const t0 = performance.now()
+        const tick = (now: number) => {
+          const p = Math.min((now - t0) / 1100, 1)
+          setVal(Math.round(((1 - Math.pow(1 - p, 3)) * to) / 100) * 100)
+          if (p < 1) raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+      }, 250)
+    }, { threshold: 0.5 })
+    obs.observe(el)
+    return () => { obs.disconnect(); cancelAnimationFrame(raf); if (timer) clearTimeout(timer) }
+  }, [to])
+
+  return <span ref={ref}>{formatARS(val)}</span>
 }

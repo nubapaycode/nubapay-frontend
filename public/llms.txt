@@ -11,6 +11,10 @@ Nubapay funciona como una web app responsive: el asistente escanea un QR o entra
 - Recibe un código QR único, irrepetible y de un solo uso, vinculado a ese pedido.
 - El staff escanea el QR en el punto de retiro; la app lo valida en tiempo real y lo invalida tras el uso.
 
+## Qué se puede vender
+
+Además de consumos (bebidas y comida), desde la misma página del evento se pueden vender entradas, estacionamiento, merchandising y otros extras. Cada compra genera su propio QR para validar el acceso o el retiro.
+
 ## Casos de uso
 
 Boliches, festivales, fiestas, recitales, eventos privados, ferias, estadios, eventos corporativos, barras móviles y food trucks.
@@ -30,6 +34,7 @@ Sin costos fijos. El modelo se basa en una comisión por transacción sobre cada
 
 - ¿Necesito descargar una app? No. Funciona desde una web app responsive.
 - ¿El QR se puede usar más de una vez? No. Cada QR es único, de un solo uso y con validación antifraude.
+- ¿Puedo vender entradas y parking? Sí. Entradas, estacionamiento, merch y extras se venden desde la misma página del evento, cada uno con su QR.
 - ¿Puedo tener varios puntos de retiro? Sí. Se configuran distintas barras o sectores con productos asignados.
 - ¿Cuánto tarda en configurarse? El menú, los puntos de retiro y los pagos pueden estar listos en menos de 20 minutos, sin hardware especial.
 
