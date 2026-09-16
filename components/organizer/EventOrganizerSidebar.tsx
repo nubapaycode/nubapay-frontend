@@ -1,13 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { Landmark, Palette, QrCode, Settings, Users } from 'lucide-react'
+import { Landmark, QrCode, Settings, User, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
 import { organizerAccentColorsFromTheme } from '@/lib/organizerAccentCss'
+import type { WorkspaceSectionKey } from '@/lib/organizerWorkspaceSections'
+import { visibleSectionTabs, WORKSPACE_SECTION_HUBS } from '@/lib/organizerWorkspaceSections'
 
 type ToolKey = keyof OrganizerStaffTools
 
@@ -18,12 +20,14 @@ type NavItem = {
   showDesktop: boolean
   mobileTabOrder?: number
   mobileFab?: boolean
-  /** Permiso requerido (omitir solo para ítems que usan `ownerOnly`). */
+  /** Permiso requerido. Sin `tool`, `ownerOnly` ni `section`, el ítem es visible para todos. */
   tool?: ToolKey
+  /** Agrupa varias herramientas con pestañas; el href apunta a la primera permitida. */
+  section?: WorkspaceSectionKey
+  /** Rutas que marcan el ítem como activo (las pestañas de la sección). */
+  matchHrefs?: string[]
   /** Solo visible para el dueño del evento (ej. equipo / staff). */
   ownerOnly?: boolean
-  /** Solo cuenta partner (menú marca blanca). */
-  partnerBrand?: boolean
   /** data-tour attribute for guided onboarding. */
   tourId?: string
 }
@@ -68,14 +72,6 @@ function navItems(basePath: string): NavItem[] {
   )
   const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
-  const blocksIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect x="1.5" y="2.5" width="13" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="1.5" y="10.5" width="5.5" height="3" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="9" y="10.5" width="5.5" height="3" rx="1.25" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  )
-
   return [
     {
       href: `${basePath}/dashboard`,
@@ -91,15 +87,8 @@ function navItems(basePath: string): NavItem[] {
       icon: catalogIcon,
       showDesktop: true,
       mobileTabOrder: 1,
-      tool: 'products',
+      section: 'catalogo',
       tourId: 'sidebar-catalog',
-    },
-    {
-      href: `${basePath}/blocks`,
-      label: 'Bloques',
-      icon: blocksIcon,
-      showDesktop: true,
-      tool: 'products',
     },
     {
       href: `${basePath}/scanner`,
@@ -128,37 +117,10 @@ function navItems(basePath: string): NavItem[] {
     },
     {
       href: `${basePath}/payments`,
-      label: 'Pagos',
+      label: 'Cobros',
       icon: paymentsIcon,
       showDesktop: true,
-      tool: 'payments',
-    },
-    {
-      href: `${basePath}/metodos-pago`,
-      label: 'Métodos de pago',
-      icon: <Landmark size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
-      showDesktop: true,
-      ownerOnly: true,
-    },
-    {
-      href: `${basePath}/comision`,
-      label: 'Comisión',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M5.5 8h5M8 5.5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-      showDesktop: true,
-      ownerOnly: true,
-    },
-    {
-      href: `${basePath}/brand`,
-      label: 'Marca y dominios',
-      icon: <Palette size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
-      showDesktop: true,
-      ownerOnly: true,
-      partnerBrand: true,
+      section: 'cobros',
     },
     {
       href: `${basePath}/staff`,
@@ -175,11 +137,23 @@ function navItems(basePath: string): NavItem[] {
       ownerOnly: true,
       tourId: 'sidebar-config',
     },
+    {
+      href: `${basePath}/cuenta`,
+      label: 'Cuenta',
+      icon: <User size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
+      showDesktop: true,
+      // Marca y dominios se abre desde Cuenta.
+      matchHrefs: [`${basePath}/cuenta`, `${basePath}/brand`],
+    },
   ]
 }
 
 function isRouteActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+function isItemActive(pathname: string, item: NavItem) {
+  return (item.matchHrefs ?? [item.href]).some(href => isRouteActive(pathname, href))
 }
 
 type Props = {
@@ -189,7 +163,6 @@ type Props = {
   onLogout: () => void
   workspaceMembership: 'owner' | 'staff'
   tools: OrganizerStaffTools
-  showPartnerBrand?: boolean
   hasMpToken?: boolean
   hasSipagoCredentials?: boolean
 }
@@ -201,7 +174,6 @@ export function EventOrganizerSidebar({
   onLogout,
   workspaceMembership,
   tools,
-  showPartnerBrand = false,
   hasMpToken = false,
   hasSipagoCredentials = false,
 }: Props) {
@@ -232,13 +204,23 @@ export function EventOrganizerSidebar({
   const allItems = useMemo(() => navItems(basePath), [basePath])
 
   const items = useMemo(() => {
-    return allItems.filter(it => {
-      if (it.partnerBrand && !showPartnerBrand) return false
-      if (it.ownerOnly) return workspaceMembership === 'owner'
-      if (it.tool) return Boolean(tools[it.tool])
-      return false
+    return allItems.flatMap((it): NavItem[] => {
+      if (it.section) {
+        const tabs = visibleSectionTabs(it.section, { membership: workspaceMembership, tools })
+        if (tabs.length === 0) return []
+        const hrefs = tabs.map(t => `${basePath}/${t.segment}`)
+        const hub = WORKSPACE_SECTION_HUBS[it.section]
+        if (hub) {
+          const hubHref = `${basePath}/${hub}`
+          return [{ ...it, href: hubHref, matchHrefs: [hubHref, ...hrefs] }]
+        }
+        return [{ ...it, href: hrefs[0], matchHrefs: hrefs }]
+      }
+      if (it.ownerOnly) return workspaceMembership === 'owner' ? [it] : []
+      if (it.tool) return tools[it.tool] ? [it] : []
+      return [it]
     })
-  }, [allItems, tools, workspaceMembership, showPartnerBrand])
+  }, [allItems, tools, workspaceMembership, basePath])
 
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
   const mobileTabs = useMemo(
@@ -292,7 +274,7 @@ export function EventOrganizerSidebar({
 
   useEffect(() => {
     queueMicrotask(() => {
-      const activeIndex = desktopItems.findIndex(item => isRouteActive(pathname, item.href))
+      const activeIndex = desktopItems.findIndex(item => isItemActive(pathname, item))
       if (activeIndex === -1) {
         setPill(p => ({ ...p, ready: false }))
         return
@@ -312,14 +294,9 @@ export function EventOrganizerSidebar({
     return () => document.removeEventListener('keydown', handleKey)
   }, [moreOpen])
 
-  const moreOverflowHrefPrefixes = useMemo(
-    () =>
-      items
-        .filter(i => i.mobileTabOrder === undefined && !i.mobileFab)
-        .map(i => i.href),
-    [items],
+  const moreOverflowActive = items.some(
+    i => i.mobileTabOrder === undefined && !i.mobileFab && isItemActive(pathname, i),
   )
-  const moreOverflowActive = moreOverflowHrefPrefixes.some(h => pathname.startsWith(h))
 
   const title = eventTitle
 
@@ -399,7 +376,7 @@ export function EventOrganizerSidebar({
           />
 
           {desktopItems.map((item, i) => {
-            const active = isRouteActive(pathname, item.href)
+            const active = isItemActive(pathname, item)
             return (
               <div key={item.href} ref={el => { itemRefs.current[i] = el }}>
                 <Link
@@ -464,9 +441,7 @@ export function EventOrganizerSidebar({
         <div className="shrink-0 px-3 pb-3">
           <Link
             href={`${basePath}/cuenta`}
-            className={`group flex w-full items-center gap-2 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/70 ${
-              isRouteActive(pathname, `${basePath}/cuenta`) ? 'bg-white/80 shadow-[0_1px_3px_rgba(0,0,0,0.06)]' : ''
-            }`}
+            className="group flex w-full items-center gap-2 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/70"
           >
             <svg
               width="13"
@@ -518,7 +493,7 @@ export function EventOrganizerSidebar({
         <div className="flex w-full items-end justify-center min-h-[56px] overflow-visible px-1 pt-1">
           {mobileSlots.map(slot => {
             if (slot.kind === 'fab') {
-              const fabActive = isRouteActive(pathname, slot.item.href)
+              const fabActive = isItemActive(pathname, slot.item)
               return (
                 <div
                   key={`fab-${slot.item.href}`}
@@ -611,7 +586,7 @@ export function EventOrganizerSidebar({
               )
             }
 
-            const active = isRouteActive(pathname, slot.item.href)
+            const active = isItemActive(pathname, slot.item)
             return (
               <Link
                 key={slot.item.href}
@@ -699,7 +674,7 @@ export function EventOrganizerSidebar({
             <nav className="overflow-y-auto px-2 py-2">
               <ul className="flex flex-col gap-0.5">
                 {items.map(item => {
-                  const active = isRouteActive(pathname, item.href)
+                  const active = isItemActive(pathname, item)
                   return (
                     <li key={`more-${item.href}`}>
                       <Link

@@ -9,9 +9,11 @@ import { authHeadersJson, clearAuthSession, getAuthUser } from '@/lib/authSessio
 import { browserFetch } from '@/lib/browserFetch'
 import { workspaceToolsForEvent, firstAllowedWorkspaceSegment } from '@/lib/organizerStaffTools'
 import type { OrganizerStaffTools } from '@/lib/authSession'
+import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
 import { EventOrganizerSidebar } from './EventOrganizerSidebar'
+import { WorkspaceAccessProvider } from './WorkspaceAccessContext'
 
 export function EventOrganizerShell({
   eventId,
@@ -157,6 +159,7 @@ export function EventOrganizerShell({
       dashboard: 'dashboard',
       storefront: 'storefront',
       products: 'products',
+      blocks: 'products',
       scanner: 'scanner',
       orders: 'orders',
       scans: 'orders',
@@ -164,9 +167,15 @@ export function EventOrganizerShell({
       payments: 'payments',
     }
 
+    const ownerOnlySegments = ['staff', 'config', 'metodos-pago', 'comision']
+    if (ownerOnlySegments.includes(segment) && eventMeta.membership === 'staff') {
+      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+      return
+    }
+
     if (
-      (segment === 'staff' || segment === 'config') &&
-      eventMeta.membership === 'staff'
+      segment === 'cobros' &&
+      visibleSectionTabs('cobros', { membership: eventMeta.membership, tools: toolsNow }).length === 0
     ) {
       router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
       return
@@ -222,12 +231,17 @@ export function EventOrganizerShell({
           clearAuthSession()
           router.replace('/')
         }}
-        showPartnerBrand={brandNavEligible}
         hasMpToken={eventMeta.hasMpToken}
         hasSipagoCredentials={eventMeta.hasSipagoCredentials}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">
+          <WorkspaceAccessProvider
+            value={{ basePath: base, membership: eventMeta.membership, tools, partnerBrand: brandNavEligible }}
+          >
+            {children}
+          </WorkspaceAccessProvider>
+        </div>
       </div>
     </div>
   )

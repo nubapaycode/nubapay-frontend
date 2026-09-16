@@ -11,6 +11,16 @@ import { useToast } from '@/components/ui/Toast'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
+/** Estado "ya conectada" de una pasarela, bien visible en la fila. */
+function ConnectedBadge() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+      <CheckCircle2 size={13} aria-hidden />
+      Conectada
+    </span>
+  )
+}
+
 export function PaymentMethodsView({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState<OrganizerEventDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,15 +89,11 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">Mercado Pago</p>
-            {event?.has_mp_token ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <CheckCircle2 size={11} className="text-green-500 shrink-0" aria-hidden />
-                <p className="text-xs text-green-600">Cuenta conectada</p>
-              </div>
-            ) : (
+            {!event?.has_mp_token && (
               <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para recibir pagos</p>
             )}
           </div>
+          {event?.has_mp_token && <ConnectedBadge />}
           <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
         </Link>
       </section>
@@ -103,15 +109,11 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">Sipago</p>
-            {event?.has_sipago_credentials ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <CheckCircle2 size={11} className="text-green-500 shrink-0" aria-hidden />
-                <p className="text-xs text-green-600">Cuenta conectada</p>
-              </div>
-            ) : (
+            {!event?.has_sipago_credentials && (
               <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para recibir pagos</p>
             )}
           </div>
+          {event?.has_sipago_credentials && <ConnectedBadge />}
           <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
         </Link>
       </section>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { OrganizerBackLink } from '@/components/organizer/OrganizerBackLink'
 import { PaymentsView } from '@/components/organizer/PaymentsView'
 import { organizerEventSectionMeta } from '@/lib/seo'
 
@@ -23,6 +24,7 @@ export default async function EventPaymentsPage({
   const { eventId } = await params
   return (
     <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
+      <OrganizerBackLink href={`/events/${eventId}/cobros`} label="Volver a Cobros" className="mb-8" />
       <PaymentsView eventId={eventId} />
     </main>
   )

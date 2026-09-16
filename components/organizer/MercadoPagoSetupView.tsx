@@ -2,8 +2,10 @@
 
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
+import { ConnectionApprovedOverlay } from '@/components/organizer/ConnectionApprovedOverlay'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
@@ -520,6 +522,9 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
   const [replaceOpen, setReplaceOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [justConnected, setJustConnected] = useState(false)
+  /** Pantalla verde de aprobado; al terminar vuelve a Métodos de pago. */
+  const [approved, setApproved] = useState(false)
+  const router = useRouter()
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
   const load = useCallback(async () => {
@@ -548,7 +553,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
     setReplaceOpen(false)
     setJustConnected(true)
     window.dispatchEvent(new CustomEvent('nubapay-mp-connected'))
-    showToast('Token guardado correctamente.', 'success')
+    setApproved(true)
   }
 
   const handleRemoveToken = async () => {
@@ -580,6 +585,18 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
       <div className="max-w-2xl mx-auto p-4 md:p-6">
         <ToastPortal />
         <p className="text-sm text-gray-400">No se pudo cargar el evento.</p>
+      </div>
+    )
+  }
+
+  if (approved) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 md:p-6">
+        <ConnectionApprovedOverlay
+          title="¡Cuenta conectada!"
+          subtitle="Mercado Pago quedó listo para cobrar. Volviendo a Métodos de pago…"
+          onDone={() => router.replace(backHref)}
+        />
       </div>
     )
   }
