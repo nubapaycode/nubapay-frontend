@@ -21,13 +21,22 @@ interface CheckoutViewProps {
   availablePaymentMethods?: string[]
 }
 
+/** Marcas aceptadas por Sipago; se listan bajo el título del método. */
+const SIPAGO_CARD_LOGOS = [
+  { src: '/images/cards/visa.svg', alt: 'Visa' },
+  { src: '/images/cards/mastercard.svg', alt: 'Mastercard' },
+  { src: '/images/cards/cabal.svg', alt: 'Cabal' },
+  { src: '/images/cards/amex.png', alt: 'American Express' },
+  { src: '/images/cards/naranja.png', alt: 'Naranja' },
+]
+
 const paymentMethods = [
   {
     id: 'mp',
     label: 'Mercado Pago',
     sub: 'Débito, crédito o dinero en cuenta',
     icon: (
-      <svg width="38" height="26" viewBox="206 130 288 210" fill="none">
+      <svg width="44" height="30" viewBox="206 130 288 210" fill="none">
         <path fill="#00bcff" d="m350.04,138.92c-77.83,0-140.91,40.36-140.91,90.15s63.09,94.05,140.91,94.05,140.91-44.27,140.91-94.05-63.09-90.15-140.91-90.15Z"/>
         <path fill="#fff" d="m304.18,201.2c-.07.14-1.45,1.56-.55,2.71,2.18,2.78,8.91,4.38,15.72,2.85,4.05-.91,9.25-5.04,14.28-9.03,5.45-4.33,10.86-8.67,16.3-10.39,5.76-1.83,9.45-1.05,11.89-.31,2.67.8,5.82,2.56,10.84,6.32,9.45,7.1,47.43,40.26,54,45.99,5.28-2.39,30.47-12.56,62.39-19.6-2.78-17.02-13.01-33.25-28.72-45.99-21.89,9.19-50.42,14.7-76.58,1.93-.13-.05-14.29-6.75-28.25-6.42-20.75.48-29.74,9.46-39.25,18.97l-12.05,12.99Z"/>
         <path fill="#fff" d="m425.1,242.95c-.45-.4-44.67-39.09-54.69-46.62-5.8-4.35-9.02-5.46-12.41-5.89-1.76-.23-4.2.1-5.9.57-4.66,1.27-10.75,5.34-16.16,9.63-5.6,4.46-10.88,8.66-15.79,9.76-6.26,1.4-13.91-.25-17.4-2.61-1.41-.95-2.41-2.05-2.89-3.16-1.29-2.99,1.09-5.38,1.48-5.78l12.2-13.2c1.42-1.41,2.85-2.83,4.31-4.23-3.94.51-7.58,1.52-11.12,2.5-4.42,1.24-8.68,2.42-12.98,2.42-1.8,0-11.42-1.58-13.25-2.07-11.05-3.02-23.56-5.97-38.04-12.73-17.35,12.91-28.65,28.77-32,46.56,2.49.66,9.02,2.15,10.71,2.52,39.26,8.73,51.49,17.72,53.71,19.6,2.4-2.67,5.87-4.36,9.73-4.36,4.35,0,8.26,2.19,10.64,5.56,2.25-1.78,5.35-3.3,9.36-3.29,1.82,0,3.71.34,5.62.98,4.43,1.52,6.72,4.47,7.9,7.14,1.48-.67,3.31-1.17,5.46-1.16,2.12,0,4.32.48,6.53,1.44,7.24,3.11,8.36,10.22,7.71,15.58.52-.06,1.04-.08,1.56-.08,8.58,0,15.56,6.98,15.56,15.57,0,2.66-.68,5.16-1.86,7.35,2.34,1.31,8.29,4.28,13.52,3.62,4.17-.53,5.76-1.95,6.32-2.76.39-.55.8-1.2.42-1.66l-11.08-12.3s-1.82-1.73-1.22-2.39c.62-.68,1.75.3,2.55.96,5.64,4.71,12.52,11.81,12.52,11.81.12.08.57.98,3.12,1.43,2.19.39,6.07.17,8.76-2.04.67-.56,1.35-1.25,1.93-1.97-.05.04-.09.08-.13.1,2.84-3.63-.32-7.29-.32-7.29l-12.93-14.52s-1.85-1.71-1.22-2.4c.56-.6,1.75.3,2.56.98,4.09,3.42,9.88,9.23,15.42,14.66,1.09.79,5.96,3.8,12.41-.43,3.92-2.57,4.7-5.73,4.59-8.1-.27-3.15-2.73-5.4-2.73-5.4l-17.66-17.76s-1.87-1.59-1.21-2.4c.54-.68,1.75.3,2.55.96,5.62,4.71,20.86,18.68,20.86,18.68.22.15,5.48,3.9,11.99-.24,2.33-1.49,3.81-3.73,3.94-6.34.22-4.52-2.96-7.2-2.96-7.2Z"/>
@@ -39,16 +48,24 @@ const paymentMethods = [
   },
   {
     id: 'sipago',
-    label: 'Sipago',
-    sub: 'Tarjetas de crédito o débito',
+    label: 'Tarjeta de débito o crédito',
+    sub: '',
     icon: (
-      <Image
-        src="/images/sipagologo.png"
-        alt="Sipago"
-        width={36}
-        height={36}
-        className="rounded-[10px] object-cover"
-      />
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={BUYER_COLORS.text}
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 2.5 21 7.5H3l9-5Z" />
+        <path d="M6 11v6M10 11v6M14 11v6M18 11v6" />
+        <path d="M3.5 21h17" />
+      </svg>
     ),
     color: '#4E358B',
   },
@@ -79,6 +96,8 @@ export function CheckoutView({
   }, [availablePaymentMethods])
 
   const [error, setError] = useState('')
+  const [nameError, setNameError] = useState(false)
+  const [emailError, setEmailError] = useState(false)
   const [focused, setFocused] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -126,9 +145,15 @@ export function CheckoutView({
 
   const handleConfirm = async () => {
     if (!paymentsEnabled) { setError('Compra inhabilitada. No es posible completar el pago en este momento.'); return }
-    if (name.trim() === '') { setError('Ingresá tu nombre para continuar'); return }
-    if (email.trim() === '') { setError('Ingresá tu email para continuar'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Ingresá un email válido'); return }
+    const trimmedName = name.trim()
+    const trimmedEmail = email.trim()
+    const emailMalformed = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+    // Ambos campos se marcan a la vez, aunque el mensaje respete la precedencia de siempre.
+    setNameError(trimmedName === '')
+    setEmailError(trimmedEmail === '' || emailMalformed)
+    if (trimmedName === '') { setError('Ingresá tu nombre para continuar'); return }
+    if (trimmedEmail === '') { setError('Ingresá tu email para continuar'); return }
+    if (emailMalformed) { setError('Ingresá un email válido'); return }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
     if (items.length === 0) return
 
@@ -353,14 +378,15 @@ export function CheckoutView({
             id="checkout-name"
             type="text"
             value={name}
-            onChange={e => { setName(e.target.value); if (error) setError('') }}
+            onChange={e => { setName(e.target.value); setNameError(false); if (error) setError('') }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder="Ej: Juan Pérez"
+            aria-invalid={nameError}
             className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
             style={{
-              border: `1.5px solid ${focused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
-              background: BUYER_COLORS.subtleFill,
+              border: `1.5px solid ${nameError ? '#DC2626' : focused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
+              background: '#fff',
               color: BUYER_COLORS.text,
               fontFamily: BUYER_FONT,
             }}
@@ -381,14 +407,15 @@ export function CheckoutView({
             type="email"
             inputMode="email"
             value={email}
-            onChange={e => { setEmail(e.target.value); if (error) setError('') }}
+            onChange={e => { setEmail(e.target.value); setEmailError(false); if (error) setError('') }}
             onFocus={() => setEmailFocused(true)}
             onBlur={() => setEmailFocused(false)}
             placeholder="Ej: juan@email.com"
+            aria-invalid={emailError}
             className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
             style={{
-              border: `1.5px solid ${emailFocused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
-              background: BUYER_COLORS.subtleFill,
+              border: `1.5px solid ${emailError ? '#DC2626' : emailFocused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
+              background: '#fff',
               color: BUYER_COLORS.text,
               fontFamily: BUYER_FONT,
             }}
@@ -400,7 +427,7 @@ export function CheckoutView({
           <p className="mb-3 text-[18px] font-bold" style={{ color: BUYER_COLORS.text }}>
             Método de pago
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="grid gap-2" style={{ gridAutoRows: '1fr' }}>
             {enabledMethods.map(method => {
               const selected = paymentMethod === method.id
               return (
@@ -410,13 +437,13 @@ export function CheckoutView({
                   onClick={() => { setPaymentMethod(method.id); if (error) setError('') }}
                   className="flex w-full items-center gap-4 rounded-[18px] px-4 py-4 text-left transition-all"
                   style={{
-                    border: selected ? `2px solid ${method.color}` : `1.5px solid ${BUYER_COLORS.border}`,
-                    background: selected ? `${method.color}0E` : '#fff',
+                    border: selected ? '2px solid rgba(0,0,0,0.25)' : `1.5px solid ${BUYER_COLORS.border}`,
+                    background: '#fff',
                     fontFamily: BUYER_FONT,
                   }}
                 >
                   <span className="flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-[12px]"
-                    style={{ background: selected ? `${method.color}18` : BUYER_COLORS.subtleFill }}
+                    style={{ background: BUYER_COLORS.subtleFill }}
                   >
                     {method.icon}
                   </span>
@@ -424,47 +451,33 @@ export function CheckoutView({
                     <p className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
                       {method.label}
                     </p>
-                    <p className="mt-0.5 text-[13px]" style={{ color: BUYER_COLORS.muted }}>
-                      {method.sub}
-                    </p>
+                    {method.sub && (
+                      <p className="mt-0.5 text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+                        {method.sub}
+                      </p>
+                    )}
+                    {method.id === 'sipago' && (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        {SIPAGO_CARD_LOGOS.map(logo => (
+                          <Image
+                            key={logo.src}
+                            src={logo.src}
+                            alt={logo.alt}
+                            width={32}
+                            height={20}
+                            unoptimized
+                            className="h-5 w-8 object-contain"
+                          />
+                        ))}
+                        <span
+                          className="flex h-5 items-center text-[12px] font-medium"
+                          style={{ color: BUYER_COLORS.muted }}
+                        >
+                          y más
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  {selected ? (
-                    <span
-                      className="flex-shrink-0 rounded-full"
-                      style={{
-                        width: '22px',
-                        height: '22px',
-                        border: `2px solid ${method.color}`,
-                        background: '#fff',
-                        boxSizing: 'border-box' as const,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <span
-                        className="rounded-full"
-                        style={{
-                          width: '12px',
-                          height: '12px',
-                          background: method.color,
-                          display: 'block',
-                        }}
-                      />
-                    </span>
-                  ) : (
-                    <span
-                      className="flex-shrink-0 rounded-full"
-                      style={{
-                        width: '22px',
-                        height: '22px',
-                        border: `2px solid ${BUYER_COLORS.border}`,
-                        background: '#fff',
-                        boxSizing: 'border-box' as const,
-                        display: 'inline-block',
-                      }}
-                    />
-                  )}
                 </button>
               )
             })}
