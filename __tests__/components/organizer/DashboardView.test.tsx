@@ -11,7 +11,7 @@ const dashboardPayload = {
   order_count: 4,
   active_orders: 3,
   delivered_orders: 1,
-  by_status: { pending: 1, preparing: 1, ready: 1, delivered: 1, cancelled: 0 },
+  by_status: { paid: 1, partially_delivered: 1, delivered: 1, cancelled: 1 },
   hourly: Array.from({ length: 8 }, (_, i) => ({ hour: `${i}h`, revenue: 0 })),
   payment_breakdown: [
     { key: 'mp' as const, count: 2, revenue: 4300 },
@@ -26,17 +26,17 @@ beforeEach(() => {
 })
 
 describe('DashboardView', () => {
-  it('muestra las 4 tarjetas de estado', async () => {
+  it('muestra los 4 estados de pedido', async () => {
     render(<DashboardView eventId="demo-event" />)
     await waitFor(() => {
       expect(screen.queryByText('Cargando métricas…')).not.toBeInTheDocument()
     })
-    const card = screen.getByText('Por estado').closest('div.rounded-2xl')
+    const card = screen.getByText('Por estado').closest('div.rounded-2xl') as HTMLElement
     expect(card).toBeTruthy()
-    expect(within(card!).getByText('Pendientes')).toBeInTheDocument()
-    expect(within(card!).getByText('En preparación')).toBeInTheDocument()
-    expect(within(card!).getByText('Listos')).toBeInTheDocument()
-    expect(within(card!).getByText('Entregados')).toBeInTheDocument()
+    expect(within(card).getByText('Pagados')).toBeInTheDocument()
+    expect(within(card).getByText('Entrega parcial')).toBeInTheDocument()
+    expect(within(card).getByText('Finalizados')).toBeInTheDocument()
+    expect(within(card).getByText('Cancelados')).toBeInTheDocument()
   })
 
   it('muestra el total recaudado formateado', async () => {
@@ -44,6 +44,10 @@ describe('DashboardView', () => {
     await waitFor(() => {
       expect(screen.queryByText('Cargando métricas…')).not.toBeInTheDocument()
     })
-    expect(screen.getByText('Recaudado').closest('div')).toHaveTextContent('8.300')
+    // El número se anima de 0 al total, así que hay que esperar al valor final.
+    await waitFor(
+      () => expect(screen.getByText('Recaudado').closest('div')).toHaveTextContent('8.300'),
+      { timeout: 3000 },
+    )
   })
 })

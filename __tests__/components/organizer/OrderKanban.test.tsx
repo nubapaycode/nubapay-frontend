@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { OrderKanban } from '@/components/organizer/OrderKanban'
 import type { Order } from '@/types'
 
@@ -14,17 +14,18 @@ const makeOrder = (id: string, status: Order['status']): Order => ({
 })
 
 describe('OrderKanban', () => {
-  it('renderiza las 4 columnas con sus headers', () => {
+  it('renderiza las 5 columnas con sus headers', () => {
     render(<OrderKanban orders={[]} onMarkReady={jest.fn()} onMarkDelivered={jest.fn()} />)
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
     expect(screen.getByText('En preparación')).toBeInTheDocument()
     expect(screen.getByText('Listo')).toBeInTheDocument()
+    expect(screen.getByText('Entrega parcial')).toBeInTheDocument()
     expect(screen.getByText('Entregado')).toBeInTheDocument()
   })
 
   it('muestra "Sin pedidos" en todas las columnas cuando no hay órdenes', () => {
     render(<OrderKanban orders={[]} onMarkReady={jest.fn()} onMarkDelivered={jest.fn()} />)
-    expect(screen.getAllByText('Sin pedidos')).toHaveLength(4)
+    expect(screen.getAllByText('Sin pedidos')).toHaveLength(5)
   })
 
   it('muestra el conteo correcto en el badge de cada columna', () => {
@@ -52,7 +53,7 @@ describe('OrderKanban', () => {
     const orders = [makeOrder('o1', 'pending'), makeOrder('o2', 'pending')]
     render(<OrderKanban orders={orders} onMarkReady={jest.fn()} onMarkDelivered={jest.fn()} />)
     // pending tiene 2 órdenes → no muestra "Sin pedidos"
-    // preparing, ready, delivered no tienen → muestran "Sin pedidos"
-    expect(screen.getAllByText('Sin pedidos')).toHaveLength(3)
+    // preparing, ready, partially_delivered y delivered no tienen → muestran "Sin pedidos"
+    expect(screen.getAllByText('Sin pedidos')).toHaveLength(4)
   })
 })

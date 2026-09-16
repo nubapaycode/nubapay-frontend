@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { EventsView } from '@/components/organizer/EventsView'
 import { browserFetch } from '@/lib/browserFetch'
@@ -85,10 +85,17 @@ describe('EventsView', () => {
     )
   })
 
-  it('elimina un evento', async () => {
+  it('elimina un evento tras confirmar en el modal', async () => {
     render(<EventsView />)
     await waitFor(() => expect(screen.getByText('Festival de Verano 2026')).toBeInTheDocument())
+
     await userEvent.click(screen.getByRole('button', { name: 'Eliminar' }))
+
+    // El modal repite el nombre del evento, así que se confirma dentro del modal.
+    const modal = await screen.findByTestId('modal-overlay')
+    expect(within(modal).getByText('¿Eliminar evento?')).toBeInTheDocument()
+    await userEvent.click(within(modal).getByRole('button', { name: 'Eliminar' }))
+
     await waitFor(() => expect(screen.queryByText('Festival de Verano 2026')).not.toBeInTheDocument())
   })
 
