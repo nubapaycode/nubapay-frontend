@@ -6,7 +6,7 @@ import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { SITE_NAME, pageMeta } from '@/lib/seo'
 
 const LANDING_META: Metadata = pageMeta({
-  title: 'Nubapay — Pedí, pagá y retirá sin cajas',
+  title: 'Nubapay - Pedí, pagá y retirá sin cajas',
   description:
     'Entradas, parking, menú digital y retiro con QR para eventos y festivales. Sin cajas, sin caos.',
 })
