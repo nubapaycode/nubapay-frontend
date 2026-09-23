@@ -168,12 +168,21 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const isCancelled = order?.payment_status === 'cancelled'
   const isRefunded = order?.payment_status === 'refunded'
 
+  // Efectivo no tiene checkout externo: el comprador presenta el QR y el staff
+  // confirma el cobro al escanearlo (ver ScannerView, panel organizador).
+  const isAwaitingCash =
+    !isPaid &&
+    Boolean(order) &&
+    order!.payment_method === 'cash' &&
+    !isRejected && !isCancelled
+
   // Requiere `order` cargado (evita que esta tarjeta se solape con "Cargando tu
   // pedido…") y se basa en el estado real del backend, no en `payment_result`
   // de la URL — volver de MP con `?payment_result=failure` no debe bloquear el
   // reintento de pago si el pedido sigue pendiente en el servidor.
   const awaitingMpCheckout =
     !isPaid &&
+    !isAwaitingCash &&
     Boolean(order) &&
     (isPendingPayment || order!.processing)
   const mpCheckoutReady = Boolean(order?.checkout_url)
@@ -568,6 +577,37 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               <p className="text-[15px] font-bold leading-snug" style={{ color: hero.titleColor }}>{hero.title}</p>
               <p className="mt-0.5 text-[12px] leading-snug" style={{ color: hero.subtitleColor }}>{hero.subtitle}</p>
             </div>
+          </div>
+        )}
+
+        {/* Efectivo pendiente — mostrar el QR para que el staff cobre y confirme */}
+        {isAwaitingCash && order && !loadError && (
+          <div
+            className="flex flex-col items-center gap-5 rounded-[18px] px-6 py-6"
+            style={{ background: '#fff', border: `1px solid #BBF7D0` }}
+          >
+            <div className="flex flex-col items-center gap-1 text-center">
+              <p className="text-[16px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+                Presentá este QR para pagar {formatPrice(order.total_amount)}
+              </p>
+              <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
+                El personal lo va a escanear para cobrarte en efectivo y confirmar tu pedido
+              </p>
+            </div>
+            <div
+              className="rounded-[18px] p-4"
+              style={{ border: `2px solid #BBF7D0`, background: '#F0FDF4' }}
+            >
+              <QRCodeSVG value={orderId} size={192} />
+            </div>
+            {order.order_number && (
+              <span
+                className="rounded-full px-4 py-1.5 font-mono text-[13px] font-semibold"
+                style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+              >
+                Pedido #{order.order_number}
+              </span>
+            )}
           </div>
         )}
 

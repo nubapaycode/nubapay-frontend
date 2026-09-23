@@ -222,6 +222,19 @@ export async function scanQr(
   return { ok: true, order: body.order }
 }
 
+export async function confirmCashPayment(
+  eventId: string,
+  orderId: string,
+): Promise<{ ok: true; order: Order } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `orders/${orderId}/confirm-cash`), {
+    method: 'POST',
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { order?: Order; error?: string }
+  if (!res.ok || !body.order) return { ok: false, error: body.error ?? 'No se pudo confirmar el pago' }
+  return { ok: true, order: body.order }
+}
+
 export async function fetchCategories(
   eventId: string,
   opts?: { page?: number; pageSize?: number },

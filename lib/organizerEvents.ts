@@ -27,6 +27,7 @@ export async function patchOrganizerEvent(
     is_active: boolean
     notify_pickup_point: boolean
     show_category_shortcuts: boolean
+    cash_enabled: boolean
     /** String para guardar el token; null o "" para eliminarlo. */
     mp_access_token: string | null
     /** String para guardar el client_id de Sipago; null o "" para eliminarlo. */

@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import jsQR from 'jsqr'
-import { AlertTriangle, Camera, Check, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
+import { AlertTriangle, Banknote, Camera, Check, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
-import { previewQr, scanQr } from '@/lib/organizerWorkspace'
-import { cn } from '@/lib/utils'
+import { confirmCashPayment, previewQr, scanQr } from '@/lib/organizerWorkspace'
+import { cn, formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
 
 type ChipTone = 'neutral' | 'success' | 'warning' | 'danger'
@@ -51,7 +51,18 @@ function OrderIdentity({ order }: { order: Order }) {
   )
 }
 
-type ScanState = 'idle' | 'scanning' | 'loading' | 'confirming' | 'confirm_loading' | 'ready' | 'partial' | 'already_scanned' | 'error'
+type ScanState =
+  | 'idle'
+  | 'scanning'
+  | 'loading'
+  | 'cash_pending'
+  | 'cash_confirming'
+  | 'confirming'
+  | 'confirm_loading'
+  | 'ready'
+  | 'partial'
+  | 'already_scanned'
+  | 'error'
 
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -113,7 +124,8 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setOrder(result.order)
       setPendingOrderId(orderId)
       setSelectedQty({})
-      setState('confirming')
+      const awaitingCash = result.order.paymentMethod === 'cash' && result.order.paymentStatus !== 'approved'
+      setState(awaitingCash ? 'cash_pending' : 'confirming')
     } else if (result.alreadyScanned) {
       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200])
       setOrder(result.order ?? null)
@@ -146,6 +158,22 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setState('error')
     }
   }, [eventId, pendingOrderId, selectedQty])
+
+  const confirmCashReceived = useCallback(async () => {
+    if (!pendingOrderId) return
+    setState('cash_confirming')
+    const result = await confirmCashPayment(eventId, pendingOrderId)
+    if (result.ok) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100])
+      setOrder(result.order)
+      setSelectedQty({})
+      setState('confirming')
+    } else {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(300)
+      setErrorMsg(result.error)
+      setState('error')
+    }
+  }, [eventId, pendingOrderId])
 
   const scan = useCallback(() => {
     const video = videoRef.current
@@ -290,6 +318,39 @@ export function ScannerView({ eventId }: { eventId: string }) {
           <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-4 text-center">
             <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
             <p className="text-sm text-gray-400">Verificando pedido…</p>
+          </div>
+        )}
+
+        {/* Cash pending — staff must confirm they physically received the money */}
+        {(state === 'cash_pending' || state === 'cash_confirming') && order && (
+          <div className="flex flex-col gap-3">
+            <div className="bg-white rounded-2xl border border-amber-100 p-4">
+              <OrderIdentity order={order} />
+              <StatusChip tone="warning" icon={Banknote}>
+                Pago en efectivo pendiente
+              </StatusChip>
+              <p className="text-sm text-gray-500">Debés recibir</p>
+              <p className="text-2xl font-semibold text-gray-900">{formatPrice(order.total)}</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => void confirmCashReceived()}
+                disabled={state === 'cash_confirming'}
+                style={organizerAccentFilledButtonStyle()}
+                className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {state === 'cash_confirming' ? 'Confirmando…' : 'Ya lo recibí'}
+              </button>
+              <button
+                type="button"
+                onClick={cancelScan}
+                disabled={state === 'cash_confirming'}
+                className="w-full rounded-full border border-gray-200 py-3.5 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                Escanear otro
+              </button>
+            </div>
           </div>
         )}
 

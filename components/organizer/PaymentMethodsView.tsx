@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, ChevronRight } from 'lucide-react'
+import { Banknote, CheckCircle2, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
-import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
+import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
 /** Estado "ya conectada" de una pasarela, bien visible en la fila. */
@@ -52,6 +52,20 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
 
   const mpHref = `/events/${eventId}/metodos-pago/mercadopago`
   const sipagoHref = `/events/${eventId}/metodos-pago/sipago`
+
+  const [cashSaving, setCashSaving] = useState(false)
+  const toggleCash = useCallback(async () => {
+    if (!event || cashSaving) return
+    const next = !event.cash_enabled
+    setCashSaving(true)
+    setEvent(prev => (prev ? { ...prev, cash_enabled: next } : prev))
+    const res = await patchOrganizerEvent(eventId, { cash_enabled: next })
+    if (!res.ok) {
+      setEvent(prev => (prev ? { ...prev, cash_enabled: !next } : prev))
+      showToast(res.error, 'error')
+    }
+    setCashSaving(false)
+  }, [event, cashSaving, eventId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -116,6 +130,37 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
           {event?.has_sipago_credentials && <ConnectedBadge />}
           <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
         </Link>
+      </section>
+
+      {/* ── Efectivo ── */}
+      <section className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+            <Banknote size={18} className="text-green-700" aria-hidden />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Efectivo</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              El comprador paga al retirar; el staff confirma el cobro al escanear su QR
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(event?.cash_enabled)}
+            disabled={cashSaving}
+            onClick={() => void toggleCash()}
+            className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:opacity-60 ${
+              event?.cash_enabled ? 'bg-gray-900' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                event?.cash_enabled ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
       </section>
       </div>
     </div>
