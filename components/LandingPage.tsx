@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import SiteNavbar from '@/components/SiteNavbar'
 import SiteFooter from '@/components/SiteFooter'
+import { browserFetch } from '@/lib/browserFetch'
 
 const TICKER = [
   'Sin cajas', 'Menú digital', 'Entradas y parking', 'QR antifraude', 'Pagos online',
@@ -429,6 +430,8 @@ const CSS = `
     .nb-faq-sticky { position: static !important; }
     .nb-cta-inner { padding: 80px 48px !important; }
     .nb-cta-buttons { flex-wrap: wrap !important; justify-content: center !important; }
+    .nb-contact-section { padding-left: 24px !important; padding-right: 24px !important; }
+    .nb-contact-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
   }
 
   @media (max-width: 640px) {
@@ -461,7 +464,49 @@ const CSS = `
     .nb-passes-box { padding: 28px 14px !important; border-radius: 28px !important; }
     .nb-pass-card { padding: 18px !important; }
     .nb-pass-peek { left: 18px; }
+    .nb-contact-section { padding-left: 20px !important; padding-right: 20px !important; padding-bottom: 80px !important; }
+    .nb-contact-card { padding: 32px 24px !important; border-radius: 28px !important; }
+    .nb-contact-form-card { padding: 24px 20px !important; }
+    .nb-contact-row { grid-template-columns: 1fr !important; }
+    .nb-contact-btn { width: 100% !important; justify-content: center !important; align-self: stretch !important; }
   }
+
+  .nb-contact-btn { transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), background 0.2s, border-color 0.2s; }
+  .nb-contact-btn:hover { transform: translateY(-2px); }
+  .nb-contact-copy {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; padding: 0; border-radius: 50%; cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1); background: transparent; color: #6A6A78;
+    transition: background 0.5s cubic-bezier(0.22,1,0.36,1), border-color 0.5s cubic-bezier(0.22,1,0.36,1), color 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.25s cubic-bezier(0.22,1,0.36,1);
+  }
+  .nb-contact-copy:hover { color: #0A0A0F; border-color: rgba(0,0,0,0.2); background: rgba(0,0,0,0.03); }
+  .nb-contact-copy:active { transform: scale(0.92); }
+  .nb-contact-copy-done, .nb-contact-copy-done:hover { color: #3D6B00; background: rgba(198,255,0,0.22); border-color: rgba(198,255,0,0.55); }
+  .nb-contact-copy-icon, .nb-contact-check-icon {
+    position: absolute; top: 50%; left: 50%;
+    transition: opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1);
+  }
+  .nb-contact-copy-icon { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .nb-contact-check-icon { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  .nb-contact-copy-done .nb-contact-copy-icon { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  .nb-contact-copy-done .nb-contact-check-icon { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .nb-contact-toast {
+    position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translate(-50%, 6px) scale(0.96);
+    background: #FFFFFF; color: #0A0A0F; font-size: 12px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+    padding: 6px 12px; border-radius: 100px; border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 6px 20px rgba(10,10,15,0.08), 0 1px 3px rgba(10,10,15,0.06);
+    pointer-events: none; opacity: 0; filter: blur(2px);
+    transition: opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.55s cubic-bezier(0.22,1,0.36,1), filter 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+  .nb-contact-toast-on { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .nb-contact-copy-icon, .nb-contact-check-icon, .nb-contact-toast { transition: opacity 0.3s; }
+    .nb-contact-toast, .nb-contact-toast-on { transform: translate(-50%, 0); filter: none; }
+  }
+  .nb-contact-input { transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
+  .nb-contact-input::placeholder { color: #9A9AA8; }
+  .nb-contact-input:focus { background: #FFFFFF !important; border-color: #0A0A0F !important; box-shadow: 0 0 0 4px rgba(198,255,0,0.35); }
+  @media (prefers-reduced-motion: reduce) { .nb-contact-btn:hover { transform: none; } }
 `
 
 const S = {
@@ -1026,7 +1071,7 @@ export function LandingPage() {
                 Preguntas<br />frecuentes.
               </h2>
               <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: 0 }}>
-                ¿Tenés dudas? Acá respondemos las más comunes. Si necesitás más info, escribinos.
+                ¿Tenés dudas? Acá respondemos las más comunes. Si necesitás más info, <a href="#contacto" style={{ color: '#0A0A0F', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '3px' }}>escribinos</a>.
               </p>
             </div>
 
@@ -1082,6 +1127,9 @@ export function LandingPage() {
 
           </div>
         </section>
+
+        {/* ─── CONTACTO ─── */}
+        <ContactSection />
 
         {/* ─── FINAL CTA ─── */}
         <section className="nb-cta-section" style={{ padding: '0 40px 160px', maxWidth: '1280px', margin: '0 auto' }}>
@@ -1525,4 +1573,190 @@ function CartTotal({ to }: { to: number }) {
   }, [to])
 
   return <span ref={ref}>{formatARS(val)}</span>
+}
+
+/* ── Contacto ── */
+const CONTACT_EMAIL = 'contacto@nubapay.com'
+const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde nubapay')}`
+/** Mismo form de Formspree que la solicitud de registro; se puede separar por entorno. */
+const CONTACT_FORMSPREE_ID =
+  process.env.NEXT_PUBLIC_FORMSPREE_CONTACT_FORM_ID || process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID || 'mdeoggby'
+const CONTACT_ENDPOINT = `https://formspree.io/f/${CONTACT_FORMSPREE_ID}`
+const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CONTACT_MESSAGE_MAX_H = 360
+const CONTACT_TOPICS = [
+  { title: 'Eventos grandes', desc: 'Festivales, estadios o varios puntos de retiro.' },
+  { title: 'Alianzas y prensa', desc: 'Productoras, sponsors y medios.' },
+  { title: 'Soporte', desc: 'Dudas sobre tu cuenta o un evento en curso.' },
+]
+
+const CONTACT_INPUT: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)',
+  borderRadius: '14px', padding: '14px 16px', fontSize: '15px', color: '#0A0A0F',
+  fontFamily: 'inherit', outline: 'none',
+}
+const CONTACT_LABEL: React.CSSProperties = {
+  display: 'block', fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 8px 0', letterSpacing: '-0.01em',
+}
+
+function ContactSection() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+  const [gotcha, setGotcha] = useState('')
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
+  const [copy, setCopy] = useState<'idle' | 'ok' | 'error'>('idle')
+  const messageRef = useRef<HTMLTextAreaElement>(null)
+
+  /* ── El textarea crece con el contenido hasta CONTACT_MESSAGE_MAX_H ── */
+  useLayoutEffect(() => {
+    const el = messageRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const next = Math.min(el.scrollHeight + 2, CONTACT_MESSAGE_MAX_H)
+    el.style.height = `${next}px`
+    el.style.overflowY = el.scrollHeight + 2 > CONTACT_MESSAGE_MAX_H ? 'auto' : 'hidden'
+  }, [message, status])
+
+  useEffect(() => {
+    if (copy === 'idle') return
+    const t = setTimeout(() => setCopy('idle'), 2200)
+    return () => clearTimeout(t)
+  }, [copy])
+
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL)
+      setCopy('ok')
+    } catch {
+      setCopy('error')
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (name.trim().length < 2) { setError('Ingresá tu nombre.'); return }
+    if (!CONTACT_EMAIL_RE.test(email.trim())) { setError('Revisá el email: falta el @ o el dominio.'); return }
+    if (message.trim().length < 10) { setError('Contanos un poco más: al menos 10 caracteres.'); return }
+    setStatus('sending')
+    try {
+      const res = await browserFetch(CONTACT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          nombre: name.trim(),
+          email: email.trim(),
+          mensaje: message.trim(),
+          origen: 'Landing - Contacto',
+          _subject: `Contacto desde la web: ${name.trim()}`,
+          _gotcha: gotcha,
+        }),
+      })
+      if (res.ok) {
+        setStatus('sent')
+        return
+      }
+      const body = (await res.json().catch(() => null)) as { errors?: { message?: string }[] } | null
+      setError(body?.errors?.[0]?.message ?? 'No pudimos enviar tu mensaje. Probá de nuevo.')
+    } catch {
+      setError('No se pudo contactar al servidor. Revisá tu conexión.')
+    }
+    setStatus('idle')
+  }
+
+  const reset = () => {
+    setName(''); setEmail(''); setMessage(''); setError(''); setStatus('idle')
+  }
+
+  return (
+    <section id="contacto" className="nb-contact-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
+      <div className="nb-reveal nb-contact-card" style={{ background: '#F4F4F6', borderRadius: '36px', padding: '72px 64px' }}>
+        <div className="nb-contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: '80px', alignItems: 'center' }}>
+
+          <div>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Contacto</p>
+            <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
+              ¿Hablamos?
+            </h2>
+            <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: '0 0 36px 0', maxWidth: '420px' }}>
+              Contanos sobre tu evento y te ayudamos a armarlo. Respondemos en menos de 24 horas hábiles.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 36px 0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {CONTACT_TOPICS.map(({ title, desc }) => (
+                <li key={title} style={{ display: 'flex', gap: '12px', alignItems: 'baseline', fontSize: '14px', lineHeight: '1.5' }}>
+                  <span aria-hidden="true" style={{ width: '6px', height: '6px', borderRadius: '50%', background: S.accent, boxShadow: '0 0 0 3px rgba(198,255,0,0.25)', flexShrink: 0, transform: 'translateY(-2px)' }} />
+                  <span><strong style={{ fontWeight: 600, color: '#0A0A0F' }}>{title}.</strong> <span style={{ color: S.muted }}>{desc}</span></span>
+                </li>
+              ))}
+            </ul>
+            <p style={{ fontSize: '14px', color: S.muted, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              ¿Preferís el mail?
+              <a href={CONTACT_MAILTO} style={{ color: '#0A0A0F', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: '3px', wordBreak: 'break-all' }}>{CONTACT_EMAIL}</a>
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                <button type="button" onClick={copyEmail} aria-label="Copiar mail" title="Copiar mail" className={`nb-contact-copy${copy === 'ok' ? ' nb-contact-copy-done' : ''}`}>
+                  {/* Los dos íconos quedan montados y se cruzan con fade + scale */}
+                  <svg className="nb-contact-copy-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.4" /><path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+                  <svg className="nb-contact-check-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
+                <span aria-hidden="true" className={`nb-contact-toast${copy !== 'idle' ? ' nb-contact-toast-on' : ''}`}>
+                  {copy === 'error' ? 'No se pudo copiar' : '¡Copiado!'}
+                </span>
+                <span role="status" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+                  {copy === 'ok' ? 'Mail copiado al portapapeles' : copy === 'error' ? 'No se pudo copiar el mail' : ''}
+                </span>
+              </span>
+            </p>
+          </div>
+
+          <div className="nb-contact-form-card" style={{ background: '#FFFFFF', borderRadius: '24px', padding: '36px', border: `1px solid ${S.border}` }}>
+            {status === 'sent' ? (
+              <div role="status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '14px', padding: '24px 0' }}>
+                <span style={{ width: '48px', height: '48px', borderRadius: '50%', background: S.accent, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="16" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke={S.accentFg} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
+                <h3 style={{ fontSize: '26px', fontWeight: 500, letterSpacing: '-0.035em', margin: 0, color: '#0A0A0F' }}>¡Mensaje enviado!</h3>
+                <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: 0 }}>
+                  Gracias {name.trim()}. Te respondemos a <strong style={{ color: '#0A0A0F', fontWeight: 600 }}>{email.trim()}</strong> dentro de las próximas 24 horas hábiles.
+                </p>
+                <button type="button" onClick={reset} style={{ background: 'none', border: 'none', padding: 0, marginTop: '6px', color: '#0A0A0F', fontWeight: 600, fontSize: '14px', textDecoration: 'underline', textUnderlineOffset: '3px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Enviar otro mensaje
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div className="nb-contact-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label htmlFor="nb-contact-name" style={CONTACT_LABEL}>Nombre</label>
+                    <input id="nb-contact-name" className="nb-contact-input" type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" style={CONTACT_INPUT} />
+                  </div>
+                  <div>
+                    <label htmlFor="nb-contact-email" style={CONTACT_LABEL}>Email</label>
+                    <input id="nb-contact-email" className="nb-contact-input" type="email" autoComplete="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vos@ejemplo.com" style={CONTACT_INPUT} />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="nb-contact-message" style={CONTACT_LABEL}>Mensaje</label>
+                  <textarea ref={messageRef} id="nb-contact-message" className="nb-contact-input" rows={5} value={message} onChange={e => setMessage(e.target.value)} placeholder="Contanos sobre tu evento: tipo, fecha, cantidad de asistentes…" style={{ ...CONTACT_INPUT, resize: 'none', minHeight: '128px', maxHeight: `${CONTACT_MESSAGE_MAX_H}px`, lineHeight: '1.6' }} />
+                </div>
+                {/* Honeypot anti-spam: Formspree descarta envíos con _gotcha completo */}
+                <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" value={gotcha} onChange={e => setGotcha(e.target.value)} style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }} />
+                {error && (
+                  <p role="alert" style={{ margin: 0, fontSize: '14px', color: '#C2410C', background: 'rgba(255,92,26,0.08)', borderRadius: '12px', padding: '10px 14px' }}>{error}</p>
+                )}
+                <button type="submit" disabled={status === 'sending'} className="nb-contact-btn nb-hero-cta-primary" style={{ alignSelf: 'flex-end', display: 'inline-flex', alignItems: 'center', gap: '8px', height: '52px', boxSizing: 'border-box', background: S.accent, color: S.accentFg, padding: '0 6px 0 26px', borderRadius: '100px', border: 'none', cursor: status === 'sending' ? 'wait' : 'pointer', opacity: status === 'sending' ? 0.7 : 1, fontSize: '15px', fontWeight: 400, letterSpacing: '-0.02em', fontFamily: 'inherit' }}>
+                  {status === 'sending' ? 'Enviando…' : 'Enviar mensaje'}
+                  <span className="nb-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '100px', background: S.accentFg }}>
+                    <ArrowRight color={S.accent} size={16} strokeWidth={1} />
+                  </span>
+                </button>
+              </form>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </section>
+  )
 }

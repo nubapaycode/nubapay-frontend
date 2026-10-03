@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Cómo funciona', href: '/#como-funciona' },
   { label: 'Casos', href: '/#caso-landia' },
   { label: 'Nosotros', href: '/nosotros' },
+  { label: 'Contacto', href: '/#contacto' },
 ]
 
 function CtaArrow() {
