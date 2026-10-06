@@ -517,18 +517,24 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           </div>
         )}
 
-        {/* Banner resultado de pago (solo si no está pagado todavía) */}
+        {/* Banner resultado de pago (solo si no está pagado todavía).
+            El proveedor ya dijo "success" en el redirect, pero el backend
+            recién lo confirma cuando llega su webhook — el texto no debe
+            afirmar algo que la tarjeta de abajo puede todavía contradecir. */}
         {!isPaid && paymentResult === 'success' && (
           <div
             className="flex items-center gap-3 rounded-[16px] px-4 py-3"
             style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}
           >
             <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full" style={{ background: '#16A34A' }}>
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path d="M2.5 7l3 3 6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <div
+                className="h-3.5 w-3.5 rounded-full border-2"
+                style={{ borderColor: 'rgba(255,255,255,0.35)', borderTopColor: '#fff', animation: 'spin 0.75s linear infinite' }}
+              />
             </div>
-            <p className="text-[13px] font-semibold" style={{ color: '#15803D' }}>¡Pago aprobado! Tu pedido está confirmado.</p>
+            <p className="text-[13px] font-semibold" style={{ color: '#15803D' }}>
+              Recibimos tu pago — estamos confirmándolo, en unos segundos vas a ver tu QR.
+            </p>
           </div>
         )}
         {!isPaid && paymentResult === 'pending' && (
@@ -633,12 +639,25 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   {order?.order_number ? `Pedido #${order.order_number} reservado` : 'Estamos procesando tu orden'}
                 </p>
                 <p className="text-[12px] mt-0.5" style={{ color: BUYER_COLORS.muted }}>
-                  {mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
+                  {paymentResult === 'success'
+                    ? 'Ya recibimos tu pago, estamos confirmándolo.'
+                    : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
                 </p>
               </div>
             </div>
 
             <div className="px-4 pb-4 flex flex-col gap-3">
+              {/* El proveedor ya redirigió con "success": no tiene sentido ofrecer
+                  "Pagar con X" de nuevo — mostramos un estado de confirmación. */}
+              {paymentResult === 'success' ? (
+                <div
+                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold"
+                  style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                >
+                  <Spinner size="sm" />
+                  Confirmando tu pago…
+                </div>
+              ) : (
               <button
                 type="button"
                 disabled={!mpCheckoutReady}
@@ -677,7 +696,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   </>
                 )}
               </button>
-              {!mpCheckoutReady && (
+              )}
+              {paymentResult !== 'success' && !mpCheckoutReady && (
                 waitedLong ? (
                   <div
                     className="flex items-center gap-2.5 rounded-[14px] px-3.5 py-3"
@@ -699,9 +719,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   </p>
                 )
               )}
-              <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
-                Si no completás el pago, el pedido se cancelará automáticamente.
-              </p>
+              {paymentResult !== 'success' && (
+                <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
+                  Si no completás el pago, el pedido se cancelará automáticamente.
+                </p>
+              )}
             </div>
           </div>
         )}

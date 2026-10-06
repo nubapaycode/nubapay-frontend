@@ -411,7 +411,8 @@ export function CheckoutView({
             onBlur={() => setFocused(false)}
             placeholder="Ej: Juan Pérez"
             aria-invalid={nameError}
-            className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
+            // text-[16px]: por debajo de 16px, iOS/Android hacen zoom automático al enfocar el input
+            className="w-full rounded-[12px] px-4 py-3 text-[16px] outline-none transition-colors"
             style={{
               border: `1.5px solid ${nameError ? '#DC2626' : focused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
               background: '#fff',
@@ -440,7 +441,7 @@ export function CheckoutView({
             onBlur={() => setEmailFocused(false)}
             placeholder="Ej: juan@email.com"
             aria-invalid={emailError}
-            className="w-full rounded-[12px] px-4 py-3 text-[15px] outline-none transition-colors"
+            className="w-full rounded-[12px] px-4 py-3 text-[16px] outline-none transition-colors"
             style={{
               border: `1.5px solid ${emailError ? '#DC2626' : emailFocused ? BUYER_COLORS.text : BUYER_COLORS.border}`,
               background: '#fff',
