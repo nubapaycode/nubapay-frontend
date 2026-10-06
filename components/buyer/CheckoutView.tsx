@@ -182,7 +182,10 @@ export function CheckoutView({
 
     setLoading(true)
     setError('')
-    let redirectingToMp = false
+    // Se mantiene en true para cualquier redirect (MP externo o router.push
+    // interno) para que el overlay no se apague antes de que la navegación
+    // termine — si no, queda una ventana "trabada" sin loader visible.
+    let isNavigatingAway = false
 
     try {
       const slug = catalogSlug ?? eventId
@@ -258,16 +261,18 @@ export function CheckoutView({
 
       if (checkoutUrl && paymentMethod === 'mp') {
         // El link de MP ya está listo: vamos directo, sin pasar por el tracker
-        redirectingToMp = true
+        isNavigatingAway = true
         window.location.href = checkoutUrl
         return
       }
+      isNavigatingAway = true
       router.push(buyerFlowPath(eventId, { catalogSlug, path: `order/${orderId}` }))
     } catch {
       setError('Error de conexión. Verificá tu internet e intentá de nuevo.')
     } finally {
-      // Al ir directo a MP dejamos el overlay hasta que el navegador navegue
-      if (!redirectingToMp) setLoading(false)
+      // Dejamos el overlay prendido hasta que la navegación (externa o
+      // interna) complete y este componente se desmonte.
+      if (!isNavigatingAway) setLoading(false)
     }
   }
 
