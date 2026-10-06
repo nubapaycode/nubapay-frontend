@@ -51,7 +51,7 @@ const NAV = [
     title: 'Empresa',
     links: [
       { label: 'Sobre Nubapay', href: '/nosotros' },
-      { label: 'Contacto', href: '/nosotros#equipo' },
+      { label: 'Contacto', href: '/#contacto' },
     ],
   },
   {
