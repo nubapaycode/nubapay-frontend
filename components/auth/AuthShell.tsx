@@ -186,7 +186,7 @@ export const AUTH_CSS = `
   .nba-input:focus {
     background: #FFFFFF;
     border-color: #0A0A0F;
-    box-shadow: 0 0 0 3px rgba(198,255,0,0.45);
+    box-shadow: 0 0 0 3px color-mix(in srgb, ${ACCENT} 45%, transparent);
   }
   .nba-input:disabled { opacity: 0.55; cursor: not-allowed; }
   textarea.nba-input { height: 128px; resize: none; line-height: 1.6; }
