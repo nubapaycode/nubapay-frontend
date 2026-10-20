@@ -30,7 +30,7 @@ export const AUTH_CSS = `
     position: relative;
     overflow: hidden;
   }
-  /* Mismo glow lima del hero de la landing */
+  /* Mismo glow lima del hero de la landing; en tenants toma el color principal de la marca */
   .nba-glow {
     position: absolute;
     top: 50%;
@@ -38,7 +38,7 @@ export const AUTH_CSS = `
     width: 900px;
     height: 760px;
     transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(198,255,0,0.42) 0%, rgba(198,255,0,0.10) 46%, rgba(198,255,0,0) 72%);
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, color-mix(in srgb, ${ACCENT} 42%, transparent) 0%, color-mix(in srgb, ${ACCENT} 10%, transparent) 46%, transparent 72%);
     pointer-events: none;
   }
   .nba-glow--b {
@@ -47,7 +47,7 @@ export const AUTH_CSS = `
     width: 46%;
     height: 58%;
     transform: none;
-    background: radial-gradient(ellipse 60% 60% at 40% 40%, rgba(198,255,0,0.16) 0%, rgba(198,255,0,0) 70%);
+    background: radial-gradient(ellipse 60% 60% at 40% 40%, color-mix(in srgb, ${ACCENT} 16%, transparent) 0%, transparent 70%);
   }
 
   .nba-brand {
