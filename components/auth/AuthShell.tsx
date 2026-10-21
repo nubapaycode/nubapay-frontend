@@ -224,7 +224,7 @@ export const AUTH_CSS = `
     margin-top: 6px;
     transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.16s;
   }
-  .nba-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px -12px rgba(198,255,0,0.75); }
+  .nba-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px -12px color-mix(in srgb, ${ACCENT} 75%, transparent); }
   .nba-submit:disabled { opacity: 0.55; cursor: not-allowed; }
   .nba-submit-arrow {
     display: inline-flex; align-items: center; justify-content: center;
