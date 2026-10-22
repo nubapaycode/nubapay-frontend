@@ -1576,7 +1576,7 @@ function CartTotal({ to }: { to: number }) {
 }
 
 /* ── Contacto ── */
-const CONTACT_EMAIL = 'contacto@nubapay.com'
+const CONTACT_EMAIL = 'contacto@nubapay.app'
 const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde nubapay')}`
 /** Mismo form de Formspree que la solicitud de registro; se puede separar por entorno. */
 const CONTACT_FORMSPREE_ID =
