@@ -100,6 +100,20 @@ export const platformAdminPaths = {
     return s ? `${base}?${s}` : base
   },
   eventProducts: (eventId: string) => apiUrl(`/platform/events/${encodeURIComponent(eventId)}/products`),
+  /** Ruta genérica bajo `/api/platform/…` con query opcional (omite valores vacíos). */
+  path: (
+    suffix: string,
+    params?: Record<string, string | number | boolean | null | undefined>,
+  ) => {
+    const base = apiUrl(`/platform${suffix.startsWith('/') ? suffix : `/${suffix}`}`)
+    const q = new URLSearchParams()
+    for (const [k, v] of Object.entries(params ?? {})) {
+      if (v === undefined || v === null || v === '' || v === false) continue
+      q.set(k, v === true ? '1' : String(v))
+    }
+    const s = q.toString()
+    return s ? `${base}?${s}` : base
+  },
   loadTests: (opts?: { page?: number; page_size?: number }) => {
     const base = apiUrl('/platform/load-tests')
     const q = new URLSearchParams()
