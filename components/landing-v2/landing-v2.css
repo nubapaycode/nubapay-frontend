@@ -1,0 +1,882 @@
+/* ───────── Nubapay · Landing v2 ───────── */
+.lv2-root {
+  --lv-lime: #C6FF00;
+  --lv-lime-soft: #D4FF3D;
+  --lv-lime-fg: #0A0F00;
+  --lv-ink: #0A0A0F;
+  --lv-muted: #6A6A78;
+  --lv-faint: #9A9AA8;
+  --lv-surface: #FAFAFA;
+  --lv-line: rgba(0, 0, 0, 0.08);
+  --lv-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --lv-gutter: 40px;
+
+  font-family: var(--font-bricolage, "Bricolage Grotesque", "DM Sans", sans-serif);
+  background: #fff;
+  color: var(--lv-ink);
+  overflow-x: clip;
+  position: relative;
+}
+.lv2-root *, .lv2-root *::before, .lv2-root *::after { box-sizing: border-box; }
+.lv2-root a { color: inherit; }
+.lv2-wrap { max-width: 1280px; margin: 0 auto; padding: 0 var(--lv-gutter); }
+.lv2-section { padding-bottom: 140px; }
+
+/* ── Progreso de scroll ── */
+.lv2-progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 120;
+  background: var(--lv-lime); transform-origin: left; transform: scaleX(var(--lv-progress, 0));
+  pointer-events: none;
+}
+
+/* ── Tipografía de sección ── */
+.lv2-h2 {
+  font-size: clamp(44px, 5vw, 72px); font-weight: 500; letter-spacing: -0.045em;
+  line-height: 0.95; margin: 0; color: var(--lv-ink);
+}
+.lv2-lead { font-size: 17px; line-height: 1.7; color: var(--lv-muted); margin: 0; }
+.lv2-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 72px;
+}
+.lv2-head .lv2-lead { max-width: 400px; text-align: right; }
+
+/* Marcador lima */
+.lv2-mark { position: relative; display: inline-block; padding: 0.02em 0.16em 0.08em; z-index: 0; color: var(--lv-lime-fg); }
+.lv2-mark::before {
+  content: ""; position: absolute; inset: -0.03em -0.06em;
+  transform: rotate(-0.8deg) scaleX(0); transform-origin: left center; z-index: -1;
+  /* trazo de marcador real: doble pasada + borde irregular (máscara SVG con ruido) */
+  background-image:
+    linear-gradient(101deg, rgba(198,255,0,0) 1%, rgba(198,255,0,0.95) 4%, rgba(198,255,0,0.95) 96%, rgba(198,255,0,0) 99%),
+    linear-gradient(98deg, rgba(198,255,0,0) 2%, rgba(198,255,0,0.6) 6%, rgba(198,255,0,0.6) 94%, rgba(198,255,0,0) 98%);
+  background-repeat: no-repeat, no-repeat;
+  background-size: 100% 70%, 100% 86%;
+  background-position: 0 92%, 0 55%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='44'%3E%3Cfilter%20id='r'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.014%200.15'%20numOctaves='2'%20seed='7'%20result='n'/%3E%3CfeDisplacementMap%20in='SourceGraphic'%20in2='n'%20scale='8'/%3E%3C/filter%3E%3Crect%20x='6'%20y='7'%20width='108'%20height='30'%20rx='9'%20fill='black'%20filter='url(%23r)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='44'%3E%3Cfilter%20id='r'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.014%200.15'%20numOctaves='2'%20seed='7'%20result='n'/%3E%3CfeDisplacementMap%20in='SourceGraphic'%20in2='n'%20scale='8'/%3E%3C/filter%3E%3Crect%20x='6'%20y='7'%20width='108'%20height='30'%20rx='9'%20fill='black'%20filter='url(%23r)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  transition: transform 0.9s var(--lv-ease) 0.35s;
+}
+.lv2-reveal.is-in .lv2-mark::before { transform: rotate(-0.8deg) scaleX(1); }
+/* El del hero lo dibuja GSAP tweeneando --mk */
+.lv2-mark--now::before { transform: rotate(-0.8deg) scaleX(var(--mk, 0)); transition: none; }
+
+/* ── Reveal (lo anima GSAP con ScrollTrigger.batch; acá sólo el estado inicial) ── */
+.lv2-reveal { opacity: 0; }
+.lv2-reveal.is-in { opacity: 1; }
+
+/* ── Spotlight que sigue al cursor ── */
+.lv2-spot { position: relative; overflow: hidden; isolation: isolate; }
+.lv2-spot::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0;
+  background: radial-gradient(440px circle at var(--mx, 50%) var(--my, 50%), rgba(198, 255, 0, 0.2), transparent 45%);
+  transition: opacity 0.4s ease;
+}
+.lv2-spot:hover::after { opacity: 1; }
+
+/* ── Botones ── */
+.lv2-btn {
+  display: inline-flex; align-items: center; gap: 10px; height: 58px; padding: 0 8px 0 30px;
+  border-radius: 100px; border: 0; cursor: pointer; text-decoration: none; font: inherit;
+  font-size: 17px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap;
+  background: var(--lv-lime); color: var(--lv-lime-fg);
+  transition: transform 0.35s var(--lv-ease), box-shadow 0.35s var(--lv-ease), background 0.35s ease;
+  overflow: hidden; /* la flecha sale por la derecha mientras se achica */
+}
+.lv2-btn:hover { background: var(--lv-lime-soft); box-shadow: 0 14px 30px -12px rgba(150, 200, 0, 0.55); }
+.lv2-btn:active { transform: scale(0.97); }
+.lv2-btn-arrow {
+  display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px;
+  border-radius: 100px; background: var(--lv-lime-fg); color: var(--lv-lime); overflow: hidden; position: relative; flex-shrink: 0;
+}
+.lv2-btn--ghost {
+  background: transparent; color: var(--lv-ink); padding: 0 30px; border: 1px solid rgba(0, 0, 0, 0.14);
+}
+.lv2-btn--ghost:hover { background: rgba(0, 0, 0, 0.04); box-shadow: none; }
+.lv2-btn--ghost-dark { color: #fff; border-color: rgba(255, 255, 255, 0.16); }
+.lv2-btn--ghost-dark:hover { background: rgba(255, 255, 255, 0.07); }
+/* El botón lima siempre con texto negro (le gana a `.lv2-root a { color: inherit }` en secciones oscuras) */
+.lv2-root .lv2-btn:not(.lv2-btn--ghost) { color: var(--lv-lime-fg); }
+
+/* ── Navbar: logo suelto a la izquierda + grupo de acciones a la derecha + menú bento ──
+   Todo el movimiento (apertura, ☰, tema, hovers) lo maneja GSAP desde Nav.tsx; acá sólo layout y estado inicial. */
+.lv2-nav {
+  --nv-glass: rgba(255, 255, 255, 0.6); --nv-highlight: rgba(255, 255, 255, 0.95); --nv-lowlight: rgba(10, 10, 15, 0.05);
+  --nv-fg: rgba(10, 10, 15, 1); --nv-burger-bg: rgba(10, 10, 15, 0.78); --nv-burger-fg: rgba(255, 255, 255, 1); --nv-burger-hl: rgba(255, 255, 255, 0.22); --nv-shadow: rgba(10, 10, 15, 0.22);
+  --nv-badge-bg: rgba(0, 0, 0, 1); --nv-badge-fg: rgba(255, 255, 255, 1);
+  position: fixed; top: 14px; left: 0; right: 0; z-index: 100; pointer-events: none;
+}
+.lv2-nav-bar {
+  position: relative; z-index: 2; max-width: 1280px; margin: 0 auto; padding: 0 var(--lv-gutter);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.lv2-nav-bar > * { pointer-events: auto; }
+.lv2-nav-chip {
+  display: inline-flex; align-items: center; height: 50px; padding: 0 20px; border-radius: 100px;
+  background: var(--nv-glass); color: var(--nv-fg); border: 0;
+  backdrop-filter: blur(20px) saturate(1.8);
+  /* Sin borde: lo despegan del fondo el brillo de arriba, la sombra interna de abajo y una sombra en dos capas */
+  box-shadow:
+    inset 0 1px 0 var(--nv-highlight), inset 0 -1px 0 var(--nv-lowlight),
+    0 0 3px -1px var(--nv-shadow), 0 0 28px -8px var(--nv-shadow);
+  text-decoration: none;
+}
+.lv2-root .lv2-logo { font-size: 21px; font-weight: 700; letter-spacing: -0.04em; color: var(--nv-fg); padding: 0 22px; }
+.lv2-logo-word { display: inline-flex; }
+.lv2-logo-char { display: inline-block; height: 1.3em; line-height: 1.3em; overflow: hidden; }
+.lv2-logo-roll, .lv2-logo-roll > span { display: block; }
+.lv2-logo-badge { width: 0.62em; height: 0.62em; flex-shrink: 0; margin-left: 0.1em; position: relative; top: calc(-0.22em + 4px); overflow: visible; }
+.lv2-nav-actions { display: flex; align-items: center; gap: 6px; }
+.lv2-root .lv2-nav-login { font-size: 14px; font-weight: 500; color: var(--nv-fg); }
+.lv2-nav-login span { opacity: 0.66; }
+.lv2-root .lv2-nav-cta {
+  display: inline-flex; align-items: center; gap: 8px; height: 50px; padding: 0 7px 0 20px; border-radius: 100px;
+  background: rgba(198, 255, 0, 0.72); color: var(--lv-lime-fg); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap;
+  backdrop-filter: blur(20px) saturate(1.8); overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(60, 80, 0, 0.18),
+    0 0 3px -1px var(--nv-shadow), 0 0 28px -8px var(--nv-shadow);
+}
+.lv2-nav-cta i {
+  display: inline-flex; width: 36px; height: 36px; border-radius: 50%; background: var(--lv-lime-fg);
+  color: var(--lv-lime); align-items: center; justify-content: center; overflow: hidden;
+}
+/* ☰ → ✕ (GSAP rota las líneas) */
+.lv2-nav-burger {
+  position: relative; width: 50px; height: 50px; border-radius: 50%; border: 0; cursor: pointer; flex-shrink: 0;
+  background: var(--nv-burger-bg); color: var(--nv-burger-fg);
+  backdrop-filter: blur(20px) saturate(1.8);
+  /* Vidrio tintado: mismo brillo arriba / sombra interna abajo que los chips */
+  box-shadow:
+    inset 0 1px 0 var(--nv-burger-hl), inset 0 -1px 0 var(--nv-lowlight),
+    0 0 3px -1px var(--nv-shadow), 0 0 28px -8px var(--nv-shadow);
+}
+.lv2-nav-burger span { position: absolute; left: 16px; right: 16px; height: 1.8px; border-radius: 2px; background: currentColor; }
+.lv2-nav-burger span:first-child { top: 21px; }
+.lv2-nav-burger span:last-child { top: 27px; }
+.lv2-nav-chip:focus-visible, .lv2-nav-cta:focus-visible, .lv2-nav-burger:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 3px; }
+
+/* Sin Lenis (movimiento reducido) el salto nativo a un ancla respeta el mismo despeje */
+.lv2-root section[id] { scroll-margin-top: 88px; }
+
+/* Menú a pantalla completa: GSAP lo revela con un círculo que nace del ☰ */
+.lv2-menu {
+  position: fixed; inset: 0; z-index: 1; background: rgba(10, 10, 15, 0.9); color: #fff; overflow-y: auto; overscroll-behavior: contain;
+  /* Vidrio oscuro: se adivina la página detrás sin perder contraste */
+  backdrop-filter: blur(25px) saturate(1.8);
+  clip-path: circle(0px at 100% 0%); visibility: hidden; pointer-events: none; outline: none; will-change: clip-path;
+}
+.lv2-nav.is-open .lv2-menu { pointer-events: auto; }
+.lv2-menu::before {
+  content: ""; position: absolute; width: 60vmax; height: 60vmax; right: -20vmax; top: -24vmax; border-radius: 50%;
+  background: radial-gradient(circle, rgba(198, 255, 0, 0.16), transparent 62%); pointer-events: none;
+}
+.lv2-menu-inner {
+  position: relative; min-height: 100%; padding-top: 118px; padding-bottom: 40px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: stretch;
+}
+/* Subgrid: las tres tarjetas comparten la altura de la ilustración y la del texto aunque un título baje de línea */
+.lv2-menu-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 1fr auto; column-gap: 14px; }
+.lv2-root .lv2-menu-card {
+  position: relative; display: grid; grid-row: span 2; grid-template-rows: subgrid; border-radius: 26px; overflow: hidden; text-decoration: none; color: #fff;
+  background: rgba(255, 255, 255, 0.05); border: 0; min-height: 440px; outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.lv2-menu-media { position: relative; min-height: 0; overflow: hidden; margin: 10px 10px 0; border-radius: 18px; background: #fff; }
+.lv2-menu-art { position: absolute; inset: 0; width: 100%; height: 100%; padding: 8%; color: #000; overflow: visible; }
+.lv2-menu-card-body { display: grid; align-content: start; gap: 6px; padding: 18px 20px 22px; }
+.lv2-menu-card-body small { display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
+.lv2-menu-card-body em {
+  font-style: normal; color: var(--lv-lime); padding: 3px 10px; border-radius: 100px;
+  border: 1px solid rgba(198, 255, 0, 0.45);
+}
+.lv2-menu-card-body b { font-size: 30px; line-height: 1.05; font-weight: 600; letter-spacing: -0.03em; }
+.lv2-menu-card-body > span { font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.6); }
+.lv2-menu-card-arrow {
+  position: absolute; top: 22px; right: 22px; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--lv-lime); color: var(--lv-lime-fg); visibility: hidden;
+}
+
+.lv2-menu-side { display: flex; flex-direction: column; gap: 32px; padding: 6px 0 0; }
+.lv2-menu-more { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+/* Cada link es una máscara: la línea entra desde abajo al abrir y el "roll" sube al hover */
+.lv2-root .lv2-menu-link {
+  display: block; width: fit-content; height: 1.3em; line-height: 1.3em; overflow: hidden;
+  font-size: 26px; font-weight: 500; letter-spacing: -0.02em; color: rgba(255, 255, 255, 0.86); text-decoration: none;
+}
+.lv2-menu-line, .lv2-menu-roll { display: block; }
+.lv2-menu-roll > span { display: block; white-space: nowrap; }
+.lv2-menu-roll > span + span, .lv2-menu-link.is-here .lv2-menu-roll > span:first-child { color: var(--lv-lime); }
+.lv2-menu-ctas { display: grid; gap: 10px; margin-top: auto; }
+.lv2-menu-ctas .lv2-btn { justify-content: space-between; width: 100%; }
+.lv2-menu-ctas .lv2-btn--ghost { justify-content: center; }
+.lv2-menu-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; }
+.lv2-root .lv2-menu-meta a { color: rgba(255, 255, 255, 0.5); text-decoration: none; }
+
+/* ── Hero ── */
+.lv2-hero { position: relative; padding: 110px 0 90px; overflow: clip; }
+.lv2-hero-glow {
+  position: absolute; pointer-events: none; z-index: 0; border-radius: 50%; filter: blur(10px);
+}
+.lv2-hero-glow--a {
+  top: -10%; left: -16%; width: 70%; height: 90%;
+  background: radial-gradient(ellipse 55% 55% at 40% 45%, rgba(198, 255, 0, 0.3), rgba(198, 255, 0, 0) 70%);
+}
+.lv2-hero-glow--b {
+  bottom: -20%; right: -10%; width: 50%; height: 70%;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(198, 255, 0, 0.16), rgba(198, 255, 0, 0) 70%);
+}
+.lv2-hero-grid {
+  position: relative; z-index: 1; display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 40px; align-items: center;
+}
+.lv2-h1 {
+  font-size: clamp(40px, 5.15vw, 80px); font-weight: 600; letter-spacing: -0.045em; line-height: 1;
+  margin: 0 0 28px;
+}
+.lv2-h1 .lv2-line { display: block; white-space: nowrap; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.lv2-h1 .lv2-line > span {
+  display: inline-block; transform: translateY(110%);
+}
+.lv2-hero-sub { font-size: 19px; line-height: 1.65; color: var(--lv-muted); max-width: 520px; margin: 0 0 36px; }
+.lv2-hero-sub strong { color: var(--lv-ink); font-weight: 500; }
+.lv2-hero-cta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+/* Estados iniciales de la intro del hero (los anima GSAP) */
+.lv2-fade-up { opacity: 0; }
+.lv2-hero-sub.lv2-fade-up, .lv2-hero-cta.lv2-fade-up { transform: translateY(24px); }
+.lv2-hero-phone-in { will-change: transform; }
+
+/* Escenario del teléfono */
+.lv2-stage {
+  position: relative; display: flex; justify-content: center; align-items: center; min-height: 680px;
+  --px: 0; --py: 0;
+}
+/* ── Fondo detrás del teléfono (Aura): grilla de puntos + anillos tenues + luz difusa ── */
+.lv2-bg {
+  position: absolute; inset: -14% -20%; z-index: 0; pointer-events: none;
+  transform: translate(calc(var(--px) * -10px), calc(var(--py) * -10px));
+  transition: transform 0.4s ease-out;
+}
+.lv2-bg > i { position: absolute; display: block; }
+.lv2-bg-grid {
+  inset: 0; background-image: radial-gradient(rgba(10, 10, 15, 0.2) 1px, transparent 1.4px); background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent 100%); mask-image: radial-gradient(closest-side, #000 25%, transparent 100%);
+}
+.lv2-bg-rings {
+  inset: 0; background: repeating-radial-gradient(circle at 50% 50%, transparent 0 71px, rgba(10, 10, 15, 0.07) 72px 73px);
+  -webkit-mask-image: radial-gradient(closest-side, #000 15%, transparent 80%); mask-image: radial-gradient(closest-side, #000 15%, transparent 80%);
+}
+.lv2-bg-blob { border-radius: 50%; filter: blur(70px); will-change: transform; }
+.lv2-bg-blob--a { left: 29%; top: 18%; width: 42%; height: 54%; background: var(--lv-lime); opacity: 0.75; animation: lv2-drift-a 14s ease-in-out infinite alternate; }
+.lv2-bg-blob--b { left: 46%; top: 44%; width: 30%; height: 36%; background: #9DF0C8; opacity: 0.5; animation: lv2-drift-b 17s ease-in-out infinite alternate; }
+@keyframes lv2-drift-a { to { transform: translate(9%, -7%) scale(1.12); } }
+@keyframes lv2-drift-b { to { transform: translate(-14%, 8%) scale(0.88); } }
+.lv2-phone-wrap {
+  position: relative; top: -40px; z-index: 2; transform: translate(calc(var(--px) * 8px), calc(var(--py) * 8px));
+  transition: transform 0.4s ease-out;
+}
+/* iPhone 3D (three.js): el lienzo desborda el escenario para que el giro no se recorte */
+.lv2-phone3d {
+  position: absolute; inset: -90px -60px -50px; z-index: 2; pointer-events: none;
+  opacity: 0; transition: opacity 0.5s ease;
+}
+.lv2-phone3d.is-ready { opacity: 1; }
+.lv2-phone3d canvas {
+  display: block; width: 100%; height: 100%;
+  filter: drop-shadow(0 40px 50px rgba(10, 15, 0, 0.3)) drop-shadow(0 12px 18px rgba(10, 15, 0, 0.16));
+}
+/* Flechas de vidrio a los costados del teléfono (centradas con él, que está 20px arriba) */
+.lv2-hero-arrow {
+  position: absolute; top: calc(50% - 20px); translate: 0 -50%; z-index: 4; width: 52px; height: 52px; border-radius: 50%;
+  border: 0; padding: 0; display: grid; place-items: center; cursor: pointer; color: var(--lv-ink);
+  background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(10, 10, 15, 0.05),
+    0 0 3px -1px rgba(10, 10, 15, 0.22), 0 0 28px -8px rgba(10, 10, 15, 0.22);
+}
+.lv2-hero-arrow--prev { right: calc(50% + 174px); }
+.lv2-hero-arrow--next { left: calc(50% + 174px); }
+.lv2-hero-arrow:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 3px; }
+.lv2-dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 4; }
+.lv2-dots button {
+  width: 8px; height: 8px; border-radius: 8px; border: 0; padding: 0; cursor: pointer;
+  background: rgba(10, 15, 0, 0.25); transition: width 0.45s var(--lv-ease), background 0.3s ease;
+}
+.lv2-dots button.is-on { width: 28px; background: var(--lv-ink); }
+
+/* ── iPhone con capturas reales ── */
+.lv2-iphone {
+  --pw: 300px; position: relative; width: var(--pw); flex-shrink: 0;
+  filter: drop-shadow(0 40px 50px rgba(10, 15, 0, 0.32)) drop-shadow(0 12px 18px rgba(10, 15, 0, 0.18));
+}
+.lv2-ip-frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.lv2-ip-screen { position: absolute; overflow: hidden; background: #fff; z-index: 0; }
+.lv2-ip-status {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2% 9% 0 12%; background: #fff; color: #000; font-size: calc(var(--pw) * 0.047); font-weight: 600; letter-spacing: -0.01em;
+  font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; transition: background 0.5s ease, color 0.5s ease;
+}
+.lv2-ip-status.is-dark { background: #0B0B10; color: #fff; }
+.lv2-ip-status-icons { display: flex; align-items: center; gap: 0.32em; }
+.lv2-ip-status-icons svg { width: 1.1em; height: 0.78em; fill: currentColor; }
+.lv2-ip-batt { position: relative; width: 1.65em; height: 0.82em; border: 1px solid currentColor; border-radius: 0.28em; padding: 1px; opacity: 0.95; }
+.lv2-ip-batt::after { content: ""; position: absolute; right: -0.18em; top: 50%; width: 0.1em; height: 0.3em; border-radius: 0 1px 1px 0; background: currentColor; transform: translateY(-50%); opacity: 0.5; }
+.lv2-ip-batt i { display: block; width: 82%; height: 100%; border-radius: 0.14em; background: currentColor; }
+.lv2-ip-shots { position: absolute; left: 0; right: 0; bottom: 0; }
+.lv2-ip-shots img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top;
+  /* La saliente queda opaca debajo hasta que termina de entrar la nueva: sin “fantasmas” */
+  opacity: 0; z-index: 0; transform: scale(1.03); transition: opacity 0s linear 0.65s, transform 0s linear 0.65s;
+}
+.lv2-ip-shots img.is-on { opacity: 1; z-index: 1; transform: none; transition: opacity 0.6s ease, transform 0.9s var(--lv-ease); }
+.lv2-ip-glare {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 24%, rgba(255, 255, 255, 0) 42%);
+}
+
+/* ── Ticker ── */
+.lv2-ticker { border-top: 1px solid var(--lv-line); border-bottom: 1px solid var(--lv-line); padding: 20px 0; margin-bottom: 140px; background: #fff; overflow: hidden; }
+.lv2-ticker-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.lv2-ticker-track { display: flex; width: max-content; animation: lv2-marquee 32s linear infinite; }
+.lv2-ticker:hover .lv2-ticker-track { animation-play-state: paused; }
+.lv2-ticker-item { display: flex; align-items: center; gap: 18px; padding: 0 22px; white-space: nowrap; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.lv2-ticker-item i { width: 5px; height: 5px; border-radius: 50%; background: #8CC800; }
+@keyframes lv2-marquee { to { transform: translateX(-33.3333%); } }
+
+/* ── Recorrido (sticky) ── */
+.lv2-journey { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+.lv2-journey-steps { padding-bottom: 8vh; }
+.lv2-step {
+  min-height: 115vh; display: flex; flex-direction: column; justify-content: center; padding-right: 20px;
+  opacity: 0.3; transition: opacity 0.5s ease;
+}
+.lv2-step.is-on { opacity: 1; }
+.lv2-step-num {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
+  font-size: 15px; font-weight: 700; background: #F4F4F6; margin-bottom: 26px;
+  transition: background 0.4s ease, transform 0.5s var(--lv-ease);
+}
+.lv2-step.is-on .lv2-step-num { background: var(--lv-lime); transform: scale(1.1) rotate(-6deg); }
+.lv2-step h3 { font-size: clamp(34px, 3.6vw, 52px); font-weight: 500; letter-spacing: -0.04em; line-height: 1; margin: 0 0 18px; }
+.lv2-step p { font-size: 18px; line-height: 1.65; color: var(--lv-muted); margin: 0; max-width: 430px; }
+.lv2-step-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.lv2-step-tags span { padding: 7px 14px; border-radius: 100px; font-size: 13px; font-weight: 500; border: 1px solid var(--lv-line); background: #fff; }
+.lv2-journey-stick { position: sticky; top: 13vh; height: 74vh; display: flex; align-items: center; justify-content: center; }
+.lv2-journey-stick .lv2-bg { transform: none; }
+/* El fondo acompaña el giro: la luz se corre al lado contrario */
+.lv2-journey-stick .lv2-bg-blob { translate: calc(var(--ryn, 0) * 1.6px) 0; transition: translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.lv2-journey-progress { position: absolute; z-index: 3; left: -26px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
+.lv2-journey-progress i { width: 4px; height: 22px; border-radius: 4px; background: rgba(0, 0, 0, 0.1); transition: background 0.3s, height 0.5s var(--lv-ease); }
+.lv2-journey-progress i.is-on { background: var(--lv-ink); height: 44px; }
+
+/* ── Stats ── */
+.lv2-stats {
+  background: var(--lv-lime); border-radius: 36px; padding: 70px 40px; display: grid;
+  grid-template-columns: repeat(4, 1fr); position: relative; overflow: hidden;
+}
+.lv2-stats::before { content: ""; position: absolute; top: -30%; right: -5%; width: 45%; height: 160%; background: radial-gradient(ellipse, rgba(10, 15, 0, 0.07), transparent 60%); pointer-events: none; }
+.lv2-stats::after { content: ""; position: absolute; bottom: -40%; left: -5%; width: 40%; height: 160%; background: radial-gradient(ellipse, rgba(255, 255, 255, 0.28), transparent 60%); pointer-events: none; }
+.lv2-stat { padding: 0 36px; position: relative; z-index: 1; }
+.lv2-stat + .lv2-stat { border-left: 1px solid rgba(10, 15, 0, 0.14); }
+.lv2-stat-ico { width: 42px; height: 42px; border-radius: 13px; background: rgba(10, 15, 0, 0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--lv-lime-fg); }
+.lv2-stat-num { font-size: clamp(46px, 4.4vw, 78px); font-weight: 800; letter-spacing: -0.055em; line-height: 1; color: var(--lv-lime-fg); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.lv2-stat p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; font-weight: 500; color: rgba(10, 15, 0, 0.75); }
+.lv2-stat small { font-size: 12px; color: rgba(10, 15, 0, 0.5); font-weight: 500; }
+
+/* ── Panel (bento) ── */
+.lv2-bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+.lv2-card {
+  background: var(--lv-surface); border: 1px solid rgba(0, 0, 0, 0.07); border-radius: 26px; padding: 30px;
+  display: flex; flex-direction: column; transition: translate 0.5s var(--lv-ease), border-color 0.4s ease, box-shadow 0.5s var(--lv-ease);
+}
+/* El hover usa `translate` (no `transform`) para no chocar con la entrada de GSAP */
+.lv2-card:hover { translate: 0 -4px; border-color: rgba(0, 0, 0, 0.14); box-shadow: 0 24px 50px -28px rgba(10, 10, 15, 0.3); }
+.lv2-card-ico {
+  width: 46px; height: 46px; border-radius: 14px; background: #fff; border: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 22px;
+  transition: background 0.4s ease, transform 0.5s var(--lv-ease), border-color 0.4s ease;
+}
+.lv2-card:hover .lv2-card-ico { background: var(--lv-lime); border-color: var(--lv-lime); transform: rotate(-8deg) scale(1.08); }
+.lv2-card h3 { font-size: 21px; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 8px; }
+.lv2-card p { font-size: 14.5px; line-height: 1.65; color: var(--lv-muted); margin: 0; }
+.lv2-card-stat { margin-top: auto; padding-top: 22px; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.lv2-bento-main { grid-column: span 4; grid-row: span 2; padding: 0; background: #F4F6EE; }
+.lv2-bento-main-top { padding: 34px 34px 0; }
+.lv2-bento-main h3 { font-size: 30px; letter-spacing: -0.04em; }
+.lv2-bento-main p { max-width: 460px; }
+.lv2-tilt { perspective: 1400px; padding: 26px 34px 0; margin-top: auto; }
+.lv2-tilt-inner {
+  transform: rotateX(var(--rx, 6deg)) rotateY(var(--ry, 0deg)); transform-origin: center bottom;
+  transition: transform 0.5s var(--lv-ease); border-radius: 18px 18px 0 0; overflow: hidden;
+  box-shadow: 0 30px 70px -30px rgba(10, 15, 0, 0.5); border: 1px solid rgba(0, 0, 0, 0.08); border-bottom: 0; line-height: 0;
+}
+.lv2-tilt-inner img { width: 100%; height: auto; display: block; }
+.lv2-bento-s { grid-column: span 2; }
+
+/* ── Galería del panel: lista de herramientas a la izquierda, ventana a la derecha ── */
+.lv2-gal { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
+.lv2-gal-window {
+  grid-column: 2; grid-row: 1; border-radius: 22px; overflow: hidden; background: #fff; border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 40px 80px -40px rgba(10, 15, 0, 0.35), 0 12px 30px -18px rgba(10, 15, 0, 0.18);
+}
+.lv2-gal-bar {
+  display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; gap: 12px; height: 42px; padding: 0 16px;
+  background: #F4F4F6; border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.lv2-gal-dots { display: flex; gap: 7px; }
+.lv2-gal-dots i { width: 11px; height: 11px; border-radius: 50%; }
+.lv2-gal-dots i:nth-child(1) { background: #FF6159; } .lv2-gal-dots i:nth-child(2) { background: #FFBD2E; } .lv2-gal-dots i:nth-child(3) { background: #28C941; }
+.lv2-gal-url {
+  justify-self: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 5px 16px; border-radius: 8px; background: #fff; border: 1px solid rgba(0, 0, 0, 0.06); font-size: 12.5px; color: var(--lv-muted);
+}
+.lv2-gal-url b { color: var(--lv-ink); font-weight: 600; }
+.lv2-gal-stage {
+  position: relative; display: block; width: 100%; aspect-ratio: 16 / 10; padding: 0; border: 0; background: #F7F8FA; cursor: zoom-in; overflow: hidden;
+}
+.lv2-gal-stage img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top;
+  opacity: 0; transform: scale(1.025); transition: opacity 0s linear 0.7s, transform 0s linear 0.7s;
+}
+.lv2-gal-stage img.is-on { opacity: 1; z-index: 1; transform: none; transition: opacity 0.6s ease, transform 1.1s var(--lv-ease); }
+.lv2-gal-zoom {
+  position: absolute; right: 16px; bottom: 16px; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px;
+  border-radius: 100px; background: rgba(10, 10, 15, 0.82); color: #fff; font-size: 13px; font-weight: 500; backdrop-filter: blur(8px);
+  opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.4s var(--lv-ease);
+}
+.lv2-gal-stage:hover .lv2-gal-zoom, .lv2-gal-stage:focus-visible .lv2-gal-zoom { opacity: 1; transform: none; }
+.lv2-gal-rail { position: relative; grid-column: 1; grid-row: 1; display: grid; gap: 8px; }
+.lv2-gal-thumb {
+  position: relative; display: flex; align-items: flex-start; gap: 14px; padding: 10px 12px 12px 10px; border-radius: 16px; cursor: pointer; text-align: left;
+  background: transparent; border: 1px solid transparent; font: inherit; color: var(--lv-ink);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.4s var(--lv-ease);
+}
+.lv2-gal-thumb:hover { background: var(--lv-surface); }
+.lv2-gal-thumb.is-on { background: #fff; border-color: rgba(0, 0, 0, 0.1); box-shadow: 0 16px 34px -24px rgba(10, 10, 15, 0.4); }
+.lv2-gal-thumb img {
+  flex: 0 0 96px; width: 96px; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left;
+  border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.08); display: block; filter: grayscale(0.6); opacity: 0.75; transition: filter 0.4s ease, opacity 0.4s ease;
+}
+.lv2-gal-thumb:hover img, .lv2-gal-thumb.is-on img { filter: none; opacity: 1; }
+.lv2-gal-thumb-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-top: 4px; }
+.lv2-gal-thumb-label { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 600; letter-spacing: -0.015em; }
+.lv2-gal-thumb-label svg { color: var(--lv-faint); transition: color 0.3s ease; flex-shrink: 0; }
+.lv2-gal-thumb.is-on .lv2-gal-thumb-label svg { color: #5A8A00; }
+.lv2-gal-thumb-text {
+  font-size: 13px; line-height: 1.5; color: var(--lv-muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+  max-height: 0; opacity: 0; transition: max-height 0.5s var(--lv-ease), opacity 0.35s ease;
+}
+.lv2-gal-thumb.is-on .lv2-gal-thumb-text { max-height: 60px; opacity: 1; }
+.lv2-gal-progress { position: absolute; left: 12px; right: 12px; bottom: 4px; height: 2px; border-radius: 2px; background: rgba(0, 0, 0, 0.06); overflow: hidden; }
+.lv2-gal-progress i { display: block; height: 100%; background: var(--lv-lime); transform-origin: left; transform: scaleX(0); }
+.lv2-gal-thumb:not(.is-on) .lv2-gal-progress { opacity: 0; }
+
+/* Visor a pantalla completa */
+.lv2-lb {
+  position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 72px 90px 40px; background: rgba(8, 8, 12, 0.9); backdrop-filter: blur(10px); animation: lv2-lb-in 0.35s ease both;
+}
+@keyframes lv2-lb-in { from { opacity: 0; } }
+.lv2-lb-top { position: absolute; top: 18px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 15px; font-weight: 600; }
+.lv2-lb-top small { margin-left: 10px; font-weight: 400; opacity: 0.55; }
+.lv2-lb-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 100%; max-height: 100%; }
+.lv2-lb-fig img {
+  max-width: min(1500px, 100%); max-height: calc(100vh - 190px); width: auto; height: auto; border-radius: 14px;
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.7); animation: lv2-lb-img 0.45s var(--lv-ease) both; background: #fff;
+}
+@keyframes lv2-lb-img { from { opacity: 0; transform: scale(0.97); } }
+.lv2-lb-fig figcaption { color: rgba(255, 255, 255, 0.7); font-size: 14.5px; text-align: center; max-width: 620px; line-height: 1.55; }
+.lv2-lb-btn {
+  width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.25s ease, transform 0.25s var(--lv-ease);
+}
+.lv2-lb-btn:hover { background: rgba(255, 255, 255, 0.18); }
+.lv2-lb-btn:active { transform: scale(0.94); }
+.lv2-lb-prev, .lv2-lb-next { position: absolute; top: 50%; translate: 0 -50%; }
+.lv2-lb-prev { left: 22px; } .lv2-lb-next { right: 22px; }
+
+/* ── Caso Landia ── */
+/* Tira tipo reels en forma de Λ: bases alineadas abajo, la del centro (más grande) sobresale arriba */
+.lv2-reels { display: flex; gap: 14px; align-items: flex-end; }
+.lv2-reel {
+  position: relative; flex: 1; aspect-ratio: 9 / 15; border-radius: 20px; overflow: hidden; background: #0A0A0F;
+  border: 1px solid rgba(0, 0, 0, 0.08); transition: translate 0.55s var(--lv-ease), box-shadow 0.4s var(--lv-ease);
+}
+.lv2-reel:nth-child(even) { margin-bottom: 28px; }
+.lv2-reel:hover { translate: 0 -6px; box-shadow: 0 22px 46px -18px rgba(10, 15, 0, 0.4); }
+.lv2-reel--feat { flex: 1.4; box-shadow: 0 0 0 2px var(--lv-lime), 0 16px 38px -14px rgba(10, 15, 0, 0.3); }
+.lv2-reel--feat:hover { box-shadow: 0 0 0 2px var(--lv-lime), 0 24px 50px -16px rgba(10, 15, 0, 0.45); }
+.lv2-reel img, .lv2-reel video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--lv-ease);
+}
+.lv2-reel:hover img, .lv2-reel:hover video { transform: scale(1.05); }
+.lv2-reel-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 54px 16px 16px; color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+.lv2-reel-cap b { display: block; font-size: 14px; letter-spacing: -0.01em; margin-bottom: 3px; }
+.lv2-reel-cap small { font-size: 12px; color: rgba(255, 255, 255, 0.7); line-height: 1.4; }
+.lv2-reels-wrap { position: relative; }
+.lv2-reels-wrap + .lv2-quote { margin-top: 44px; }
+/* Flechas de la tira de reels: sólo en responsive (cuando scrollea en horizontal), sobre las imágenes */
+.lv2-reels-nav { display: none; position: absolute; inset: 0; pointer-events: none; }
+.lv2-reels-btn {
+  width: 46px; height: 46px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
+  position: absolute; top: 50%; translate: 0 -50%; pointer-events: auto; transition: opacity 0.3s ease;
+  color: var(--lv-ink); background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(10, 10, 15, 0.05),
+    0 0 3px -1px rgba(10, 10, 15, 0.22), 0 0 28px -8px rgba(10, 10, 15, 0.22);
+}
+.lv2-reels-btn:first-child { left: 0; }
+.lv2-reels-btn:last-child { right: 0; }
+.lv2-reels-btn:disabled { opacity: 0; pointer-events: none; }
+.lv2-reels-btn:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 3px; }
+.lv2-quote { background: var(--lv-lime); border-radius: 28px; padding: 36px; display: flex; flex-direction: column; justify-content: space-between; gap: 30px; flex-direction: row; align-items: center; }
+.lv2-quote q { font-size: clamp(24px, 2.6vw, 38px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; quotes: none; max-width: 620px; color: var(--lv-lime-fg); }
+.lv2-quote-stats { display: flex; gap: 34px; }
+.lv2-quote-stats div { font-size: 13px; color: rgba(10, 15, 0, 0.65); line-height: 1.4; }
+.lv2-quote-stats b { display: block; font-size: 44px; letter-spacing: -0.05em; color: var(--lv-lime-fg); font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.lv2-case-credit { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 36px; font-size: 13px; color: var(--lv-faint); }
+.lv2-case-credit a { color: var(--lv-muted); text-decoration: none; font-weight: 500; }
+.lv2-case-credit a:hover { color: var(--lv-ink); }
+
+/* ── Entradas / pases ── */
+.lv2-passes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 14px 0 20px; }
+.lv2-pass {
+  position: relative; border-radius: 26px; padding: 26px 24px 24px; min-height: 340px; display: flex; flex-direction: column;
+  background: var(--pc, #fff); color: var(--pf, var(--lv-ink)); border: 1px solid rgba(0, 0, 0, 0.08);
+  transform: rotate(var(--r, 0deg)); transition: transform 0.6s var(--lv-ease), box-shadow 0.6s var(--lv-ease);
+  box-shadow: 0 10px 30px -22px rgba(10, 10, 15, 0.4);
+  --mask: radial-gradient(circle 13px at 0 68%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 68%, transparent 98%, #000) right / 51% 100% no-repeat;
+  -webkit-mask: var(--mask); mask: var(--mask);
+}
+.lv2-pass-slot { display: flex; }
+.lv2-pass-slot > .lv2-pass { flex: 1; }
+.lv2-passes:hover .lv2-pass { transform: rotate(0deg); }
+.lv2-pass:hover { transform: translateY(-12px) rotate(0deg) !important; box-shadow: 0 34px 50px -26px rgba(10, 10, 15, 0.5); z-index: 2; }
+.lv2-pass-kind { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; }
+.lv2-pass h3 { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin: 12px 0 10px; }
+.lv2-pass p { font-size: 13.5px; line-height: 1.55; margin: 0; opacity: 0.65; }
+.lv2-pass-ico { margin-bottom: 20px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(10, 15, 0, 0.07); }
+.lv2-pass--lime .lv2-pass-ico { background: rgba(10, 15, 0, 0.1); }
+.lv2-pass--ink .lv2-pass-ico { background: rgba(198, 255, 0, 0.14); color: var(--lv-lime); }
+.lv2-pass-foot { margin-top: auto; padding-top: 22px; border-top: 2px dashed rgba(127, 127, 127, 0.3); display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
+.lv2-pass-foot b { font-size: 17px; letter-spacing: -0.03em; }
+.lv2-pass-foot span { display: inline-flex; align-items: center; gap: 6px; opacity: 0.7; }
+.lv2-pass--lime { --pc: var(--lv-lime); --pf: var(--lv-lime-fg); border-color: transparent; }
+.lv2-pass--ink { --pc: #0A0A0F; --pf: #fff; border-color: transparent; }
+.lv2-pass--soft { --pc: #F1F4E8; }
+
+/* ── Eventos ── */
+.lv2-events { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.lv2-event { min-height: 250px; cursor: default; }
+/* Casos de uso: sin elevación al pasar el mouse (quedan el spotlight y el ícono lima) */
+.lv2-event:hover { translate: none; box-shadow: none; }
+/* Card "¿Tu evento es distinto?": toda clickeable (stretched link) con botón lima */
+.lv2-event--cta { cursor: pointer; }
+.lv2-event--cta:focus-within { border-color: var(--lv-ink); box-shadow: 0 0 0 4px rgba(198, 255, 0, 0.45); }
+.lv2-event--cta .lv2-card-ico { background: var(--lv-lime); border-color: var(--lv-lime); }
+/* "Hablemos" como link subrayado; su ::after se estira sobre toda la card */
+.lv2-event-link { text-decoration: underline; text-underline-offset: 3px; }
+.lv2-event-link::after { content: ""; position: absolute; inset: 0; border-radius: 26px; }
+.lv2-event-link:focus-visible { outline: none; }
+.lv2-event-link svg { transition: transform 0.45s var(--lv-ease); }
+.lv2-event--cta:hover .lv2-event-link svg { transform: translateX(3px); }
+.lv2-events-cta { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 60px; text-align: center; }
+.lv2-events-cta p { margin: 0; color: var(--lv-muted); font-size: 16px; }
+
+/* ── FAQ ── */
+.lv2-faq { display: grid; grid-template-columns: 1fr 2fr; gap: 80px; align-items: start; }
+.lv2-faq-side { position: sticky; top: 110px; }
+.lv2-faq-side .lv2-h2 { font-size: clamp(38px, 3.6vw, 56px); margin-bottom: 20px; }
+.lv2-faq-side a { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.lv2-faq-item { border-top: 1px solid var(--lv-line); }
+.lv2-faq-item:last-child { border-bottom: 1px solid var(--lv-line); }
+.lv2-faq-q {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 26px 0; background: none; border: 0; cursor: pointer;
+  text-align: left; font: inherit; font-size: 19px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.25; color: var(--lv-ink); transition: padding 0.4s var(--lv-ease);
+}
+.lv2-faq-q:hover { padding-left: 8px; }
+.lv2-faq-plus { width: 34px; height: 34px; border-radius: 50%; background: #F4F4F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.3s ease, transform 0.5s var(--lv-ease); }
+.lv2-faq-item.is-open .lv2-faq-plus { background: var(--lv-lime); transform: rotate(135deg); }
+.lv2-faq-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s var(--lv-ease); }
+.lv2-faq-item.is-open .lv2-faq-a { grid-template-rows: 1fr; }
+.lv2-faq-a > div { overflow: hidden; }
+.lv2-faq-a p { margin: 0 0 28px; padding-right: 60px; font-size: 16px; line-height: 1.75; color: var(--lv-muted); opacity: 0; transform: translateY(-6px); transition: opacity 0.4s ease, transform 0.5s var(--lv-ease); }
+.lv2-faq-item.is-open .lv2-faq-a p { opacity: 1; transform: none; transition-delay: 0.1s; }
+
+/* ── Contacto ── */
+.lv2-contact { background: #F4F4F6; border-radius: 40px; padding: 72px 64px; display: grid; grid-template-columns: 1fr 1.15fr; gap: 80px; align-items: center; }
+.lv2-contact .lv2-h2 { font-size: clamp(38px, 3.6vw, 56px); margin-bottom: 20px; }
+.lv2-contact > :first-child { position: relative; top: -80px; }
+.lv2-topics { list-style: none; padding: 0; margin: 34px 0 0; display: grid; gap: 14px; }
+.lv2-topics li { display: flex; gap: 12px; align-items: baseline; font-size: 14.5px; line-height: 1.5; color: var(--lv-muted); }
+.lv2-topics li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lv-lime); box-shadow: 0 0 0 3px rgba(198, 255, 0, 0.3); flex-shrink: 0; transform: translateY(-2px); }
+.lv2-topics strong { color: var(--lv-ink); font-weight: 600; }
+.lv2-mail { margin-top: 28px; font-size: 14px; color: var(--lv-muted); }
+.lv2-mail a { color: var(--lv-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.lv2-form { display: grid; gap: 18px; }
+.lv2-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; }
+.lv2-input {
+  width: 100%; background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 16px; padding: 15px 18px; font: inherit; font-size: 15px;
+  color: var(--lv-ink); outline: none; transition: border-color 0.2s, box-shadow 0.25s;
+}
+.lv2-input::placeholder { color: var(--lv-faint); }
+.lv2-input:focus { border-color: var(--lv-ink); box-shadow: 0 0 0 4px rgba(198, 255, 0, 0.4); }
+textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
+.lv2-form-err { color: #C0301A; font-size: 13.5px; margin: -6px 0 0; }
+.lv2-form .lv2-btn { justify-self: end; }
+.lv2-btn:disabled { opacity: 0.6; cursor: wait; }
+.lv2-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.lv2-sent { text-align: center; padding: 30px 10px; }
+.lv2-sent i { width: 64px; height: 64px; border-radius: 50%; background: var(--lv-lime); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; animation: lv2-pop 0.7s var(--lv-ease) both; }
+.lv2-sent h3 { font-size: 28px; letter-spacing: -0.04em; margin: 0 0 10px; font-weight: 600; }
+.lv2-sent p { margin: 0 0 22px; color: var(--lv-muted); }
+.lv2-sent button { background: none; border: 0; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* ── CTA final ── */
+.lv2-cta { background: #0A0A0F; border-radius: 44px; padding: 130px 40px; text-align: center; position: relative; overflow: hidden; color: #fff; margin-bottom: 140px; }
+.lv2-cta-glow { position: absolute; top: -35%; left: 50%; width: 70%; height: 90%; transform: translateX(-50%); background: radial-gradient(ellipse, rgba(198, 255, 0, 0.22), transparent 65%); pointer-events: none; animation: lv2-glow 6s ease-in-out infinite alternate; }
+@keyframes lv2-glow { to { opacity: 0.55; transform: translateX(-50%) scale(1.15); } }
+.lv2-cta-bg { position: absolute; inset: 0; font-size: clamp(120px, 22vw, 340px); font-weight: 800; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.06); display: flex; align-items: flex-end; justify-content: center; line-height: 0.72; pointer-events: none; user-select: none; overflow: hidden; white-space: nowrap; }
+.lv2-cta h2 { position: relative; font-size: clamp(56px, 8vw, 120px); font-weight: 500; letter-spacing: -0.055em; line-height: 0.9; margin: 0 0 30px; }
+.lv2-cta p { position: relative; margin: 0 auto 50px; max-width: 460px; font-size: 18px; line-height: 1.7; color: rgba(255, 255, 255, 0.5); }
+.lv2-cta-btns { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.lv2-cta-note { position: relative; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 30px; font-size: 13px; color: rgba(255, 255, 255, 0.4); }
+.lv2-cta-note span + span::before { content: ""; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); margin-right: 14px; vertical-align: middle; }
+
+/* ── CTA final editorial: "sin filas." gigante + botón circular con texto girando (movimiento con GSAP) ── */
+.lv2-cta3 { position: relative; text-align: left; padding: 100px 64px 64px; }
+.lv2-cta3-title { position: relative; margin: 0; font-weight: 600; }
+.lv2-cta.lv2-cta3 h2 { margin: 0; font-size: inherit; line-height: inherit; letter-spacing: inherit; }
+.lv2-cta3-eyebrow { display: block; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em; color: rgba(255, 255, 255, 0.6); }
+.lv2-cta3-big {
+  display: flex; flex-wrap: nowrap; font-size: clamp(76px, 16.5vw, 250px); line-height: 0.86;
+  letter-spacing: -0.065em; margin: 0.06em 0 0 -0.05em; white-space: nowrap;
+}
+/* Recorta sólo arriba y abajo (para la subida); a los costados no, porque el letter-spacing negativo hace que el dibujo se salga de la caja */
+.lv2-cta3-mask { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.04em 0 0.1em; margin-bottom: -0.1em; }
+.lv2-cta3-char { display: inline-block; transform-origin: 0% 100%; }
+.lv2-cta3-dot { color: var(--lv-lime); }
+.lv2-cta3-sub {
+  display: block; margin-top: 0.5em; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em;
+  line-height: 1.1; color: rgba(255, 255, 255, 0.6);
+}
+.lv2-cta3-sub em { font-style: normal; color: #fff; }
+.lv2-cta3-circle {
+  position: absolute; top: 64px; right: 64px; z-index: 2; display: grid; place-items: center; width: 168px; height: 168px;
+  border-radius: 50%; background: var(--lv-lime); color: var(--lv-lime-fg); text-decoration: none;
+  box-shadow: 0 24px 60px -20px rgba(198, 255, 0, 0.45);
+}
+.lv2-cta3-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lv2-cta3-ring text { font-size: 15.5px; font-weight: 600; letter-spacing: 3.2px; fill: var(--lv-lime-fg); }
+.lv2-cta3-arrow { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--lv-lime-fg); color: var(--lv-lime); }
+.lv2-cta3-circle:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.lv2-cta3-foot {
+  position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+  margin-top: 56px; padding-top: 28px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.lv2-cta.lv2-cta3 .lv2-cta3-foot p { margin: 0; max-width: 430px; font-size: 17px; }
+.lv2-cta3-side { display: flex; flex-direction: column; align-items: flex-end; gap: 16px; }
+.lv2-cta3-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 20px; font-size: 13px; color: rgba(255, 255, 255, 0.5); }
+.lv2-cta3-notes li { display: inline-flex; align-items: center; gap: 7px; }
+.lv2-cta3-notes svg { color: var(--lv-lime); }
+
+/* ── Footer ── */
+.lv2-f { position: relative; overflow: hidden; background: #0A0A0F; color: #fff; border-radius: 44px 44px 0 0; }
+.lv2-f-inner { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 100px var(--lv-gutter) 0; }
+.lv2-f-top { display: grid; grid-template-columns: 1.15fr 1fr; gap: 60px; align-items: start; padding-bottom: 90px; }
+.lv2-f-kicker { margin: 0 0 18px; font-size: 15px; color: rgba(255, 255, 255, 0.45); }
+.lv2-f-mail {
+  display: inline-flex; align-items: center; gap: 14px; color: #fff; text-decoration: none;
+  font-size: clamp(30px, 3.6vw, 54px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.15;
+}
+/* Mismo hover "roll" que los links: el texto sube y entra su copia en lima */
+.lv2-f-mail-text { display: inline-block; height: 1.15em; overflow: hidden; }
+.lv2-f-mail:hover .lv2-f-roll, .lv2-f-mail:focus-visible .lv2-f-roll { transform: translateY(-50%); }
+.lv2-f-mail-arrow {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18); transition: background 0.4s ease, color 0.4s ease, transform 0.5s var(--lv-ease), border-color 0.4s;
+}
+.lv2-f-mail:hover .lv2-f-mail-arrow { background: var(--lv-lime); border-color: var(--lv-lime); color: var(--lv-lime-fg); transform: rotate(45deg); }
+.lv2-f-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
+.lv2-f-time, .lv2-f-social {
+  display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 16px; border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.12); font-size: 13px; color: rgba(255, 255, 255, 0.7); text-decoration: none;
+}
+.lv2-f-time b { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lv2-f-social { transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease; }
+.lv2-f-social:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.05); }
+.lv2-f-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.lv2-f-coltitle { margin: 0 0 18px; font-size: 13px; font-weight: 600; letter-spacing: 0; color: rgba(255, 255, 255, 0.4); }
+.lv2-f-cols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+/* Hover "roll": el texto sube y entra su copia (en lima) desde abajo */
+.lv2-f-link { display: inline-block; height: 1.45em; overflow: hidden; font-size: 15px; line-height: 1.45em; color: rgba(255, 255, 255, 0.72); text-decoration: none; vertical-align: top; }
+.lv2-f-roll { display: flex; flex-direction: column; transition: transform 0.5s var(--lv-ease); }
+.lv2-f-roll > span { display: block; white-space: nowrap; }
+.lv2-f-roll > span + span { color: var(--lv-lime); }
+.lv2-f-link:hover .lv2-f-roll, .lv2-f-link:focus-visible .lv2-f-roll { transform: translateY(-50%); }
+/* "Volver arriba" como píldora junto a la hora y el Instagram */
+.lv2-f-totop {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 6px 0 16px; border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.12); font-size: 13px; color: rgba(255, 255, 255, 0.7); text-decoration: none;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+.lv2-f-totop span {
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08); transition: background 0.3s ease, color 0.3s ease, transform 0.45s var(--lv-ease);
+}
+.lv2-f-totop:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.05); }
+.lv2-f-totop:hover span { background: var(--lv-lime); color: var(--lv-lime-fg); transform: translateY(-2px); }
+/* Wordmark gigante: sólido, cortado abajo, con el verificado lima como superíndice */
+.lv2-f-mark {
+  position: relative; display: flex; justify-content: center; align-items: flex-start; margin: -1.2vw 0 0.6vw;
+  font-size: 21vw; font-weight: 800; letter-spacing: -0.065em; line-height: 0.8; color: #F2F2EE; user-select: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, rgba(0, 0, 0, 0.6) 100%); mask-image: linear-gradient(to bottom, #000 72%, rgba(0, 0, 0, 0.6) 100%);
+}
+.lv2-f::after {
+  content: ""; position: absolute; left: 50%; bottom: -30%; width: 80%; height: 60%; transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(198, 255, 0, 0.07), transparent 60%);
+}
+.lv2-f-word { display: inline-flex; }
+/* Aire arriba y abajo para que el palo de la b y la cola de la p no se recorten; a los costados no se recorta
+   (con el letter-spacing negativo las panzas de la b y la p se salen de la caja) */
+.lv2-f-char-wrap { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.2em 0.015em 0.26em; margin: -0.2em 0 -0.26em; }
+.lv2-f-char { display: inline-block; transition: translate 0.5s var(--lv-ease), color 0.4s ease; }
+.lv2-f-char-wrap:hover .lv2-f-char { translate: 0 -0.06em; color: var(--lv-lime); }
+.lv2-f-badge { width: 0.4em; height: 0.4em; flex-shrink: 0; margin: 0.14em 0 0 0.04em; transform-origin: 50% 50%; overflow: visible; }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .lv2-hero-grid { grid-template-columns: 1fr; gap: 20px; }
+  .lv2-hero { padding-top: 90px; }
+  .lv2-hero-sub { max-width: 620px; }
+  .lv2-stage { min-height: 700px; margin-top: 30px; }
+  .lv2-passes { grid-template-columns: repeat(2, 1fr); }
+  .lv2-pass { --r: 0deg !important; }
+  .lv2-bento-main { grid-column: span 6; grid-row: auto; }
+  .lv2-bento-s { grid-column: span 3; }
+  .lv2-bento-s:last-child { grid-column: span 6; }
+  .lv2-contact { grid-template-columns: 1fr; gap: 50px; padding: 56px 44px; }
+  .lv2-contact > :first-child { top: 0; }
+}
+@media (max-width: 900px) {
+  .lv2-stats-section, .lv2-quote { display: none; }
+  .lv2-cta3 { padding: 80px 40px 48px; }
+  .lv2-cta3-circle { top: 40px; right: 40px; width: 136px; height: 136px; }
+  .lv2-cta3-arrow { width: 52px; height: 52px; }
+  .lv2-cta3-foot { flex-direction: column; align-items: flex-start; }
+  .lv2-cta3-side { align-items: flex-start; }
+  .lv2-cta3-notes { justify-content: flex-start; }
+  .lv2-f { border-radius: 30px 30px 0 0; }
+  .lv2-f-inner { padding-top: 70px; }
+  .lv2-f-top { grid-template-columns: 1fr; gap: 50px; }
+  .lv2-f-top { padding-bottom: 60px; }
+
+  .lv2-gal { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .lv2-gal-window { grid-column: 1; grid-row: 1; }
+  .lv2-gal-rail { grid-column: 1; grid-row: 2; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px var(--lv-gutter) 8px; margin: 0 calc(var(--lv-gutter) * -1); scrollbar-width: none; }
+  .lv2-gal-rail::-webkit-scrollbar { display: none; }
+  .lv2-gal-thumb { flex: 0 0 230px; flex-direction: column; gap: 10px; scroll-snap-align: start; background: var(--lv-surface); border-color: rgba(0, 0, 0, 0.07); }
+  .lv2-gal-thumb img { flex: none; width: 100%; }
+  .lv2-gal-thumb-text { max-height: none; opacity: 1; -webkit-line-clamp: 2; }
+  .lv2-lb { padding: 70px 14px 30px; }
+  .lv2-lb-prev, .lv2-lb-next { top: auto; bottom: 22px; translate: none; }
+
+  .lv2-root { --lv-gutter: 20px; }
+  .lv2-section { padding-bottom: 96px; }
+  .lv2-menu-inner { grid-template-columns: 1fr; gap: 36px; padding-top: 96px; }
+  .lv2-menu-cards { grid-template-columns: 1fr; grid-template-rows: none; gap: 10px; }
+  .lv2-root .lv2-menu-card { display: flex; grid-row: auto; flex-direction: row; align-items: center; min-height: 0; border-radius: 22px; }
+  .lv2-menu-media { flex: 0 0 96px; height: 96px; margin: 8px 0 8px 8px; border-radius: 15px; }
+  .lv2-menu-card-body { padding: 14px 18px; }
+  .lv2-menu-card-body b { font-size: 22px; }
+  .lv2-menu-card-arrow { display: none; }
+  .lv2-menu-ctas { margin-top: 0; }
+  .lv2-head { flex-direction: column; align-items: flex-start; gap: 20px; margin-bottom: 44px; }
+  .lv2-head .lv2-lead { text-align: left; max-width: none; }
+  .lv2-journey { grid-template-columns: 1fr; gap: 0; }
+  .lv2-journey-stick { position: sticky; top: 76px; height: 520px; z-index: 0; order: -1; margin-bottom: -60px; transform-origin: top center; }
+  .lv2-journey-progress { display: none; }
+  .lv2-step-card { opacity: clamp(0, calc(1 - var(--lift, 0) * 2.2), 1); transition: opacity 0.2s linear; }
+  .lv2-step { min-height: 100vh; padding: 0; position: relative; z-index: 1; justify-content: flex-end; padding-bottom: 20px; }
+  .lv2-step > div.lv2-step-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); border: 1px solid var(--lv-line); border-radius: 26px; padding: 26px; box-shadow: 0 20px 40px -24px rgba(10, 10, 15, 0.3); }
+  .lv2-stats { grid-template-columns: 1fr 1fr; padding: 44px 12px; row-gap: 40px; }
+  .lv2-stat { padding: 0 22px; }
+  .lv2-stat:nth-child(3) { border-left: 0; }
+  .lv2-reels { overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 calc(var(--lv-gutter) * -1); padding: 4px var(--lv-gutter) 10px; scrollbar-width: none; }
+  .lv2-reels::-webkit-scrollbar { display: none; }
+  .lv2-reels-nav { display: block; }
+  .lv2-reel { flex: 0 0 218px; scroll-snap-align: start; margin-bottom: 0 !important; }
+  .lv2-reel--feat { flex: 0 0 252px; }
+  .lv2-quote { flex-direction: column; align-items: flex-start; }
+  .lv2-quote-stats { flex-wrap: wrap; gap: 24px; }
+  .lv2-events { grid-template-columns: 1fr 1fr; }
+  .lv2-faq { grid-template-columns: 1fr; gap: 40px; }
+  .lv2-faq-side { position: static; }
+}
+@media (max-width: 640px) {
+  .lv2-nav { top: 10px; }
+  .lv2-nav-bar { padding: 0 12px; }
+  .lv2-nav-login { display: none !important; }
+  .lv2-nav-chip, .lv2-root .lv2-nav-cta, .lv2-nav-burger { height: 46px; }
+  .lv2-nav-burger { width: 46px; }
+  .lv2-nav-burger span:first-child { top: 19px; }
+  .lv2-nav-burger span:last-child { top: 25px; }
+  .lv2-root .lv2-logo { font-size: 19px; padding: 0 16px; }
+  /* En mobile el CTA va sin la flecha para que entren logo, CTA y ☰ en una línea */
+  .lv2-root .lv2-nav-cta { padding: 0 18px; font-size: 13px; }
+  .lv2-nav-cta i { display: none; }
+  .lv2-root .lv2-menu-link { font-size: 22px; }
+  .lv2-f-cols { grid-template-columns: 1fr 1fr; row-gap: 36px; }
+  .lv2-f-mail { font-size: 26px; }
+  .lv2-f-mail-arrow { width: 42px; height: 42px; }
+  .lv2-f-mark { font-size: 21vw; margin-bottom: 1.6vw; }
+
+  .lv2-gal-bar { grid-template-columns: 50px 1fr 0; height: 38px; padding: 0 12px; }
+  .lv2-gal-dots i { width: 9px; height: 9px; }
+  .lv2-gal-url { font-size: 11px; padding: 5px 10px; }
+  .lv2-gal-window { border-radius: 16px; }
+
+  .lv2-h1 { font-size: clamp(36px, 10.2vw, 62px); }
+  .lv2-hero { padding: 112px 0 60px; }
+  .lv2-hero-sub { font-size: 17px; }
+  .lv2-btn { height: 54px; font-size: 16px; padding-left: 24px; }
+  .lv2-stage { min-height: 600px; }
+  .lv2-hero-arrow { width: 44px; height: 44px; }
+  .lv2-hero-arrow--prev { right: auto; left: 0; }
+  .lv2-hero-arrow--next { left: auto; right: 0; }
+  .lv2-iphone { --pw: 252px; }
+  .lv2-ticker { margin-bottom: 90px; }
+  .lv2-bento-s { grid-column: span 6; }
+  .lv2-card { padding: 24px; }
+  .lv2-passes { grid-template-columns: 1fr; }
+  .lv2-pass { min-height: 300px; }
+  .lv2-events { grid-template-columns: 1fr; }
+  .lv2-contact { padding: 40px 22px; border-radius: 30px; }
+  .lv2-cta { padding: 90px 22px; border-radius: 32px; margin-bottom: 90px; }
+  .lv2-cta3 { padding: 64px 22px 36px; }
+  .lv2-cta3-big { font-size: 21vw; }
+  .lv2-cta3-circle { position: relative; top: auto; right: auto; margin: 28px 0 0 auto; width: 120px; height: 120px; }
+  .lv2-cta3-ring text { font-size: 17px; }
+  .lv2-cta3-arrow { width: 46px; height: 46px; }
+  .lv2-cta3-foot { margin-top: 32px; }
+  .lv2-stat-num { font-size: 42px; }
+  .lv2-faq-q { font-size: 17px; }
+  .lv2-faq-a p { padding-right: 0; }
+}
+
+/* ── Accesibilidad: movimiento reducido ── */
+@media (prefers-reduced-motion: reduce) {
+  .lv2-reveal { opacity: 1; transform: none; transition: none; }
+  .lv2-h1 .lv2-line > span, .lv2-fade-up { animation: none; transform: none; opacity: 1; }
+  .lv2-mark::before { transform: rotate(-0.8deg) scaleX(1); transition: none; }
+  .lv2-bg-blob, .lv2-ticker-track, .lv2-cta-glow { animation: none; }
+  .lv2-step { opacity: 1; }
+  .lv2-ip-shots img { transition: opacity 0.2s; transform: none; }
+  .lv2-gal-stage img { transform: none; transition: opacity 0.2s; }
+  .lv2-card:hover, .lv2-pass:hover { transform: none !important; translate: none; }
+  .lv2-reel:hover { translate: none; }
+  .lv2-reel:hover img, .lv2-reel:hover video { transform: none; }
+}

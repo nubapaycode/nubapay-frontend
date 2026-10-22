@@ -120,8 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const jsonLdHtml = { __html: ORG_JSONLD }
   return (
     <html lang="es" className={`${dmSans.variable} ${bricolage.variable}`}>
-      <body className={`${inter.className} bg-gray-50 text-gray-900`} style={{ fontFamily: "-apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter', sans-serif" }}>
-        {/* eslint-disable-next-line react/no-danger */}
+      <body className={`${inter.className} font-system bg-gray-50 text-gray-900`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdHtml} />
         {children}
       </body>
