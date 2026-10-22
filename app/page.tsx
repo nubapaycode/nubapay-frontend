@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import { LandingPage } from '@/components/LandingPage'
+import NewLanding from '@/components/landing-v2/NewLanding'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { SITE_NAME, pageMeta } from '@/lib/seo'
 
@@ -50,7 +50,7 @@ export default async function LandingRootPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={faqLdHtml} />
-      <LandingPage />
+      <NewLanding />
     </>
   )
 }

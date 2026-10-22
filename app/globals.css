@@ -4,6 +4,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Tipografía del sistema por encima de la clase de Inter (va en CSS y no como style en línea:
+   el navegador reescribe ese atributo y React lo marcaba como error de hidratación) */
+body.font-system {
+  font-family: -apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, Inter, sans-serif;
+}
+
 @keyframes scanner-sweep {
   0%   { transform: translateY(0);       opacity: 0; }
   12%  { opacity: 1; }
