@@ -1,0 +1,276 @@
+/* ───────── Nubapay · Páginas internas (legales y seguridad) sobre el sistema de landing-v2 ───────── */
+
+/* ── Hero ── */
+.lv2-pg-hero { padding: 140px 0 110px; }
+.lv2-pg-hero-inner { position: relative; z-index: 1; }
+.lv2-pg-top { margin-bottom: 36px; }
+.lv2-pg-top.lv2-fade-up { transform: translateY(16px); }
+.lv2-pg-hero .lv2-h1 { font-size: clamp(48px, 7.4vw, 116px); line-height: 0.94; margin: 0 0 40px; }
+.lv2-pg-hero-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.lv2-pg-hero-row.lv2-fade-up { transform: translateY(24px); }
+.lv2-pg-hero-row > p { margin: 0; max-width: 560px; font-size: 19px; line-height: 1.65; color: var(--lv-muted); }
+.lv2-pg-hero-row strong { color: var(--lv-ink); font-weight: 500; }
+
+/* Selector entre documentos: píldora de vidrio como los chips del navbar */
+.lv2-pg-tabs {
+  display: inline-flex; gap: 2px; padding: 5px; border-radius: 100px;
+  background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(10, 10, 15, 0.05),
+    0 0 3px -1px rgba(10, 10, 15, 0.22), 0 0 28px -8px rgba(10, 10, 15, 0.22);
+}
+.lv2-root .lv2-pg-tabs a {
+  display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 100px;
+  font-size: 14px; font-weight: 500; color: var(--lv-muted); text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.lv2-root .lv2-pg-tabs a:hover { color: var(--lv-ink); background: rgba(10, 10, 15, 0.05); }
+.lv2-root .lv2-pg-tabs a.is-on { background: var(--lv-ink); color: #fff; }
+.lv2-pg-tabs a:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 2px; }
+
+/* En el navbar: mismo alto y vidrio que los chips, con los colores de la barra (se invierte sobre fondos oscuros) */
+.lv2-pg-tabs--nav {
+  height: 50px; align-items: center; background: var(--nv-glass);
+  box-shadow:
+    inset 0 1px 0 var(--nv-highlight), inset 0 -1px 0 var(--nv-lowlight),
+    0 0 3px -1px var(--nv-shadow), 0 0 28px -8px var(--nv-shadow);
+}
+.lv2-root .lv2-pg-tabs--nav a { height: 40px; color: var(--nv-fg); opacity: 0.66; transition: background 0.3s ease, color 0.3s ease, opacity 0.3s ease; }
+.lv2-root .lv2-pg-tabs--nav a:hover { opacity: 1; background: transparent; color: var(--nv-fg); }
+.lv2-root .lv2-pg-tabs--nav a.is-on { opacity: 1; background: var(--nv-burger-bg); color: var(--nv-burger-fg); }
+
+/* Con el selector en el navbar, el del hero sólo aparece donde la barra no tiene lugar */
+.lv2-pg-top { display: none; }
+
+/* Datos del documento (última actualización, versión, jurisdicción) */
+.lv2-pg-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.lv2-pg-meta > div {
+  padding: 12px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.7); border: 1px solid var(--lv-line);
+  backdrop-filter: blur(12px);
+}
+.lv2-pg-meta dt { margin: 0 0 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lv-faint); }
+.lv2-pg-meta dd { margin: 0; font-size: 14px; font-weight: 600; }
+
+/* ── Documento legal: índice fijo a la izquierda + secciones ── */
+.lv2-lg { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 72px; align-items: start; }
+/* Doble clase: `.lv2-wrap` define `padding` y `margin` con shorthand y, según el orden del CSS, pisaba el espacio inferior */
+.lv2-wrap.lv2-lg { padding-bottom: 140px; }
+.lv2-lg-side { position: sticky; top: 100px; }
+.lv2-lg-side-title { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 14px; padding: 0 12px; font-size: 13px; font-weight: 600; }
+.lv2-lg-side-title small { font-size: 12px; font-weight: 500; color: var(--lv-faint); }
+.lv2-lg-side-scroll {
+  position: relative; max-height: calc(100vh - 170px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+  padding: 8px 4px 16px 0;
+}
+.lv2-lg-index { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.lv2-root .lv2-lg-index a {
+  display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; border-radius: 12px;
+  font-size: 13.5px; line-height: 1.35; color: var(--lv-muted); text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.lv2-lg-index a span { flex: 0 0 18px; font-size: 11px; font-weight: 700; color: var(--lv-faint); font-variant-numeric: tabular-nums; transition: color 0.25s ease; }
+.lv2-root .lv2-lg-index a:hover { background: #F4F4F6; color: var(--lv-ink); }
+.lv2-root .lv2-lg-index a.is-here { background: var(--lv-ink); color: #fff; }
+.lv2-lg-index a.is-here span { color: var(--lv-lime); }
+
+.lv2-lg-mobile { display: none; }
+
+.lv2-lg-sec { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 24px; padding: 40px 0; border-top: 1px solid var(--lv-line); }
+.lv2-lg-sec:first-of-type { border-top: 0; padding-top: 0; }
+.lv2-lg-num {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
+  background: #F4F4F6; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+  transition: background 0.4s ease, transform 0.5s var(--lv-ease);
+}
+.lv2-lg-sec.is-here .lv2-lg-num { background: var(--lv-lime); transform: rotate(-6deg); }
+.lv2-lg-content h2 { margin: 12px 0 16px; font-size: clamp(22px, 2vw, 28px); font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; }
+.lv2-lg-prose p { margin: 0 0 14px; font-size: 15.5px; line-height: 1.75; color: #4A4A5A; }
+.lv2-lg-prose ul { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.lv2-lg-prose li { position: relative; padding-left: 22px; font-size: 15.5px; line-height: 1.65; color: #4A4A5A; }
+.lv2-lg-prose li::before {
+  content: ""; position: absolute; left: 3px; top: 0.6em; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--lv-lime); box-shadow: 0 0 0 3px rgba(198, 255, 0, 0.28);
+}
+.lv2-lg-prose > :last-child { margin-bottom: 0; }
+.lv2-lg-subs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.lv2-lg-sub { padding: 20px 22px; border-radius: 20px; background: var(--lv-surface); border: 1px solid rgba(0, 0, 0, 0.07); }
+.lv2-lg-sub h3 { margin: 0 0 10px; font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+.lv2-lg-sub .lv2-lg-prose p, .lv2-lg-sub .lv2-lg-prose li { font-size: 14px; }
+.lv2-lg-sub .lv2-lg-prose ul { gap: 5px; }
+
+.lv2-lg-contact {
+  position: relative; overflow: hidden; margin-top: 56px; padding: 44px; border-radius: 32px; background: #0A0A0F; color: #fff;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; flex-wrap: wrap;
+}
+.lv2-lg-contact::before {
+  content: ""; position: absolute; top: -60%; right: -10%; width: 60%; height: 180%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(198, 255, 0, 0.18), transparent 62%);
+}
+.lv2-lg-contact > * { position: relative; }
+.lv2-lg-contact h2 { margin: 0 0 10px; font-size: clamp(28px, 2.6vw, 40px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.05; }
+.lv2-lg-contact p { margin: 0; max-width: 440px; font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, 0.55); }
+
+/* ── Seguridad ── */
+.lv2-sec-qr {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; align-items: center;
+  padding: 72px 64px; border-radius: 40px; background: #0A0A0F; color: #fff;
+}
+.lv2-sec-qr-glow {
+  position: absolute; top: -30%; right: -12%; width: 64%; height: 140%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(198, 255, 0, 0.2), transparent 62%);
+}
+.lv2-sec-qr-copy { position: relative; }
+.lv2-sec-kicker {
+  display: inline-flex; align-items: center; height: 32px; padding: 0 14px; margin-bottom: 24px; border-radius: 100px;
+  background: rgba(198, 255, 0, 0.12); color: var(--lv-lime); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.lv2-sec-qr h2 { margin: 0 0 20px; font-size: clamp(40px, 4.4vw, 68px); font-weight: 500; letter-spacing: -0.045em; line-height: 0.98; }
+.lv2-sec-qr h2 em, .lv2-sec-cta h2 em { font-style: normal; color: var(--lv-lime); }
+.lv2-sec-qr-copy > p { margin: 0 0 30px; max-width: 470px; font-size: 17px; line-height: 1.65; color: rgba(255, 255, 255, 0.55); }
+.lv2-sec-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.lv2-sec-checks li { display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 1.45; color: rgba(255, 255, 255, 0.78); }
+.lv2-sec-checks i {
+  display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--lv-lime); color: var(--lv-lime-fg);
+}
+
+/* Ticket con el QR: el escáner lima barre el código */
+.lv2-sec-ticket {
+  position: relative; justify-self: center; width: min(100%, 320px); padding: 26px; border-radius: 30px;
+  background: #fff; color: var(--lv-ink); rotate: -3deg; transition: rotate 0.7s var(--lv-ease);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.lv2-sec-qr:hover .lv2-sec-ticket { rotate: 0deg; }
+.lv2-sec-code { position: relative; aspect-ratio: 1; padding: 26px; border-radius: 20px; background: #F4F6EE; display: grid; place-items: center; overflow: hidden; }
+.lv2-sec-code svg { display: block; width: 100%; height: auto; }
+.lv2-sec-corner { position: absolute; width: 24px; height: 24px; border: 3px solid var(--lv-ink); }
+.lv2-sec-corner--tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+.lv2-sec-corner--tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; border-top-right-radius: 10px; }
+.lv2-sec-corner--bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; border-bottom-left-radius: 10px; }
+.lv2-sec-corner--br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+.lv2-sec-scan {
+  position: absolute; left: 14px; right: 14px; top: 12%; height: 3px; border-radius: 3px;
+  background: var(--lv-lime); box-shadow: 0 0 18px 5px rgba(198, 255, 0, 0.55);
+  animation: lv2-sec-scan 2.4s ease-in-out infinite alternate;
+}
+@keyframes lv2-sec-scan { to { top: 86%; } }
+.lv2-sec-ticket-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin-top: 20px; padding-top: 18px; border-top: 2px dashed rgba(0, 0, 0, 0.12);
+}
+.lv2-sec-ticket-foot b { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+.lv2-sec-ready {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 100px;
+  background: var(--lv-lime); color: var(--lv-lime-fg); font-size: 12px; font-weight: 700;
+}
+
+/* Capas: bento de 3 + 2 */
+.lv2-sec-layers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+.lv2-sec-layer { grid-column: span 2; }
+.lv2-sec-layer--wide { grid-column: span 3; }
+.lv2-sec-list { list-style: none; margin: auto 0 0; padding: 24px 0 0; display: grid; gap: 9px; }
+.lv2-sec-layer--wide .lv2-sec-list { grid-template-columns: 1fr 1fr; }
+.lv2-sec-list li { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; font-weight: 500; line-height: 1.45; }
+.lv2-sec-list svg { flex-shrink: 0; margin-top: 2px; color: #5A8A00; }
+
+/* Recorrido: cinco pasos unidos por una línea que se llena con el scroll */
+.lv2-sec-flow { position: relative; }
+.lv2-sec-track { position: absolute; left: 10%; right: 10%; top: 31px; height: 2px; border-radius: 2px; background: var(--lv-line); }
+.lv2-sec-track i { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--lv-lime); transform-origin: left center; transform: scaleX(var(--p, 1)); }
+.lv2-sec-steps { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
+.lv2-sec-step { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6px; }
+.lv2-sec-step-ico {
+  display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 18px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(0, 0, 0, 0.1); box-shadow: 0 10px 30px -18px rgba(10, 10, 15, 0.4);
+  transition: background 0.4s ease, border-color 0.4s ease, transform 0.5s var(--lv-ease);
+}
+.lv2-sec-step:hover .lv2-sec-step-ico { background: var(--lv-lime); border-color: var(--lv-lime); transform: rotate(-8deg) scale(1.06); }
+.lv2-sec-step small { margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--lv-faint); font-variant-numeric: tabular-nums; }
+.lv2-sec-step h3 { margin: 0 0 8px; font-size: 21px; font-weight: 600; letter-spacing: -0.03em; }
+.lv2-sec-step p { margin: 0; max-width: 210px; font-size: 14px; line-height: 1.6; color: var(--lv-muted); }
+
+.lv2-sec-cta {
+  position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; flex-wrap: wrap;
+  padding: 64px; border-radius: 40px; background: #0A0A0F; color: #fff;
+}
+.lv2-sec-cta::before {
+  content: ""; position: absolute; top: -50%; left: 50%; width: 70%; height: 150%; transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(ellipse, rgba(198, 255, 0, 0.16), transparent 62%);
+}
+.lv2-sec-cta > * { position: relative; }
+.lv2-sec-cta h2 { margin: 0 0 14px; font-size: clamp(36px, 4vw, 60px); font-weight: 500; letter-spacing: -0.045em; line-height: 1; }
+.lv2-sec-cta p { margin: 0; font-size: 17px; line-height: 1.6; color: rgba(255, 255, 255, 0.55); }
+.lv2-sec-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ── Responsive ── */
+/* Debajo de este ancho el selector ya no entra entre el logo y las acciones del navbar */
+@media (max-width: 1240px) {
+  .lv2-nav-center { display: none; }
+  .lv2-pg-top { display: block; }
+}
+@media (max-width: 1100px) {
+  .lv2-lg { grid-template-columns: 240px minmax(0, 1fr); gap: 48px; }
+  .lv2-sec-qr { grid-template-columns: 1fr; padding: 56px 44px; }
+  .lv2-sec-layer, .lv2-sec-layer--wide { grid-column: span 3; }
+  .lv2-sec-layer:nth-child(3) { grid-column: span 6; }
+}
+@media (max-width: 900px) {
+  .lv2-pg-hero { padding: 120px 0 80px; }
+  .lv2-pg-hero-row { flex-direction: column; align-items: flex-start; gap: 28px; }
+
+  .lv2-lg { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .lv2-wrap.lv2-lg { padding-bottom: 96px; }
+  .lv2-lg-side { display: none; }
+  /* En mobile el índice es un desplegable que queda pegado debajo del navbar */
+  .lv2-lg-mobile {
+    display: block; position: sticky; top: 76px; z-index: 5; margin-bottom: 32px; border-radius: 20px;
+    background: rgba(255, 255, 255, 0.86); backdrop-filter: blur(16px) saturate(1.6); border: 1px solid var(--lv-line);
+    box-shadow: 0 16px 34px -26px rgba(10, 10, 15, 0.45);
+  }
+  .lv2-lg-mobile summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px;
+    font-size: 15px; font-weight: 600; cursor: pointer; list-style: none;
+  }
+  .lv2-lg-mobile summary::-webkit-details-marker { display: none; }
+  .lv2-lg-mobile summary svg { transition: rotate 0.35s var(--lv-ease); }
+  .lv2-lg-mobile[open] summary svg { rotate: 180deg; }
+  .lv2-lg-mobile > div { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 0 8px 10px; }
+
+  .lv2-sec-track { left: 31px; right: auto; top: 32px; bottom: 32px; width: 2px; height: auto; }
+  .lv2-sec-track i { transform-origin: center top; transform: scaleY(var(--p, 1)); }
+  .lv2-sec-steps { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .lv2-sec-step { display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 20px; align-items: start; text-align: left; padding: 0; }
+  .lv2-sec-step-ico { grid-row: span 3; margin-bottom: 0; }
+  .lv2-sec-step small { margin: 8px 0 4px; }
+  .lv2-sec-step p { max-width: none; }
+}
+@media (max-width: 640px) {
+  .lv2-pg-hero { padding-top: 104px; }
+  .lv2-pg-hero .lv2-h1 { font-size: clamp(42px, 12.4vw, 72px); margin-bottom: 28px; }
+  /* Si una línea no entra (p. ej. "punta a punta.") se deja partir */
+  .lv2-pg-hero .lv2-line { white-space: normal; }
+  .lv2-pg-hero-row > p { font-size: 17px; }
+  .lv2-root .lv2-pg-tabs a { height: 34px; padding: 0 14px; font-size: 13px; }
+
+  .lv2-lg-mobile { top: 68px; }
+  .lv2-lg-sec { grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 32px 0; }
+  .lv2-lg-num { width: 40px; height: 40px; font-size: 13px; }
+  .lv2-lg-content h2 { margin-top: 7px; }
+  .lv2-lg-subs { grid-template-columns: minmax(0, 1fr); margin-left: -56px; }
+  .lv2-lg-contact { padding: 32px 22px; border-radius: 26px; }
+  .lv2-lg-contact .lv2-btn { font-size: 15px; }
+
+  .lv2-sec-qr { padding: 44px 22px; border-radius: 30px; gap: 40px; }
+  .lv2-sec-layer, .lv2-sec-layer--wide, .lv2-sec-layer:nth-child(3) { grid-column: span 6; }
+  .lv2-sec-layer--wide .lv2-sec-list { grid-template-columns: 1fr; }
+  .lv2-sec-cta { padding: 44px 22px; border-radius: 30px; }
+}
+
+/* ── Accesibilidad: movimiento reducido ── */
+@media (prefers-reduced-motion: reduce) {
+  .lv2-pg-top.lv2-fade-up, .lv2-pg-hero-row.lv2-fade-up { transform: none; }
+  .lv2-sec-scan { animation: none; }
+  .lv2-sec-ticket { rotate: 0deg; transition: none; }
+}

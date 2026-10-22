@@ -15,7 +15,7 @@ const NOTES = ['Sin tarjeta', 'Setup en 20 min', 'Cancelás cuando quieras']
  * CTA final editorial: "sin filas." gigante a ancho completo cuyas letras suben ligadas al
  * scroll, y un botón circular lima con el texto girando en un anillo (acelera en hover).
  */
-export default function FinalCta() {
+export default function FinalCta({ base = '' }: { base?: string }) {
   const rootRef = useRef<HTMLElement>(null)
 
   const { contextSafe } = useGSAP(() => {
@@ -50,6 +50,8 @@ export default function FinalCta() {
     gsap.to(e.currentTarget.querySelector('.lv2-cta3-arrow'), { rotation: 0, scale: 1, duration: 0.6, ease: 'expo.out', overwrite: 'auto' })
   })
 
+  const A = base ? Link : 'a'
+
   return (
     <section ref={rootRef} aria-labelledby="lv2-cta-h">
       <div className="lv2-wrap">
@@ -69,7 +71,7 @@ export default function FinalCta() {
             <span className="lv2-cta3-sub lv2-cta3-fade">Mejor experiencia, <em>más ganancia.</em></span>
           </h2>
 
-          <a href="#contacto" className="lv2-cta3-circle" aria-label="Agendá una demo" onMouseEnter={circleIn} onMouseLeave={circleOut}>
+          <A href={`${base}#contacto`} className="lv2-cta3-circle" aria-label="Agendá una demo" onMouseEnter={circleIn} onMouseLeave={circleOut}>
             <svg className="lv2-cta3-ring" viewBox="0 0 200 200" aria-hidden="true">
               <defs>
                 <path id="lv2-cta3-ring-path" d="M100,100 m-76,0 a76,76 0 1,1 152,0 a76,76 0 1,1 -152,0" />
@@ -77,7 +79,7 @@ export default function FinalCta() {
               <text><textPath href="#lv2-cta3-ring-path">{RING.toUpperCase()}</textPath></text>
             </svg>
             <span className="lv2-cta3-arrow" aria-hidden="true"><ArrowRight size={30} strokeWidth={1.6} /></span>
-          </a>
+          </A>
 
           <div className="lv2-cta3-foot lv2-cta3-fade">
             <p>Te mostramos cómo funciona en tu evento, o probala por tu cuenta. Sin costos fijos: solo pagás cuando vendés.</p>

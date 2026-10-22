@@ -1,0 +1,149 @@
+/* ───────── Nubapay · Nosotros (sobre el sistema de landing-v2) ───────── */
+
+/* ── Hero: titular a todo el ancho, texto + CTA abajo y la foto del evento ── */
+.lv2-ab-hero { padding-top: 150px; }
+.lv2-ab-hero-inner { position: relative; z-index: 1; }
+.lv2-ab-hero .lv2-h1 { font-size: clamp(52px, 7.6vw, 120px); line-height: 0.94; margin: 0 0 44px; }
+.lv2-ab-hero-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 56px; }
+.lv2-ab-hero-row.lv2-fade-up { transform: translateY(24px); }
+.lv2-ab-hero-row p { margin: 0; max-width: 540px; font-size: 19px; line-height: 1.65; color: var(--lv-muted); }
+.lv2-ab-hero-row strong { color: var(--lv-ink); font-weight: 500; }
+
+.lv2-ab-band {
+  position: relative; margin: 0; height: clamp(340px, 50vw, 640px); border-radius: 36px; overflow: hidden;
+  background: #0A0A0F; isolation: isolate;
+}
+.lv2-ab-band-par { position: absolute; inset: -9% 0; will-change: transform; }
+.lv2-ab-band-par img { object-fit: cover; }
+.lv2-ab-band::after {
+  content: ""; position: absolute; inset: auto 0 0; height: 45%; z-index: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+}
+.lv2-ab-band-cap { position: absolute; left: 24px; right: 24px; bottom: 24px; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.lv2-ab-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 100px;
+  font-size: 13px; font-weight: 500; color: #fff; background: rgba(10, 10, 15, 0.42);
+  backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.lv2-ab-chip svg { color: var(--lv-lime); }
+
+/* ── Manifiesto: palabras que se encienden con el scroll ── */
+.lv2-ab-manifesto { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 60px; align-items: start; }
+.lv2-ab-eyebrow {
+  margin: 0; padding-top: 0.9em;
+  font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--lv-muted);
+}
+.lv2-ab-statement {
+  margin: 0; font-size: clamp(30px, 3.7vw, 56px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.12; color: var(--lv-ink);
+}
+/* "las filas." tachado con un trazo lima que se dibuja al llegar */
+.lv2-ab-strike { position: relative; display: inline-block; }
+.lv2-ab-strike::after {
+  content: ""; position: absolute; left: -0.05em; right: -0.05em; top: 54%; height: 0.13em; border-radius: 0.1em;
+  background: var(--lv-lime); transform: rotate(-2deg) scaleX(0); transform-origin: left center;
+  transition: transform 0.9s var(--lv-ease);
+}
+.lv2-ab-strike.is-on::after { transform: rotate(-2deg) scaleX(1); }
+
+/* ── Números: el bloque lima de la landing, en tres columnas ── */
+.lv2-ab-stats { grid-template-columns: repeat(3, 1fr); }
+
+/* ── Equipo ── */
+.lv2-ab-team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.lv2-ab-founder {
+  display: flex; flex-direction: column; padding: 10px; border-radius: 28px;
+  background: var(--lv-surface); border: 1px solid rgba(0, 0, 0, 0.07);
+  transition: translate 0.5s var(--lv-ease), border-color 0.4s ease, box-shadow 0.5s var(--lv-ease);
+}
+.lv2-ab-founder:hover { translate: 0 -4px; border-color: rgba(0, 0, 0, 0.14); box-shadow: 0 24px 50px -28px rgba(10, 10, 15, 0.3); }
+.lv2-ab-photo { position: relative; aspect-ratio: 4 / 5; border-radius: 20px; overflow: hidden; background: #ECECEF; }
+.lv2-ab-photo img { object-fit: cover; filter: grayscale(1); transition: filter 0.6s ease, transform 1.2s var(--lv-ease); }
+.lv2-ab-founder:hover .lv2-ab-photo img { filter: none; transform: scale(1.05); }
+.lv2-ab-role {
+  position: absolute; top: 14px; left: 14px; z-index: 1; display: inline-flex; align-items: center; height: 32px; padding: 0 14px;
+  border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--lv-ink);
+  background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 24px -8px rgba(10, 10, 15, 0.25);
+  transition: background 0.4s ease;
+}
+.lv2-ab-founder:hover .lv2-ab-role { background: var(--lv-lime); color: var(--lv-lime-fg); }
+.lv2-ab-founder-body { display: flex; flex-direction: column; flex: 1; padding: 22px 16px 14px; }
+.lv2-ab-founder h3 { margin: 0 0 4px; font-size: 26px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.1; }
+.lv2-ab-title { margin: 0 0 14px; font-size: 13px; font-weight: 500; color: var(--lv-faint); }
+.lv2-ab-bio { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--lv-muted); }
+.lv2-ab-links { display: flex; gap: 8px; margin-top: auto; padding-top: 22px; }
+.lv2-root .lv2-ab-link {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 100px;
+  border: 1px solid rgba(0, 0, 0, 0.12); background: #fff; font-size: 13px; font-weight: 500; color: var(--lv-ink); text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.lv2-root .lv2-ab-link:hover { background: var(--lv-ink); border-color: var(--lv-ink); color: #fff; }
+.lv2-root .lv2-ab-link--icon { width: 40px; padding: 0; }
+.lv2-ab-link:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 3px; }
+
+/* ── Principios: título fijo a la izquierda, lista numerada a la derecha ── */
+.lv2-ab-principles { display: grid; grid-template-columns: 1fr 1.6fr; gap: 80px; align-items: start; }
+.lv2-ab-principles-side { position: sticky; top: 110px; }
+.lv2-ab-principles-side .lv2-h2 { margin-bottom: 20px; }
+.lv2-ab-pr-list { list-style: none; margin: 0; padding: 0; }
+.lv2-ab-pr {
+  display: grid; grid-template-columns: 52px minmax(0, 1fr); column-gap: 28px; row-gap: 10px; padding: 34px 0;
+  border-top: 1px solid var(--lv-line); transition: padding 0.5s var(--lv-ease);
+}
+.lv2-ab-pr:last-child { border-bottom: 1px solid var(--lv-line); }
+.lv2-ab-pr:hover { padding-left: 8px; }
+.lv2-ab-pr-num {
+  grid-row: span 2; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
+  background: #F4F4F6; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+  transition: background 0.4s ease, transform 0.5s var(--lv-ease);
+}
+.lv2-ab-pr:hover .lv2-ab-pr-num { background: var(--lv-lime); transform: scale(1.08) rotate(-6deg); }
+.lv2-ab-pr h3 { margin: 0; padding-top: 10px; font-size: clamp(24px, 2.2vw, 32px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; }
+.lv2-ab-pr p { margin: 0; max-width: 540px; font-size: 16px; line-height: 1.7; color: var(--lv-muted); }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .lv2-ab-team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lv2-ab-principles { gap: 56px; }
+}
+@media (max-width: 900px) {
+  .lv2-ab-hero { padding-top: 120px; }
+  .lv2-ab-hero-row { flex-direction: column; align-items: flex-start; gap: 28px; margin-bottom: 40px; }
+  .lv2-ab-band { border-radius: 28px; }
+  .lv2-ab-manifesto { grid-template-columns: 1fr; gap: 24px; }
+  .lv2-ab-eyebrow { padding-top: 0; }
+  .lv2-ab-stats { grid-template-columns: 1fr; row-gap: 0; padding: 20px 12px; }
+  .lv2-ab-stats .lv2-stat { padding: 28px 22px; }
+  .lv2-ab-stats .lv2-stat + .lv2-stat { border-left: 0; border-top: 1px solid rgba(10, 15, 0, 0.14); }
+  .lv2-ab-principles { grid-template-columns: 1fr; gap: 32px; }
+  .lv2-ab-principles-side { position: static; }
+}
+@media (max-width: 640px) {
+  .lv2-ab-hero { padding-top: 104px; }
+  .lv2-ab-hero .lv2-h1 { font-size: clamp(44px, 13.4vw, 80px); margin-bottom: 28px; }
+  /* En mobile "los eventos fluyan." no entra en una línea: se deja partir y "fluyan." baja sola */
+  .lv2-ab-hero .lv2-line { white-space: normal; }
+  .lv2-ab-hero-row p { font-size: 17px; }
+  .lv2-ab-band { height: 420px; border-radius: 24px; }
+  .lv2-ab-band-cap { left: 14px; right: 14px; bottom: 14px; }
+  .lv2-ab-chip { height: 34px; padding: 0 12px; font-size: 12px; }
+  .lv2-ab-team { grid-template-columns: 1fr; }
+  .lv2-ab-pr { grid-template-columns: 44px minmax(0, 1fr); column-gap: 18px; padding: 28px 0; }
+  .lv2-ab-pr-num { width: 44px; height: 44px; font-size: 14px; }
+  .lv2-ab-pr h3 { padding-top: 7px; }
+  .lv2-ab-pr p { grid-column: 1 / -1; }
+}
+
+/* Sin hover (táctil): las fotos van a color */
+@media (hover: none) {
+  .lv2-ab-photo img { filter: none; }
+}
+
+/* ── Accesibilidad: movimiento reducido ── */
+@media (prefers-reduced-motion: reduce) {
+  .lv2-ab-hero-row.lv2-fade-up { transform: none; }
+  .lv2-ab-strike::after { transition: none; }
+  .lv2-ab-founder:hover { translate: none; }
+  .lv2-ab-founder:hover .lv2-ab-photo img { transform: none; }
+}

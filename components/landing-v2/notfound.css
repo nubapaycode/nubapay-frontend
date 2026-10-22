@@ -1,0 +1,111 @@
+/* ───────── Nubapay · 404 (sobre el sistema de landing-v2) ───────── */
+
+.lv2-nf { min-height: 100svh; display: flex; align-items: center; padding: 104px 0 64px; text-align: center; }
+.lv2-nf-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+/* ── 4 [QR] 4 gigante: todo en `em` del tamaño del número ── */
+.lv2-nf-code {
+  display: flex; align-items: center; justify-content: center; gap: 0.03em;
+  /* Limitado también por el alto: todo el bloque (número, texto y botones) entra en la primera pantalla */
+  font-size: clamp(110px, min(20vw, 30svh), 300px); font-weight: 800; letter-spacing: -0.06em; line-height: 0.8; color: var(--lv-ink);
+}
+/* Recorta arriba y abajo para la subida; a los costados no (el letter-spacing negativo se sale de la caja) */
+.lv2-nf-mask { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.06em 0 0.08em; }
+.lv2-nf-digit { display: inline-block; transform-origin: 0% 100%; transform: translateY(115%) rotate(10deg); }
+
+.lv2-nf-qr {
+  position: relative; display: grid; place-items: center; flex-shrink: 0; width: 0.76em; height: 0.76em; margin: 0 0.05em;
+  padding: 0; border: 0; border-radius: 0.14em; font: inherit; color: var(--lv-lime-fg); background: var(--lv-lime); cursor: pointer;
+  box-shadow: 0 0.1em 0.24em -0.1em rgba(150, 200, 0, 0.6), inset 0 -0.012em 0 rgba(60, 80, 0, 0.18);
+  transform: scale(0) rotate(-90deg);
+}
+.lv2-nf-qr:focus-visible { outline: 3px solid var(--lv-ink); outline-offset: 6px; }
+.lv2-nf-qr:disabled { cursor: default; }
+.lv2-nf-qr svg { width: 60%; height: 60%; overflow: visible; }
+/* Esquinas de visor */
+.lv2-nf-corner { position: absolute; width: 0.1em; height: 0.1em; border: 0.014em solid var(--lv-lime-fg); }
+.lv2-nf-corner--tl { top: 0.06em; left: 0.06em; border-right: 0; border-bottom: 0; border-top-left-radius: 0.04em; }
+.lv2-nf-corner--tr { top: 0.06em; right: 0.06em; border-left: 0; border-bottom: 0; border-top-right-radius: 0.04em; }
+.lv2-nf-corner--bl { bottom: 0.06em; left: 0.06em; border-right: 0; border-top: 0; border-bottom-left-radius: 0.04em; }
+.lv2-nf-corner--br { bottom: 0.06em; right: 0.06em; border-left: 0; border-top: 0; border-bottom-right-radius: 0.04em; }
+/* Línea del escáner: barre en loop; al re-escanear la mueve GSAP */
+.lv2-nf-scan {
+  position: absolute; left: 12%; right: 12%; top: 14%; height: max(3px, 0.01em); border-radius: 3px;
+  background: #fff; box-shadow: 0 0 0.05em 0.012em rgba(255, 255, 255, 0.85);
+  animation: lv2-nf-scan 2.4s ease-in-out infinite alternate;
+  transition: opacity 0.4s ease;
+}
+@keyframes lv2-nf-scan { to { top: 84%; } }
+/* Check que aparece cuando el QR "se arregla" */
+.lv2-nf-ok {
+  position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 0.26em; height: 0.26em; border-radius: 50%;
+  background: var(--lv-ink); color: var(--lv-lime); box-shadow: 0 0 0 0.03em var(--lv-lime);
+  transform: translate(-50%, -50%) scale(0); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lv2-nf-ok svg { width: 55%; height: 55%; }
+.lv2-nf-qr.is-ok .lv2-nf-ok { transform: translate(-50%, -50%) scale(1); }
+.lv2-nf-qr.is-ok .lv2-nf-scan { opacity: 0; animation: none; }
+
+.lv2-nf-hint { margin: 16px 0 0; font-size: 13px; font-weight: 500; color: var(--lv-faint); transition: opacity 0.4s ease, visibility 0.4s; }
+.lv2-nf-hint.is-hidden { opacity: 0 !important; visibility: hidden; }
+
+/* ── Texto ── */
+.lv2-nf-fade { opacity: 0; transform: translateY(20px); }
+.lv2-nf-status {
+  display: inline-flex; align-items: center; gap: 9px; height: 38px; margin: 24px 0 20px; padding: 0 16px 0 7px; border-radius: 100px;
+  background: var(--lv-ink); color: #fff; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.lv2-nf-status i {
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #FF5A4E; color: #fff;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.lv2-nf-status.is-scanning i { background: rgba(255, 255, 255, 0.2); }
+.lv2-nf-status.is-ok { background: var(--lv-lime); color: var(--lv-lime-fg); }
+.lv2-nf-status.is-ok i { background: var(--lv-lime-fg); color: var(--lv-lime); }
+.lv2-nf-title { margin: 0 0 16px; font-size: clamp(40px, min(5vw, 8svh), 76px); font-weight: 500; letter-spacing: -0.045em; line-height: 0.95; }
+.lv2-nf-text { margin: 0 0 30px; max-width: 500px; font-size: 18px; line-height: 1.65; color: var(--lv-muted); }
+.lv2-nf-cta { justify-content: center; }
+.lv2-nf-back { padding-left: 24px; }
+.lv2-nf-back svg { transition: transform 0.45s var(--lv-ease); }
+.lv2-nf-back:hover svg { transform: translateX(-3px); }
+/* Al resolver el easter egg, "Volver al inicio" late para invitar a salir */
+.lv2-btn.is-ready { animation: lv2-nf-ready 1.6s ease-in-out infinite; }
+@keyframes lv2-nf-ready { 50% { box-shadow: 0 0 0 10px rgba(198, 255, 0, 0.3), 0 14px 30px -12px rgba(150, 200, 0, 0.55); } }
+
+/* ── Atajos ── */
+.lv2-nf-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.lv2-nf-link { position: relative; min-height: 220px; }
+.lv2-nf-link h3 a { color: inherit; text-decoration: none; }
+/* Toda la card es clickeable: el link del título se estira sobre ella */
+.lv2-nf-link h3 a::after { content: ""; position: absolute; inset: 0; border-radius: 26px; }
+.lv2-nf-link:focus-within { border-color: var(--lv-ink); box-shadow: 0 0 0 4px rgba(198, 255, 0, 0.45); }
+.lv2-nf-link h3 a:focus-visible { outline: none; }
+.lv2-nf-link-arrow {
+  position: absolute; top: 26px; right: 26px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: background 0.4s ease, border-color 0.4s ease, transform 0.5s var(--lv-ease);
+}
+.lv2-nf-link:hover .lv2-nf-link-arrow { background: var(--lv-lime); border-color: var(--lv-lime); transform: rotate(45deg); }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .lv2-nf-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .lv2-nf { min-height: 0; padding: 116px 0 80px; }
+  .lv2-nf-code { font-size: clamp(110px, 38vw, 170px); }
+  .lv2-nf-text { font-size: 16px; }
+  .lv2-nf-links { grid-template-columns: minmax(0, 1fr); }
+  .lv2-nf-link { min-height: 0; }
+  .lv2-nf-link-arrow { top: 22px; right: 22px; }
+}
+
+/* ── Accesibilidad: movimiento reducido ── */
+@media (prefers-reduced-motion: reduce) {
+  .lv2-nf-digit { transform: none; }
+  .lv2-nf-qr { transform: rotate(-4deg); }
+  .lv2-nf-fade { opacity: 1; transform: none; }
+  .lv2-nf-scan, .lv2-btn.is-ready { animation: none; }
+  .lv2-nf-ok { transition: none; }
+}

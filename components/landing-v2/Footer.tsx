@@ -63,7 +63,8 @@ function RollLink({ href, children }: { href: string; children: string }) {
     : <Link href={href} className="lv2-f-link" aria-label={children}>{inner}</Link>
 }
 
-export default function Footer() {
+/** `base`: igual que en el Nav, ruta que se antepone a las anclas de la home cuando el footer va en otra página. */
+export default function Footer({ base = '' }: { base?: string }) {
   const rootRef = useRef<HTMLElement>(null)
   const time = useSyncExternalStore(subscribeClock, readClock, () => '')
 
@@ -114,7 +115,7 @@ export default function Footer() {
               <div key={col.title}>
                 <p className="lv2-f-coltitle">{col.title}</p>
                 <ul>
-                  {col.links.map(l => <li key={l.label}><RollLink href={l.href}>{l.label}</RollLink></li>)}
+                  {col.links.map(l => <li key={l.label}><RollLink href={l.href.startsWith('#') ? base + l.href : l.href}>{l.label}</RollLink></li>)}
                 </ul>
               </div>
             ))}

@@ -128,6 +128,9 @@
 .lv2-logo-roll, .lv2-logo-roll > span { display: block; }
 .lv2-logo-badge { width: 0.62em; height: 0.62em; flex-shrink: 0; margin-left: 0.1em; position: relative; top: calc(-0.22em + 4px); overflow: visible; }
 .lv2-nav-actions { display: flex; align-items: center; gap: 6px; }
+/* Contenido centrado opcional (selector de las páginas legales): se oculta mientras el menú está abierto */
+.lv2-nav-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transition: opacity 0.3s ease; }
+.lv2-nav.is-open .lv2-nav-center { opacity: 0; pointer-events: none; }
 .lv2-root .lv2-nav-login { font-size: 14px; font-weight: 500; color: var(--nv-fg); }
 .lv2-nav-login span { opacity: 0.66; }
 .lv2-root .lv2-nav-cta {
@@ -379,7 +382,7 @@
 .lv2-stat { padding: 0 36px; position: relative; z-index: 1; }
 .lv2-stat + .lv2-stat { border-left: 1px solid rgba(10, 15, 0, 0.14); }
 .lv2-stat-ico { width: 42px; height: 42px; border-radius: 13px; background: rgba(10, 15, 0, 0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--lv-lime-fg); }
-.lv2-stat-num { font-size: clamp(46px, 4.4vw, 78px); font-weight: 800; letter-spacing: -0.055em; line-height: 1; color: var(--lv-lime-fg); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.lv2-stat-num { font-size: clamp(46px, 3.8vw, 64px); white-space: nowrap; font-weight: 800; letter-spacing: -0.055em; line-height: 1; color: var(--lv-lime-fg); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
 .lv2-stat p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; font-weight: 500; color: rgba(10, 15, 0, 0.75); }
 .lv2-stat small { font-size: 12px; color: rgba(10, 15, 0, 0.5); font-weight: 500; }
 

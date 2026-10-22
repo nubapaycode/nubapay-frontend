@@ -9,7 +9,7 @@ import {
 
 import { browserFetch } from '@/lib/browserFetch'
 import { gsap, MOTION_OK, MOTION_REDUCED, ScrollTrigger, useGSAP } from './gsap'
-import { CountUp, LoopVideo, prefersReducedMotion, useCtaHover, usePointerEffects, useReveal, useScrollState, useSmoothScroll } from './hooks'
+import { CountUp, LoopVideo, prefersReducedMotion, Reveal, useCtaHover, usePointerEffects, useReveal, useScrollState, useSmoothScroll } from './hooks'
 import FinalCta from './FinalCta'
 import Footer from './Footer'
 import Nav from './Nav'
@@ -96,16 +96,6 @@ const CONTACT_TOPICS = [
 ]
 
 /* ───────── Piezas chicas ───────── */
-
-function Reveal({ children, d = 0, className = '', as: Tag = 'div' }: {
-  children: React.ReactNode; d?: number; className?: string; as?: 'div' | 'section' | 'header'
-}) {
-  return (
-    <Tag className={`lv2-reveal ${className}`} style={{ '--d': `${d}s` } as React.CSSProperties}>
-      {children}
-    </Tag>
-  )
-}
 
 function ArrowBtn({ href, children, ghost = false, dark = false }: {
   href: string; children: React.ReactNode; ghost?: boolean; dark?: boolean

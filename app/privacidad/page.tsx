@@ -1,20 +1,21 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import SiteNavbar from '@/components/SiteNavbar'
-import SiteFooter from '@/components/SiteFooter'
-import { breadcrumbJsonLd } from '@/lib/seo'
+
+import LegalPage, { type LegalSection } from '@/components/landing-v2/LegalPage'
+import { breadcrumbJsonLd, pageMeta, SITE_URL } from '@/lib/seo'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad',
-  description: 'Política de privacidad y protección de datos personales de Nubapay.',
-  alternates: { canonical: 'https://nubapay.app/privacidad' },
+  ...pageMeta({
+    title: 'Política de Privacidad',
+    description: 'Política de privacidad y protección de datos personales de Nubapay.',
+  }),
+  alternates: { canonical: `${SITE_URL}/privacidad` },
 }
 
-type Section = { num: string; title: string; body: string; children?: { subtitle: string; body: string }[] }
+const BREADCRUMB_LD = { __html: breadcrumbJsonLd([{ name: 'Política de Privacidad', path: '/privacidad' }]) }
 
 // TODO(pendiente): agregar cuando estén los datos. Sección 1: razón social/titular, CUIT y domicilio legal.
 // Sección de contacto (última): domicilio y WhatsApp. Se quitaron del texto para no mostrar placeholders.
-const sections: Section[] = [
+const sections: LegalSection[] = [
   {
     num: '1',
     title: 'Identificación del responsable',
@@ -310,217 +311,25 @@ const sections: Section[] = [
 ]
 
 export default function PrivacidadPage() {
-  const font = "var(--font-dm-sans, 'DM Sans', sans-serif)"
-
   return (
-    <div style={{ fontFamily: font, background: '#FFFFFF', minHeight: '100vh' }}>
-      <script type="application/ld+json">{breadcrumbJsonLd([{ name: 'Política de Privacidad', path: '/privacidad' }])}</script>
-      <style>{`
-        .nb-sidebar-link { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; text-decoration: none; font-size: 12px; color: #6B6B7A; font-weight: 500; line-height: 1.35; transition: background 0.12s, color 0.12s; }
-        .nb-sidebar-link:hover { background: #F0F0F2; color: #0A0A0F; }
-
-        .priv-hero { max-width: 1100px; margin: 0 auto; padding: 72px 32px 56px; }
-        .priv-divider { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
-        .priv-layout {
-          max-width: 1100px; margin: 0 auto;
-          padding: 48px 32px 120px;
-          display: grid;
-          grid-template-columns: 220px 1fr;
-          gap: 48px;
-          align-items: start;
-        }
-        .priv-sidebar { display: block; }
-
-        @media (max-width: 1024px) {
-          .priv-layout { grid-template-columns: 180px 1fr; gap: 32px; }
-        }
-
-        @media (max-width: 768px) {
-          .priv-hero { padding: 48px 24px 40px; }
-          .priv-divider { padding: 0 24px; }
-          .priv-layout { grid-template-columns: 1fr; padding: 32px 24px 80px; gap: 0; }
-          .priv-sidebar { display: none; }
-        }
-
-        @media (max-width: 480px) {
-          .priv-hero { padding: 40px 20px 32px; }
-          .priv-divider { padding: 0 20px; }
-          .priv-layout { padding: 28px 20px 64px; }
-        }
-      `}</style>
-
-      <SiteNavbar />
-
-      {/* Hero */}
-      <div className="priv-hero">
-        <h1 style={{
-          fontSize: 'clamp(40px, 6vw, 72px)',
-          fontWeight: 800,
-          color: '#0A0A0F',
-          letterSpacing: '-0.04em',
-          lineHeight: 1.05,
-          margin: '0 0 20px',
-          maxWidth: '100%',
-        }}>
-          Política de Privacidad
-        </h1>
-        <p style={{ fontSize: '16px', color: '#6B6B7A', lineHeight: 1.65, margin: 0, maxWidth: '100%' }}>
-          En Nubapay valoramos la privacidad de nuestros usuarios y nos comprometemos a proteger los datos personales recolectados y tratados a través de nuestra plataforma. Al acceder o utilizarla, declarás haber leído y comprendido esta Política.
-        </p>
-
-        {/* Meta info */}
-        <div style={{ display: 'flex', gap: '24px', marginTop: '36px', flexWrap: 'wrap' }}>
-          {[
-            { label: 'Última actualización', value: 'Mayo 2025' },
-            { label: 'Versión', value: '1.0' },
-            { label: 'Jurisdicción', value: 'República Argentina' },
-          ].map(item => (
-            <div key={item.label} style={{
-              padding: '12px 16px',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0,0,0,0.07)',
-              borderRadius: '12px',
-              minWidth: '160px',
-            }}>
-              <p style={{ margin: '0 0 3px', fontSize: '11px', fontWeight: 600, color: '#9A9AA8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                {item.label}
-              </p>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0A0A0F' }}>
-                {item.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="priv-divider">
-        <div style={{ height: '1px', background: 'rgba(0,0,0,0.07)' }} />
-      </div>
-
-      {/* Content */}
-      <div className="priv-layout">
-
-        {/* Sidebar */}
-        <aside className="priv-sidebar" style={{ position: 'sticky', top: '84px' }}>
-          <p style={{
-            fontSize: '11px', fontWeight: 700, color: '#9A9AA8',
-            letterSpacing: '0.06em', textTransform: 'uppercase',
-            margin: '0 0 16px',
-          }}>
-            Índice
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
-            {sections.map(s => (
-              <a key={s.num} href={`#sec-${s.num}`} className="nb-sidebar-link">
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#C4C4CF', width: '16px', flexShrink: 0, textAlign: 'right' }}>
-                  {s.num}
-                </span>
-                {s.title}
-              </a>
-            ))}
-          </div>
-        </aside>
-
-        {/* Sections */}
-        <main>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {sections.map((section, idx) => (
-              <div
-                key={section.num}
-                id={`sec-${section.num}`}
-                style={{
-                  padding: '28px 0',
-                  borderBottom: idx < sections.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <span style={{
-                    flexShrink: 0,
-                    width: '28px', height: '28px',
-                    borderRadius: '8px',
-                    background: '#F0F0F2',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 800, color: '#9A9AA8',
-                    marginTop: '2px',
-                  }}>
-                    {section.num}
-                  </span>
-
-                  <div style={{ flex: 1 }}>
-                    <h2 style={{ margin: '0 0 12px', fontSize: '17px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em' }}>
-                      {section.title}
-                    </h2>
-                    <div style={{ fontSize: '14px', lineHeight: 1.75, color: '#4A4A5A' }}>
-                      {section.body.split('\n\n').map((para, i) => (
-                        <p key={i} style={{ margin: i === 0 ? 0 : '12px 0 0', whiteSpace: 'pre-line' }}>
-                          {para}
-                        </p>
-                      ))}
-                    </div>
-
-                    {section.children && (
-                      <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {section.children.map(child => (
-                          <div key={child.subtitle} style={{
-                            padding: '16px',
-                            background: '#FAFAFA',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(0,0,0,0.05)',
-                          }}>
-                            <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>
-                              {child.subtitle}
-                            </p>
-                            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.7, color: '#4A4A5A', whiteSpace: 'pre-line' }}>
-                              {child.body}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom note */}
-          <div style={{
-            marginTop: '48px',
-            padding: '24px',
-            background: '#0A0A0F',
-            borderRadius: '20px',
-            display: 'flex', alignItems: 'flex-start', gap: '16px',
-          }}>
-            <div style={{
-              width: '36px', height: '36px', flexShrink: 0,
-              background: 'rgba(198,255,0,0.12)',
-              borderRadius: '10px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM8 5v4M8 11v.5" stroke="#C6FF00" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div>
-              <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
-                ¿Tenés consultas sobre tus datos?
-              </p>
-              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                Escribinos a{' '}
-                <a href="mailto:privacidad@nubapay.app" style={{ color: '#C6FF00', textDecoration: 'none', fontWeight: 600 }}>
-                  privacidad@nubapay.app
-                </a>
-                . Te respondemos dentro de las 48 horas hábiles.
-              </p>
-            </div>
-          </div>
-        </main>
-
-      </div>
-
-      <SiteFooter />
-
-    </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={BREADCRUMB_LD} />
+      <LegalPage
+        doc="privacidad"
+        lines={['Política de', 'privacidad.']}
+        intro="En Nubapay valoramos la privacidad de nuestros usuarios y nos comprometemos a proteger los datos personales recolectados y tratados a través de nuestra plataforma. Al acceder o utilizarla, declarás haber leído y comprendido esta Política."
+        meta={[
+          { label: 'Última actualización', value: 'Mayo 2025' },
+          { label: 'Versión', value: '1.0' },
+          { label: 'Jurisdicción', value: 'República Argentina' },
+        ]}
+        sections={sections}
+        contact={{
+          title: '¿Tenés consultas sobre tus datos?',
+          text: 'Escribinos y te respondemos dentro de las 48 horas hábiles.',
+          email: 'privacidad@nubapay.app',
+        }}
+      />
+    </>
   )
 }

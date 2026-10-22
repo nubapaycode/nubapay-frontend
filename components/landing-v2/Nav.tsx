@@ -26,8 +26,8 @@ const MORE = [
 
 const SECTION_IDS = [...FEATURED.map(f => f.id), ...MORE.map(m => m.id)]
 
-/** Superficies oscuras de la página: cuando pasan por debajo de la barra, la barra se invierte. */
-const DARK_SURFACES = '.lv2-cta, .lv2-f'
+/** Superficies oscuras de la página: cuando pasan por debajo de la barra, la barra se invierte (`.lv2-dark` para las de otras páginas). */
+const DARK_SURFACES = '.lv2-cta, .lv2-f, .lv2-dark'
 const BAR_Y = 44
 
 const CONTACT_EMAIL = 'contacto@nubapay.app'
@@ -102,7 +102,12 @@ function useOverDark() {
 
 type Hover = React.SyntheticEvent<HTMLElement>
 
-export default function Nav({ scrolled }: { scrolled: boolean }) {
+/**
+ * `base` antepone una ruta a las anclas de secciones: en la landing va vacío (scroll suave en la misma
+ * página); en otras páginas se pasa '/' para que naveguen a la sección de la home.
+ * `center` es contenido opcional centrado en la barra (p. ej. el selector de las páginas legales).
+ */
+export default function Nav({ scrolled, base = '', center }: { scrolled: boolean; base?: string; center?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const overDark = useOverDark()
   const active = useActiveSection(SECTION_IDS)
@@ -305,6 +310,7 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
   }, [open])
 
   const tab = open ? 0 : -1
+  const A = base ? Link : 'a'
 
   return (
     <header ref={headerRef} className={`lv2-nav${open ? ' is-open' : ''}`}>
@@ -330,12 +336,13 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
             <path className="lv2-logo-check" d="m9 12 2 2 4-4" pathLength={1} strokeDasharray="1" fill="none" stroke="var(--nv-badge-fg)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
+        {center && <div className="lv2-nav-center">{center}</div>}
         <div className="lv2-nav-actions">
           <Link href="/login" className="lv2-nav-chip lv2-nav-login" onMouseEnter={fadeIn} onMouseLeave={fadeOut}>
             <span>Iniciar sesión</span>
           </Link>
-          <a
-            href="#contacto"
+          <A
+            href={`${base}#contacto`}
             className="lv2-nav-cta"
             onClick={go}
             onMouseEnter={ctaIn}
@@ -344,7 +351,7 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
             onPointerUp={release}
           >
             Agendá una demo <i><ArrowRight size={15} strokeWidth={1.8} /></i>
-          </a>
+          </A>
           <button
             ref={toggleRef}
             type="button"
@@ -367,9 +374,9 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
         <div className="lv2-wrap lv2-menu-inner">
           <nav className="lv2-menu-cards" aria-label="Secciones destacadas">
             {FEATURED.map((f, i) => (
-              <a
+              <A
                 key={f.id}
-                href={`#${f.id}`}
+                href={`${base}#${f.id}`}
                 onClick={go}
                 onMouseEnter={cardIn}
                 onMouseLeave={cardOut}
@@ -385,7 +392,7 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
                   <span>{f.text}</span>
                 </span>
                 <span className="lv2-menu-card-arrow" aria-hidden="true"><ArrowUpRight size={18} /></span>
-              </a>
+              </A>
             ))}
           </nav>
 
@@ -393,8 +400,8 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
             <ul className="lv2-menu-more" aria-label="Más secciones">
               {MORE.map(m => (
                 <li key={m.id}>
-                  <a
-                    href={`#${m.id}`}
+                  <A
+                    href={`${base}#${m.id}`}
                     onClick={go}
                     onMouseEnter={rollIn}
                     onMouseLeave={rollOut}
@@ -407,15 +414,15 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
                       <span className="lv2-menu-roll" aria-hidden="true"><span>{m.label}</span><span>{m.label}</span></span>
                     </span>
                     <span className="sr-only">{m.label}</span>
-                  </a>
+                  </A>
                 </li>
               ))}
             </ul>
             <div className="lv2-menu-ctas">
-              <a href="#contacto" onClick={go} tabIndex={tab} className="lv2-btn">
+              <A href={`${base}#contacto`} onClick={go} tabIndex={tab} className="lv2-btn">
                 Agendá una demo
                 <span className="lv2-btn-arrow"><ArrowRight size={18} strokeWidth={1.6} /></span>
-              </a>
+              </A>
               <Link href="/login" tabIndex={tab} className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Iniciar sesión</Link>
             </div>
             <div className="lv2-menu-meta">

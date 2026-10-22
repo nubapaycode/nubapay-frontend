@@ -304,3 +304,14 @@ export function LoopVideo({ src, label }: { src: string; label: string }) {
     <video ref={ref} src={src} muted loop playsInline preload="metadata" aria-label={label} />
   )
 }
+
+/** Bloque que entra con `useReveal` (`d` queda como variable CSS para retrasos manuales). */
+export function Reveal({ children, d = 0, className = '', as: Tag = 'div' }: {
+  children: React.ReactNode; d?: number; className?: string; as?: 'div' | 'section' | 'header' | 'article' | 'li'
+}) {
+  return (
+    <Tag className={`lv2-reveal ${className}`} style={{ '--d': `${d}s` } as React.CSSProperties}>
+      {children}
+    </Tag>
+  )
+}
