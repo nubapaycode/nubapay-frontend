@@ -41,7 +41,8 @@ function StatusBar({ dark }: { dark: boolean }) {
   )
 }
 
-export default function RealPhone({ screen, eager = false }: { screen: number; eager?: boolean }) {
+/** `single`: renderiza sólo la captura actual (para listas con un teléfono por paso, sin cargar las demás). */
+export default function RealPhone({ screen, eager = false, single = false }: { screen: number; eager?: boolean; single?: boolean }) {
   const uid = useId().replace(/:/g, '')
   const current = PHONE_SCREENS[screen] ?? PHONE_SCREENS[0]
 
@@ -53,7 +54,7 @@ export default function RealPhone({ screen, eager = false }: { screen: number; e
       >
         <StatusBar dark={current.dark} />
         <div className="lv2-ip-shots" style={{ top: `${STATUS_PCT}%` }}>
-          {PHONE_SCREENS.map((s, i) => (
+          {PHONE_SCREENS.map((s, i) => (single && i !== screen ? null : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={s.src}
@@ -65,7 +66,7 @@ export default function RealPhone({ screen, eager = false }: { screen: number; e
               loading={eager ? 'eager' : 'lazy'}
               className={i === screen ? 'is-on' : ''}
             />
-          ))}
+          )))}
         </div>
         <div className="lv2-ip-glare" aria-hidden="true" />
       </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import {
-  ArrowRight, ArrowUpRight, Bell, Building2, Car, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, CreditCard, LayoutDashboard, ListChecks,
+  ArrowRight, ArrowUpRight, Bell, Building2, Car, Check, ChevronLeft, ChevronRight, Clock, CreditCard, LayoutDashboard, ListChecks,
   MapPin, Music, Plus, ScanLine, ShieldCheck, ShoppingBag, Store, Ticket, TrendingUp, Truck, Wine, Zap,
 } from 'lucide-react'
 
@@ -14,11 +14,18 @@ import FinalCta from './FinalCta'
 import Footer from './Footer'
 import Nav from './Nav'
 import Phone3D, { type PhoneSpin } from './Phone3D'
+import RealPhone from './RealPhone'
 import Tickets from './Tickets'
 import 'lenis/dist/lenis.css'
 import './landing-v2.css'
 
 /* ───────── Datos ───────── */
+
+/** Breakpoint del recorrido: el CSS pasa a una sola columna con `max-width: 900px`. */
+const DESKTOP = '(min-width: 901px)'
+
+/** Teléfono: `false` usa el iPhone SVG con capturas (RealPhone, sin three.js); `true` vuelve al 3D de Phone3D. */
+const USE_3D = false
 
 /** Pantallas del iPhone del hero, en el orden del flujo de compra. */
 const SCREENS = ['Catálogo', 'Carrito', 'Pago', 'Retiro con QR']
@@ -200,7 +207,9 @@ function Hero() {
           onPointerEnter={() => { paused.current = true }}
         >
           <StageBg />
-          <Phone3D screen={screen} lift={20} />
+          {USE_3D
+            ? <Phone3D screen={screen} lift={20} />
+            : <div className="lv2-phone-wrap"><RealPhone screen={screen} eager /></div>}
 
           <button type="button" className="lv2-hero-arrow lv2-hero-arrow--prev" aria-label="Pantalla anterior"
             onClick={e => step(-1, e)} onMouseEnter={e => nudge(-1, e)} onMouseLeave={e => nudge(0, e)}>
@@ -249,30 +258,16 @@ function Journey() {
   const sectionRef = useRef<HTMLElement>(null)
   const spinRef = useRef<PhoneSpin>({ ry: 0, rx: 0, z: 0 })
 
-  /* Mobile: al llegar sólo se ve el teléfono, así que avisamos que hay que deslizar
-     hasta que la primera tarjeta entra en pantalla (y vuelve si se sube de nuevo) */
-  const [hint, setHint] = useState(true)
+  /* Desktop: teléfono 3D sticky que gira con el scroll. En mobile no se monta (ni three.js ni su WebGL):
+     cada paso lleva su captura estática y listo. */
+  const [desktop, setDesktop] = useState(false)
   useEffect(() => {
-    const card = refs.current[0]?.querySelector('.lv2-step-card')
-    if (!card || typeof IntersectionObserver === 'undefined') return
-    const obs = new IntersectionObserver(
-      ([e]) => setHint(!e.isIntersecting && e.boundingClientRect.top > 0),
-      { threshold: 0.3 },
-    )
-    obs.observe(card)
-    return () => obs.disconnect()
+    const mq = window.matchMedia(DESKTOP)
+    const sync = () => setDesktop(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
   }, [])
-
-  /* Indicador sutil fijo abajo mientras se recorren los pasos (y todavía queda alguno por ver) */
-  const [inSteps, setInSteps] = useState(false)
-  useEffect(() => {
-    const list = refs.current[0]?.parentElement
-    if (!list || typeof IntersectionObserver === 'undefined') return
-    const obs = new IntersectionObserver(([e]) => setInSteps(e.isIntersecting))
-    obs.observe(list)
-    return () => obs.disconnect()
-  }, [])
-  const cue = inSteps && !hint && active < STEPS.length - 1
 
   /* El recorrido va del centro del primer paso al centro del último. Con movimiento:
      timeline con scrub, una vuelta de 360° por paso (con meseta de frente en cada uno) del iPhone 3D.
@@ -291,7 +286,7 @@ function Journey() {
     }
 
     const mm = gsap.matchMedia()
-    mm.add(MOTION_OK, () => {
+    if (USE_3D) mm.add(`${MOTION_OK} and ${DESKTOP}`, () => {
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         /* scrub alto + Lenis: el giro "persigue" al scroll con inercia en vez de ir pegado */
@@ -311,7 +306,8 @@ function Journey() {
       }
       tl.to({}, { duration: 0 }, last)
     })
-    mm.add(MOTION_REDUCED, () => {
+    /* Sin 3D (o con movimiento reducido) el teléfono sólo cambia de pantalla según el paso visible */
+    mm.add(USE_3D ? `${MOTION_REDUCED} and ${DESKTOP}` : DESKTOP, () => {
       ScrollTrigger.create({ ...range, onUpdate: self => setActive(Math.round(self.progress * last)) })
     })
   }, { scope: sectionRef })
@@ -336,6 +332,8 @@ function Journey() {
                   <p>{s.text}</p>
                   <div className="lv2-step-tags">{s.tags.map(t => <span key={t}>{t}</span>)}</div>
                 </div>
+                {/* Sólo mobile (CSS): captura estática del paso, en lugar del teléfono 3D */}
+                <div className="lv2-step-shot"><RealPhone screen={i} single /></div>
               </div>
             ))}
           </div>
@@ -344,15 +342,9 @@ function Journey() {
               {STEPS.map((s, i) => <i key={s.title} className={active === i ? 'is-on' : ''} />)}
             </div>
             <StageBg />
-            <Phone3D screen={active} variant="journey" spin={spinRef} />
-            <div className={`lv2-journey-hint${hint ? '' : ' is-hidden'}`} aria-hidden="true">
-              <span><ChevronDown size={16} strokeWidth={2.4} /></span>
-              Deslizá para ver los 4 pasos
-            </div>
-          </div>
-          <div className={`lv2-journey-cue${cue ? ' is-on' : ''}`} aria-hidden="true">
-            <small>Deslizá</small>
-            <i />
+            {desktop && (USE_3D
+              ? <Phone3D screen={active} variant="journey" spin={spinRef} />
+              : <div className="lv2-phone-wrap"><RealPhone screen={active} /></div>)}
           </div>
         </div>
       </div>

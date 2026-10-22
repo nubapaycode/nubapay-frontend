@@ -72,14 +72,15 @@ function loadImage(src: string) {
 }
 
 /** Pantalla completa de iOS: barra de estado dibujada + la captura (que viene sin barra). */
-function paintScreen(img: HTMLImageElement, dark: boolean) {
+function paintScreen(img: HTMLImageElement, dark: boolean, scale = 1) {
   const c = document.createElement('canvas')
-  c.width = 1179
-  c.height = 2556
+  c.width = Math.round(1179 * scale)
+  c.height = Math.round(2556 * scale)
   const g = c.getContext('2d')!
+  g.scale(scale, scale)
   const fg = dark ? '#fff' : '#000'
   g.fillStyle = dark ? '#0B0B10' : '#fff'
-  g.fillRect(0, 0, c.width, c.height)
+  g.fillRect(0, 0, 1179, 2556)
   g.drawImage(img, 0, 2556 - 2394, 1179, 2394)
 
   g.fillStyle = fg
@@ -277,7 +278,9 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
 
       const reduced = prefersReducedMotion()
       const renderer = new T.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      /* Celulares: texturas de pantalla a 2/3 y pixel ratio 1.5 (cada textura completa pesa ~12 MB en GPU) */
+      const small = window.matchMedia('(max-width: 900px)').matches
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 2))
       renderer.toneMapping = T.ACESFilmicToneMapping
       renderer.toneMappingExposure = 1.05
       renderer.domElement.setAttribute('aria-hidden', 'true')
@@ -316,7 +319,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
 
       /* Pantalla: dos capas para hacer el fundido entre capturas */
       const screens = imgs.map((img, i) => {
-        const tex = keep(new T.CanvasTexture(paintScreen(img, PHONE_SCREENS[i].dark)))
+        const tex = keep(new T.CanvasTexture(paintScreen(img, PHONE_SCREENS[i].dark, small ? 0.67 : 1)))
         tex.colorSpace = T.SRGBColorSpace
         tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
         return tex
