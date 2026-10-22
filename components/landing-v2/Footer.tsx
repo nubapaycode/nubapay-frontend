@@ -15,6 +15,7 @@ const COLUMNS = [
       { label: 'Cómo funciona', href: '#como-funciona' },
       { label: 'Panel', href: '#panel' },
       { label: 'Caso real', href: '#caso-landia' },
+      { label: 'Venta de entradas', href: '#venta-de-entradas' },
       { label: 'Entradas y parking', href: '#entradas-y-parking' },
       { label: 'Tipos de evento', href: '#eventos' },
       { label: 'Preguntas frecuentes', href: '#faq' },

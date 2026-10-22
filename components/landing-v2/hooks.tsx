@@ -89,8 +89,8 @@ export function usePointerEffects(root: React.RefObject<HTMLElement | null>) {
  */
 let activeLenis: Lenis | null = null
 
-/** Despeje para que el título de la sección no quede debajo del navbar fijo. */
-const ANCHOR_OFFSET = -88
+/* El despeje para que el título no quede debajo del navbar fijo lo da `scroll-margin-top` en el CSS:
+   Lenis lo respeta al scrollear a un elemento, así que no se le pasa `offset` (si no, se suma dos veces). */
 
 /** Frena / reanuda el scroll de la página (p. ej. mientras hay un modal abierto). */
 export function lockScroll(locked: boolean) {
@@ -105,14 +105,14 @@ export function lockScroll(locked: boolean) {
 export function scrollToHash(hash: string) {
   const el = document.querySelector<HTMLElement>(hash)
   if (!el) return
-  if (activeLenis) activeLenis.scrollTo(el, { offset: ANCHOR_OFFSET })
+  if (activeLenis) activeLenis.scrollTo(el)
   else el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
 }
 
 export function useSmoothScroll() {
   useEffect(() => {
     if (prefersReducedMotion()) return
-    const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.95, anchors: { offset: ANCHOR_OFFSET } })
+    const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.95, anchors: true })
     activeLenis = lenis
     lenis.on('scroll', ScrollTrigger.update)
     const tick = (time: number) => lenis.raf(time * 1000)

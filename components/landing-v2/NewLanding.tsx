@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import {
-  ArrowRight, ArrowUpRight, Bell, Building2, Car, Check, ChevronLeft, ChevronRight, Clock, CreditCard, LayoutDashboard, ListChecks,
+  ArrowRight, ArrowUpRight, Bell, Building2, Car, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, CreditCard, LayoutDashboard, ListChecks,
   MapPin, Music, Plus, ScanLine, ShieldCheck, ShoppingBag, Store, Ticket, TrendingUp, Truck, Wine, Zap,
 } from 'lucide-react'
 
@@ -14,6 +14,7 @@ import FinalCta from './FinalCta'
 import Footer from './Footer'
 import Nav from './Nav'
 import Phone3D, { type PhoneSpin } from './Phone3D'
+import Tickets from './Tickets'
 import 'lenis/dist/lenis.css'
 import './landing-v2.css'
 
@@ -248,6 +249,31 @@ function Journey() {
   const sectionRef = useRef<HTMLElement>(null)
   const spinRef = useRef<PhoneSpin>({ ry: 0, rx: 0, z: 0 })
 
+  /* Mobile: al llegar sólo se ve el teléfono, así que avisamos que hay que deslizar
+     hasta que la primera tarjeta entra en pantalla (y vuelve si se sube de nuevo) */
+  const [hint, setHint] = useState(true)
+  useEffect(() => {
+    const card = refs.current[0]?.querySelector('.lv2-step-card')
+    if (!card || typeof IntersectionObserver === 'undefined') return
+    const obs = new IntersectionObserver(
+      ([e]) => setHint(!e.isIntersecting && e.boundingClientRect.top > 0),
+      { threshold: 0.3 },
+    )
+    obs.observe(card)
+    return () => obs.disconnect()
+  }, [])
+
+  /* Indicador sutil fijo abajo mientras se recorren los pasos (y todavía queda alguno por ver) */
+  const [inSteps, setInSteps] = useState(false)
+  useEffect(() => {
+    const list = refs.current[0]?.parentElement
+    if (!list || typeof IntersectionObserver === 'undefined') return
+    const obs = new IntersectionObserver(([e]) => setInSteps(e.isIntersecting))
+    obs.observe(list)
+    return () => obs.disconnect()
+  }, [])
+  const cue = inSteps && !hint && active < STEPS.length - 1
+
   /* El recorrido va del centro del primer paso al centro del último. Con movimiento:
      timeline con scrub, una vuelta de 360° por paso (con meseta de frente en cada uno) del iPhone 3D.
      La pantalla cambia a mitad de vuelta (180°), cuando se ve la espalda. */
@@ -319,6 +345,14 @@ function Journey() {
             </div>
             <StageBg />
             <Phone3D screen={active} variant="journey" spin={spinRef} />
+            <div className={`lv2-journey-hint${hint ? '' : ' is-hidden'}`} aria-hidden="true">
+              <span><ChevronDown size={16} strokeWidth={2.4} /></span>
+              Deslizá para ver los 4 pasos
+            </div>
+          </div>
+          <div className={`lv2-journey-cue${cue ? ' is-on' : ''}`} aria-hidden="true">
+            <small>Deslizá</small>
+            <i />
           </div>
         </div>
       </div>
@@ -675,6 +709,7 @@ export default function NewLanding() {
         <Stats />
         <Panel />
         <CaseStudy />
+        <Tickets />
         <Passes />
         <EventTypes />
         <Faq />

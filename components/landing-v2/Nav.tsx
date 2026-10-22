@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
 
@@ -18,6 +19,7 @@ const FEATURED = [
 ] satisfies { id: string; title: string; text: string; art: MenuArtKind }[]
 
 const MORE = [
+  { id: 'venta-de-entradas', label: 'Venta de entradas' },
   { id: 'entradas-y-parking', label: 'Entradas y parking' },
   { id: 'eventos', label: 'Tipos de evento' },
   { id: 'faq', label: 'Preguntas frecuentes' },
@@ -29,6 +31,12 @@ const SECTION_IDS = [...FEATURED.map(f => f.id), ...MORE.map(m => m.id)]
 /** Superficies oscuras de la página: cuando pasan por debajo de la barra, la barra se invierte (`.lv2-dark` para las de otras páginas). */
 const DARK_SURFACES = '.lv2-cta, .lv2-f, .lv2-dark'
 const BAR_Y = 44
+
+/** Páginas propias (no secciones de la home): van aparte, debajo de las anclas. */
+const PAGES = [
+  { href: '/nosotros', label: 'Nosotros' },
+  { href: '/seguridad', label: 'Seguridad' },
+]
 
 const CONTACT_EMAIL = 'contacto@nubapay.app'
 
@@ -310,6 +318,7 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
   }, [open])
 
   const tab = open ? 0 : -1
+  const pathname = usePathname()
   const A = base ? Link : 'a'
 
   return (
@@ -415,6 +424,28 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
                     </span>
                     <span className="sr-only">{m.label}</span>
                   </A>
+                </li>
+              ))}
+            </ul>
+            <ul className="lv2-menu-more lv2-menu-pages" aria-label="Páginas">
+              {PAGES.map(p => (
+                <li key={p.href}>
+                  <Link
+                    href={p.href}
+                    onClick={() => setOpen(false)}
+                    onMouseEnter={rollIn}
+                    onMouseLeave={rollOut}
+                    onFocus={rollIn}
+                    onBlur={rollOut}
+                    tabIndex={tab}
+                    aria-current={pathname === p.href ? 'page' : undefined}
+                    className={`lv2-menu-link${pathname === p.href ? ' is-here' : ''}`}
+                  >
+                    <span className="lv2-menu-line">
+                      <span className="lv2-menu-roll" aria-hidden="true"><span>{p.label}</span><span>{p.label}</span></span>
+                    </span>
+                    <span className="sr-only">{p.label}</span>
+                  </Link>
                 </li>
               ))}
             </ul>
