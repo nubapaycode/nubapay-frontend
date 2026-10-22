@@ -135,7 +135,7 @@ function paintSheen() {
   return c
 }
 
-/** Vidrio trasero esmerilado (grano fino) con el logo en lima donde el original lleva el suyo. */
+/** Vidrio trasero esmerilado (grano fino) con el logo donde el original lleva el suyo. */
 function paintBack(font: string) {
   const c = document.createElement('canvas')
   c.width = 512
@@ -151,7 +151,8 @@ function paintBack(font: string) {
     grain.data[i + 2] += n
   }
   g.putImageData(grain, 0, 0)
-  g.fillStyle = '#C6FF00'
+  /* Logo tono sobre tono, un poco más oscuro que el vidrio (como el del original) */
+  g.fillStyle = '#242428'
   g.font = `700 58px ${font}`
   g.textAlign = 'center'
   g.textBaseline = 'middle'
