@@ -101,7 +101,7 @@ export const AUTH_CSS = `
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 20px 26px 18px;
+    padding: 0 26px;
     height: 58px;
     box-sizing: border-box;
   }
@@ -109,7 +109,7 @@ export const AUTH_CSS = `
     font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
     text-transform: uppercase; color: rgba(10,10,15,0.42);
   }
-  .nba-stub-logo { max-height: 22px; max-width: 130px; width: auto; object-fit: contain; display: block; }
+  .nba-stub-logo { max-height: 29px; max-width: 169px; width: auto; object-fit: contain; display: block; }
   .nba-stub-note { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(10,10,15,0.3); white-space: nowrap; }
   .nba-stub-chip {
     font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
@@ -298,10 +298,12 @@ export function AuthShell({
       <div className="nba-glow" aria-hidden />
       <div className="nba-glow nba-glow--b" aria-hidden />
 
-      <Link href="/" className="nba-brand">
-        <span className="nba-brand-word">{brand.word}</span>
-        {brand.showTag ? <span className="nba-brand-tag">organizer</span> : null}
-      </Link>
+      {brand.showTag ? (
+        <Link href="/" className="nba-brand">
+          <span className="nba-brand-word">{brand.word}</span>
+          <span className="nba-brand-tag">organizer</span>
+        </Link>
+      ) : null}
 
       <div className="nba-card-wrap">
         <div className="nba-card">

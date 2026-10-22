@@ -221,7 +221,7 @@ export function EventPanel({
           {/* Comisión + KPIs */}
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-[#C6FF00]/25 bg-gradient-to-br from-[#C6FF00]/[0.09] to-transparent p-5 lg:row-span-1">
-              <p className="text-xs font-medium text-[#C6FF00]/80">Comisión que te debe el organizador</p>
+              <p className="text-xs font-medium text-[#C6FF00]/80">Tu comisión a cobrar</p>
               <p className="mt-2 text-4xl font-semibold tracking-tight text-[#C6FF00]">{formatPrice(d.commission.in_range)}</p>
               <p className="mt-1 text-xs text-white/50">
                 {(d.commission.rate * 100).toLocaleString('es-AR')}% sobre {formatPrice(d.stats.revenue)} facturados en {rangeLabel(d)}
@@ -231,13 +231,9 @@ export function EventPanel({
                   <dt className="text-white/50">Histórico del evento</dt>
                   <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.all_time)}</dd>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-white/50">A transferir al organizador</dt>
-                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.payout_in_range)}</dd>
-                </div>
               </dl>
               <p className="mt-3 text-[11px] leading-snug text-white/30">
-                Es la comisión generada: la plataforma no registra pagos ya recibidos, así que no se descuenta lo cobrado.
+                Es la comisión generada, que te corresponde a vos. No hay registro de pagos ya recibidos, así que no se descuenta lo que ya cobraste.
               </p>
             </div>
 

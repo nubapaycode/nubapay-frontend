@@ -5,7 +5,14 @@ import { usePathname, useRouter } from 'next/navigation'
 
 import { Spinner } from '@/components/ui/Spinner'
 import { authPaths } from '@/lib/api'
-import { authHeadersJson, clearAuthSession, getAuthToken, setAuthSession, type AuthUser } from '@/lib/authSession'
+import {
+  authHeadersJson,
+  clearAuthSession,
+  getAuthToken,
+  isSessionRejected,
+  setAuthSession,
+  type AuthUser,
+} from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 
 /** Si la ruta es /events/{uuid}/products, devuelve la URL del catálogo público. */
@@ -29,17 +36,24 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
     ;(async () => {
       try {
         const res = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
-        if (!res.ok) {
+        if (isSessionRejected(res)) {
           clearAuthSession()
-          router.replace(_publicFallback(pathname) ?? '/login')
+          router.replace(_publicFallback(pathname) ?? '/login?expired=1')
+          return
+        }
+        if (!res.ok) {
+          // Falla transitoria del servidor: se conserva la sesión y se sigue con los datos guardados.
+          setState('ok')
           return
         }
         const body = (await res.json()) as {
           user?: AuthUser
+          token?: string
           staff_memberships?: AuthUser['staff_memberships']
         }
         if (body.user) {
-          setAuthSession(token, {
+          // `token` viene cuando el servidor renueva la sesión (ver /auth/me).
+          setAuthSession(body.token ?? token, {
             ...body.user,
             staff_memberships: body.staff_memberships ?? body.user.staff_memberships,
           })

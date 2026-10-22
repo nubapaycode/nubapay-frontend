@@ -68,12 +68,42 @@ describe('OrganizerGuard', () => {
 
   it('redirige a /login cuando el token es inválido (401)', async () => {
     localStorage.setItem('nubapay_token', 'expired-token')
-    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: false })
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 })
     render(
       <OrganizerGuard>
         <div>Contenido protegido</div>
       </OrganizerGuard>,
     )
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login?expired=1'))
+    expect(localStorage.getItem('nubapay_token')).toBeNull()
+  })
+
+  it('conserva la sesión y deja pasar si el servidor falla (503)', async () => {
+    localStorage.setItem('nubapay_token', 'valid-token')
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 })
+    render(
+      <OrganizerGuard>
+        <div>Contenido protegido</div>
+      </OrganizerGuard>,
+    )
+    await waitFor(() => expect(screen.getByText('Contenido protegido')).toBeInTheDocument())
+    expect(localStorage.getItem('nubapay_token')).toBe('valid-token')
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('guarda el token renovado que devuelve /auth/me', async () => {
+    localStorage.setItem('nubapay_token', 'old-token')
+    ;(browserFetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ token: 'fresh-token', user: { id: '1', email: 'a@b.c', staff_memberships: [] } }),
+    })
+    render(
+      <OrganizerGuard>
+        <div>Contenido protegido</div>
+      </OrganizerGuard>,
+    )
+    await waitFor(() => expect(screen.getByText('Contenido protegido')).toBeInTheDocument())
+    expect(localStorage.getItem('nubapay_token')).toBe('fresh-token')
   })
 })

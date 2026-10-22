@@ -117,3 +117,52 @@ describe('LoginView', () => {
     expect(mockPush).toHaveBeenCalledWith('/login')
   })
 })
+
+describe('LoginView con sesión guardada', () => {
+  const mockReplace = jest.fn()
+
+  beforeEach(() => {
+    mockReplace.mockClear()
+    ;(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: mockReplace })
+  })
+
+  it('redirige sin mostrar el formulario si la sesión sigue vigente', async () => {
+    localStorage.setItem('nubapay_token', 'valid')
+    mockBrowserFetch.mockImplementation(async (input) => {
+      const u = String(input)
+      if (u.includes('auth/me')) {
+        return { ok: true, status: 200, json: async () => ({ user: { ...demoUser, is_platform_admin: true } }) } as Response
+      }
+      throw new Error(`Unhandled fetch: ${u}`)
+    })
+    render(<LoginView />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(getAuthToken()).toBe('valid')
+  })
+
+  it('con token vencido (401) lo borra y deja el formulario, sin rebotar por /events', async () => {
+    localStorage.setItem('nubapay_token', 'expired')
+    mockBrowserFetch.mockImplementation(async (input) => {
+      const u = String(input)
+      if (u.includes('auth/me')) return { ok: false, status: 401, json: async () => ({}) } as Response
+      throw new Error(`Unhandled fetch: ${u}`)
+    })
+    render(<LoginView />)
+    await waitFor(() => expect(getAuthToken()).toBeNull())
+    expect(mockReplace).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
+    expect(screen.getByText(/Tu sesión venció/)).toBeInTheDocument()
+  })
+
+  it('con el servidor caído (500) NO borra el token', async () => {
+    localStorage.setItem('nubapay_token', 'valid')
+    mockBrowserFetch.mockImplementation(async (input) => {
+      const u = String(input)
+      if (u.includes('auth/me')) return { ok: false, status: 500, json: async () => ({}) } as Response
+      return { ok: false, status: 500, json: async () => ({}) } as Response
+    })
+    render(<LoginView />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/events'))
+    expect(getAuthToken()).toBe('valid')
+  })
+})

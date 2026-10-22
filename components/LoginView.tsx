@@ -8,7 +8,7 @@ import { AuthError, AuthField, AuthShell, AuthSubmit, Mark } from '@/components/
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 
 import { authPaths, eventsPaths } from '@/lib/api'
-import { authHeadersJson, type AuthUser, getAuthToken, setAuthSession } from '@/lib/authSession'
+import { authHeadersJson, type AuthUser, clearAuthSession, getAuthToken, isSessionRejected, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
 import { FetchError } from '@/lib/fetcher'
 
@@ -45,6 +45,8 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const brandWord = displayName || resolvedSub || 'nubapay'
 
   const [mode] = useState<Mode>(initialMode)
+  // Llegamos con `expired=1` (o lo detectamos acá) cuando había token pero el servidor lo rechazó.
+  const [expired, setExpired] = useState(searchParams.get('expired') === '1')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -57,6 +59,12 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
     ;(async () => {
       try {
         const meRes = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
+        if (isSessionRejected(meRes)) {
+          // Token vencido o usuario inexistente: se muestra el formulario sin rebotar por /events.
+          clearAuthSession()
+          if (!cancelled) setExpired(true)
+          return
+        }
         if (meRes.ok) {
           const meBody = (await meRes.json()) as { user?: AuthUser }
           if (!cancelled && meBody.user?.is_platform_admin) {
@@ -239,6 +247,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         )}
 
         {error && <AuthError>{error}</AuthError>}
+        {!error && expired && isLogin && <AuthError>Tu sesión venció o ya no es válida. Iniciá sesión de nuevo.</AuthError>}
 
         <AuthSubmit type="submit" disabled={loading}>
           {loading ? (isLogin ? 'Ingresando…' : 'Creando cuenta…') : isLogin ? 'Ingresar' : 'Crear cuenta y entrar'}

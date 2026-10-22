@@ -315,7 +315,7 @@ export function EventOrganizerSidebar({
           {brandLogo ? (
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- URL remota de marca configurada */}
-              <img src={brandLogo} alt="" className="h-6 max-w-[136px] w-auto object-contain object-left" />
+              <img src={brandLogo} alt="" className="h-[31px] max-w-[177px] w-auto object-contain object-left" />
               <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Organizer</span>
             </div>
           ) : brandName ? (

@@ -52,6 +52,14 @@ export function clearAuthSession(): void {
   emitAuthChanged()
 }
 
+/**
+ * `/auth/me` responde 401 si el token es inválido o venció y 404 si el usuario ya no existe.
+ * Cualquier otro fallo (5xx, 429, corte de red) es transitorio: no se debe cerrar la sesión.
+ */
+export function isSessionRejected(res: { status: number }): boolean {
+  return res.status === 401 || res.status === 404
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(TOKEN_KEY)

@@ -572,7 +572,6 @@ export type AdminEventDetail = {
     all_time: number
     all_time_revenue: number
     all_time_paid_orders: number
-    payout_in_range: number
   }
   groups: Record<'all' | OrderGroup, { count: number; amount: number }>
 }
@@ -599,7 +598,6 @@ export type SettlementRow = {
   paid_orders: number
   revenue: number
   commission: number
-  payout: number
 }
 
 export type Settlement = {
@@ -613,9 +611,8 @@ export type Settlement = {
     paid_orders: number
     revenue: number
     commission: number
-    payout: number
   }[]
-  totals: { revenue: number; commission: number; payout: number; paid_orders: number }
+  totals: { revenue: number; commission: number; paid_orders: number }
 }
 
 export function fetchSettlement(range: DateRangeParams) {

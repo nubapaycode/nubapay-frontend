@@ -56,17 +56,18 @@ export function SettlementTab() {
         <div className={cx('space-y-6 transition-opacity', loading && 'opacity-60')}>
           <p className="text-xs text-white/40">
             {fmtDayLong(data.range.from)} – {fmtDayLong(data.range.to)} · órdenes creadas en el período con pago aprobado · comisión{' '}
-            {(data.commission_rate * 100).toLocaleString('es-AR')}%. No incluye órdenes de test.
+            {(data.commission_rate * 100).toLocaleString('es-AR')}% para Nubapay. Los compradores le pagan directo a cada organizador:
+            acá solo figura lo que te corresponde cobrar a vos. No incluye órdenes de test.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Total label="Facturado" value={formatPrice(data.totals.revenue)} />
-            <Total label="Comisión Nubapay" value={formatPrice(data.totals.commission)} />
-            <Total strong label="A transferir a organizadores" value={formatPrice(data.totals.payout)} />
+            <Total strong label="Tu comisión a cobrar" value={formatPrice(data.totals.commission)} />
+            <Total label="Facturado por los organizadores" value={formatPrice(data.totals.revenue)} />
             <Total label="Órdenes pagas" value={fmtInt(data.totals.paid_orders)} />
+            <Total label="Organizadores con ventas" value={fmtInt(data.organizers.length)} />
           </div>
 
-          <Card title="Por organizador" subtitle="Lo que le corresponde a cada uno en el período" flush>
+          <Card title="Por organizador" subtitle="Cuánto te corresponde cobrar a cada uno en el período" flush>
             {data.organizers.length === 0 ? (
               <EmptyState title="Sin ventas en el período" />
             ) : (
@@ -77,8 +78,7 @@ export function SettlementTab() {
                     <Th align="right">Eventos</Th>
                     <Th align="right">Órdenes</Th>
                     <Th align="right">Facturado</Th>
-                    <Th align="right">Comisión</Th>
-                    <Th align="right">A transferir</Th>
+                    <Th align="right">Comisión a cobrar</Th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
@@ -91,9 +91,8 @@ export function SettlementTab() {
                       <Td align="right">{fmtInt(o.events)}</Td>
                       <Td align="right">{fmtInt(o.paid_orders)}</Td>
                       <Td align="right">{formatPrice(o.revenue)}</Td>
-                      <Td align="right">{formatPrice(o.commission)}</Td>
-                      <Td align="right" className="!font-semibold !text-white">
-                        {formatPrice(o.payout)}
+                      <Td align="right" className="!font-semibold !text-[#C6FF00]">
+                        {formatPrice(o.commission)}
                       </Td>
                     </tr>
                   ))}
@@ -113,8 +112,7 @@ export function SettlementTab() {
                     <Th>Organizador</Th>
                     <Th align="right">Órdenes</Th>
                     <Th align="right">Facturado</Th>
-                    <Th align="right">Comisión</Th>
-                    <Th align="right">A transferir</Th>
+                    <Th align="right">Comisión a cobrar</Th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
@@ -124,8 +122,9 @@ export function SettlementTab() {
                       <Td muted>{e.organizer_email}</Td>
                       <Td align="right">{fmtInt(e.paid_orders)}</Td>
                       <Td align="right">{formatPrice(e.revenue)}</Td>
-                      <Td align="right">{formatPrice(e.commission)}</Td>
-                      <Td align="right">{formatPrice(e.payout)}</Td>
+                      <Td align="right" className="!font-semibold !text-white">
+                        {formatPrice(e.commission)}
+                      </Td>
                     </tr>
                   ))}
                 </tbody>
