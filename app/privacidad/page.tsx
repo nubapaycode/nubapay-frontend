@@ -12,11 +12,13 @@ export const metadata: Metadata = {
 
 type Section = { num: string; title: string; body: string; children?: { subtitle: string; body: string }[] }
 
+// TODO(pendiente): agregar cuando estén los datos. Sección 1: razón social/titular, CUIT y domicilio legal.
+// Sección de contacto (última): domicilio y WhatsApp. Se quitaron del texto para no mostrar placeholders.
 const sections: Section[] = [
   {
     num: '1',
     title: 'Identificación del responsable',
-    body: `La plataforma Nubapay es operada por:\n\nRazón social / titular: [completar]\nCUIT / identificación fiscal: [completar]\nDomicilio legal: [completar]\nCorreo de contacto: [completar]\nSitio web: [completar]\nJurisdicción: República Argentina\n\nEn adelante, "Nubapay", "la Plataforma", "nosotros" o "el Responsable".`,
+    body: `La plataforma Nubapay es operada por:\n\nCorreo de contacto: contacto@nubapay.app\nSitio web: www.nubapay.app\nJurisdicción: República Argentina\n\nEn adelante, "Nubapay", "la Plataforma", "nosotros" o "el Responsable".`,
   },
   {
     num: '2',
@@ -218,12 +220,12 @@ const sections: Section[] = [
   {
     num: '19',
     title: 'Comunicaciones comerciales',
-    body: `Nubapay podrá enviar comunicaciones comerciales o informativas a usuarios que hayan contratado o consultado nuestros servicios, incluyendo novedades de producto, promociones, invitaciones, casos de uso y encuestas.\n\nEl usuario podrá solicitar darse de baja en cualquier momento mediante el enlace incluido en los mensajes o escribiendo a [completar email]. Las comunicaciones operativas, legales o de seguridad podrán seguir enviándose independientemente.`,
+    body: `Nubapay podrá enviar comunicaciones comerciales o informativas a usuarios que hayan contratado o consultado nuestros servicios, incluyendo novedades de producto, promociones, invitaciones, casos de uso y encuestas.\n\nEl usuario podrá solicitar darse de baja en cualquier momento mediante el enlace incluido en los mensajes o escribiendo a contacto@nubapay.app. Las comunicaciones operativas, legales o de seguridad podrán seguir enviándose independientemente.`,
   },
   {
     num: '20',
     title: 'Derechos de los titulares de datos',
-    body: `El titular de los datos podrá ejercer conforme la normativa aplicable los siguientes derechos:\n\n• Acceso: conocer qué datos personales tratamos.\n• Rectificación: corregir datos inexactos o incompletos.\n• Actualización: actualizar datos desactualizados.\n• Supresión: solicitar la eliminación cuando corresponda.\n• Oposición: oponerse a ciertos tratamientos cuando resulte aplicable.\n• Revocación del consentimiento.\n• Información sobre el tratamiento de sus datos.\n\nPara ejercer estos derechos, escribir a [completar email] con el asunto "Solicitud de datos personales" e información suficiente para acreditar identidad.`,
+    body: `El titular de los datos podrá ejercer conforme la normativa aplicable los siguientes derechos:\n\n• Acceso: conocer qué datos personales tratamos.\n• Rectificación: corregir datos inexactos o incompletos.\n• Actualización: actualizar datos desactualizados.\n• Supresión: solicitar la eliminación cuando corresponda.\n• Oposición: oponerse a ciertos tratamientos cuando resulte aplicable.\n• Revocación del consentimiento.\n• Información sobre el tratamiento de sus datos.\n\nPara ejercer estos derechos, escribir a contacto@nubapay.app con el asunto "Solicitud de datos personales" e información suficiente para acreditar identidad.`,
   },
   {
     num: '21',
@@ -283,7 +285,7 @@ const sections: Section[] = [
   {
     num: '32',
     title: 'Baja de cuenta y eliminación de datos',
-    body: `El usuario podrá solicitar la baja de su cuenta o eliminación de sus datos personales escribiendo a [completar email].\n\nLa baja no implica la eliminación inmediata de todos los datos, ya que Nubapay podrá conservar información para cumplir obligaciones legales, gestionar pagos pendientes, resolver reclamos, prevenir fraude, mantener registros contables o fiscales y defender derechos.`,
+    body: `El usuario podrá solicitar la baja de su cuenta o eliminación de sus datos personales escribiendo a contacto@nubapay.app.\n\nLa baja no implica la eliminación inmediata de todos los datos, ya que Nubapay podrá conservar información para cumplir obligaciones legales, gestionar pagos pendientes, resolver reclamos, prevenir fraude, mantener registros contables o fiscales y defender derechos.`,
   },
   {
     num: '33',
@@ -298,7 +300,7 @@ const sections: Section[] = [
   {
     num: '35',
     title: 'Contacto',
-    body: `Para consultas, solicitudes o reclamos relacionados con esta Política o el tratamiento de datos personales:\n\nResponsable: [completar]\nCorreo electrónico: [completar]\nWhatsApp: [completar]\nDomicilio: [completar]\nSitio web: [completar]`,
+    body: `Para consultas, solicitudes o reclamos relacionados con esta Política o el tratamiento de datos personales:\n\nResponsable: Nubapay\nCorreo electrónico: contacto@nubapay.app\nSitio web: www.nubapay.app`,
   },
   {
     num: '36',
