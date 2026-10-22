@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { EventDrawer } from './EventDrawer'
+import { EventPanel } from './EventPanel'
 import { EventsTab } from './EventsTab'
 import { GlobalSearch, type SearchTarget } from './GlobalSearch'
 import { HealthTab } from './HealthTab'
@@ -53,8 +53,6 @@ function Dashboard({ summary }: { summary: PlatformAdminOverview['summary'] }) {
 
   const [orderId, setOrderId] = useState<string | null>(null)
   const [eventId, setEventId] = useState<string | null>(null)
-  const [ordersQuery, setOrdersQuery] = useState<string | undefined>()
-  const [ordersEventId, setOrdersEventId] = useState<string | undefined>()
   const [usersQuery, setUsersQuery] = useState<string | undefined>()
   const [refreshKey, setRefreshKey] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -103,18 +101,17 @@ function Dashboard({ summary }: { summary: PlatformAdminOverview['summary'] }) {
 
   function handleSelect(t: SearchTarget) {
     if (t.type === 'order') setOrderId(t.id)
-    else if (t.type === 'event') setEventId(t.id)
+    else if (t.type === 'event') openEvent(t.id)
     else {
       setUsersQuery(t.email)
       setTab('users')
     }
   }
 
-  function viewEventOrders(id: string) {
-    setEventId(null)
-    setOrdersQuery('')
-    setOrdersEventId(id)
-    setTab('orders')
+  function openEvent(id: string) {
+    setEventId(id)
+    setTab('events')
+    window.scrollTo({ top: 0 })
   }
 
   const onDataChanged = useCallback(() => {
@@ -177,7 +174,10 @@ function Dashboard({ summary }: { summary: PlatformAdminOverview['summary'] }) {
             <button
               key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setEventId(null)
+                setTab(t.key)
+              }}
               aria-current={tab === t.key ? 'page' : undefined}
               className={cx(
                 'flex flex-shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
@@ -202,37 +202,46 @@ function Dashboard({ summary }: { summary: PlatformAdminOverview['summary'] }) {
       </nav>
 
       <main className="mx-auto max-w-7xl px-4 py-7 md:px-6">
+        {eventId && (
+          <EventPanel
+            key={eventId}
+            eventId={eventId}
+            refreshKey={refreshKey}
+            onBack={() => setEventId(null)}
+            onOpenOrder={setOrderId}
+            onChanged={onDataChanged}
+          />
+        )}
         {mounted('overview') && (
-          <div hidden={!show('overview')}>
+          <div hidden={!show('overview') || !!eventId}>
             <OverviewTab summary={summary} />
           </div>
         )}
-        {show('health') && <HealthTab onOpenOrder={setOrderId} />}
+        {show('health') && !eventId && <HealthTab onOpenOrder={setOrderId} />}
         {mounted('orders') && (
-          <div hidden={!show('orders')}>
-            <OrdersTab key={`${ordersQuery ?? ''}|${ordersEventId ?? ''}`} initialQuery={ordersQuery} initialEventId={ordersEventId} onOpenOrder={setOrderId} refreshKey={refreshKey} />
+          <div hidden={!show('orders') || !!eventId}>
+            <OrdersTab onOpenOrder={setOrderId} refreshKey={refreshKey} />
           </div>
         )}
         {mounted('events') && (
-          <div hidden={!show('events')}>
-            <EventsTab onOpenEvent={setEventId} refreshKey={refreshKey} />
+          <div hidden={!show('events') || !!eventId}>
+            <EventsTab onOpenEvent={openEvent} refreshKey={refreshKey} />
           </div>
         )}
         {mounted('users') && (
-          <div hidden={!show('users')}>
+          <div hidden={!show('users') || !!eventId}>
             <UsersTab key={usersQuery ?? ''} initialQuery={usersQuery} />
           </div>
         )}
         {mounted('settlement') && (
-          <div hidden={!show('settlement')}>
+          <div hidden={!show('settlement') || !!eventId}>
             <SettlementTab />
           </div>
         )}
-        {show('load-tests') && <LoadTestsView />}
+        {show('load-tests') && !eventId && <LoadTestsView />}
       </main>
 
       <OrderDrawer orderId={orderId} onClose={() => setOrderId(null)} onChanged={onDataChanged} />
-      <EventDrawer eventId={eventId} onClose={() => setEventId(null)} onViewOrders={viewEventOrders} onChanged={onDataChanged} />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} onSelect={handleSelect} />
     </div>
   )

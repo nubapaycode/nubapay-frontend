@@ -418,6 +418,9 @@ export function searchPlatform(q: string) {
 export type OrderFilters = {
   q?: string
   status?: string
+  /** Grupo de estado del panel de evento: paid | pending | redeemed | cancelled | failed. */
+  group?: string
+  days?: number
   payment_status?: string
   event_id?: string
   from?: string
@@ -558,12 +561,26 @@ export type AdminEventDetail = {
   }
   status_counts: Record<string, number>
   top_products: { name: string; quantity: number; revenue: number }[]
-  series: { date: string; revenue: number; created: number }[]
+  series: { date: string; revenue: number; commission: number; paid_orders: number }[]
   payment_methods: { provider: string; orders: number; revenue: number }[]
+  /** null = todo el historial. */
+  range: { from: string; to: string } | null
+  /** Comisión que el organizador le debe a la plataforma (generada, no descuenta lo ya cobrado). */
+  commission: {
+    rate: number
+    in_range: number
+    all_time: number
+    all_time_revenue: number
+    all_time_paid_orders: number
+    payout_in_range: number
+  }
+  groups: Record<'all' | OrderGroup, { count: number; amount: number }>
 }
 
-export function fetchPlatformEventDetail(eventId: string) {
-  return getJson<AdminEventDetail>(`/events/${encodeURIComponent(eventId)}/detail`)
+export type OrderGroup = 'paid' | 'pending' | 'redeemed' | 'cancelled' | 'failed'
+
+export function fetchPlatformEventDetail(eventId: string, range: DateRangeParams = {}) {
+  return getJson<AdminEventDetail>(`/events/${encodeURIComponent(eventId)}/detail`, range)
 }
 
 export function setEventSalesActive(eventId: string, isActive: boolean) {
