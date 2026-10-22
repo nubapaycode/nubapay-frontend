@@ -165,6 +165,10 @@ function Hero() {
         .from('.lv2-bg', { scale: 0.82, opacity: 0, duration: 1.8, clearProps: 'transform,opacity' }, 0.3)
         .from('.lv2-dots', { opacity: 0, y: 12, duration: 0.8 }, 1.3)
         .from('.lv2-hero-arrow', { opacity: 0, scale: 0.6, duration: 0.9, ease: 'back.out(1.8)', stagger: 0.08 }, 1.2)
+      /* El iPhone SVG sube desde abajo con un leve giro, en paralelo al titular (el 3D anima su propia entrada) */
+      if (!USE_3D) {
+        gsap.from('.lv2-stage .lv2-iphone', { y: 150, scale: 0.88, rotate: -5, opacity: 0, duration: 1.9, delay: 0.3, ease: 'expo.out', clearProps: 'transform,opacity' })
+      }
     })
   }, { scope: heroRef })
 
