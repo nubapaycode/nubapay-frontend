@@ -69,7 +69,7 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="max-w-2xl flex flex-col items-center justify-center py-24 gap-3 mx-auto px-4">
+      <div className="flex w-full max-w-[720px] flex-col items-center justify-center gap-3 py-24">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
       </div>
@@ -77,7 +77,7 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-8">
+    <div className="w-full max-w-[720px] space-y-8">
       <ToastPortal />
 
       <OrganizerToolHeading

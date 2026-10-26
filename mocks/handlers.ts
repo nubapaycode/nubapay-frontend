@@ -96,6 +96,17 @@ const routes: MockRoute[] = [
     handler: () => ({
       orders: mockOrders,
       pagination: { page: 1, page_size: 40, total: mockOrders.length },
+      status_counts: {
+        unredeemed: mockOrders.filter((o) => ['pending', 'paid', 'preparing', 'ready'].includes(o.status)).length,
+        partially_delivered: mockOrders.filter((o) => (o.status as string) === 'partially_delivered').length,
+        delivered: mockOrders.filter((o) => o.status === 'delivered').length,
+        cancelled: mockOrders.filter((o) => (o.status as string) === 'cancelled').length,
+      },
+      summary: {
+        revenue: mockOrders.filter((o) => (o.status as string) !== 'cancelled').reduce((a, o) => a + o.total, 0),
+        units: mockOrders.reduce((a, o) => a + o.items.reduce((s, i) => s + i.quantity, 0), 0),
+        redeemed_units: mockOrders.filter((o) => o.status === 'delivered').reduce((a, o) => a + o.items.reduce((s, i) => s + i.quantity, 0), 0),
+      },
     }),
   },
   {

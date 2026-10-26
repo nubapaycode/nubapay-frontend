@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { BadgePercent } from 'lucide-react'
+import { BadgePercent, Boxes, Camera, Link2, ListTree, Package, Search } from 'lucide-react'
 
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { CatalogItemRow, NewItemMenu } from '@/components/organizer/catalog/CatalogParts'
 import { StorefrontSettingsView } from '@/components/organizer/StorefrontSettingsView'
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
@@ -26,6 +26,8 @@ import {
   type WorkspaceCategory,
   type WorkspaceProduct,
   type WorkspaceProductPromotion,
+  type WorkspaceProductsCounts,
+  reorderWorkspaceProducts,
 } from '@/lib/organizerWorkspace'
 import {
   clearWorkspaceProductImage,
@@ -507,9 +509,12 @@ type DeleteConfirmTarget =
   | { kind: 'category'; id: string; name: string }
   | { kind: 'catalog'; id: string; name: string; variant: 'single' | 'combo' }
 
+/** Estado del catálogo filtrado en el servidor (antes se filtraba solo la página cargada). */
+type CatalogStatusFilter = 'all' | 'active' | 'paused' | 'no_image'
+
 type ComboPickerEntry = { product_id: string; quantity: number; displayName?: string }
 
-const PRODUCT_PAGE_SIZE = 5
+const PRODUCT_PAGE_SIZE = 20
 
 export function ProductsView({ eventId }: { eventId: string }) {
   const { show: showToast, ToastPortal } = useToast()
@@ -529,7 +534,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
   const [comboDrawerSinglesLoading, setComboDrawerSinglesLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [listLoading, setListLoading] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'paused'>('all')
+  const [filterStatus, setFilterStatus] = useState<CatalogStatusFilter>('all')
+  const [catalogCounts, setCatalogCounts] = useState<WorkspaceProductsCounts | null>(null)
   const [selectingAllPages, setSelectingAllPages] = useState(false)
   const [error, setError] = useState('')
   const [drawerMode, setDrawerMode] = useState<'product' | 'combo' | 'categories' | null>(null)
@@ -697,6 +703,8 @@ export function ProductsView({ eventId }: { eventId: string }) {
         type: catalogTab === 'products' ? 'single' : 'combo',
         q: catalogSearchQ || undefined,
         categoryId: filterCategoryId || undefined,
+        isActive: filterStatus === 'active' ? true : filterStatus === 'paused' ? false : undefined,
+        noImage: filterStatus === 'no_image' || undefined,
       }),
       fetchWorkspaceProductPromotions(eventId),
     ])
@@ -706,6 +714,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
     else {
       setProducts(p.products)
       setProductPagination(p.pagination)
+      setCatalogCounts(p.counts)
     }
     if (!promoRes.ok) setError(e => e || promoRes.error)
     else {
@@ -715,7 +724,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
     }
     setLoading(false)
     setListLoading(false)
-  }, [eventId, productPage, catalogTab, catalogSearchQ, filterCategoryId])
+  }, [eventId, productPage, catalogTab, catalogSearchQ, filterCategoryId, filterStatus])
 
   useEffect(() => {
     const t = window.setTimeout(() => setCatalogSearchQ(catalogSearchInput.trim()), 350)
@@ -779,11 +788,61 @@ export function ProductsView({ eventId }: { eventId: string }) {
   }, [drawerMode, eventId])
 
   const hasCatalogFilters =
-    catalogSearchInput.trim().length > 0 || Boolean(filterCategoryId)
+    catalogSearchInput.trim().length > 0 || Boolean(filterCategoryId) || filterStatus !== 'all'
 
-  const visibleProducts = filterStatus === 'all'
-    ? products
-    : products.filter(p => filterStatus === 'active' ? p.is_active : !p.is_active)
+  const visibleProducts = products
+
+  const openNewProduct = () => {
+    setFormError('')
+    clearPendingImage()
+    setEditingCatalogId(null)
+    setName('')
+    setPrice('')
+    setDescription('')
+    setCategoryId('')
+    setDrawerMode('product')
+  }
+
+  const openNewCombo = () => {
+    setFormError('')
+    clearPendingImage()
+    setEditingCatalogId(null)
+    setComboName('')
+    setComboPrice('')
+    setComboDesc('')
+    setComboPickerItems([])
+    setComboPickerQuery('')
+    setDrawerMode('combo')
+  }
+
+  const openEditProduct = (product: WorkspaceProduct) => {
+    setFormError('')
+    clearPendingImage()
+    setEditingCatalogId(product.id)
+    setName(product.name)
+    setPrice(String(product.price))
+    setDescription(product.description ?? '')
+    setCategoryId(product.category_id ?? '')
+    setDrawerMode('product')
+  }
+
+  const openEditCombo = (combo: WorkspaceProduct) => {
+    setFormError('')
+    clearPendingImage()
+    setEditingCatalogId(combo.id)
+    setComboName(combo.name)
+    setComboPrice(String(combo.price))
+    setComboDesc(combo.description ?? '')
+    setComboPickerItems(combo.combo_lines.map(l => ({ product_id: l.product_id, quantity: l.quantity, displayName: l.name })))
+    setComboPickerQuery('')
+    setDrawerMode('combo')
+  }
+
+  const chooseStatus = (next: CatalogStatusFilter) => {
+    setFilterStatus(next)
+    setProductPage(1)
+    setSelectedIds(new Set())
+  }
 
   const closeDrawer = () => {
     setDrawerMode(null)
@@ -1112,15 +1171,20 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
   const reorderProducts = async (sourceId: string, targetId: string) => {
     if (sourceId === targetId) return
-    setProducts(prev => {
-      const sourceIdx = prev.findIndex(p => p.id === sourceId)
-      const targetIdx = prev.findIndex(p => p.id === targetId)
-      if (sourceIdx === -1 || targetIdx === -1) return prev
-      const next = [...prev]
-      const [moved] = next.splice(sourceIdx, 1)
-      next.splice(targetIdx, 0, moved)
-      return next
-    })
+    const sourceIdx = products.findIndex(p => p.id === sourceId)
+    const targetIdx = products.findIndex(p => p.id === targetId)
+    if (sourceIdx === -1 || targetIdx === -1) return
+    const previous = products
+    const next = [...products]
+    const [moved] = next.splice(sourceIdx, 1)
+    next.splice(targetIdx, 0, moved)
+    setProducts(next)
+    // Antes el orden solo cambiaba en pantalla; ahora se guarda (y se revierte si falla).
+    const res = await reorderWorkspaceProducts(eventId, next.map(p => p.id))
+    if (!res.ok) {
+      setProducts(previous)
+      showToast(res.error, 'error')
+    }
   }
 
   const removeProduct = async (id: string) => {
@@ -1189,581 +1253,282 @@ export function ProductsView({ eventId }: { eventId: string }) {
         @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Catálogo"
-        description="Productos, combos, categorías y promociones (icono de etiqueta en cada fila) para el catálogo público."
-        actions={
-          <>
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-[620px]">
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Catálogo</h1>
+          <p className="mt-1 text-[13px] text-gray-500">
+            Lo que se vende en el catálogo público: productos, combos, categorías y promociones.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setLinkModalOpen(true)}
-            className="nb-pill-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: '#6B7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '9px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
             title="Link del catálogo"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M7.5 5.5a3.18 3.18 0 0 0-4.5 0L1.5 7a3.18 3.18 0 0 0 4.5 4.5l.75-.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M5.5 7.5a3.18 3.18 0 0 0 4.5 0L11.5 6A3.18 3.18 0 0 0 7 1.5l-.75.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Link2 size={15} strokeWidth={1.75} aria-hidden />
             Link
           </button>
           <button
             type="button"
             onClick={() => setDrawerMode('categories')}
-            className="nb-pill-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: '#6B7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '9px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
             title="Gestionar categorías"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M1.5 3.5h10M1.5 6.5h7M1.5 9.5h8.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
+            <ListTree size={15} strokeWidth={1.75} aria-hidden />
             Categorías
-            {categories.length > 0 && <span style={{ background: '#F5F5F7', color: '#0A0A0F', fontWeight: 700, padding: '1px 7px', borderRadius: '100px', fontSize: '11px' }}>{categories.length}</span>}
+            {categories.length > 0 && (
+              <span className="rounded-md bg-gray-100 px-1.5 text-[11px] font-semibold tabular-nums text-gray-600">{categories.length}</span>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFormError('')
-              clearPendingImage()
-              setEditingCatalogId(null)
-              setName('')
-              setPrice('')
-              setDescription('')
-              setCategoryId('')
-              setDrawerMode('product')
-            }}
-            className="nb-pill-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: '#FFFFFF', color: '#6B7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '9px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1L1 4v6l6 3 6-3V4L7 1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-              <path d="M1 4l6 3 6-3M7 7v6" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            </svg>
-            Producto
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFormError('')
-              clearPendingImage()
-              setEditingCatalogId(null)
-              setComboName('')
-              setComboPrice('')
-              setComboDesc('')
-              setComboPickerItems([])
-              setComboPickerQuery('')
-              setDrawerMode('combo')
-            }}
-            className="nb-pill-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: '#FFFFFF', color: '#6B7280', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '9px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="8" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="1.5" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              <rect x="8" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-            </svg>
-            Combo
-          </button>
-          </>
-        }
-      />
+          <NewItemMenu onProduct={openNewProduct} onCombo={openNewCombo} />
+        </div>
+      </header>
 
       {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
-        </div>
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">{error}</div>
       )}
 
-
       <div className="min-w-0">
-        {/* Search + filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-5">
-          <div className="relative flex-1 min-w-[12rem]">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#C8C8D0', pointerEvents: 'none' }}>
-              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+        {/* Pestañas Productos / Combos con conteo */}
+        <div role="tablist" aria-label="Tipo de ítem del catálogo" className="mb-4 flex gap-1 border-b border-gray-200">
+          {([
+            { key: 'products' as const, label: 'Productos', count: catalogCounts?.single },
+            { key: 'combos' as const, label: 'Combos', count: catalogCounts?.combo },
+          ]).map(({ key, label, count }) => {
+            const active = catalogTab === key
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                id={`catalog-tab-${key}`}
+                aria-controls={`catalog-panel-${key}`}
+                onClick={() => setCatalogTab(key)}
+                className={`-mb-px flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[13px] transition-colors ${
+                  active ? 'border-gray-900 font-semibold text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {label}
+                {count != null && (
+                  <span className={`rounded-md px-1.5 text-[11px] font-semibold tabular-nums ${active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Buscador y filtros */}
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative min-w-[12rem] flex-1">
+            <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
             <input
               id="catalog-search"
               type="search"
               value={catalogSearchInput}
               onChange={e => setCatalogSearchInput(e.target.value)}
               placeholder={`Buscar ${catalogTab === 'products' ? 'productos' : 'combos'}…`}
-              style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '10px 14px 10px 38px', fontSize: '13px', color: '#0A0A0F', background: '#FAFAFA', outline: 'none' }}
+              className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-[13px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]"
               autoComplete="off"
               aria-label="Buscar en catálogo"
             />
           </div>
-          <NubaSelect
-            value={filterCategoryId}
-            onChange={setFilterCategoryId}
-            ariaLabel="Filtrar por categoría"
-            minWidth={200}
-            options={[
-              { value: '', label: 'Todas las categorías' },
-              { value: 'none', label: 'Sin categoría' },
-              ...categories.map(c => ({ value: c.id, label: c.name })),
-            ]}
-          />
-
-          {/* Tabs */}
-          <div
-            style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px', flexShrink: 0 }}
-            role="tablist"
-            aria-label="Tipo de ítem del catálogo"
-          >
-            {/* Sliding pill */}
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: '4px',
-                bottom: '4px',
-                left: '4px',
-                width: 'calc(50% - 6px)',
-                background: '#FFFFFF',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                transform: catalogTab === 'combos' ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
-                transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
-              }}
+          {catalogTab === 'products' && (
+            <NubaSelect
+              value={filterCategoryId}
+              onChange={setFilterCategoryId}
+              ariaLabel="Filtrar por categoría"
+              minWidth={200}
+              options={[
+                { value: '', label: 'Todas las categorías' },
+                { value: 'none', label: 'Sin categoría' },
+                ...categories.map(c => ({ value: c.id, label: c.name })),
+              ]}
             />
+          )}
+        </div>
+
+        {/* Totales del tipo elegido; cada uno es un filtro rápido */}
+        {catalogCounts && (
+          <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
             {([
-              { key: 'products' as const, label: 'Productos' },
-              { key: 'combos' as const, label: 'Combos' },
-            ]).map(({ key, label }) => {
-              const active = catalogTab === key
+              { key: 'all' as const, label: catalogTab === 'products' ? 'Todos' : 'Todos', n: catalogCounts.total },
+              { key: 'active' as const, label: 'En venta', n: catalogCounts.active },
+              { key: 'paused' as const, label: 'Pausados', n: catalogCounts.paused },
+              { key: 'no_image' as const, label: 'Sin foto', n: catalogCounts.no_image },
+            ]).map(({ key, label, n }) => {
+              if (key !== 'all' && n === 0 && filterStatus !== key) return null
+              const active = filterStatus === key
               return (
                 <button
                   key={key}
                   type="button"
-                  role="tab"
-                  aria-selected={active}
-                  id={`catalog-tab-${key}`}
-                  aria-controls={`catalog-panel-${key}`}
-                  onClick={() => setCatalogTab(key)}
-                  style={{
-                    position: 'relative',
-                    zIndex: 1,
-                    background: 'transparent',
-                    color: active ? '#0A0A0F' : '#9A9AA8',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '7px 18px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    letterSpacing: '-0.01em',
-                    whiteSpace: 'nowrap',
-                    transition: 'color 0.2s ease',
-                  }}
+                  aria-pressed={active}
+                  onClick={() => chooseStatus(active && key !== 'all' ? 'all' : key)}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors ${
+                    active
+                      ? 'border-gray-900 bg-gray-900 text-white'
+                      : key === 'no_image'
+                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900'
+                  }`}
                 >
+                  {key === 'no_image' && !active && <Camera size={13} strokeWidth={1.75} aria-hidden />}
                   {label}
+                  <span className="tabular-nums opacity-70">{n}</span>
                 </button>
               )
             })}
+            {filterStatus === 'no_image' && (
+              <span className="ml-1 text-[12px] text-gray-500">Los productos con foto se venden más: tocá uno para subirle una.</span>
+            )}
           </div>
+        )}
 
-          <div style={{ position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px', flexShrink: 0 }}>
-            {/* Sliding pill */}
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: '4px',
-                bottom: '4px',
-                left: '4px',
-                width: 'calc(33.333% - 6px)',
-                background: '#FFFFFF',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                transform: filterStatus === 'active' ? 'translateX(calc(100% + 4px))' : filterStatus === 'paused' ? 'translateX(calc(200% + 8px))' : 'translateX(0)',
-                transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
-                pointerEvents: 'none',
-              }}
-            />
-            {([
-              { key: 'all', label: 'Todos' },
-              { key: 'active', label: 'Activos' },
-              { key: 'paused', label: 'Pausados' },
-            ] as const).map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilterStatus(key)}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: filterStatus === key ? 600 : 500,
-                  color: filterStatus === key ? '#0A0A0F' : '#9A9AA8',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'color 0.2s ease',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ position: 'relative', minHeight: '120px' }}>
+        <div className="relative min-h-[120px]">
           {listLoading && !loading && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, borderRadius: '16px', pointerEvents: 'none' }}>
+            <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[2px]">
               <Spinner className="text-gray-900" />
             </div>
           )}
-        {catalogTab === 'products' ? (
           <section
             className="min-w-0"
             role="tabpanel"
-            id="catalog-panel-products"
-            aria-labelledby="catalog-tab-products"
+            id={`catalog-panel-${catalogTab}`}
+            aria-labelledby={`catalog-tab-${catalogTab}`}
           >
             {visibleProducts.length === 0 ? (
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <path d="M11 2L3 6v10l8 4 8-4V6L11 2z" stroke="#C8C8D0" strokeWidth="1.5" strokeLinejoin="round"/>
-                    <path d="M3 6l8 4 8-4M11 10v10" stroke="#C8C8D0" strokeWidth="1.5"/>
-                  </svg>
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+                <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400">
+                  {catalogTab === 'products' ? <Package size={22} strokeWidth={1.5} aria-hidden /> : <Boxes size={22} strokeWidth={1.5} aria-hidden />}
                 </div>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin productos en esta vista</p>
-                <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0, maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto' }}>
-                  {hasCatalogFilters ? 'Probá otra búsqueda o quitá filtros.' : 'Creá tu primer producto con el botón de arriba.'}
+                <p className="text-[15px] font-semibold text-gray-900">
+                  {catalogTab === 'products' ? 'Sin productos en esta vista' : 'Sin combos todavía'}
                 </p>
-              </div>
-            ) : (
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px 10px 18px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                  <span style={{ width: '10px', flexShrink: 0 }} />
+                <p className="mx-auto mt-1 max-w-[320px] text-[13px] text-gray-500">
+                  {hasCatalogFilters
+                    ? 'Probá otra búsqueda o quitá filtros.'
+                    : catalogTab === 'products'
+                      ? 'Creá tu primer producto para empezar a vender.'
+                      : 'Un combo agrupa varios productos con un precio.'}
+                </p>
+                {!hasCatalogFilters && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (selectedIds.size > 0) {
-                        setSelectedIds(new Set())
-                      } else {
-                        void selectAllAcrossPages()
-                      }
-                    }}
-                    aria-checked={selectedIds.size > 0}
-                    role="checkbox"
-                    disabled={selectingAllPages}
-                    style={{ width: '18px', height: '18px', borderRadius: '5px', border: selectedIds.size > 0 ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: selectedIds.size > 0 ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: selectingAllPages ? 'not-allowed' : 'pointer', flexShrink: 0, padding: 0 }}
+                    onClick={catalogTab === 'products' ? openNewProduct : openNewCombo}
+                    style={organizerAccentFilledButtonStyle()}
+                    className="mt-5 rounded-xl px-4 py-2 text-[14px] font-semibold transition-[filter] hover:brightness-95"
                   >
-                    {selectedIds.size > 0 && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    {catalogTab === 'products' ? 'Crear producto' : 'Crear combo'}
                   </button>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>
-                    {selectingAllPages ? 'Cargando…' : selectedIds.size > 0 ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? '' : 's'}` : 'Seleccionar todos'}
-                  </span>
-                </div>
-                {visibleProducts.map((product, idx) => {
-                  const checked = selectedIds.has(product.id)
-                  const isOver = dragOverId === product.id && draggedId !== product.id
-                  return (
-                  <div
-                    key={product.id}
-                    className="group"
-                    draggable
-                    onDragStart={e => { setDraggedId(product.id); e.dataTransfer.effectAllowed = 'move' }}
-                    onDragOver={e => { e.preventDefault(); setDragOverId(product.id); e.dataTransfer.dropEffect = 'move' }}
-                    onDragLeave={() => setDragOverId(curr => curr === product.id ? null : curr)}
-                    onDrop={e => { e.preventDefault(); if (draggedId) reorderProducts(draggedId, product.id); setDraggedId(null); setDragOverId(null) }}
-                    onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '14px 12px 14px 18px',
-                      borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                      opacity: draggedId === product.id ? 0.4 : (product.is_active ? 1 : 0.55),
-                      background: isOver ? 'rgba(198,255,0,0.08)' : 'transparent',
-                      transition: 'opacity 0.15s, background 0.1s',
-                      cursor: draggedId === product.id ? 'grabbing' : 'default',
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', cursor: 'grab', color: '#D1D5DB', flexShrink: 0 }} className="nb-drag-handle" title="Arrastrar para reordenar">
-                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
-                        <circle cx="3" cy="3" r="1" fill="currentColor"/>
-                        <circle cx="7" cy="3" r="1" fill="currentColor"/>
-                        <circle cx="3" cy="7" r="1" fill="currentColor"/>
-                        <circle cx="7" cy="7" r="1" fill="currentColor"/>
-                        <circle cx="3" cy="11" r="1" fill="currentColor"/>
-                        <circle cx="7" cy="11" r="1" fill="currentColor"/>
-                      </svg>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => toggleSelected(product.id)}
-                      aria-checked={checked}
-                      role="checkbox"
-                      style={{ width: '18px', height: '18px', borderRadius: '5px', border: checked ? 'none' : '1.5px solid rgba(0,0,0,0.18)', background: checked ? '#0A0A0F' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
-                    >
-                      {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                    </button>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}>
-                      {product.image_url ? (
-                        <img src={product.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
-                          <CatalogCameraPlaceholderIcon size={20} />
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
-                        {product.name}
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px', fontSize: '12px', color: '#9A9AA8', flexWrap: 'wrap' }}>
-                        {(() => {
-                          const promo = promotionsByProductId[product.id]
-                          const hasPromoPrice = promo?.is_active && promo.promo_price != null && promo.promo_price < product.price
-                          return hasPromoPrice ? (
-                            <>
-                              <span style={{ fontWeight: 600, color: '#9A9AA8', textDecoration: 'line-through', textDecorationColor: '#C8C8D0' }}>{formatPrice(product.price)}</span>
-                              <span style={{ fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '1px 8px', borderRadius: '100px', fontSize: '12px' }}>{formatPrice(promo.promo_price!)}</span>
-                            </>
-                          ) : (
-                            <>
-                              <span style={{ fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(product.price)}</span>
-                              {promo?.is_active && (
-                                <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
-                                  Promo
-                                </span>
-                              )}
-                            </>
-                          )
-                        })()}
-                        {product.category_name && (
-                          <>
-                            <span style={{ color: '#E0E0E5' }}>·</span>
-                            <span>{product.category_name}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-                      <button
-                        type="button"
-                        onClick={() => openPromoModal(product)}
-                        title="Promoción en catálogo"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '7px',
-                          borderRadius: '8px',
-                          color: promotionsByProductId[product.id] ? '#0A0A0F' : '#6B7280',
-                          display: 'flex',
-                          alignItems: 'center',
-                          transition: 'background 0.15s, color 0.15s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.color = promotionsByProductId[product.id] ? '#0A0A0F' : '#6B7280'
-                        }}
-                      >
-                        <BadgePercent size={15} strokeWidth={1.5} className="shrink-0" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormError('')
-                          clearPendingImage()
-                          setEditingCatalogId(product.id)
-                          setName(product.name)
-                          setPrice(String(product.price))
-                          setDescription(product.description ?? '')
-                          setCategoryId(product.category_id ?? '')
-                          setDrawerMode('product')
-                        }}
-                        title="Editar"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '7px', borderRadius: '8px', color: '#6B7280', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-                          <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget({ kind: 'catalog', id: product.id, name: product.name, variant: 'single' })}
-                        aria-label={`Eliminar ${product.name}`}
-                        title="Eliminar"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '7px', borderRadius: '8px', color: '#6B7280', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280' }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </button>
-                      <div style={{ marginLeft: '6px' }}>
-                        <ToggleSwitch
-                          checked={product.is_active}
-                          disabled={productTogglePending.has(product.id)}
-                          onChange={() => toggleActive(product)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-        ) : (
-          <section
-            className="min-w-0"
-            role="tabpanel"
-            id="catalog-panel-combos"
-            aria-labelledby="catalog-tab-combos"
-          >
-            {visibleProducts.length === 0 ? (
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-                    <rect x="12" y="3" width="7" height="7" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-                    <rect x="3" y="12" width="7" height="7" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-                    <rect x="12" y="12" width="7" height="7" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-                  </svg>
-                </div>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin combos todavía</p>
-                <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0, maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto' }}>
-                  {hasCatalogFilters ? 'Probá otra búsqueda o quitá filtros.' : 'Un combo agrupa varios productos con un precio.'}
-                </p>
+                )}
               </div>
             ) : (
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden' }}>
-                {visibleProducts.map((combo, idx) => (
-                  <div
-                    key={combo.id}
-                    style={{
-                      display: 'flex', flexDirection: 'column', gap: '8px',
-                      padding: '14px 18px',
-                      borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.05)',
-                      opacity: combo.is_active ? 1 : 0.55,
-                      transition: 'opacity 0.15s',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, background: '#F5F5F7', border: '1px solid rgba(0,0,0,0.06)' }}>
-                        {combo.image_url ? (
-                          <img src={combo.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB' }}>
-                            <CatalogCameraPlaceholderIcon size={22} />
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
-                          {combo.name}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#0A0A0F' }}>{formatPrice(combo.price)}</span>
-                          {promotionsByProductId[combo.id]?.is_active ? (
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: ORGANIZER_ACCENT_FOREGROUND, background: ORGANIZER_ACCENT_BACKGROUND, padding: '2px 8px', borderRadius: '100px', letterSpacing: '0.02em' }}>
-                              Promo
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                        <button
-                          type="button"
-                          onClick={() => openPromoModal(combo)}
-                          title="Promoción en catálogo"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '8px',
-                            borderRadius: '8px',
-                            color: promotionsByProductId[combo.id] ? '#0A0A0F' : '#9A9AA8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            transition: 'background 0.15s, color 0.15s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.color = promotionsByProductId[combo.id] ? '#0A0A0F' : '#9A9AA8'
-                          }}
-                        >
-                          <BadgePercent size={14} strokeWidth={1.35} className="shrink-0" aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormError('')
-                            clearPendingImage()
-                            setEditingCatalogId(combo.id)
-                            setComboName(combo.name)
-                            setComboPrice(String(combo.price))
-                            setComboDesc(combo.description ?? '')
-                            setComboPickerItems(
-                              combo.combo_lines.map(l => ({ product_id: l.product_id, quantity: l.quantity, displayName: l.name })),
-                            )
-                            setComboPickerQuery('')
-                            setDrawerMode('combo')
-                          }}
-                          title="Editar"
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#0A0A0F' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget({ kind: 'catalog', id: combo.id, name: combo.name, variant: 'combo' })}
-                          title="Eliminar"
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#9A9AA8', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9A9AA8' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2h5v1.5M3 3.5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </button>
-                        <div style={{ marginLeft: '6px' }}>
-                          <ToggleSwitch
-                            checked={combo.is_active}
-                            disabled={productTogglePending.has(combo.id)}
-                            onChange={() => toggleActive(combo)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {combo.combo_lines.length > 0 && (
-                      <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        {combo.combo_lines.map(line => (
-                          <li
-                            key={`${combo.id}-${line.product_id}`}
-                            style={{ fontSize: '11px', color: '#6B7280', background: '#F5F5F7', borderRadius: '100px', padding: '3px 9px' }}
-                          >
-                            <span style={{ fontWeight: 700, color: '#0A0A0F' }}>{line.quantity}×</span> {line.name}
-                          </li>
-                        ))}
-                      </ul>
+              <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                {catalogTab === 'products' && (
+                  <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedIds.size > 0) setSelectedIds(new Set())
+                        else void selectAllAcrossPages()
+                      }}
+                      aria-checked={selectedIds.size > 0}
+                      aria-label="Seleccionar todos"
+                      role="checkbox"
+                      disabled={selectingAllPages}
+                      className={`ml-[22px] flex size-[18px] items-center justify-center rounded-[5px] border transition-colors disabled:cursor-not-allowed ${
+                        selectedIds.size > 0 ? 'border-gray-900 bg-gray-900' : 'border-gray-300 bg-white hover:border-gray-400'
+                      }`}
+                    >
+                      {selectedIds.size > 0 && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden>
+                          <path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                    <span className="text-[11px] font-medium text-gray-400">
+                      {selectingAllPages
+                        ? 'Cargando…'
+                        : selectedIds.size > 0
+                          ? `${selectedIds.size} seleccionado${selectedIds.size === 1 ? '' : 's'}`
+                          : 'Seleccionar todos'}
+                    </span>
+                    {productPagination.total > 1 && selectedIds.size === 0 && (
+                      <span className="ml-auto hidden text-[11px] text-gray-400 md:inline">Arrastrá para cambiar el orden del catálogo</span>
                     )}
                   </div>
-                ))}
+                )}
+                <ul className="divide-y divide-gray-100">
+                  {visibleProducts.map(item => {
+                    const isProduct = catalogTab === 'products'
+                    return (
+                      <li key={item.id}>
+                        <CatalogItemRow
+                          item={item}
+                          promo={promotionsByProductId[item.id]}
+                          checked={isProduct ? selectedIds.has(item.id) : undefined}
+                          onToggleChecked={isProduct ? () => toggleSelected(item.id) : undefined}
+                          onPromo={() => openPromoModal(item)}
+                          onEdit={() => (isProduct ? openEditProduct(item) : openEditCombo(item))}
+                          onDelete={() =>
+                            setDeleteTarget({ kind: 'catalog', id: item.id, name: item.name, variant: isProduct ? 'single' : 'combo' })
+                          }
+                          toggle={
+                            <ToggleSwitch
+                              checked={item.is_active}
+                              disabled={productTogglePending.has(item.id)}
+                              onChange={() => toggleActive(item)}
+                            />
+                          }
+                          drag={
+                            isProduct
+                              ? {
+                                  dragging: draggedId === item.id,
+                                  over: dragOverId === item.id && draggedId !== null && draggedId !== item.id,
+                                  handlers: {
+                                    draggable: true,
+                                    onDragStart: e => {
+                                      setDraggedId(item.id)
+                                      e.dataTransfer.effectAllowed = 'move'
+                                    },
+                                    onDragOver: e => {
+                                      e.preventDefault()
+                                      setDragOverId(item.id)
+                                      e.dataTransfer.dropEffect = 'move'
+                                    },
+                                    onDragLeave: () => setDragOverId(curr => (curr === item.id ? null : curr)),
+                                    onDrop: e => {
+                                      e.preventDefault()
+                                      if (draggedId) void reorderProducts(draggedId, item.id)
+                                      setDraggedId(null)
+                                      setDragOverId(null)
+                                    },
+                                    onDragEnd: () => {
+                                      setDraggedId(null)
+                                      setDragOverId(null)
+                                    },
+                                  },
+                                }
+                              : undefined
+                          }
+                        />
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
             )}
           </section>
-        )}
         </div>
       </div>
 
-      {productPagination.total >= 5 && (
-        <div style={{ marginTop: '17px', display: 'flex', justifyContent: 'center', width: '100%' }}>
+      {productPagination.total > productPagination.page_size && (
+        <div className="mt-5 flex w-full justify-center">
           <PaginationBar
             page={productPagination.page}
             pageSize={productPagination.page_size}

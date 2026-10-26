@@ -28,8 +28,8 @@ export const WORKSPACE_SECTION_HUBS: Partial<Record<WorkspaceSectionKey, string>
 /** Herramientas agrupadas en una sola entrada del sidebar (con pestañas o con página de entrada). */
 export const WORKSPACE_SECTIONS: Record<WorkspaceSectionKey, WorkspaceSectionTab[]> = {
   catalogo: [
-    { segment: 'products', label: 'Productos', tool: 'products' },
-    { segment: 'blocks', label: 'Bloques', tool: 'products' },
+    { segment: 'products', label: 'Productos y combos', tool: 'products' },
+    { segment: 'blocks', label: 'Bloques destacados', tool: 'products' },
   ],
   cobros: [
     { segment: 'payments', label: 'Pagos', tool: 'payments' },

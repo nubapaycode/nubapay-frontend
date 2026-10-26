@@ -10,7 +10,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   await params
   return organizerEventSectionMeta(
-    'Bloques personalizados',
+    'Bloques destacados',
     'Armá secciones destacadas del catálogo con banner propio y productos elegidos a mano.',
   )
 }

@@ -1,10 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronDown, Info, MapPin, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
-import { Spinner } from '@/components/ui/Spinner'
 import { ORGANIZER_ACCENT_BACKGROUND, organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import {
   createPickupPoint,
@@ -55,6 +54,132 @@ type CatalogGroupRow = {
 
 const PICKUP_PAGE_SIZE = 12
 
+function useDismiss(open: boolean, close: () => void) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) close()
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open, close])
+  return ref
+}
+
+function PointCardMenu({ name, onEdit, onDelete }: { name: string; onEdit: () => void; onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useDismiss(open, () => setOpen(false))
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Opciones de ${name}`}
+        onClick={() => setOpen(o => !o)}
+        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
+      >
+        <MoreHorizontal size={16} strokeWidth={2} aria-hidden />
+      </button>
+      {open && (
+        <div role="menu" className="nb-pop absolute bottom-[calc(100%+4px)] right-0 z-20 w-44 rounded-xl border border-gray-200 bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.18)]">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onEdit()
+            }}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          >
+            <Pencil size={14} strokeWidth={1.75} />
+            Editar
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onDelete()
+            }}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-red-600 hover:bg-red-50"
+          >
+            <Trash2 size={14} strokeWidth={1.75} />
+            Eliminar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** "Asignar a…": manda los productos sin cobertura a un punto existente o a uno nuevo. */
+function AssignMenu({
+  points,
+  onPick,
+  onNew,
+}: {
+  points: WorkspacePickupPoint[]
+  onPick: (p: WorkspacePickupPoint) => void
+  onNew: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useDismiss(open, () => setOpen(false))
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gray-900 px-3 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800"
+      >
+        Asignar a…
+        <ChevronDown size={14} strokeWidth={2.25} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} aria-hidden />
+      </button>
+      {open && (
+        <div role="menu" className="nb-pop absolute right-0 top-[calc(100%+6px)] z-20 w-60 rounded-xl border border-gray-200 bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.18)]">
+          {points.map(p => (
+            <button
+              key={p.id}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false)
+                onPick(p)
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <MapPin size={14} strokeWidth={1.75} className="shrink-0 text-gray-400" />
+              <span className="truncate">{p.name}</span>
+            </button>
+          ))}
+          {points.length > 0 && <div className="my-1 h-px bg-gray-100" />}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onNew()
+            }}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-gray-900 hover:bg-gray-50"
+          >
+            <Plus size={14} strokeWidth={2} className="shrink-0" />
+            Nuevo punto con estos productos
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 export function PickupPointsView({ eventId }: { eventId: string }) {
   const [points, setPoints] = useState<WorkspacePickupPoint[]>([])
   const [catalog, setCatalog] = useState<WorkspaceProduct[]>([])
@@ -69,6 +194,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
   const [formDesc, setFormDesc] = useState('')
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(() => new Set())
   const [productSearch, setProductSearch] = useState('')
+  const [onlyUnassigned, setOnlyUnassigned] = useState(false)
   const [detailExpandedKeys, setDetailExpandedKeys] = useState<Set<string>>(() => new Set())
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -119,31 +245,54 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
     setFormDesc('')
     setSelectedProductIds(new Set())
     setProductSearch('')
+    setOnlyUnassigned(false)
     setDetailExpandedKeys(new Set())
     setFormError('')
   }
 
-  const openCreate = () => {
+  const openCreate = (preselected: string[] = []) => {
     setFormError('')
     setFormName('')
     setFormDesc('')
-    setSelectedProductIds(new Set())
+    setSelectedProductIds(new Set(preselected))
+    setOnlyUnassigned(false)
     setProductSearch('')
     setDetailExpandedKeys(new Set())
     setEditingId(null)
     setDrawerMode('create')
   }
 
-  const openEdit = (p: WorkspacePickupPoint) => {
+  const openEdit = (p: WorkspacePickupPoint, extra: string[] = []) => {
     setFormError('')
     setFormName(p.name)
     setFormDesc(p.description || '')
-    setSelectedProductIds(new Set(p.products.filter(x => x.is_active).map(x => x.product_id)))
+    setSelectedProductIds(new Set([...p.products.filter(x => x.is_active).map(x => x.product_id), ...extra]))
+    setOnlyUnassigned(false)
     setProductSearch('')
     setDetailExpandedKeys(new Set())
     setEditingId(p.id)
     setDrawerMode('edit')
   }
+
+  /** Productos asignados a algún punto activo, sin contar el que se está editando. */
+  const assignedElsewhere = useMemo(() => {
+    const set = new Set<string>()
+    for (const p of points) {
+      if (!p.is_active || p.id === editingId) continue
+      for (const x of p.products) if (x.is_active) set.add(x.product_id)
+    }
+    return set
+  }, [points, editingId])
+
+  /** Productos en venta que no están asignados a ningún punto activo. */
+  const uncovered = useMemo(() => {
+    const covered = new Set<string>()
+    for (const p of points) {
+      if (!p.is_active) continue
+      for (const x of p.products) if (x.is_active) covered.add(x.product_id)
+    }
+    return catalog.filter(p => p.is_active && !covered.has(p.id))
+  }, [points, catalog])
 
   const catalogGroups = useMemo((): CatalogGroupRow[] => {
     const q = productSearch.trim().toLowerCase()
@@ -176,6 +325,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
     if (byCat.has('__none__')) orderedKeys.push('__none__')
 
     const matchesSearch = (p: WorkspaceProduct) => {
+      if (onlyUnassigned && assignedElsewhere.has(p.id)) return false
       if (!q) return true
       return (
         p.name.toLowerCase().includes(q)
@@ -187,8 +337,9 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
     const rows: CatalogGroupRow[] = []
     for (const key of orderedKeys) {
       const fullProducts = byCat.get(key)!
-      const displayProducts = q ? fullProducts.filter(matchesSearch) : fullProducts
-      if (q && displayProducts.length === 0) continue
+      const filtering = Boolean(q) || onlyUnassigned
+      const displayProducts = filtering ? fullProducts.filter(matchesSearch) : fullProducts
+      if (filtering && displayProducts.length === 0) continue
 
       let label: string
       if (key === '__none__') {
@@ -201,7 +352,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
       rows.push({ key, label, fullProducts, displayProducts })
     }
     return rows
-  }, [catalog, categories, productSearch])
+  }, [catalog, categories, productSearch, onlyUnassigned, assignedElsewhere])
 
   const toggleCategoryProducts = (fullProducts: WorkspaceProduct[], add: boolean) => {
     const ids = fullProducts.map(p => p.id)
@@ -314,140 +465,194 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="w-full min-w-0 flex flex-col items-center justify-center py-24 gap-3">
-        <Spinner size="lg" className="text-gray-900" />
-        <p className="text-sm text-gray-400">Cargando puntos de retiro…</p>
+      <div className="mx-auto w-full max-w-[1180px]" aria-busy="true">
+        <p className="sr-only">Cargando puntos de retiro…</p>
+        <div className="mb-6 h-14 w-72 animate-pulse rounded-xl bg-gray-100" />
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-48 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
       </div>
     )
   }
 
+  const activePoints = points.filter(p => p.is_active)
+
   return (
-    <div className="w-full min-w-0 max-w-none" style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+    <div className="mx-auto w-full min-w-0 max-w-[1180px]">
       <style>{`
+        @keyframes nb-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes nb-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+        .nb-rise { animation: nb-rise 420ms cubic-bezier(0.22,1,0.36,1) both; }
+        .nb-pop { animation: nb-pop 160ms ease-out both; transform-origin: top right; }
         .nb-input:focus { border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
-        .nb-pp-card { transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
-        .nb-pp-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
+        @media (prefers-reduced-motion: reduce) { .nb-rise, .nb-pop { animation: none; } }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Puntos de retiro"
-        description="Definí dónde se entrega cada producto del catálogo."
-        actions={
-          <button
-            type="button"
-            onClick={openCreate}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Nuevo punto
-          </button>
-        }
-      />
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-[620px]">
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Puntos de retiro</h1>
+          <p className="mt-1 text-[13px] text-gray-500">
+            Dónde se entrega cada producto: barras, cantinas, mostradores. Así tu equipo sabe qué despacha cada uno.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => openCreate()}
+          style={organizerAccentFilledButtonStyle()}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
+        >
+          <Plus size={16} strokeWidth={2.25} aria-hidden />
+          Nuevo punto
+        </button>
+      </header>
 
       {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
-        </div>
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {points.length === 0 ? (
-          <div className="col-span-full" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11 2C7.96 2 5.5 4.46 5.5 7.5c0 4.12 5.5 11 5.5 11s5.5-6.88 5.5-11C16.5 4.46 14.04 2 11 2z" stroke="#C8C8D0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="11" cy="7.5" r="2" stroke="#C8C8D0" strokeWidth="1.5"/>
-              </svg>
+      {/* Cobertura: productos en venta que no están en ningún punto activo (organización del equipo) */}
+      {points.length > 0 && uncovered.length > 0 && (
+        <section role="status" className="nb-rise mb-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <Info size={18} strokeWidth={1.75} className="mt-0.5 shrink-0 text-gray-400" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold text-gray-900">
+                {uncovered.length === 1
+                  ? '1 producto en venta no está en ningún punto'
+                  : `${uncovered.length} productos en venta no están en ningún punto`}
+              </p>
+              <p className="mt-0.5 text-[13px] text-gray-500">
+                Asignalos para que tu equipo sepa dónde se entrega cada uno.
+              </p>
+              <ul className="mt-2.5 flex flex-wrap gap-1.5">
+                {uncovered.slice(0, 8).map(p => (
+                  <li key={p.id} className="max-w-[220px] truncate rounded-full bg-white px-2.5 py-1 text-[12px] text-gray-700 ring-1 ring-gray-200">
+                    {p.name}
+                  </li>
+                ))}
+                {uncovered.length > 8 && (
+                  <li className="px-1.5 py-1 text-[12px] text-gray-500">y {uncovered.length - 8} más</li>
+                )}
+              </ul>
             </div>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin puntos de retiro</p>
-            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero para asignar productos por ubicación.</p>
-            <button
-              type="button"
-              onClick={openCreate}
-              style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Crear punto
-            </button>
+            <AssignMenu
+              points={activePoints}
+              onPick={p => openEdit(p, uncovered.map(x => x.id))}
+              onNew={() => openCreate(uncovered.map(x => x.id))}
+            />
           </div>
-        ) : (
-          points.map(p => {
+        </section>
+      )}
+
+      {points.length === 0 ? (
+        <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400">
+            <MapPin size={22} strokeWidth={1.5} aria-hidden />
+          </div>
+          <p className="text-[16px] font-semibold text-gray-900">Sin puntos de retiro</p>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-gray-500">
+            Creá el primero (por ejemplo “Barra principal”) y elegí qué productos se entregan ahí.
+          </p>
+          <button
+            type="button"
+            onClick={() => openCreate()}
+            style={organizerAccentFilledButtonStyle()}
+            className="mt-5 rounded-xl px-4 py-2 text-[14px] font-semibold transition-[filter] hover:brightness-95"
+          >
+            Crear punto
+          </button>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {points.map((p, i) => {
             const activeProducts = p.products.filter(x => x.is_active)
+            const combos = activeProducts.filter(x => x.type === 'combo').length
             return (
-              <div
+              <li
                 key={p.id}
-                className="nb-pp-card"
-                style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '14px', opacity: p.is_active ? 1 : 0.6 }}
+                className="nb-rise group flex flex-col rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-shadow hover:shadow-[0_6px_20px_-8px_rgba(16,24,40,0.18)]"
+                style={{ animationDelay: `${i * 40}ms` }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{p.name}</p>
+                <div className="flex items-start gap-3 p-4">
+                  <span
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${p.is_active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'}`}
+                    aria-hidden
+                  >
+                    <MapPin size={18} strokeWidth={1.75} />
+                  </span>
+                  <div className={`min-w-0 flex-1 ${p.is_active ? '' : 'opacity-60'}`}>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(p)}
+                        className="truncate text-left text-[15px] font-semibold tracking-tight text-gray-900 hover:underline"
+                      >
+                        {p.name}
+                      </button>
                       {!p.is_active && (
-                        <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(0,0,0,0.06)', color: '#9A9AA8', padding: '2px 8px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Pausado</span>
+                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">Pausado</span>
                       )}
                     </div>
-                    <p style={{ fontSize: '12px', color: p.description ? '#9A9AA8' : '#D1D5DB', margin: 0, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    <p className={`mt-0.5 line-clamp-2 text-[12px] ${p.description ? 'text-gray-500' : 'text-gray-300'}`}>
                       {p.description || 'Sin descripción'}
                     </p>
                   </div>
                   <ToggleSwitch checked={p.is_active} disabled={togglePending.has(p.id)} onChange={() => togglePointActive(p)} />
                 </div>
-                <div>
-                  <p style={{ fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
-                    {activeProducts.length === 0 ? 'Sin productos asignados' : `${activeProducts.length} producto${activeProducts.length === 1 ? '' : 's'}`}
+
+                <div className="flex-1 border-t border-gray-100 px-4 py-3">
+                  <p className="mb-2 text-[12px] text-gray-500">
+                    {activeProducts.length === 0 ? (
+                      'Sin productos asignados'
+                    ) : (
+                      <>
+                        <span className="font-semibold tabular-nums text-gray-900">{activeProducts.length}</span>{' '}
+                        {activeProducts.length === 1 ? 'producto' : 'productos'}
+                        {combos > 0 && <span className="text-gray-400"> · {combos} {combos === 1 ? 'combo' : 'combos'}</span>}
+                      </>
+                    )}
                   </p>
                   {activeProducts.length === 0 ? (
-                    <p style={{ fontSize: '12px', color: '#C8C8D0', margin: 0 }}>Asigná desde "Editar".</p>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      className="text-[12px] font-medium text-gray-900 underline-offset-4 hover:underline"
+                    >
+                      Asignar productos
+                    </button>
                   ) : (
-                    <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', listStyle: 'none', padding: 0, margin: 0 }}>
+                    <ul className="flex flex-wrap gap-1">
                       {activeProducts.slice(0, 6).map(x => (
-                        <li
-                          key={x.product_id}
-                          title={x.name}
-                          style={{ fontSize: '11px', color: '#0A0A0F', background: '#F5F5F7', padding: '3px 9px', borderRadius: '100px', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                        >
+                        <li key={x.product_id} title={x.name} className="max-w-full truncate rounded-full bg-gray-100 px-2.5 py-1 text-[11px] text-gray-700">
                           {x.name}
-                          {x.type === 'combo' && <span style={{ color: '#9A9AA8', marginLeft: '4px' }}>· combo</span>}
+                          {x.type === 'combo' && <span className="ml-1 text-gray-400">· combo</span>}
                         </li>
                       ))}
                       {activeProducts.length > 6 && (
-                        <li style={{ fontSize: '11px', color: '#9A9AA8', background: 'transparent', padding: '3px 6px' }}>
-                          +{activeProducts.length - 6}
-                        </li>
+                        <li className="px-1.5 py-1 text-[11px] text-gray-400">+{activeProducts.length - 6}</li>
                       )}
                     </ul>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+
+                <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1.5">
                   <button
                     type="button"
                     onClick={() => openEdit(p)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0', fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
                   >
-                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Pencil size={13} strokeWidth={1.75} aria-hidden />
                     Editar
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(p)}
-                    aria-label={`Eliminar ${p.name}`}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#C8C8D0', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C8C8D0' }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M4.5 3.5V2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v1M3.5 3.5l.75 7.5h5.5l.75-7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
+                  <PointCardMenu name={p.name} onEdit={() => openEdit(p)} onDelete={() => setDeleteTarget(p)} />
                 </div>
-              </div>
+              </li>
             )
-          })
-        )}
-      </div>
-
+          })}
+        </ul>
+      )}
 
       <div
         role="presentation"
@@ -529,6 +734,19 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                     disabled={saving}
                   />
                 </div>
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 text-[12px] text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={onlyUnassigned}
+                      onChange={e => setOnlyUnassigned(e.target.checked)}
+                      className="size-3.5 accent-gray-900"
+                      disabled={saving}
+                    />
+                    Solo los que no están en otro punto
+                  </label>
+                  <span className="text-[12px] tabular-nums text-gray-400">{selectedProductIds.size} elegidos</span>
+                </div>
                 <div style={{ borderRadius: '14px', border: '1px solid rgba(0,0,0,0.07)', background: '#FAFAFA', overflow: 'hidden' }}>
                   {catalog.length === 0 ? (
                     <p style={{ padding: '20px', fontSize: '12px', color: '#9A9AA8', textAlign: 'center', margin: 0 }}>No hay productos en el catálogo.</p>
@@ -606,6 +824,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                                           <span style={{ display: 'block', fontSize: '11px', color: '#9A9AA8', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {prod.type === 'combo' ? 'Combo' : 'Producto'}
                                             {!prod.is_active && ' · inactivo'}
+                                            {assignedElsewhere.has(prod.id) && ' · ya está en otro punto'}
                                           </span>
                                         </span>
                                       </label>
@@ -636,7 +855,9 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 onClick={handleSave}
                 style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
-                {saving ? 'Guardando…' : drawerVisible === 'create' ? 'Crear punto' : 'Guardar cambios'}
+                {saving
+                  ? 'Guardando…'
+                  : `${drawerVisible === 'create' ? 'Crear punto' : 'Guardar cambios'}${selectedProductIds.size ? ` · ${selectedProductIds.size} ${selectedProductIds.size === 1 ? 'producto' : 'productos'}` : ''}`}
               </button>
             </div>
           </>

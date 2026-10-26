@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowDown, ArrowUp, ImageIcon, LayoutTemplate, Pencil, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { ORGANIZER_ACCENT_BACKGROUND, organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
@@ -13,6 +13,7 @@ import {
   fetchAllCategories,
   fetchAllWorkspaceProducts,
   fetchCatalogBlocks,
+  reorderCatalogBlocks,
   patchCatalogBlock,
   putCatalogBlockProducts,
   type WorkspaceCatalogBlock,
@@ -323,6 +324,27 @@ export function BlocksView({ eventId }: { eventId: string }) {
     }
   }
 
+  const [dragId, setDragId] = useState<string | null>(null)
+  const dragBefore = useRef<WorkspaceCatalogBlock[] | null>(null)
+
+  /** Guarda el orden nuevo; si falla, vuelve al anterior. */
+  const persistOrder = async (next: WorkspaceCatalogBlock[], previous: WorkspaceCatalogBlock[]) => {
+    setBlocks(next)
+    const res = await reorderCatalogBlocks(eventId, next.map(b => b.id))
+    if (!res.ok) {
+      setBlocks(previous)
+      setError(res.error)
+    }
+  }
+
+  const move = (index: number, delta: number) => {
+    const target = index + delta
+    if (target < 0 || target >= blocks.length) return
+    const next = [...blocks]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    void persistOrder(next, blocks)
+  }
+
   const toggleBlockActive = async (b: WorkspaceCatalogBlock) => {
     if (togglePending.has(b.id)) return
     setTogglePending(s => new Set(s).add(b.id))
@@ -360,9 +382,14 @@ export function BlocksView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="w-full min-w-0 flex flex-col items-center justify-center py-24 gap-3">
-        <Spinner size="lg" className="text-gray-900" />
-        <p className="text-sm text-gray-400">Cargando bloques…</p>
+      <div className="w-full max-w-[1180px]" aria-busy="true">
+        <p className="sr-only">Cargando bloques…</p>
+        <div className="mb-6 h-14 w-72 animate-pulse rounded-xl bg-gray-100" />
+        <div className="flex flex-col gap-3">
+          {[0, 1].map(i => (
+            <div key={i} className="h-36 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -375,136 +402,204 @@ export function BlocksView({ eventId }: { eventId: string }) {
         .nb-block-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Bloques personalizados"
-        description="Armá secciones destacadas del catálogo con banner propio y productos elegidos a mano."
-        actions={
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-[620px]">
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Bloques destacados</h1>
+          <p className="mt-1 text-[13px] text-gray-500">
+            Secciones que aparecen arriba del catálogo, con banner propio y productos elegidos a mano.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openCreate}
+          style={organizerAccentFilledButtonStyle()}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+          Nuevo bloque
+        </button>
+      </header>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">{error}</div>
+      )}
+
+      {blocks.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400">
+            <LayoutTemplate size={22} strokeWidth={1.5} aria-hidden />
+          </div>
+          <p className="text-[16px] font-semibold text-gray-900">Sin bloques destacados</p>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-gray-500">
+            Creá el primero para destacar productos con un banner propio, por ejemplo “Promos de la noche” o “Combos para compartir”.
+          </p>
           <button
             type="button"
             onClick={openCreate}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
+            style={organizerAccentFilledButtonStyle()}
+            className="mt-5 rounded-xl px-4 py-2 text-[14px] font-semibold transition-[filter] hover:brightness-95"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Nuevo bloque
+            Crear bloque
           </button>
-        }
-      />
-
-      {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
         </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {blocks.length === 0 ? (
-          <div className="col-span-full" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="3" width="16" height="9" rx="2" stroke="#C8C8D0" strokeWidth="1.5"/>
-                <rect x="3" y="14.5" width="7" height="4.5" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-                <rect x="12" y="14.5" width="7" height="4.5" rx="1.5" stroke="#C8C8D0" strokeWidth="1.5"/>
-              </svg>
-            </div>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin bloques personalizados</p>
-            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero para destacar productos con un banner propio.</p>
-            <button
-              type="button"
-              onClick={openCreate}
-              style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Crear bloque
-            </button>
-          </div>
-        ) : (
-          blocks.map(b => {
-            const activeProducts = b.products.filter(x => x.is_active)
-            return (
-              <div
-                key={b.id}
-                className="nb-block-card"
-                style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', overflow: 'hidden', display: 'flex', flexDirection: 'column', opacity: b.is_active ? 1 : 0.6 }}
-              >
-                <div style={{ width: '100%', paddingTop: '43.75%', background: '#F5F5F7', position: 'relative' }}>
-                  <div style={{ position: 'absolute', inset: 0 }}>
+      ) : (
+        <>
+          <p className="mb-3 px-1 text-[12px] text-gray-500">
+            Aparecen arriba del catálogo en este orden{blocks.length > 1 ? ': arrastralos o usá las flechas para cambiarlo.' : '.'}
+          </p>
+          <ol className="flex flex-col gap-3">
+            {blocks.map((b, i) => {
+              const activeProducts = b.products.filter(x => x.is_active)
+              return (
+                <li
+                  key={b.id}
+                  draggable={blocks.length > 1}
+                  onDragStart={e => {
+                    e.dataTransfer.effectAllowed = 'move'
+                    dragBefore.current = blocks
+                    setDragId(b.id)
+                  }}
+                  onDragOver={e => {
+                    if (!dragId || dragId === b.id) return
+                    e.preventDefault()
+                    setBlocks(list => {
+                      const from = list.findIndex(x => x.id === dragId)
+                      const to = list.findIndex(x => x.id === b.id)
+                      if (from < 0 || to < 0 || from === to) return list
+                      const next = [...list]
+                      const [moved] = next.splice(from, 1)
+                      next.splice(to, 0, moved)
+                      return next
+                    })
+                  }}
+                  onDrop={e => e.preventDefault()}
+                  onDragEnd={() => {
+                    const before = dragBefore.current
+                    setDragId(null)
+                    dragBefore.current = null
+                    if (before && before.map(x => x.id).join() !== blocks.map(x => x.id).join()) {
+                      void persistOrder(blocks, before)
+                    }
+                  }}
+                  className={`group flex flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[box-shadow,opacity] hover:shadow-[0_6px_20px_-8px_rgba(16,24,40,0.18)] sm:flex-row ${
+                    dragId === b.id ? 'opacity-50' : ''
+                  }`}
+                >
+                  {/* Banner */}
+                  <div className="relative aspect-[16/7] w-full shrink-0 bg-gray-50 sm:aspect-auto sm:w-56">
                     {b.banner_image_url ? (
-                      <img src={b.banner_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      // eslint-disable-next-line @next/next/no-img-element -- banner subido por el organizador
+                      <img src={b.banner_image_url} alt="" className={`size-full object-cover ${b.is_active ? '' : 'grayscale'}`} />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#D1D1D8" strokeWidth="1.5"/><circle cx="8.5" cy="10" r="1.5" stroke="#D1D1D8" strokeWidth="1.5"/><path d="M21 15l-5-5-9 9" stroke="#D1D1D8" strokeWidth="1.5"/></svg>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(b)}
+                        className="flex size-full flex-col items-center justify-center gap-1 text-[12px] text-gray-400 transition-colors hover:text-gray-700"
+                      >
+                        <ImageIcon size={20} strokeWidth={1.5} aria-hidden />
+                        Sumar banner
+                      </button>
                     )}
+                    <span className="absolute left-2.5 top-2.5 flex size-6 items-center justify-center rounded-full bg-white/90 text-[12px] font-semibold tabular-nums text-gray-900 shadow-sm backdrop-blur" aria-label={`Posición ${i + 1}`}>
+                      {i + 1}
+                    </span>
                   </div>
-                </div>
-                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{b.title}</p>
-                        {!b.is_active && (
-                          <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(0,0,0,0.06)', color: '#9A9AA8', padding: '2px 8px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Pausado</span>
-                        )}
-                      </div>
-                    </div>
-                    <ToggleSwitch checked={b.is_active} disabled={togglePending.has(b.id)} onChange={() => toggleBlockActive(b)} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '11px', fontWeight: 700, color: '#9A9AA8', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px 0' }}>
-                      {activeProducts.length === 0 ? 'Sin productos elegidos' : `${activeProducts.length} producto${activeProducts.length === 1 ? '' : 's'}`}
-                    </p>
-                    {activeProducts.length === 0 ? (
-                      <p style={{ fontSize: '12px', color: '#C8C8D0', margin: 0 }}>Elegí desde "Editar".</p>
-                    ) : (
-                      <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        {activeProducts.slice(0, 6).map(x => (
-                          <li
-                            key={x.product_id}
-                            title={x.name}
-                            style={{ fontSize: '11px', color: '#0A0A0F', background: '#F5F5F7', padding: '3px 9px', borderRadius: '100px', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+
+                  {/* Contenido */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`min-w-0 flex-1 ${b.is_active ? '' : 'opacity-60'}`}>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(b)}
+                            className="truncate text-left text-[15px] font-semibold tracking-tight text-gray-900 hover:underline"
                           >
+                            {b.title}
+                          </button>
+                          {!b.is_active && (
+                            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">Pausado</span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-[12px] text-gray-500">
+                          {activeProducts.length === 0
+                            ? 'Sin productos elegidos'
+                            : `${activeProducts.length} ${activeProducts.length === 1 ? 'producto' : 'productos'}`}
+                        </p>
+                      </div>
+                      <ToggleSwitch checked={b.is_active} disabled={togglePending.has(b.id)} onChange={() => toggleBlockActive(b)} />
+                    </div>
+
+                    {activeProducts.length > 0 ? (
+                      <ul className="flex flex-wrap gap-1">
+                        {activeProducts.slice(0, 8).map(x => (
+                          <li key={x.product_id} title={x.name} className="max-w-full truncate rounded-full bg-gray-100 px-2.5 py-1 text-[11px] text-gray-700">
                             {x.name}
-                            {x.type === 'combo' && <span style={{ color: '#9A9AA8', marginLeft: '4px' }}>· combo</span>}
+                            {x.type === 'combo' && <span className="ml-1 text-gray-400">· combo</span>}
                           </li>
                         ))}
-                        {activeProducts.length > 6 && (
-                          <li style={{ fontSize: '11px', color: '#9A9AA8', background: 'transparent', padding: '3px 6px' }}>
-                            +{activeProducts.length - 6}
-                          </li>
-                        )}
+                        {activeProducts.length > 8 && <li className="px-1.5 py-1 text-[11px] text-gray-400">+{activeProducts.length - 8}</li>}
                       </ul>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(b)}
+                        className="self-start text-[12px] font-medium text-gray-900 underline-offset-4 hover:underline"
+                      >
+                        Elegir productos
+                      </button>
                     )}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(b)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0', fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 12h2L11 5l-2-2L2 10v2zM9 3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(b)}
-                      aria-label={`Eliminar ${b.title}`}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#C8C8D0', display: 'flex', alignItems: 'center', transition: 'background 0.15s, color 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#DC2626' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C8C8D0' }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M4.5 3.5V2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v1M3.5 3.5l.75 7.5h5.5l.75-7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
 
+                    <div className="mt-auto flex items-center gap-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(b)}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                      >
+                        <Pencil size={13} strokeWidth={1.75} aria-hidden />
+                        Editar
+                      </button>
+                      {blocks.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => move(i, -1)}
+                            disabled={i === 0}
+                            aria-label={`Subir ${b.title}`}
+                            title="Subir"
+                            className="rounded-lg p-1.5 text-gray-400 transition-colors enabled:hover:bg-gray-100 enabled:hover:text-gray-900 disabled:opacity-30"
+                          >
+                            <ArrowUp size={15} strokeWidth={1.75} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => move(i, 1)}
+                            disabled={i === blocks.length - 1}
+                            aria-label={`Bajar ${b.title}`}
+                            title="Bajar"
+                            className="rounded-lg p-1.5 text-gray-400 transition-colors enabled:hover:bg-gray-100 enabled:hover:text-gray-900 disabled:opacity-30"
+                          >
+                            <ArrowDown size={15} strokeWidth={1.75} aria-hidden />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(b)}
+                        aria-label={`Eliminar ${b.title}`}
+                        title="Eliminar"
+                        className="ml-auto rounded-lg p-1.5 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 size={15} strokeWidth={1.75} aria-hidden />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </>
+      )}
 
       <div
         role="presentation"

@@ -477,30 +477,44 @@ export const mockPickupPoints = [
   },
 ]
 
+const MOCK_HOURLY_REVENUE = [182400, 241900, 318700, 296300, 402800, 455100, 388600, 214900]
+const MOCK_HOURLY_ORDERS = [41, 55, 72, 66, 89, 101, 86, 47]
+
 export const mockDashboard = {
-  total_revenue: 42350,
-  order_count: 8,
-  active_orders: 4,
-  delivered_orders: 2,
-  by_status: { pending: 3, preparing: 2, ready: 1, delivered: 2, cancelled: 0 },
-  hourly: Array.from({ length: 12 }, (_, i) => ({
-    hour: `${10 + i}:00`,
-    revenue: [0, 2500, 4200, 6800, 5100, 3900, 7200, 4500, 3100, 2800, 1500, 0][i],
-  })),
+  total_revenue: 2500700,
+  order_count: 557,
+  avg_ticket: 4489.6,
+  active_orders: 64,
+  delivered_orders: 471,
+  by_status: { pending: 0, paid: 52, partially_delivered: 12, delivered: 471, cancelled: 22 },
+  hourly: MOCK_HOURLY_REVENUE.map((revenue, i) => ({ hour: `${16 + i}h`, revenue })),
+  series: {
+    kind: 'hourly' as const,
+    points: MOCK_HOURLY_REVENUE.map((revenue, i) => ({ label: `${16 + i}h`, revenue, orders: MOCK_HOURLY_ORDERS[i] })),
+  },
+  range: null,
+  comparison: null,
+  filters: { payment: null, product: null },
   payment_breakdown: [
-    { key: 'mp' as const, count: 5, revenue: 29500 },
-    { key: 'cash' as const, count: 2, revenue: 8450 },
-    { key: 'transfer' as const, count: 1, revenue: 4400 },
+    { key: 'mp' as const, count: 362, revenue: 1689400 },
+    { key: 'cash' as const, count: 141, revenue: 571300 },
+    { key: 'transfer' as const, count: 54, revenue: 240000 },
   ],
   top_products: [
-    { name: 'Hamburguesa Clásica', quantity: 22, revenue: 77000 },
-    { name: 'Combo Clásico', quantity: 14, revenue: 68600 },
-    { name: 'Cerveza Rubia 500ml', quantity: 31, revenue: 37200 },
-    { name: 'Fernet con Coca', quantity: 18, revenue: 45000 },
-    { name: 'Combo Para Dos', quantity: 8, revenue: 57600 },
-    { name: 'Papas Fritas', quantity: 19, revenue: 26600 },
-    { name: 'IPA Artesanal 500ml', quantity: 12, revenue: 21600 },
+    { name: 'Cerveza Rubia 500ml', quantity: 412, revenue: 370800 },
+    { name: 'Fernet con Coca', quantity: 268, revenue: 670000 },
+    { name: 'Hamburguesa Clásica', quantity: 191, revenue: 668500 },
+    { name: 'Combo Clásico', quantity: 122, revenue: 597800 },
+    { name: 'Agua sin gas', quantity: 118, revenue: 94400 },
+    { name: 'Papas Fritas', quantity: 96, revenue: 134400 },
+    { name: 'IPA Artesanal 500ml', quantity: 71, revenue: 127800 },
+    { name: 'Combo Para Dos', quantity: 33, revenue: 237600 },
   ],
+  live: {
+    orders_last_hour: 47,
+    revenue_last_hour: 214900,
+    per_minute: [1, 2, 0, 1, 3, 2, 1, 0, 2, 4, 3, 1, 2, 2, 0, 1, 3, 5, 4, 2, 1, 2, 3, 1, 0, 2, 3, 4, 2, 1],
+  },
 }
 
 /** Respuesta del storefront para el comprador (GET /catalog/storefront/:slug). */

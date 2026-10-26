@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ProductsView } from '@/components/organizer/ProductsView'
 import {
@@ -7,6 +7,7 @@ import {
   fetchWorkspaceProductPromotions,
   fetchWorkspaceProducts,
   patchWorkspaceProduct,
+  reorderWorkspaceProducts,
 } from '@/lib/organizerWorkspace'
 
 jest.mock('@/lib/organizerWorkspace', () => ({
@@ -20,6 +21,7 @@ jest.mock('@/lib/organizerWorkspace', () => ({
   fetchWorkspaceProductPromotions: jest.fn(),
   fetchWorkspaceProducts: jest.fn(),
   patchWorkspaceProduct: jest.fn(),
+  reorderWorkspaceProducts: jest.fn(),
   upsertWorkspaceProductPromotion: jest.fn(),
 }))
 
@@ -174,5 +176,57 @@ describe('ProductsView', () => {
       expect(firstProductActiveToggle).not.toBeChecked()
     })
     expect(patchWorkspaceProduct).toHaveBeenCalled()
+  })
+
+  describe('rediseño', () => {
+    const counts = { single: 2, combo: 2, total: 2, active: 1, paused: 1, no_image: 2 }
+    const loaded = async () => {
+      render(<ProductsView eventId={eventId} />)
+      await screen.findByText('Gaseosa 500ml')
+    }
+    const lastOpts = () => (fetchWorkspaceProducts as jest.Mock).mock.calls.at(-1)?.[1]
+
+    beforeEach(() => {
+      const base = (fetchWorkspaceProducts as jest.Mock).getMockImplementation()!
+      ;(fetchWorkspaceProducts as jest.Mock).mockImplementation(async (e: string, opts?: Record<string, unknown>) => ({
+        ...(await base(e, opts)),
+        counts,
+      }))
+    })
+
+    it('pide 20 productos por página', async () => {
+      await loaded()
+      expect(lastOpts()).toEqual(expect.objectContaining({ pageSize: 20 }))
+    })
+
+    it('muestra los conteos en las pestañas y filtra el estado en el servidor', async () => {
+      await loaded()
+      expect(screen.getByRole('tab', { name: /Productos\s*2/ })).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: /Pausados\s*1/ }))
+      await waitFor(() => expect(lastOpts()).toEqual(expect.objectContaining({ isActive: false, page: 1 })))
+      await userEvent.click(screen.getByRole('button', { name: /Sin foto\s*2/ }))
+      await waitFor(() => expect(lastOpts()).toEqual(expect.objectContaining({ noImage: true, isActive: undefined })))
+    })
+
+    it('el menú "Nuevo" abre el formulario de producto', async () => {
+      await loaded()
+      await userEvent.click(screen.getByRole('button', { name: /Nuevo/ }))
+      await userEvent.click(screen.getByRole('menuitem', { name: /Producto/ }))
+      expect(await screen.findByRole('heading', { name: /Nuevo producto/ })).toBeInTheDocument()
+    })
+
+    it('guarda el orden al arrastrar y lo revierte si falla', async () => {
+      ;(reorderWorkspaceProducts as jest.Mock).mockResolvedValueOnce({ ok: false, error: 'No se pudo guardar el orden' })
+      await loaded()
+      const rows = () => screen.getAllByRole('listitem').map(li => li.textContent ?? '')
+      expect(rows()[0]).toContain('Gaseosa')
+      const agua = screen.getByText('Agua Mineral 500ml').closest('[draggable="true"]') as HTMLElement
+      const gaseosa = screen.getByText('Gaseosa 500ml').closest('[draggable="true"]') as HTMLElement
+      fireEvent.dragStart(agua, { dataTransfer: { effectAllowed: '', dropEffect: '' } })
+      fireEvent.dragOver(gaseosa, { dataTransfer: { dropEffect: '' } })
+      fireEvent.drop(gaseosa, { dataTransfer: {} })
+      await waitFor(() => expect(reorderWorkspaceProducts).toHaveBeenCalledWith(eventId, ['p2', 'p1']))
+      await waitFor(() => expect(rows()[0]).toContain('Gaseosa'))
+    })
   })
 })

@@ -1,599 +1,328 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUpRight, CreditCard, Search } from 'lucide-react'
+import Link from 'next/link'
+import { useCallback, useEffect, useState } from 'react'
 
-
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import { FilterChip, PAYMENT_CONFIG } from '@/components/organizer/dashboard/Panels'
+import { FilterMenu } from '@/components/organizer/orders/FilterMenu'
+import { relativeTime } from '@/components/organizer/orders/orderUi'
 import { PaginationBar } from '@/components/ui/PaginationBar'
-import { Spinner } from '@/components/ui/Spinner'
-import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
-import { fetchWorkspacePayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
-import { formatPrice } from '@/lib/utils'
-
-const channelLabels: Record<string, string> = {
-  mp: 'Mercado Pago',
-  cash: 'Efectivo',
-  transfer: 'Transferencia',
-}
-
-const channelClass: Record<string, string> = {
-  mp: 'bg-sky-50 text-sky-700',
-  cash: 'bg-green-50 text-green-700',
-  transfer: 'bg-violet-50 text-violet-700',
-}
-
-const statusLabels: Record<string, string> = {
-  approved: 'Aprobado',
-  pending: 'Pendiente',
-  rejected: 'Rechazado',
-  refunded: 'Reembolso',
-}
-
-const statusClass: Record<string, string> = {
-  approved: 'bg-green-50 text-green-700',
-  pending: 'bg-amber-50 text-amber-800',
-  rejected: 'bg-red-50 text-red-700',
-  refunded: 'bg-gray-100 text-gray-600',
-}
-
-const STATUS_TABS = [
-  { key: 'approved', label: 'Aprobado' },
-  { key: 'pending', label: 'Pendiente' },
-  { key: 'rejected', label: 'Rechazado' },
-  { key: 'refunded', label: 'Reembolso' },
-]
-
-const CHANNELS = [
-  { key: 'mp', label: 'Mercado Pago' },
-  { key: 'cash', label: 'Efectivo' },
-  { key: 'transfer', label: 'Transferencia' },
-]
-
-type AmountSort = 'none' | 'asc' | 'desc'
-type DateSort = 'none' | 'asc' | 'desc'
+import {
+  fetchWorkspacePayments,
+  type PaymentsSort,
+  type PaymentsSummary,
+  type WorkspacePayment,
+} from '@/lib/organizerWorkspace'
+import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
 
-
-function fmtDate(s: string | null | undefined) {
-  if (!s) return '—'
-  const d = new Date(s)
-  return (
-    d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
-    + ' '
-    + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  )
+const STATUS_UI: Record<string, { label: string; badge: string; dot: string }> = {
+  approved: { label: 'Aprobado', badge: 'bg-emerald-50 text-emerald-800', dot: 'bg-emerald-500' },
+  pending: { label: 'Pendiente', badge: 'bg-amber-50 text-amber-800', dot: 'bg-amber-400' },
+  rejected: { label: 'Rechazado', badge: 'bg-red-50 text-red-700', dot: 'bg-red-400' },
+  refunded: { label: 'Reembolso', badge: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
 }
 
-const STATUS_OPTIONS = STATUS_TABS
+const SORT_OPTIONS: { value: PaymentsSort; label: string }[] = [
+  { value: 'date_desc', label: 'Más recientes' },
+  { value: 'date_asc', label: 'Más antiguos' },
+  { value: 'amount_desc', label: 'Monto mayor' },
+  { value: 'amount_asc', label: 'Monto menor' },
+]
 
-function StatusDropdown({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const toggle = (key: string) => {
-    onChange(value.includes(key) ? value.filter(c => c !== key) : [...value, key])
-  }
-
-  const hasFilter = value.length > 0
-  const label = hasFilter
-    ? value.map(k => statusLabels[k] ?? k).join(', ')
-    : 'Estado'
-
-  return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          height: '38px', padding: '0 14px',
-          background: hasFilter ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
-          border: `1px solid ${hasFilter ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
-          borderRadius: '12px', fontSize: '13px', fontWeight: hasFilter ? 600 : 400,
-          color: hasFilter ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
-          maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis',
-          transition: 'all 0.15s',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M7 4v3l2 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-        {hasFilter ? (
-          <span
-            role="button"
-            onClick={e => { e.stopPropagation(); onChange([]) }}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(0,0,0,0.12)', flexShrink: 0, cursor: 'pointer' }}
-          >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-          </span>
-        ) : (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.4, flexShrink: 0 }}>
-            <path d="M2.5 3.5L5 6.5L7.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </button>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
-          background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.10)', padding: '6px', minWidth: '170px',
-          animation: 'nb-select-pop 0.15s cubic-bezier(0.32,0.72,0,1)',
-        }}>
-          {STATUS_OPTIONS.map(opt => {
-            const active = value.includes(opt.key)
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => toggle(opt.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  width: '100%', textAlign: 'left',
-                  padding: '8px 12px', borderRadius: '9px', border: 'none',
-                  background: active ? '#F5F5F7' : 'transparent',
-                  fontSize: '13px', fontWeight: active ? 600 : 400,
-                  color: active ? '#0A0A0F' : 'rgba(0,0,0,0.65)', cursor: 'pointer',
-                }}
-              >
-                <span style={{
-                  width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
-                  border: `1.5px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.18)'}`,
-                  background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.12s',
-                }}>
-                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </span>
-                {opt.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
+/** Nombre del proveedor como lo reconoce el organizador ("sipago" → "SiPago"). */
+function providerLabel(provider: string | null | undefined) {
+  const p = (provider ?? '').toLowerCase()
+  if (!p) return ''
+  if (p.includes('mercado') || p === 'mp') return 'Mercado Pago'
+  if (p === 'sipago') return 'SiPago'
+  if (p === 'cash' || p === 'efectivo') return 'Efectivo'
+  if (p === 'transfer') return 'Transferencia'
+  return provider ?? ''
 }
 
-function ChannelDropdown({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const toggle = (key: string) => {
-    onChange(value.includes(key) ? value.filter(c => c !== key) : [...value, key])
-  }
-
-  const hasFilter = value.length > 0
-  const label = hasFilter
-    ? value.map(k => CHANNELS.find(c => c.key === k)?.label ?? k).join(', ')
-    : 'Canal'
-
+function PaymentsSkeleton() {
   return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          height: '38px', padding: '0 14px',
-          background: hasFilter ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
-          border: `1px solid ${hasFilter ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
-          borderRadius: '12px', fontSize: '13px', fontWeight: hasFilter ? 600 : 400,
-          color: hasFilter ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
-          maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis',
-          transition: 'all 0.15s',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-          <path d="M1.5 4h11M3.5 7h7M5.5 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        </svg>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-        {hasFilter ? (
-          <span
-            role="button"
-            onClick={e => { e.stopPropagation(); onChange([]) }}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(0,0,0,0.12)', flexShrink: 0, cursor: 'pointer' }}
-          >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-          </span>
-        ) : (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.4, flexShrink: 0 }}>
-            <path d="M2.5 3.5L5 6.5L7.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </button>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
-          background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.10)', padding: '6px', minWidth: '180px',
-          animation: 'nb-select-pop 0.15s cubic-bezier(0.32,0.72,0,1)',
-        }}>
-          {CHANNELS.map(ch => {
-            const active = value.includes(ch.key)
-            return (
-              <button
-                key={ch.key}
-                type="button"
-                onClick={() => toggle(ch.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  width: '100%', textAlign: 'left',
-                  padding: '8px 12px', borderRadius: '9px', border: 'none',
-                  background: active ? '#F5F5F7' : 'transparent',
-                  fontSize: '13px', fontWeight: active ? 600 : 400,
-                  color: active ? '#0A0A0F' : 'rgba(0,0,0,0.65)', cursor: 'pointer',
-                }}
-              >
-                <span style={{
-                  width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
-                  border: `1.5px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.18)'}`,
-                  background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.12s',
-                }}>
-                  {active && <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </span>
-                {ch.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SimpleSortDropdown({
-  value, onChange, label, icon, options,
-}: {
-  value: string
-  onChange: (v: string) => void
-  label: string
-  icon: React.ReactNode
-  options: { key: string; label: string }[]
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const active = value !== 'none'
-  const current = options.find(o => o.key === value)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          height: '38px', padding: '0 14px',
-          background: active ? ORGANIZER_ACCENT_BACKGROUND : '#FAFAFA',
-          border: `1px solid ${active ? ORGANIZER_ACCENT_BACKGROUND : 'rgba(0,0,0,0.08)'}`,
-          borderRadius: '12px', fontSize: '13px', fontWeight: active ? 600 : 400,
-          color: active ? ORGANIZER_ACCENT_FOREGROUND : 'rgba(0,0,0,0.6)', cursor: 'pointer', whiteSpace: 'nowrap',
-          transition: 'all 0.15s',
-        }}
-      >
-        {icon}
-        {active ? current?.label : label}
-        {active ? (
-          <span
-            role="button"
-            onClick={e => { e.stopPropagation(); onChange('none') }}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(0,0,0,0.12)', flexShrink: 0, cursor: 'pointer' }}
-          >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-          </span>
-        ) : (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.4 }}>
-            <path d="M2.5 3.5L5 6.5L7.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </button>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50,
-          background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.10)', padding: '6px', minWidth: '180px',
-          animation: 'nb-select-pop 0.15s cubic-bezier(0.32,0.72,0,1)',
-        }}>
-          {options.map(opt => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => { onChange(opt.key); setOpen(false) }}
-              style={{
-                display: 'block', width: '100%', textAlign: 'left',
-                padding: '8px 12px', borderRadius: '9px', border: 'none',
-                background: opt.key === value ? '#F5F5F7' : 'transparent',
-                fontSize: '13px', fontWeight: opt.key === value ? 600 : 400,
-                color: opt.key === value ? '#0A0A0F' : 'rgba(0,0,0,0.65)',
-                cursor: 'pointer',
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div aria-busy="true">
+      <p className="sr-only">Cargando pagos…</p>
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="h-[88px] animate-pulse rounded-2xl bg-gray-100" />
+        ))}
+      </div>
+      <div className="h-80 animate-pulse rounded-2xl bg-gray-100" />
     </div>
   )
 }
 
 export function PaymentsView({ eventId }: { eventId: string }) {
   const [rows, setRows] = useState<WorkspacePayment[]>([])
+  const [summary, setSummary] = useState<PaymentsSummary | null>(null)
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({ page: 1, page_size: PAGE_SIZE, total: 0 })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [now, setNow] = useState(() => Date.now())
 
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [q, setQ] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>([])
   const [channelFilter, setChannelFilter] = useState<string[]>([])
-  const [amountSort, setAmountSort] = useState<AmountSort>('none')
-  const [dateSort, setDateSort] = useState<DateSort>('none')
+  const [sort, setSort] = useState<PaymentsSort>('date_desc')
 
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setQ(searchInput.trim())
+      setPage(1)
+    }, 350)
+    return () => window.clearTimeout(t)
+  }, [searchInput])
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  // Todos los filtros y el orden se aplican en el servidor (antes solo filtraban la página cargada).
   const load = useCallback(async () => {
-    setLoading(true)
+    setRefreshing(true)
     setError('')
-    const res = await fetchWorkspacePayments(eventId, { page, pageSize: PAGE_SIZE })
+    const res = await fetchWorkspacePayments(eventId, {
+      page,
+      pageSize: PAGE_SIZE,
+      status: statusFilter,
+      channels: channelFilter,
+      q,
+      sort,
+    })
     if (!res.ok) {
       setError(res.error)
       setRows([])
     } else {
       setRows(res.payments)
       setPagination(res.pagination)
+      setSummary(res.summary)
     }
     setLoading(false)
-  }, [eventId, page])
+    setRefreshing(false)
+  }, [eventId, page, statusFilter, channelFilter, q, sort])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch helper owns loading/error; intentional on mount/page change
-    void load()
+    const id = window.requestAnimationFrame(() => void load())
+    return () => window.cancelAnimationFrame(id)
   }, [load])
 
-  const displayed = useMemo(() => {
-    let base = [...rows]
-
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      base = base.filter(r =>
-        r.order_id.toLowerCase().includes(q)
-        || r.order_id.slice(0, 8).toUpperCase().includes(q.toUpperCase())
-      )
-    }
-
-    if (statusFilter.length > 0) {
-      base = base.filter(r => statusFilter.includes(r.status))
-    }
-
-    if (channelFilter.length > 0) {
-      base = base.filter(r => r.channel && channelFilter.includes(r.channel))
-    }
-
-    if (amountSort !== 'none') {
-      base.sort((a, b) => amountSort === 'asc' ? a.amount - b.amount : b.amount - a.amount)
-    } else if (dateSort !== 'none') {
-      base.sort((a, b) => {
-        const da = new Date(a.paid_at ?? a.created_at ?? 0).getTime()
-        const db = new Date(b.paid_at ?? b.created_at ?? 0).getTime()
-        return dateSort === 'asc' ? da - db : db - da
-      })
-    }
-
-    return base
-  }, [rows, search, statusFilter, channelFilter, amountSort, dateSort])
-
-  if (loading) {
-    return (
-      <div className="max-w-6xl flex flex-col items-center justify-center py-24 gap-3">
-        <Spinner size="lg" className="text-gray-900" />
-        <p className="text-sm text-gray-400">Cargando pagos…</p>
-      </div>
-    )
+  const withPageReset = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v)
+    setPage(1)
   }
+  const setStatusF = withPageReset(setStatusFilter)
+  const setChannelF = withPageReset(setChannelFilter)
+  const setSortF = withPageReset(setSort)
+
+  const hasFilters = Boolean(q || statusFilter.length || channelFilter.length)
+  const ordersHref = (orderId: string) => `/events/${eventId}/orders?pedido=${orderId}`
+
+  if (loading) return <PaymentsSkeleton />
+
+  const cards: { key: 'approved' | 'pending' | 'rejected'; label: string; hint: string }[] = [
+    { key: 'approved', label: 'Cobrado', hint: 'pagos aprobados' },
+    { key: 'pending', label: 'Pendiente', hint: 'esperando confirmación' },
+    { key: 'rejected', label: 'Rechazado', hint: 'no se cobraron' },
+  ]
 
   return (
-    <div className="max-w-6xl" style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+    <div className="mx-auto w-full max-w-[1180px]">
       <style>{`
-        @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 640px) {
-          .pay-table-wrap { overflow-x: visible !important; }
-          .pay-table { min-width: 0 !important; width: 100% !important; }
-          .pay-table thead { display: none; }
-          .pay-table tbody tr {
-            display: grid !important;
-            grid-template-areas:
-              "status  channel  amount"
-              "prov    orderid  date";
-            grid-template-columns: auto auto 1fr;
-            padding: 12px 16px;
-            gap: 4px 8px;
-            border-bottom: 1px solid #f3f4f6;
-          }
-          .pay-table tbody tr:last-child { border-bottom: none; }
-          .pay-table td { padding: 0 !important; display: flex; align-items: center; }
-          .pay-table td:nth-child(1) { grid-area: status; }
-          .pay-table td:nth-child(2) { grid-area: prov; font-size: 11px !important; color: #9A9AA8; }
-          .pay-table td:nth-child(3) { grid-area: channel; }
-          .pay-table td:nth-child(4) { grid-area: orderid; font-size: 11px !important; }
-          .pay-table td:nth-child(5) { grid-area: amount; justify-content: flex-end; }
-          .pay-table td:nth-child(6) { grid-area: date; justify-content: flex-end; }
-        }
+        @keyframes nb-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+        .nb-pop { animation: nb-pop 160ms ease-out both; transform-origin: top left; }
+        @media (prefers-reduced-motion: reduce) { .nb-pop { animation: none; } }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Pagos"
-        description="Registros de cobro asociados a pedidos del evento."
-      />
+      <header className="mb-5">
+        <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Pagos</h1>
+        <p className="mt-1 text-[13px] text-gray-500">Cada cobro del evento, con su estado y el pedido al que pertenece.</p>
+      </header>
 
-      {/* Filters bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {/* Search */}
-        <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#C8C8D0', pointerEvents: 'none' }}>
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+      {/* Resumen por estado: cada tarjeta filtra la tabla */}
+      {summary && (
+        <div className="mb-5 grid gap-3 sm:grid-cols-3">
+          {cards.map(c => {
+            const s = summary[c.key]
+            const active = statusFilter.length === 1 && statusFilter[0] === c.key
+            return (
+              <button
+                key={c.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setStatusF(active ? [] : [c.key])}
+                className={cn(
+                  'rounded-2xl border bg-white p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow]',
+                  active ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200/80 hover:border-gray-300',
+                )}
+              >
+                <span className="flex items-center gap-2 text-[12px] font-medium text-gray-500">
+                  <span className={cn('size-1.5 rounded-full', STATUS_UI[c.key].dot)} aria-hidden />
+                  {c.label}
+                </span>
+                <Money value={s.amount} className="mt-1.5 block text-[22px] font-semibold tracking-tight tabular-nums text-gray-900" />
+                <span className="mt-0.5 block text-[12px] text-gray-400">
+                  {formatCount(s.count)} {s.count === 1 ? 'pago' : 'pagos'} · {c.hint}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Buscador y filtros */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1">
+          <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
           <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por ID de pedido…"
-            style={{
-              width: '100%', height: '38px', paddingLeft: '34px', paddingRight: '12px',
-              borderRadius: '12px', border: '1px solid rgba(0,0,0,0.08)',
-              background: '#FAFAFA', fontSize: '13px', color: '#0A0A0F',
-              outline: 'none', boxSizing: 'border-box',
-            }}
+            type="search"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="Buscar por nº de pedido o cliente…"
+            aria-label="Buscar pagos"
+            className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-[13px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]"
           />
         </div>
-
-        {/* Status dropdown */}
-        <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
-
-        {/* Channel dropdown */}
-        <ChannelDropdown value={channelFilter} onChange={setChannelFilter} />
-
-        {/* Sort monto */}
-        <SimpleSortDropdown
-          value={amountSort}
-          onChange={v => { setAmountSort(v as AmountSort); if (v !== 'none') setDateSort('none') }}
-          label="Monto"
-          icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M7 2v10M4 9l3 3 3-3M4 5l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-          options={[
-            { key: 'asc', label: 'Menor a mayor' },
-            { key: 'desc', label: 'Mayor a menor' },
-          ]}
+        <FilterMenu
+          label="Estado"
+          multiple
+          options={Object.entries(STATUS_UI).map(([value, s]) => ({ value, label: s.label }))}
+          selected={statusFilter}
+          onChange={setStatusF}
         />
-
-        {/* Sort fecha */}
-        <SimpleSortDropdown
-          value={dateSort}
-          onChange={v => { setDateSort(v as DateSort); if (v !== 'none') setAmountSort('none') }}
-          label="Fecha"
-          icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><rect x="2" y="3" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2 6h10M5 2v2M9 2v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>}
-          options={[
-            { key: 'desc', label: 'Más reciente' },
-            { key: 'asc', label: 'Más antigua' },
-          ]}
+        <FilterMenu
+          label="Medio"
+          multiple
+          options={PAYMENT_CONFIG.map(p => ({ value: p.key, label: p.label, swatch: p.color }))}
+          selected={channelFilter}
+          onChange={setChannelF}
         />
+        <label className="relative">
+          <span className="sr-only">Ordenar</span>
+          <select
+            value={sort}
+            onChange={e => setSortF(e.target.value as PaymentsSort)}
+            className="h-9 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none hover:border-gray-300 focus:border-gray-400"
+          >
+            {SORT_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400" aria-hidden>
+            ▼
+          </span>
+        </label>
       </div>
 
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      {(statusFilter.length > 0 || channelFilter.length > 0) && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {statusFilter.map(s => (
+            <FilterChip key={s} label="Estado" value={STATUS_UI[s]?.label ?? s} onClear={() => setStatusF(statusFilter.filter(x => x !== s))} />
+          ))}
+          {channelFilter.map(c => (
+            <FilterChip
+              key={c}
+              label="Medio"
+              value={PAYMENT_CONFIG.find(p => p.key === c)?.label ?? c}
+              onClear={() => setChannelF(channelFilter.filter(x => x !== c))}
+            />
+          ))}
+        </div>
+      )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        {rows.length === 0 ? (
-          <div style={{ padding: '56px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <rect x="2" y="5" width="18" height="14" rx="2.5" stroke="#C8C8D0" strokeWidth="1.6"/>
-                <path d="M2 9h18" stroke="#C8C8D0" strokeWidth="1.6" strokeLinecap="round"/>
-                <path d="M6 5V3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5V5" stroke="#C8C8D0" strokeWidth="1.6" strokeLinecap="round"/>
-                <path d="M7 14h4M7 17h2" stroke="#C8C8D0" strokeWidth="1.6" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 4px 0' }}>Sin pagos registrados</p>
-              <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Los cobros del evento aparecerán acá una vez que se procesen.</p>
-            </div>
-          </div>
-        ) : displayed.length === 0 ? (
-          <div style={{ padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0 }}>Sin resultados</p>
-            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Probá con otros filtros.</p>
-          </div>
-        ) : (
-          <div className="pay-table-wrap overflow-x-auto">
-            <table className="pay-table w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Proveedor</th>
-                  <th className="px-4 py-3">Canal</th>
-                  <th className="px-4 py-3">Pedido</th>
-                  <th className="px-4 py-3 text-right">Monto</th>
-                  <th className="px-4 py-3 text-right">Fecha</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {displayed.map(row => {
-                  const st = row.status
-                  const stCls = statusClass[st] ?? 'bg-gray-100 text-gray-600'
-                  const ch = row.channel ?? ''
-                  const chCls = channelClass[ch] ?? 'bg-gray-100 text-gray-600'
-                  return (
-                    <tr key={row.id} className="text-gray-900 hover:bg-gray-50/80">
-                      <td className="px-4 py-3 align-middle">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${stCls}`}>
-                          {statusLabels[st] ?? st}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{row.provider ?? '—'}</td>
-                      <td className="px-4 py-3 align-middle">
-                        {ch ? (
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${chCls}`}>
-                            {channelLabels[ch] ?? ch}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500 tracking-wide">
-                        #{row.order_id.slice(0, 8).toUpperCase()}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-900">
-                        {formatPrice(row.amount)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-xs text-gray-500 tabular-nums whitespace-nowrap">
-                        {fmtDate(row.paid_at || row.created_at)}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {error && <div className="mb-3 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">{error}</div>}
 
-      {pagination.total > 0 && (
-        <div className="mt-4">
-          <PaginationBar
-            page={pagination.page}
-            pageSize={pagination.page_size}
-            total={pagination.total}
-            onPageChange={setPage}
-          />
+      {rows.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200/80 bg-white px-6 py-14 text-center">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-50 text-gray-400">
+            <CreditCard size={22} strokeWidth={1.5} aria-hidden />
+          </div>
+          <p className="text-[15px] font-semibold text-gray-900">{hasFilters ? 'Sin resultados' : 'Sin pagos registrados'}</p>
+          <p className="mt-1 text-[13px] text-gray-500">
+            {hasFilters ? 'Probá con otros filtros.' : 'Los cobros del evento aparecerán acá una vez que se procesen.'}
+          </p>
+        </div>
+      ) : (
+        <div className={cn('overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-opacity', refreshing && 'opacity-70')}>
+          <div className="hidden grid-cols-[120px_minmax(160px,1fr)_minmax(150px,1fr)_120px_110px] gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid">
+            <span>Estado</span>
+            <span>Pedido</span>
+            <span>Medio</span>
+            <span className="text-right">Monto</span>
+            <span className="text-right">Fecha</span>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {rows.map(row => {
+              const st = STATUS_UI[row.status] ?? { label: row.status, badge: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' }
+              const ch = PAYMENT_CONFIG.find(p => p.key === row.channel)
+              const provider = providerLabel(row.provider)
+              const when = row.paid_at || row.created_at
+              return (
+                <li key={row.id}>
+                  <Link
+                    href={ordersHref(row.order_id)}
+                    className="group grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors hover:bg-gray-50/70 md:grid-cols-[120px_minmax(160px,1fr)_minmax(150px,1fr)_120px_110px] md:gap-y-0"
+                  >
+                    <span>
+                      <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold', st.badge)}>
+                        <span className={cn('size-1.5 rounded-full', st.dot)} aria-hidden />
+                        {st.label}
+                      </span>
+                    </span>
+                    <span className="justify-self-end text-right md:hidden">
+                      <Money
+                        value={row.amount}
+                        className={cn('text-[14px] font-semibold tabular-nums', row.status === 'rejected' ? 'text-gray-400 line-through' : 'text-gray-900')}
+                      />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1 text-[13px] font-semibold text-gray-900">
+                        {row.order_number != null ? `#${row.order_number}` : `#${row.order_id.slice(0, 8).toUpperCase()}`}
+                        <ArrowUpRight size={13} strokeWidth={2} className="text-gray-300 transition-colors group-hover:text-gray-900" aria-hidden />
+                      </span>
+                      {row.customer_name && <span className="block truncate text-[12px] text-gray-500">{row.customer_name}</span>}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-2 text-[13px] text-gray-700 max-md:justify-self-end">
+                      {ch && <span className="size-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: ch.color }} aria-hidden />}
+                      <span className="truncate">
+                        {ch?.label ?? '—'}
+                        {provider && provider !== ch?.label && <span className="text-gray-400"> · {provider}</span>}
+                      </span>
+                    </span>
+                    <span className="hidden text-right md:block">
+                      <Money
+                        value={row.amount}
+                        className={cn('text-[13px] font-semibold tabular-nums', row.status === 'rejected' ? 'text-gray-400 line-through' : 'text-gray-900')}
+                      />
+                    </span>
+                    <span
+                      className="col-span-2 whitespace-nowrap text-[12px] tabular-nums text-gray-400 md:col-span-1 md:text-right"
+                      title={when ? new Date(when).toLocaleString('es-AR', { hourCycle: 'h23' }) : undefined}
+                    >
+                      {when ? relativeTime(when, now) : '—'}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {pagination.total > PAGE_SIZE && (
+        <div className="mt-5 flex justify-center">
+          <PaginationBar page={pagination.page} pageSize={pagination.page_size} total={pagination.total} onPageChange={setPage} />
         </div>
       )}
     </div>

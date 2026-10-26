@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Landmark, QrCode, Settings, Ticket, User, Users } from 'lucide-react'
+import { ChevronsUpDown, Landmark, LogOut, QrCode, Search, Settings, Ticket, User, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { OPEN_COMMAND_EVENT } from '@/components/organizer/commandEvents'
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
@@ -13,7 +14,7 @@ import { visibleSectionTabs, WORKSPACE_SECTION_HUBS } from '@/lib/organizerWorks
 
 type ToolKey = keyof OrganizerStaffTools
 
-type NavItem = {
+export type NavItem = {
   href: string
   label: string
   icon: React.ReactNode
@@ -30,7 +31,18 @@ type NavItem = {
   ownerOnly?: boolean
   /** data-tour attribute for guided onboarding. */
   tourId?: string
+  /** Sección de la sidebar de escritorio. */
+  group: NavGroup
 }
+
+export type NavGroup = 'operacion' | 'catalogo' | 'dinero' | 'ajustes'
+
+export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
+  { key: 'operacion', label: 'Operación' },
+  { key: 'catalogo', label: 'Catálogo' },
+  { key: 'dinero', label: 'Dinero' },
+  { key: 'ajustes', label: 'Ajustes' },
+]
 
 function navItems(basePath: string): NavItem[] {
   const dashIcon = (
@@ -77,6 +89,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/dashboard`,
       label: 'Dashboard',
+      group: 'operacion',
       icon: dashIcon,
       showDesktop: true,
       mobileTabOrder: 0,
@@ -85,6 +98,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/products`,
       label: 'Catálogo',
+      group: 'catalogo',
       icon: catalogIcon,
       showDesktop: true,
       mobileTabOrder: 1,
@@ -94,6 +108,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/tickets`,
       label: 'Tickets',
+      group: 'catalogo',
       icon: ticketsIcon,
       showDesktop: true,
       tool: 'products',
@@ -101,6 +116,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/scanner`,
       label: 'Escáner',
+      group: 'operacion',
       icon: scannerIcon,
       showDesktop: false,
       mobileFab: true,
@@ -110,6 +126,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/orders`,
       label: 'Pedidos',
+      group: 'operacion',
       icon: ordersIcon,
       showDesktop: true,
       mobileTabOrder: 2,
@@ -119,6 +136,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/pickup-points`,
       label: 'Puntos de retiro',
+      group: 'catalogo',
       icon: pickupIcon,
       showDesktop: true,
       tool: 'pickup_points',
@@ -126,6 +144,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/payments`,
       label: 'Cobros',
+      group: 'dinero',
       icon: paymentsIcon,
       showDesktop: true,
       section: 'cobros',
@@ -133,6 +152,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/staff`,
       label: 'Equipo',
+      group: 'ajustes',
       icon: staffIcon,
       showDesktop: true,
       ownerOnly: true,
@@ -140,6 +160,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/config`,
       label: 'Configuración',
+      group: 'ajustes',
       icon: <Settings size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
       showDesktop: true,
       ownerOnly: true,
@@ -148,12 +169,37 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/cuenta`,
       label: 'Cuenta',
+      group: 'ajustes',
       icon: <User size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
       showDesktop: true,
       // Marca y dominios se abre desde Cuenta.
       matchHrefs: [`${basePath}/cuenta`, `${basePath}/brand`],
     },
   ]
+}
+
+/** Ítems de navegación que puede ver este integrante (permisos de staff y secciones con pestañas). */
+export function visibleNavItems(
+  basePath: string,
+  tools: OrganizerStaffTools,
+  workspaceMembership: 'owner' | 'staff',
+): NavItem[] {
+  return navItems(basePath).flatMap((it): NavItem[] => {
+    if (it.section) {
+      const tabs = visibleSectionTabs(it.section, { membership: workspaceMembership, tools })
+      if (tabs.length === 0) return []
+      const hrefs = tabs.map(t => `${basePath}/${t.segment}`)
+      const hub = WORKSPACE_SECTION_HUBS[it.section]
+      if (hub) {
+        const hubHref = `${basePath}/${hub}`
+        return [{ ...it, href: hubHref, matchHrefs: [hubHref, ...hrefs] }]
+      }
+      return [{ ...it, href: hrefs[0], matchHrefs: hrefs }]
+    }
+    if (it.ownerOnly) return workspaceMembership === 'owner' ? [it] : []
+    if (it.tool) return tools[it.tool] ? [it] : []
+    return [it]
+  })
 }
 
 function isRouteActive(pathname: string, href: string) {
@@ -209,26 +255,10 @@ export function EventOrganizerSidebar({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasAnyPaymentMethod])
 
-  const allItems = useMemo(() => navItems(basePath), [basePath])
-
-  const items = useMemo(() => {
-    return allItems.flatMap((it): NavItem[] => {
-      if (it.section) {
-        const tabs = visibleSectionTabs(it.section, { membership: workspaceMembership, tools })
-        if (tabs.length === 0) return []
-        const hrefs = tabs.map(t => `${basePath}/${t.segment}`)
-        const hub = WORKSPACE_SECTION_HUBS[it.section]
-        if (hub) {
-          const hubHref = `${basePath}/${hub}`
-          return [{ ...it, href: hubHref, matchHrefs: [hubHref, ...hrefs] }]
-        }
-        return [{ ...it, href: hrefs[0], matchHrefs: hrefs }]
-      }
-      if (it.ownerOnly) return workspaceMembership === 'owner' ? [it] : []
-      if (it.tool) return tools[it.tool] ? [it] : []
-      return [it]
-    })
-  }, [allItems, tools, workspaceMembership, basePath])
+  const items = useMemo(
+    () => visibleNavItems(basePath, tools, workspaceMembership),
+    [basePath, tools, workspaceMembership],
+  )
 
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
   const mobileTabs = useMemo(
@@ -318,108 +348,144 @@ export function EventOrganizerSidebar({
 
   return (
     <>
-      <aside className="hidden h-full min-h-0 w-[264px] shrink-0 flex-col overflow-hidden bg-gray-100 p-3 md:flex">
-        <div className="px-3 pt-5 pb-4 mb-1">
+      <aside className="hidden h-full min-h-0 w-[264px] shrink-0 flex-col overflow-hidden bg-gray-100 px-3 pb-3 pt-5 md:flex">
+        <div className="mb-4 px-2.5">
           {brandLogo ? (
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- URL remota de marca configurada */}
-              <img src={brandLogo} alt="" className="h-[31px] max-w-[177px] w-auto object-contain object-left" />
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Organizer</span>
+              <img src={brandLogo} alt="" className="h-[28px] max-w-[177px] w-auto object-contain object-left" />
+              <span className="text-[11px] font-medium text-gray-400">Organizer</span>
             </div>
           ) : brandName ? (
             <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-semibold text-gray-900 tracking-tight">{brandName}</span>
-              <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
+              <span className="text-[15px] font-semibold tracking-tight text-gray-900">{brandName}</span>
+              <span className="text-[11px] font-medium text-gray-400">Organizer</span>
             </div>
           ) : (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-semibold text-gray-900 tracking-tight">nubapay</span>
-              <span className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest">organizer</span>
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element -- SVG estático del logo
+            <img src="/logo-nubapay.svg" alt="nubapay" width={75} height={26} className="h-[26px] w-auto" />
           )}
         </div>
 
-        <nav ref={navRef} className="relative flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain pt-2">
-          {(() => {
-            const myEventsHref = `${basePath}/all`
-            const myEventsActive = isRouteActive(pathname, myEventsHref)
-            return (
-              <Link
-                href={myEventsHref}
-                className="relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors z-10"
-                style={{
-                  background: myEventsActive ? ORG_ACC : 'transparent',
-                  color: myEventsActive ? ORG_INK : '#6B7280',
-                  fontWeight: myEventsActive ? 600 : 400,
-                }}
+        {/* Selector de evento: muestra el evento activo y lleva a la lista para cambiarlo. */}
+        {(() => {
+          const myEventsHref = `${basePath}/all`
+          const myEventsActive = isRouteActive(pathname, myEventsHref)
+          return (
+            <Link
+              href={myEventsHref}
+              title="Cambiar de evento"
+              className={`group mb-4 flex items-center gap-2.5 rounded-xl border bg-white p-2 pr-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_8px_-2px_rgba(16,24,40,0.12)] ${
+                myEventsActive ? 'border-gray-300' : 'border-gray-200/80 hover:border-gray-300'
+              }`}
+            >
+              <span
+                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-semibold"
+                style={{ background: ORG_ACC, color: ORG_INK }}
+                aria-hidden
               >
-                <span className="shrink-0" style={{ color: myEventsActive ? ORG_INK : '#9CA3AF' }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                {title ? title.trim().charAt(0).toUpperCase() : (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="3" width="14" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
                     <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
-                </span>
-                <span className="shrink-0">Mis eventos</span>
-                {title && (
-                  <>
-                    <span className="shrink-0" style={{ color: myEventsActive ? 'rgba(10,15,0,0.35)' : '#D1D5DB' }}>/</span>
-                    <span className="font-semibold truncate" style={{ color: myEventsActive ? ORG_INK : '#111827' }}>{title}</span>
-                  </>
                 )}
-              </Link>
-            )
-          })()}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] font-medium text-gray-400">
+                  {title ? 'Evento' : 'Organizer'}
+                </span>
+                <span className="block truncate text-[13px] font-semibold text-gray-900">{title ?? 'Mis eventos'}</span>
+              </span>
+              <ChevronsUpDown
+                size={15}
+                strokeWidth={1.75}
+                className="shrink-0 text-gray-400 transition-colors group-hover:text-gray-700"
+                aria-hidden
+              />
+            </Link>
+          )
+        })()}
 
-          <div className="border-t border-gray-200 mx-3 mt-2.5 mb-0" />
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_EVENT))}
+          className="group mb-4 flex h-9 items-center gap-2 rounded-xl px-2.5 text-[13px] text-gray-400 transition-colors hover:bg-white/60 hover:text-gray-700"
+        >
+          <Search size={15} strokeWidth={1.75} aria-hidden />
+          <span className="flex-1 text-left">Buscar…</span>
+          <kbd className="rounded-md border border-gray-200 bg-white px-1.5 font-sans text-[10px] font-semibold text-gray-400 group-hover:text-gray-500">
+            ⌘K
+          </kbd>
+        </button>
 
+        <nav ref={navRef} className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+          {/* Indicador del ítem activo: se desliza entre ítems; la barrita lleva el color de marca. */}
           <div
-            className="absolute inset-x-0 rounded-full pointer-events-none"
+            className="pointer-events-none absolute inset-x-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06),0_0_0_1px_rgba(16,24,40,0.04)]"
             style={{
-              background: ORG_ACC,
               top: pill.top,
               height: pill.height,
               opacity: pill.ready ? 1 : 0,
-              transition: pill.ready ? 'top 200ms cubic-bezier(0.4,0,0.2,1), height 200ms cubic-bezier(0.4,0,0.2,1), opacity 150ms' : 'none',
+              transition: pill.ready
+                ? 'top 240ms cubic-bezier(0.22,1,0.36,1), height 240ms cubic-bezier(0.22,1,0.36,1), opacity 150ms'
+                : 'none',
             }}
-          />
+            aria-hidden
+          >
+            <span
+              className="absolute left-1.5 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full"
+              style={{ background: ORG_ACC }}
+            />
+          </div>
 
-          {desktopItems.map((item, i) => {
-            const active = isItemActive(pathname, item)
+          {NAV_GROUPS.map(group => {
+            const groupItems = desktopItems
+              .map((item, index) => ({ item, index }))
+              .filter(({ item }) => item.group === group.key)
+            if (groupItems.length === 0) return null
             return (
-              <div key={item.href} ref={el => { itemRefs.current[i] = el }}>
-                <Link
-                  href={item.href}
-                  data-tour={item.tourId}
-                  className={`relative flex items-center gap-3 rounded-full px-3 py-2.5 text-sm z-10 transition-colors ${
-                    active ? 'font-semibold' : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                  style={active ? { color: ORG_INK } : undefined}
-                >
-                  <span className={`shrink-0 ${active ? '' : 'text-gray-400'}`} style={active ? { color: ORG_INK } : undefined}>
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
+              <div key={group.key} className="mb-3">
+                <p className="mb-1 px-3 text-[11px] font-medium text-gray-400">{group.label}</p>
+                {groupItems.map(({ item, index }) => {
+                  const active = isItemActive(pathname, item)
+                  return (
+                    <div key={item.href} ref={el => { itemRefs.current[index] = el }}>
+                      <Link
+                        href={item.href}
+                        data-tour={item.tourId}
+                        aria-current={active ? 'page' : undefined}
+                        className={`relative z-10 flex items-center gap-2.5 rounded-[10px] py-2 pl-4 pr-3 text-[13px] transition-colors ${
+                          active ? 'font-semibold text-gray-900' : 'text-gray-500 hover:bg-white/55 hover:text-gray-900'
+                        }`}
+                      >
+                        <span className={`shrink-0 transition-colors ${active ? 'text-gray-900' : 'text-gray-400'}`}>
+                          {item.icon}
+                        </span>
+                        {item.label}
+                      </Link>
+                    </div>
+                  )
+                })}
               </div>
             )
           })}
         </nav>
 
         <div
-          className="mt-1 shrink-0 border-t border-gray-200 px-3 overflow-hidden"
+          className="mt-1 shrink-0 overflow-hidden"
           style={{
             maxHeight: mpState === 'hidden' ? 0 : 80,
             opacity: mpState === 'hidden' ? 0 : 1,
-            paddingTop: mpState === 'hidden' ? 0 : 12,
-            paddingBottom: mpState === 'hidden' ? 0 : 10,
+            paddingBottom: mpState === 'hidden' ? 0 : 8,
             transition: mpState === 'hidden'
-              ? 'max-height 0.6s ease, opacity 0.5s ease, padding-top 0.6s ease, padding-bottom 0.6s ease'
+              ? 'max-height 0.6s ease, opacity 0.5s ease, padding-bottom 0.6s ease'
               : 'none',
           }}
         >
           <Link
             href={`${basePath}/metodos-pago`}
-            className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-[13px] font-medium transition-colors ${
               mpState === 'connected'
                 ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
                 : 'border-[#009EE3]/20 bg-[#009EE3]/5 text-[#007DBE] hover:bg-[#009EE3]/10'
@@ -440,40 +506,40 @@ export function EventOrganizerSidebar({
                 <path d="M4 7l2 2 4-4" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             ) : (
-              <Landmark size={17} strokeWidth={1.75} className="shrink-0" aria-hidden />
+              <Landmark size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
             )}
-            <span>{mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos'}</span>
+            <span className="flex-1">{mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos'}</span>
+            {mpState !== 'connected' && <span className="text-[11px] font-semibold opacity-60" aria-hidden>→</span>}
           </Link>
         </div>
 
-        <div className="shrink-0 px-3 pb-3">
+        <div className="shrink-0 border-t border-gray-200/80 pt-2">
           <Link
             href={`${basePath}/cuenta`}
-            className="group flex w-full items-center gap-2 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/70"
+            className="group flex w-full items-center gap-2.5 rounded-xl p-2 transition-colors hover:bg-white/70"
           >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 13 13"
-              fill="none"
-              className="shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors"
+            <span
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[11px] font-semibold uppercase text-white"
               aria-hidden
             >
-              <circle cx="6.5" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M1.5 11.5c0-2.21 2.239-4 5-4s5 1.79 5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            <p className="min-w-0 flex-1 truncate text-[12px] text-gray-500 group-hover:text-gray-800 transition-colors" title={emailLabel}>
-              {emailLabel || '…'}
-            </p>
+              {emailLabel ? emailLabel.charAt(0) : '·'}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[12px] font-medium text-gray-700 group-hover:text-gray-900" title={emailLabel}>
+                {emailLabel || '…'}
+              </span>
+              <span className="block text-[11px] text-gray-400">
+                {workspaceMembership === 'owner' ? 'Dueño del evento' : 'Equipo'}
+              </span>
+            </span>
             <button
               type="button"
               onClick={e => { e.preventDefault(); onLogout() }}
-              className="shrink-0 rounded-md p-1 text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-gray-700"
               title="Cerrar sesión"
+              aria-label="Cerrar sesión"
             >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2M9.5 9.5L12 7l-2.5-2.5M12 7H5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <LogOut size={14} strokeWidth={1.75} aria-hidden />
             </button>
           </Link>
         </div>

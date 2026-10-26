@@ -1,11 +1,11 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { FilterMenu } from '@/components/organizer/orders/FilterMenu'
 import { Modal } from '@/components/ui/Modal'
-import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { ORGANIZER_ZERO_TOOLS } from '@/lib/organizerStaffTools'
@@ -17,6 +17,7 @@ import {
   resendEventStaffInviteEmail,
   type EventStaffRow,
 } from '@/lib/organizerStaff'
+import { normalizeRole, roleCounts, typicalToolsForRole } from '@/lib/staffRoles'
 import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -117,6 +118,14 @@ const AVATAR_PALETTES = [
   { bg: '#FFF7ED', fg: '#C2410C' },
   { bg: '#ECFEFF', fg: '#0E7490' },
   { bg: '#FFF1F2', fg: '#BE123C' },
+]
+
+/** Plantillas para invitar rápido: completan rol y herramientas típicas de cada puesto. */
+const ROLE_TEMPLATES: { role: string; hint: string; tools: Partial<OrganizerStaffTools> }[] = [
+  { role: 'Acreditación', hint: 'Escanea QR en la entrada', tools: { scanner: true } },
+  { role: 'Barra', hint: 'Despacha y escanea pedidos', tools: { orders: true, scanner: true } },
+  { role: 'Producción', hint: 'Sigue ventas y pedidos', tools: { dashboard: true, orders: true, scanner: true } },
+  { role: 'Administración', hint: 'Acceso a todo', tools: { dashboard: true, products: true, scanner: true, orders: true, pickup_points: true, payments: true } },
 ]
 
 function defaultTools(): OrganizerStaffTools {
@@ -240,11 +249,12 @@ function ConfirmModal({
 // EditStaffModal
 // ---------------------------------------------------------------------------
 function EditStaffModal({
-  isOpen, onClose, eventId, row, onUpdated, onError, onSuccess, onRemoveRequest,
+  isOpen, onClose, eventId, row, onUpdated, onError, onSuccess, onRemoveRequest, knownRoles,
 }: {
   isOpen: boolean; onClose: () => void; eventId: string; row: EventStaffRow
   onUpdated: () => void; onError: (m: string) => void; onSuccess: (m: string) => void
   onRemoveRequest: () => void
+  knownRoles: string[]
 }) {
   const [tools, setTools]     = useState<OrganizerStaffTools>(row.tools)
   const [role, setRole]       = useState(row.role)
@@ -315,11 +325,14 @@ function EditStaffModal({
           Rol en el evento
         </label>
         <input
-          type="text" value={role} onChange={e => setRole(e.target.value)}
+          type="text" value={role} onChange={e => setRole(e.target.value)} list="nb-staff-roles-edit"
           placeholder="Ej. Caja, Producción, Prensa"
           className="w-full rounded-xl border border-black/10 bg-gray-50 px-3 py-2.5 text-[13px] text-[#0A0A0F] outline-none focus:border-black/25 transition-colors placeholder:text-gray-400 disabled:opacity-50"
           disabled={busy}
         />
+        <datalist id="nb-staff-roles-edit">
+          {knownRoles.map(r => <option key={r} value={r} />)}
+        </datalist>
       </div>
 
       {/* Herramientas */}
@@ -417,10 +430,12 @@ function StaffRow({ row, onEdit }: { row: EventStaffRow; onEdit: () => void }) {
 // InviteModal
 // ---------------------------------------------------------------------------
 function InviteModal({
-  isOpen, onClose, eventId, onInvited, onSuccess, onError,
+  isOpen, onClose, eventId, onInvited, onSuccess, onError, existing,
 }: {
   isOpen: boolean; onClose: () => void; eventId: string; onInvited: () => void
   onSuccess: (m: string) => void; onError: (m: string) => void
+  /** Integrantes actuales: sus roles se sugieren y sus herramientas se pueden copiar. */
+  existing: EventStaffRow[]
 }) {
   const [email, setEmail]     = useState('')
   const [name, setName]       = useState('')
@@ -429,7 +444,26 @@ function InviteModal({
   const [saving, setSaving]   = useState(false)
   const [formErr, setFormErr] = useState('')
 
+  // Cada vez que se abre arranca vacío (antes quedaba lo de la invitación anterior).
+  const [wasOpen, setWasOpen] = useState(isOpen)
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen)
+    if (isOpen) {
+      setEmail(''); setName(''); setRole(''); setTools(defaultTools()); setFormErr('')
+    }
+  }
+
   const toggleTool = (k: keyof OrganizerStaffTools) => setTools(t => ({ ...t, [k]: !t[k] }))
+
+  const applyTemplate = (tpl: (typeof ROLE_TEMPLATES)[number]) => {
+    setRole(tpl.role)
+    setTools({ ...ORGANIZER_ZERO_TOOLS, ...tpl.tools })
+  }
+
+  // Si el rol escrito ya existe en el equipo, se ofrece copiar las herramientas que suele tener.
+  const knownRoles = roleCounts(existing.map(r => r.role))
+  const typical = role.trim().length >= 3 ? typicalToolsForRole(existing, role) : null
+  const typicalDiffers = typical != null && JSON.stringify(typical) !== JSON.stringify(tools)
 
   const invite = async () => {
     setFormErr('')
@@ -480,9 +514,49 @@ function InviteModal({
             onChange={e => setEmail(e.target.value)} className={inputClass} disabled={saving} autoComplete="off" />
         </div>
 
-        {/* Rol */}
-        <input type="text" placeholder="Rol (ej. Caja, Producción, Scanner)"
-          value={role} onChange={e => setRole(e.target.value)} className={inputClass} disabled={saving} />
+        {/* Plantillas */}
+        <div>
+          <p className="mb-2 text-[12px] font-medium text-gray-500">Empezá con una plantilla</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {ROLE_TEMPLATES.map(tpl => {
+              const active = normalizeRole(role) === normalizeRole(tpl.role)
+              return (
+                <button
+                  key={tpl.role}
+                  type="button"
+                  onClick={() => applyTemplate(tpl)}
+                  disabled={saving}
+                  aria-pressed={active}
+                  className={cn(
+                    'rounded-xl border px-3 py-2 text-left transition-colors disabled:opacity-50',
+                    active ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
+                  )}
+                >
+                  <span className="block text-[13px] font-semibold text-gray-900">{tpl.role}</span>
+                  <span className="block text-[11px] text-gray-500">{tpl.hint}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Rol: sugiere los que ya existen para no escribir el mismo de otra forma */}
+        <div>
+          <input type="text" placeholder="Rol (ej. Caja, Producción, Scanner)" list="nb-staff-roles"
+            value={role} onChange={e => setRole(e.target.value)} className={inputClass} disabled={saving} />
+          <datalist id="nb-staff-roles">
+            {knownRoles.map(r => <option key={r.role} value={r.role} />)}
+          </datalist>
+          {typicalDiffers && typical && (
+            <button
+              type="button"
+              onClick={() => setTools(typical)}
+              className="mt-1.5 text-[12px] font-medium text-gray-700 underline-offset-4 hover:underline"
+            >
+              Usar las herramientas que ya tiene este rol ({TOOL_OPTS.filter(o => typical[o.key]).map(o => o.short).join(', ')})
+            </button>
+          )}
+        </div>
 
         {/* Herramientas */}
         <div className="pt-1">
@@ -515,7 +589,8 @@ function InviteModal({
             Cancelar
           </button>
           <button type="button" onClick={invite} disabled={saving}
-            className="flex-1 rounded-xl bg-[#0A0A0F] text-white text-[13px] font-semibold py-2.5 disabled:opacity-50 hover:bg-gray-800 active:scale-[0.99] transition-all">
+            style={{ backgroundColor: ORGANIZER_ACCENT_BACKGROUND, color: ORGANIZER_ACCENT_FOREGROUND }}
+            className="flex-1 rounded-xl text-[13px] font-semibold py-2.5 disabled:opacity-50 hover:brightness-95 active:scale-[0.99] transition-all">
             {saving ? 'Enviando…' : 'Enviar invitación'}
           </button>
         </div>
@@ -677,7 +752,7 @@ function EmptyState() {
         </svg>
       </div>
       <p className="text-[13px] font-medium text-gray-500">Todavía no hay integrantes</p>
-      <p className="text-[12px] text-gray-400">Usá el botón "Invitar integrante" para agregar el primero.</p>
+      <p className="text-[12px] text-gray-400">Usá el botón “Invitar integrante” para agregar el primero.</p>
     </div>
   )
 }
@@ -692,6 +767,7 @@ export function StaffView({ eventId }: { eventId: string }) {
   const [inviteOpen, setInviteOpen]   = useState(false)
   const [search, setSearch]           = useState('')
   const [toolFilter, setToolFilter]   = useState<keyof OrganizerStaffTools | ''>('')
+  const [roleFilter, setRoleFilter]   = useState('')
   const [editingRow, setEditingRow]   = useState<EventStaffRow | null>(null)
   const [confirmingRow, setConfirmingRow] = useState<EventStaffRow | null>(null)
   const [removeBusy, setRemoveBusy]   = useState(false)
@@ -714,11 +790,14 @@ export function StaffView({ eventId }: { eventId: string }) {
     return rows.filter(r => {
       const matchesSearch = !q || r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
       const matchesTool   = !toolFilter || r.tools[toolFilter]
-      return matchesSearch && matchesTool
+      const matchesRole   = !roleFilter || normalizeRole(r.role) === normalizeRole(roleFilter)
+      return matchesSearch && matchesTool && matchesRole
     })
-  }, [rows, search, toolFilter])
+  }, [rows, search, toolFilter, roleFilter])
 
-  const hasFilters = search.trim() !== '' || toolFilter !== ''
+  const roles = useMemo(() => roleCounts(rows.map(r => r.role)), [rows])
+
+  const hasFilters = search.trim() !== '' || toolFilter !== '' || roleFilter !== ''
 
   const remove = async () => {
     if (!confirmingRow) return
@@ -733,7 +812,7 @@ export function StaffView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }} className="max-w-7xl">
+    <div className="mx-auto w-full max-w-[1180px]">
       <style>{`
         @media (max-width: 640px) {
           .staff-table-wrap { overflow-x: visible !important; }
@@ -757,24 +836,23 @@ export function StaffView({ eventId }: { eventId: string }) {
           .staff-table td:nth-child(4) { grid-area: edit; align-self: start; justify-self: end; }
         }
       `}</style>
-      <OrganizerToolHeading
-        title="Equipo"
-        description="Invitá integrantes por email. Reciben acceso al panel con el rol y herramientas que elijas."
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setInviteOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'color 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#000000' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.5)' }}
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              Invitar integrante
-            </button>
-          </div>
-        }
-      />
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-[620px]">
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Equipo</h1>
+          <p className="mt-1 text-[13px] text-gray-500">
+            Invitá integrantes por email. Entran al panel solo con las herramientas que les des.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setInviteOpen(true)}
+          style={{ backgroundColor: ORGANIZER_ACCENT_BACKGROUND, color: ORGANIZER_ACCENT_FOREGROUND }}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
+        >
+          <Plus size={16} strokeWidth={2.25} aria-hidden />
+          Invitar integrante
+        </button>
+      </header>
 
       <InviteModal
         isOpen={inviteOpen}
@@ -783,6 +861,7 @@ export function StaffView({ eventId }: { eventId: string }) {
         onInvited={load}
         onSuccess={msg => show(msg, 'success')}
         onError={msg => show(msg, 'error')}
+        existing={rows}
       />
 
       {/* Controles de búsqueda y filtro */}
@@ -811,9 +890,20 @@ export function StaffView({ eventId }: { eventId: string }) {
               </button>
             )}
           </div>
+          {roles.length > 1 && (
+            <FilterMenu
+              label={roleFilter ? `Rol: ${roleFilter}` : 'Rol'}
+              options={roles.map(r => ({ value: r.role, label: `${r.role} · ${r.count}` }))}
+              selected={roleFilter ? [roleFilter] : []}
+              onChange={v => setRoleFilter(v[0] ?? '')}
+              hideCount
+              triggerClassName="h-auto max-w-[260px] gap-2 border-solid border-black/[0.09] px-3.5 py-2.5 text-gray-900"
+            />
+          )}
           <ToolFilterDropdown value={toolFilter} onChange={setToolFilter} />
         </div>
       )}
+
 
       {/* Header de la lista */}
       <div className="flex items-center gap-2.5 mb-3">
@@ -832,8 +922,15 @@ export function StaffView({ eventId }: { eventId: string }) {
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2.5 text-[13px] text-gray-400 py-8">
-          <Spinner size="sm" /> Cargando…
+        <div className="overflow-hidden rounded-2xl border border-gray-200/80" aria-busy="true">
+          <p className="sr-only">Cargando…</p>
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 border-t border-gray-100 px-4 py-3.5 first:border-t-0">
+              <div className="size-8 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-3 w-40 animate-pulse rounded bg-gray-100" />
+              <div className="ml-auto h-3 w-24 animate-pulse rounded bg-gray-100" />
+            </div>
+          ))}
         </div>
       ) : rows.length === 0 ? (
         <EmptyState />
@@ -843,7 +940,7 @@ export function StaffView({ eventId }: { eventId: string }) {
           <p className="text-[12px] text-gray-400">Ningún integrante coincide con los filtros aplicados.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-black/[0.07] overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="staff-table-wrap overflow-x-auto">
             <table className="staff-table w-full text-sm min-w-[560px]">
               <thead>
@@ -875,6 +972,7 @@ export function StaffView({ eventId }: { eventId: string }) {
           onError={msg => show(msg, 'error')}
           onSuccess={msg => show(msg, 'success')}
           onRemoveRequest={() => { setConfirmingRow(editingRow); setEditingRow(null) }}
+          knownRoles={roles.map(r => r.role)}
         />
       )}
       {confirmingRow && (

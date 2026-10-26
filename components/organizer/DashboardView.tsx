@@ -1,116 +1,123 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { BarChart3, Eye, EyeOff, RotateCw, Table2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
-import { Spinner } from '@/components/ui/Spinner'
-import type { DashboardSummary } from '@/lib/organizerWorkspace'
-import { fetchEventDashboard, type DashboardRange } from '@/lib/organizerWorkspace'
-import { formatPrice } from '@/lib/utils'
-import type { OrderStatus } from '@/types'
+import { AnimatedCount, AnimatedMoney, DeltaBadge, Money, deltaPct, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import {
+  FilterChip,
+  LivePanel,
+  PAYMENT_CONFIG,
+  PaymentMethodsPanel,
+  StatusPanel,
+  TopProductsPanel,
+} from '@/components/organizer/dashboard/Panels'
+import {
+  PeriodPicker,
+  PRESETS,
+  daysAgo,
+  formatDay,
+  isoLocal,
+  rangeForPreset,
+  type Preset,
+} from '@/components/organizer/dashboard/PeriodPicker'
+import { SalesChart, pointValue, type ChartMetric } from '@/components/organizer/dashboard/SalesChart'
+import type { DashboardPaymentKey, DashboardRange, DashboardSummary } from '@/lib/organizerWorkspace'
+import { fetchEventDashboard } from '@/lib/organizerWorkspace'
 
-const PAYMENT_CONFIG = [
-  { key: 'mp', label: 'Mercado Pago', dot: 'bg-blue-400' },
-  { key: 'cash', label: 'Efectivo', dot: 'bg-green-400' },
-  { key: 'transfer', label: 'Transferencia', dot: 'bg-purple-400' },
-] as const
+const HIDE_AMOUNTS_KEY = 'nubapay_hide_amounts'
 
-const STATUS_CONFIG: { key: OrderStatus; label: string; dot: string }[] = [
-  { key: 'paid', label: 'Pagados', dot: 'bg-blue-400' },
-  { key: 'partially_delivered', label: 'Entrega parcial', dot: 'bg-purple-400' },
-  { key: 'delivered', label: 'Finalizados', dot: 'bg-gray-300' },
-  { key: 'cancelled', label: 'Cancelados', dot: 'bg-red-300' },
+const METRIC_TABS: { key: ChartMetric; label: string }[] = [
+  { key: 'revenue', label: 'Recaudado' },
+  { key: 'orders', label: 'Pedidos' },
+  { key: 'avg', label: 'Ticket promedio' },
 ]
 
-// Anima un número de 0 al valor objetivo con easing cubic-out
-function CountUp({ to, format = String, duration = 700 }: { to: number; format?: (n: number) => string; duration?: number }) {
-  const [val, setVal] = useState(0)
-  const rafRef = useRef<number>(0)
-
-  useEffect(() => {
-    setVal(0)
-    if (to === 0) return
-    const start = performance.now()
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1)
-      const eased = 1 - (1 - t) ** 3
-      const next = Math.round(eased * to)
-      setVal(next)
-      if (t < 1) rafRef.current = requestAnimationFrame(tick)
-      else setVal(to)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  }, [to, duration])
-
-  return <>{format(val)}</>
+/** Estado del panel que viaja en la URL, así un filtro se puede compartir o recargar. */
+type UrlState = {
+  preset: Preset
+  customFrom: string
+  customTo: string
+  payment: DashboardPaymentKey | null
+  product: string | null
 }
 
-function LineChart({ data }: { data: { label: string; revenue: number }[] }) {
-  const W = 400
-  const H = 150
-  const pad = { left: 4, right: 4, top: 8, bottom: 4 }
-  const maxVal = Math.max(...data.map(d => d.revenue), 1)
+function readUrlState(): Partial<UrlState> {
+  if (typeof window === 'undefined') return {}
+  const q = new URLSearchParams(window.location.search)
+  const out: Partial<UrlState> = {}
+  const periodo = q.get('periodo')
+  if (periodo && ['all', 'today', '7', '30', 'custom'].includes(periodo)) out.preset = periodo as Preset
+  const desde = q.get('desde')
+  const hasta = q.get('hasta')
+  if (desde && hasta && /^\d{4}-\d{2}-\d{2}$/.test(desde) && /^\d{4}-\d{2}-\d{2}$/.test(hasta)) {
+    out.customFrom = desde
+    out.customTo = hasta
+  }
+  const pago = q.get('pago')
+  if (pago && PAYMENT_CONFIG.some(p => p.key === pago)) out.payment = pago as DashboardPaymentKey
+  const producto = q.get('producto')
+  if (producto) out.product = producto
+  return out
+}
 
-  const pts = data.map((d, i) => {
-    const x = pad.left + (i / Math.max(data.length - 1, 1)) * (W - pad.left - pad.right)
-    const y = pad.top + (1 - d.revenue / maxVal) * (H - pad.top - pad.bottom)
-    return { x, y, ...d }
-  })
+function writeUrlState(s: UrlState) {
+  if (typeof window === 'undefined') return
+  const q = new URLSearchParams(window.location.search)
+  for (const k of ['periodo', 'desde', 'hasta', 'pago', 'producto']) q.delete(k)
+  if (s.preset !== 'all') q.set('periodo', s.preset)
+  if (s.preset === 'custom') {
+    q.set('desde', s.customFrom)
+    q.set('hasta', s.customTo)
+  }
+  if (s.payment) q.set('pago', s.payment)
+  if (s.product) q.set('producto', s.product)
+  const qs = q.toString()
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`)
+}
 
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-  const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`
+function periodPhrase(preset: Preset, range: DashboardRange | null) {
+  if (!range) return 'en todo el evento'
+  if (preset === 'today') return 'hoy'
+  if (preset === '7') return 'en los últimos 7 días'
+  if (preset === '30') return 'en los últimos 30 días'
+  return range.from === range.to ? `el ${formatDay(range.from)}` : `del ${formatDay(range.from)} al ${formatDay(range.to)}`
+}
 
+/** Frase de encabezado con el dato que importa, en lugar de un título genérico. */
+function Headline({ summary, preset, range, hidden }: { summary: DashboardSummary; preset: Preset; range: DashboardRange | null; hidden: boolean }) {
+  if (summary.order_count === 0) {
+    return <>Todavía no hay ventas {periodPhrase(preset, range)}.</>
+  }
+  const pct = deltaPct(summary.total_revenue, summary.comparison?.total_revenue)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 150 }}>
-      <defs>
-        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#111827" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#111827" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      {pts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#111827" />
-      ))}
-    </svg>
+    <>
+      Recaudaste <Money value={summary.total_revenue} hidden={hidden} className="tabular-nums" /> {periodPhrase(preset, range)}
+      {pct != null && Math.round(pct) !== 0 ? (
+        <span className="text-gray-400">
+          , {Math.abs(Math.round(pct))}% {pct > 0 ? 'más' : 'menos'} que el período anterior.
+        </span>
+      ) : (
+        '.'
+      )}
+    </>
   )
 }
 
-type Preset = 'all' | 'today' | '7' | '30' | 'custom'
-
-const PRESETS: { value: Preset; label: string }[] = [
-  { value: 'all', label: 'Todo' },
-  { value: 'today', label: 'Hoy' },
-  { value: '7', label: '7 días' },
-  { value: '30', label: '30 días' },
-  { value: 'custom', label: 'Rango' },
-]
-
-/** YYYY-MM-DD en hora local del navegador. */
-function isoLocal(d: Date): string {
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return isoLocal(d)
-}
-
-function formatDay(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function rangeForPreset(p: Preset, customFrom: string, customTo: string): DashboardRange | null {
-  if (p === 'all') return null
-  if (p === 'today') return { from: daysAgo(0), to: daysAgo(0) }
-  if (p === 'custom') return customFrom && customTo ? { from: customFrom, to: customTo } : null
-  return { from: daysAgo(Number(p) - 1), to: daysAgo(0) }
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-[1180px] space-y-5" aria-busy="true">
+      <p className="sr-only">Cargando métricas…</p>
+      <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
+      <div className="h-8 w-[min(520px,90%)] animate-pulse rounded-lg bg-gray-100" />
+      <div className="h-9 w-48 animate-pulse rounded-xl bg-gray-100" />
+      <div className="h-[360px] animate-pulse rounded-2xl bg-gray-100" />
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="h-56 animate-pulse rounded-2xl bg-gray-100 lg:col-span-2" />
+        <div className="h-56 animate-pulse rounded-2xl bg-gray-100" />
+      </div>
+    </div>
+  )
 }
 
 export function DashboardView({ eventId }: { eventId: string }) {
@@ -118,99 +125,130 @@ export function DashboardView({ eventId }: { eventId: string }) {
   const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
+  const [hydrated, setHydrated] = useState(false)
   const [preset, setPreset] = useState<Preset>('all')
   const [customFrom, setCustomFrom] = useState(() => daysAgo(6))
   const [customTo, setCustomTo] = useState(() => isoLocal(new Date()))
   // El rango se calcula al elegir el período (no en el render), así `new Date()` queda en los handlers.
   const [range, setRange] = useState<DashboardRange | null>(null)
+  const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
+  const [product, setProduct] = useState<string | null>(null)
 
-  const choosePreset = (p: Preset) => {
-    setPreset(p)
-    setRange(rangeForPreset(p, customFrom, customTo))
+  const [metric, setMetric] = useState<ChartMetric>('revenue')
+  const [chartView, setChartView] = useState<'chart' | 'table'>('chart')
+  const [scrub, setScrub] = useState<number | null>(null)
+  const [hidden, setHidden] = useState(false)
+
+  // La URL y la preferencia de montos ocultos se leen al montar (no existen en el render del servidor).
+  useEffect(() => {
+    const s = readUrlState()
+    const from = s.customFrom ?? customFrom
+    const to = s.customTo ?? customTo
+    const p = s.preset ?? 'all'
+    queueMicrotask(() => {
+      setPreset(p)
+      setCustomFrom(from)
+      setCustomTo(to)
+      setRange(rangeForPreset(p, from, to))
+      setPayment(s.payment ?? null)
+      setProduct(s.product ?? null)
+      try {
+        setHidden(window.localStorage.getItem(HIDE_AMOUNTS_KEY) === '1')
+      } catch {
+        /* almacenamiento bloqueado: se muestran los montos */
+      }
+      setHydrated(true)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    writeUrlState({ preset, customFrom, customTo, payment, product })
+  }, [hydrated, preset, customFrom, customTo, payment, product])
+
+  const choosePreset = useCallback(
+    (p: Exclude<Preset, 'custom'>) => {
+      setPreset(p)
+      setRange(rangeForPreset(p, customFrom, customTo))
+    },
+    [customFrom, customTo],
+  )
+
+  const chooseCustom = (from: string, to: string) => {
+    setPreset('custom')
+    setCustomFrom(from)
+    setCustomTo(to)
+    setRange(rangeForPreset('custom', from, to))
   }
+
+  const toggleHidden = () => {
+    setHidden(h => {
+      try {
+        window.localStorage.setItem(HIDE_AMOUNTS_KEY, h ? '0' : '1')
+      } catch {
+        /* sin almacenamiento: vale solo para esta visita */
+      }
+      return !h
+    })
+  }
+
   const rangeFrom = range ? range.from : ''
   const rangeTo = range ? range.to : ''
-  const [barsVisible, setBarsVisible] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  const load = useCallback(async () => {
-    setLoadError('')
-    setFetching(true)
-    const res = await fetchEventDashboard(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null)
-    if (!res.ok) {
-      setLoadError(res.error)
-      setSummary(null)
-    } else {
-      setSummary(res.data)
-      setLastUpdated(new Date())
-    }
-    setFetching(false)
-    setLoading(false)
-  }, [eventId, rangeFrom, rangeTo])
-
-  const silentRefresh = useCallback(async () => {
-    const res = await fetchEventDashboard(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null)
-    if (res.ok) { setSummary(res.data); setLastUpdated(new Date()) }
-  }, [eventId, rangeFrom, rangeTo])
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoadError('')
+        setFetching(true)
+      }
+      const res = await fetchEventDashboard(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null, {
+        payment,
+        product,
+      })
+      if (!res.ok) {
+        if (!silent) {
+          setLoadError(res.error)
+          setSummary(null)
+        }
+      } else {
+        setSummary(res.data)
+        setLastUpdated(new Date())
+      }
+      setFetching(false)
+      setLoading(false)
+    },
+    [eventId, rangeFrom, rangeTo, payment, product],
+  )
 
   useEffect(() => {
-    load()
-  }, [load])
+    if (!hydrated) return
+    const id = window.requestAnimationFrame(() => void load())
+    return () => window.cancelAnimationFrame(id)
+  }, [hydrated, load])
 
   useEffect(() => {
-    const id = setInterval(silentRefresh, 30_000)
+    if (!hydrated) return
+    const id = setInterval(() => void load(true), 30_000)
     return () => clearInterval(id)
-  }, [silentRefresh])
+  }, [hydrated, load])
 
-  // Doble RAF para asegurar que las barras renderizan en 0 antes de transicionar
-  useEffect(() => {
-    if (!summary) { setBarsVisible(false); return }
-    setBarsVisible(false)
-    const id1 = requestAnimationFrame(() => {
-      const id2 = requestAnimationFrame(() => setBarsVisible(true))
-      return () => cancelAnimationFrame(id2)
-    })
-    return () => cancelAnimationFrame(id1)
-  }, [summary])
-
-  const ordersLen = summary?.order_count ?? 0
-  const byStatus = (k: OrderStatus) => summary?.by_status?.[k] ?? 0
-
-  const paymentRow = (key: 'mp' | 'cash' | 'transfer') =>
-    summary?.payment_breakdown?.find(p => p.key === key) ?? { key, count: 0, revenue: 0 }
-
-  const topProducts = summary?.top_products ?? []
-  const maxQty = topProducts[0]?.quantity ?? 1
-  const chartSeries = summary?.series
-  const chartPoints = chartSeries
-    ? chartSeries.points
-    : (summary?.hourly ?? []).map(h => ({ label: h.hour, revenue: h.revenue }))
-  const chartIsDaily = chartSeries?.kind === 'daily'
-
-  const barStyle = (pct: number) => ({
-    width: barsVisible ? `${pct}%` : '0%',
-    transition: 'width 700ms cubic-bezier(0.4,0,0.2,1)',
-  })
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <Spinner size="lg" className="text-gray-900" />
-        <p className="text-sm text-gray-400">Cargando métricas…</p>
-      </div>
-    )
-  }
+  if (loading) return <DashboardSkeleton />
 
   if (loadError || !summary) {
     return (
-      <div className="space-y-4">
-        <OrganizerToolHeading title="Dashboard del evento" />
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-red-600">{loadError || 'Sin datos'}</div>
+      <div className="mx-auto max-w-[1180px] space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Dashboard del evento</h1>
+        <div className="rounded-2xl border border-red-100 bg-red-50/60 p-5 text-sm text-red-700">{loadError || 'Sin datos'}</div>
         <button
           type="button"
-          onClick={() => { setLoading(true); load() }}
-          className="rounded-full border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
+          onClick={() => {
+            setLoading(true)
+            void load()
+          }}
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
         >
           Reintentar
         </button>
@@ -218,216 +256,210 @@ export function DashboardView({ eventId }: { eventId: string }) {
     )
   }
 
+  const points = summary.series?.points ?? (summary.hourly ?? []).map(h => ({ label: h.hour, revenue: h.revenue }))
+  const chartIsDaily = summary.series?.kind === 'daily'
+  const hasComparison = Boolean(summary.comparison) && chartIsDaily
+  const comparison = summary.comparison
+  const avgTicket = summary.avg_ticket ?? (summary.order_count ? summary.total_revenue / summary.order_count : 0)
+
+  const totals: Record<ChartMetric, { value: number; prev?: number }> = {
+    revenue: { value: summary.total_revenue, prev: comparison?.total_revenue },
+    orders: { value: summary.order_count, prev: comparison?.order_count },
+    avg: { value: avgTicket, prev: comparison?.avg_ticket },
+  }
+
+  const scrubPoint = scrub != null ? points[scrub] : null
+  const paymentLabel = PAYMENT_CONFIG.find(p => p.key === payment)?.label
+
   return (
-    <div className={`space-y-4 transition-opacity ${fetching ? 'opacity-60' : ''}`}>
+    <div className={`mx-auto max-w-[1180px] transition-opacity duration-300 ${fetching ? 'opacity-70' : ''}`}>
       <style>{`
-        @keyframes nb-stat-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .nb-stat-card {
-          animation: nb-stat-in 320ms ease-out both;
-        }
+        @keyframes nb-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes nb-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+        @keyframes nb-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .nb-rise { animation: nb-rise 420ms cubic-bezier(0.22,1,0.36,1) both; }
+        .nb-pop { animation: nb-pop 160ms ease-out both; transform-origin: top left; }
+        .nb-grow, .nb-bar { transform-origin: left; animation: nb-grow 700ms cubic-bezier(0.22,1,0.36,1) both; transition: width 500ms cubic-bezier(0.22,1,0.36,1); }
+        @media (prefers-reduced-motion: reduce) { .nb-rise, .nb-pop, .nb-grow, .nb-bar { animation: none; } }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Dashboard del evento"
-        description="Métricas y pedidos solo para este evento."
-        actions={
-          lastUpdated ? (
-            <span className="text-xs text-gray-400 tabular-nums">
-              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </span>
-          ) : undefined
-        }
-      />
-
-      {/* Rango de fechas */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div role="group" aria-label="Período" className="inline-flex gap-1 rounded-xl bg-[#F5F5F7] p-1">
-          {PRESETS.map(p => (
-            <button
-              key={p.value}
-              type="button"
-              aria-pressed={preset === p.value}
-              onClick={() => choosePreset(p.value)}
-              className={`rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
-                preset === p.value ? 'bg-white text-[#0A0A0F] shadow-sm' : 'text-[#9A9AA8] hover:text-[#0A0A0F]'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+      {/* Encabezado */}
+      <header className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="min-w-0">
+          <p className="mb-1.5 text-[12px] font-medium text-gray-400">Dashboard</p>
+          <h1 className="max-w-[680px] text-[22px] font-semibold leading-snug tracking-tight text-gray-900 md:text-[26px]">
+            <Headline summary={summary} preset={preset} range={range} hidden={hidden} />
+          </h1>
         </div>
-        {preset === 'custom' && (
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              aria-label="Desde"
-              type="date"
-              value={customFrom}
-              max={customTo || undefined}
-              onChange={e => { setCustomFrom(e.target.value); setRange(rangeForPreset('custom', e.target.value, customTo)) }}
-              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900"
-            />
-            <span className="text-xs text-gray-400">a</span>
-            <input
-              aria-label="Hasta"
-              type="date"
-              value={customTo}
-              min={customFrom || undefined}
-              onChange={e => { setCustomTo(e.target.value); setRange(rangeForPreset('custom', customFrom, e.target.value)) }}
-              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900"
-            />
-          </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {lastUpdated && (
+            <span className="mr-1 text-[12px] tabular-nums text-gray-400">
+              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => void load()}
+            aria-label="Actualizar"
+            title="Actualizar"
+            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <RotateCw size={16} strokeWidth={1.75} className={fetching ? 'animate-spin' : ''} aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={toggleHidden}
+            aria-pressed={hidden}
+            aria-label={hidden ? 'Mostrar montos' : 'Ocultar montos'}
+            title={hidden ? 'Mostrar montos' : 'Ocultar montos'}
+            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            {hidden ? <EyeOff size={16} strokeWidth={1.75} aria-hidden /> : <Eye size={16} strokeWidth={1.75} aria-hidden />}
+          </button>
+        </div>
+      </header>
+
+      {/* Barra de filtros: queda fija arriba al hacer scroll (Dub). */}
+      <div className="sticky top-0 z-20 -mx-4 mb-4 flex flex-wrap items-center gap-2 bg-white/85 px-4 py-2.5 backdrop-blur md:-mx-2 md:px-2">
+        <PeriodPicker
+          preset={preset}
+          range={range}
+          customFrom={customFrom}
+          customTo={customTo}
+          onPreset={choosePreset}
+          onCustom={chooseCustom}
+        />
+        {comparison && (
+          <span className="text-[12px] text-gray-400">
+            vs. {formatDay(comparison.range.from)} – {formatDay(comparison.range.to)}
+          </span>
         )}
-        <span className="text-xs text-gray-400">
-          {range
-            ? range.from === range.to
-              ? `Mostrando ${formatDay(range.from)} · hora Argentina`
-              : `Mostrando ${formatDay(range.from)} – ${formatDay(range.to)} · hora Argentina`
-            : 'Mostrando todo el evento'}
+        {paymentLabel && <FilterChip label="Pago" value={paymentLabel} onClear={() => setPayment(null)} />}
+        {product && <FilterChip label="Producto" value={product} onClear={() => setProduct(null)} />}
+        <span className="ml-auto hidden text-[11px] text-gray-400 lg:inline">
+          Atajos: {PRESETS.map(p => p.key).join(' · ')}
         </span>
       </div>
 
-      {/* Stat cards con fade+slide escalonado */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Recaudado', value: <CountUp to={summary.total_revenue} format={formatPrice} duration={800} /> },
-          { label: 'Pedidos',   value: <CountUp to={summary.order_count} duration={600} /> },
-          { label: 'Activos',   value: <CountUp to={summary.active_orders} duration={500} /> },
-          { label: 'Entregados',value: <CountUp to={summary.delivered_orders} duration={500} /> },
-        ].map(({ label, value }, i) => (
-          <div
-            key={label}
-            className="nb-stat-card bg-white rounded-2xl border border-gray-100 p-4"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
-            <p className="text-xs text-gray-400 mb-1">{label}</p>
-            <p className="text-lg font-medium text-gray-900">{value}</p>
+      {/* Métricas como pestañas que eligen la serie del gráfico (Plausible) */}
+      <section className="nb-rise mb-4 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div role="tablist" aria-label="Métrica del gráfico" className="grid grid-cols-2 border-b border-gray-100 md:grid-cols-4">
+          {METRIC_TABS.map(tab => {
+            const active = metric === tab.key
+            const t = totals[tab.key]
+            // Mientras se recorre el gráfico, la pestaña activa muestra el valor del punto (Mercury).
+            const showScrub = active && scrubPoint != null
+            const value = showScrub ? pointValue(scrubPoint, tab.key) : t.value
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setMetric(tab.key)}
+                className={`group relative px-5 py-4 text-left transition-colors md:border-r md:border-gray-100 ${
+                  active ? 'bg-white' : 'bg-gray-50/60 hover:bg-gray-50'
+                }`}
+              >
+                <span className={`mb-1.5 flex items-center gap-2 text-[12px] ${active ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                  {tab.label}
+                  {!showScrub && <DeltaBadge pct={deltaPct(t.value, t.prev)} />}
+                </span>
+                <span className="block text-[22px] font-semibold tracking-tight tabular-nums text-gray-900">
+                  {tab.key === 'orders' ? (
+                    <AnimatedCount value={value} />
+                  ) : showScrub ? (
+                    <Money value={tab.key === 'avg' ? Math.round(value) : value} hidden={hidden} />
+                  ) : (
+                    <AnimatedMoney value={value} hidden={hidden} />
+                  )}
+                </span>
+                <span className="mt-0.5 block h-4 text-[11px] tabular-nums text-gray-400">
+                  {showScrub ? (
+                    scrubPoint.label
+                  ) : t.prev != null ? (
+                    <>
+                      antes{' '}
+                      {tab.key === 'orders' ? formatCount(t.prev) : <Money value={tab.key === 'avg' ? Math.round(t.prev) : t.prev} hidden={hidden} />}
+                    </>
+                  ) : null}
+                </span>
+                <span
+                  aria-hidden
+                  className={`absolute inset-x-0 bottom-0 h-0.5 bg-gray-900 transition-transform duration-300 ${active ? 'scale-x-100' : 'scale-x-0'}`}
+                />
+              </button>
+            )
+          })}
+          <div className="px-5 py-4">
+            <span className="mb-1.5 block text-[12px] text-gray-500">Activos</span>
+            <span className="block text-[22px] font-semibold tracking-tight tabular-nums text-gray-900">
+              <AnimatedCount value={summary.active_orders} />
+            </span>
+            <span className="mt-0.5 block text-[11px] tabular-nums text-gray-400">
+              {formatCount(summary.delivered_orders)} entregados
+            </span>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        <div className="lg:col-span-2 flex flex-col gap-4">
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Por estado</p>
-            <div className="flex flex-col gap-3">
-              {STATUS_CONFIG.map(({ key, label, dot }) => {
-                const count = byStatus(key)
-                const pct = ordersLen ? Math.round((count / ordersLen) * 100) : 0
-                return (
-                  <div key={key}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-                        <span className="text-sm text-gray-600">{label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">{count}</span>
-                        <span className="text-xs text-gray-300 w-7 text-right">{pct}%</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-4">
-                      <div className={`h-full rounded-full ${dot}`} style={barStyle(pct)} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-medium text-gray-400 tracking-wide">{chartIsDaily ? 'Ventas por día' : 'Ventas por hora'}</p>
-              <span className="text-xs text-gray-400">{chartIsDaily ? 'período elegido' : 'últimas 8h'}</span>
-            </div>
-            <LineChart data={chartPoints.length ? chartPoints : Array.from({ length: 8 }, (_, i) => ({ label: `${i}h`, revenue: 0 }))} />
-            <div className="flex justify-between mt-2">
-              {/* Con muchos días solo se rotulan algunos para que no se encimen. */}
-              {chartPoints.map((d, i) => {
-                const step = Math.ceil(chartPoints.length / 8)
-                return (
-                  <span key={`${d.label}-${i}`} className="text-[10px] text-gray-300">
-                    {i % step === 0 || i === chartPoints.length - 1 ? d.label : ''}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-
         </div>
 
-        <div className="lg:col-span-3 flex flex-col gap-4">
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Métodos de pago</p>
-            <div className="flex flex-col gap-3">
-              {PAYMENT_CONFIG.map(({ key, label, dot }) => {
-                const row = paymentRow(key)
-                const count = row.count
-                const pct = ordersLen ? Math.round((count / ordersLen) * 100) : 0
-                const revenue = row.revenue
-                return (
-                  <div key={key}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-                        <span className="text-sm text-gray-600">{label}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-400">{count} pedidos</span>
-                        <span className="text-sm font-medium text-gray-900 w-20 text-right">{formatPrice(revenue)}</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-4">
-                      <div className={`h-full rounded-full ${dot}`} style={barStyle(pct)} />
-                    </div>
-                  </div>
-                )
-              })}
+        <div className="px-5 pb-4 pt-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-4 text-[12px]">
+              <span className="font-medium text-gray-900">{chartIsDaily ? 'Ventas por día' : 'Ventas por hora'}</span>
+              <span className="flex items-center gap-1.5 text-gray-500">
+                <span className="h-0.5 w-3 rounded-full bg-gray-900" aria-hidden />
+                {chartIsDaily ? 'Período elegido' : 'Últimas 8 h'}
+              </span>
+              {hasComparison && (
+                <span className="flex items-center gap-1.5 text-gray-400">
+                  <span className="w-3 border-t-[1.5px] border-dashed border-gray-400" aria-hidden />
+                  Período anterior
+                </span>
+              )}
+            </div>
+            <div className="inline-flex rounded-lg bg-gray-100 p-0.5" role="group" aria-label="Vista del gráfico">
+              {(
+                [
+                  { v: 'chart', label: 'Gráfico', Icon: BarChart3 },
+                  { v: 'table', label: 'Tabla', Icon: Table2 },
+                ] as const
+              ).map(({ v, label, Icon }) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={chartView === v}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => setChartView(v)}
+                  className={`rounded-md p-1.5 transition-colors ${
+                    chartView === v ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon size={14} strokeWidth={1.75} aria-hidden />
+                </button>
+              ))}
             </div>
           </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-medium text-gray-400 tracking-wide mb-4">Más vendidos</p>
-            {topProducts.length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-center">
-                <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14l4-6 3 3 7-9" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <p className="text-sm font-medium text-gray-900">Sin ventas aún</p>
-                <p className="text-xs text-gray-400 mt-1">Los más vendidos aparecerán acá</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {topProducts.map((product, i) => (
-                  <div key={product.name}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs text-gray-300 font-medium w-3 shrink-0">{i + 1}</span>
-                        <span className="text-sm font-medium text-gray-800 truncate max-w-[160px]">{product.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-gray-400">{product.quantity} uds.</span>
-                        <span className="text-sm font-medium text-gray-900 w-20 text-right">{formatPrice(product.revenue)}</span>
-                      </div>
-                    </div>
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden ml-5">
-                      <div
-                        className="h-full bg-gray-900 rounded-full"
-                        style={barStyle((product.quantity / maxQty) * 100)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+          <SalesChart
+            points={points}
+            metric={metric}
+            showComparison={hasComparison}
+            hiddenAmounts={hidden}
+            view={chartView}
+            onScrub={setScrub}
+          />
         </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PaymentMethodsPanel summary={summary} hidden={hidden} selected={payment} onSelect={setPayment} />
+        </div>
+        <LivePanel summary={summary} hidden={hidden} />
+        <div className="lg:col-span-2">
+          <TopProductsPanel summary={summary} hidden={hidden} selected={product} onSelect={setProduct} />
+        </div>
+        <StatusPanel summary={summary} />
       </div>
     </div>
   )

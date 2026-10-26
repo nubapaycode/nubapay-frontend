@@ -1,824 +1,785 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { Download, RotateCw, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import { FilterChip, PAYMENT_CONFIG } from '@/components/organizer/dashboard/Panels'
+import { OPEN_ORDER_EVENT } from '@/components/organizer/commandEvents'
+import { BulkActionsBar } from '@/components/organizer/orders/BulkActionsBar'
+import { FilterMenu } from '@/components/organizer/orders/FilterMenu'
+import { OrderDetailSheet } from '@/components/organizer/orders/OrderDetailSheet'
+import {
+  PAY_LABEL,
+  STATUS_TABS,
+  initials,
+  itemsSummary,
+  relativeTime,
+  scanInfo,
+  statusUi,
+  type StatusFilter,
+} from '@/components/organizer/orders/orderUi'
 import { ProductScanSummaryView } from '@/components/organizer/ProductScanSummaryView'
-import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
-import { Spinner } from '@/components/ui/Spinner'
-import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
-import { fetchAllCategories, fetchWorkspaceOrders, patchOrderStatus } from '@/lib/organizerWorkspace'
-import type { PaginationMeta, WorkspaceCategory } from '@/lib/organizerWorkspace'
-import { formatPrice } from '@/lib/utils'
+import {
+  downloadOrdersCsv,
+  fetchAllCategories,
+  fetchWorkspaceOrder,
+  fetchWorkspaceOrders,
+  patchOrderStatus,
+} from '@/lib/organizerWorkspace'
+import type {
+  DashboardPaymentKey,
+  OrdersStatusCounts,
+  OrdersSummary,
+  PaginationMeta,
+  WorkspaceCategory,
+} from '@/lib/organizerWorkspace'
+import { cn } from '@/lib/utils'
 import type { Order } from '@/types'
 
 const PAGE_SIZE = 20
 const POLL_INTERVAL = 15_000
 
-
-const STATUS_LABEL: Record<string, string> = {
-  pending:             'Pagado',
-  preparing:           'Pagado',
-  ready:               'Pagado',
-  delivered:           'Entregado',
-  partially_delivered: 'Entrega parcial',
-  cancelled:           'Cancelado',
-}
-
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  pending:             { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  preparing:           { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  ready:               { bg: 'rgba(16,185,129,0.08)',  color: '#047857' },
-  delivered:           { bg: 'rgba(107,114,128,0.08)', color: '#4B5563' },
-  partially_delivered: { bg: 'rgba(168,85,247,0.08)',  color: '#7E22CE' },
-  cancelled:           { bg: 'rgba(220,38,38,0.08)',   color: '#DC2626' },
-}
-
-const PAY_LABEL: Record<string, string> = {
-  mp: 'Mercado Pago',
-  cash: 'Efectivo',
-  transfer: 'Transferencia',
-}
-
-function fmtDate(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) +
-    ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-}
-
-type ScanState = 'full' | 'partial' | 'none'
-
-const SCAN_UI: Record<ScanState, { color: string; label: string }> = {
-  full:    { color: '#047857', label: 'Escaneado' },
-  partial: { color: '#B45309', label: 'Escaneado parcial' },
-  none:    { color: '#9A9AA8', label: 'Sin escanear' },
-}
-
-/** Unidades compradas vs. escaneadas de un pedido. Usa los datos por ítem
- * (`redeemedQuantity`) si están disponibles; si no, cae al `status`. */
-function scanInfo(order: Order): { units: number; redeemed: number | null; state: ScanState } {
-  const units = order.items.reduce((s, i) => s + (i.quantity ?? 0), 0)
-  const hasItemData = order.items.some(i => i.redeemedQuantity != null)
-  if (hasItemData) {
-    const redeemed = order.items.reduce((s, i) => s + (i.redeemedQuantity ?? 0), 0)
-    return { units, redeemed, state: redeemed <= 0 ? 'none' : redeemed >= units ? 'full' : 'partial' }
-  }
-  if (order.status === 'delivered') return { units, redeemed: units, state: 'full' }
-  if (order.status === 'partially_delivered') return { units, redeemed: null, state: 'partial' }
-  return { units, redeemed: 0, state: 'none' }
-}
-
-/** Columnas de la tabla de pedidos (desktop). Debe coincidir header + filas. */
-const ORDERS_GRID = '48px minmax(120px,1.6fr) minmax(96px,1fr) minmax(150px,1.5fr) 96px 92px 100px 32px'
-
-const HEAD_CELL = { fontSize: '11px', fontWeight: 600, color: '#9A9AA8' } as const
-
 type OrdersTab = 'orders' | 'scans'
 
+/** Columnas de la tabla de escritorio: header y filas comparten esta grilla. */
+const ORDERS_GRID = 'md:grid-cols-[92px_minmax(150px,1.2fr)_minmax(160px,1.6fr)_104px_112px_128px_96px]'
+
+type UrlState = {
+  tab: OrdersTab
+  status: StatusFilter
+  payment: DashboardPaymentKey | null
+  cats: string[]
+  q: string
+  orderId: string | null
+}
+
+function readUrlState(): Partial<UrlState> {
+  if (typeof window === 'undefined') return {}
+  const p = new URLSearchParams(window.location.search)
+  const out: Partial<UrlState> = {}
+  if (p.get('vista') === 'escaneos') out.tab = 'scans'
+  const estado = p.get('estado')
+  if (estado && STATUS_TABS.some(t => t.key === estado)) out.status = estado as StatusFilter
+  const pago = p.get('pago')
+  if (pago && PAYMENT_CONFIG.some(c => c.key === pago)) out.payment = pago as DashboardPaymentKey
+  const cat = p.get('categoria')
+  if (cat) out.cats = cat.split(',').filter(Boolean)
+  const q = p.get('q')
+  if (q) out.q = q
+  const pedido = p.get('pedido')
+  if (pedido) out.orderId = pedido
+  return out
+}
+
+function writeUrlState(s: UrlState) {
+  const p = new URLSearchParams(window.location.search)
+  for (const k of ['vista', 'estado', 'pago', 'categoria', 'q', 'pedido']) p.delete(k)
+  if (s.tab === 'scans') p.set('vista', 'escaneos')
+  if (s.status !== 'all') p.set('estado', s.status)
+  if (s.payment) p.set('pago', s.payment)
+  if (s.cats.length) p.set('categoria', s.cats.join(','))
+  if (s.q) p.set('q', s.q)
+  if (s.orderId) p.set('pedido', s.orderId)
+  const qs = p.toString()
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`)
+}
+
+function ScanProgress({ order }: { order: Order }) {
+  if (order.status === 'cancelled') return <span className="text-[12px] text-gray-300">—</span>
+  const { units, redeemed } = scanInfo(order)
+  const pct = redeemed != null ? (redeemed / Math.max(units, 1)) * 100 : 50
+  const done = redeemed != null && redeemed >= units
+  return (
+    <div className="flex items-center gap-2" title={`${redeemed ?? '?'} de ${units} unidades retiradas`}>
+      <div className="h-1.5 w-12 overflow-hidden rounded-full bg-gray-100">
+        <div
+          className={cn('h-full rounded-full', done ? 'bg-emerald-500' : redeemed ? 'bg-amber-400' : 'bg-transparent')}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={cn('text-[12px] tabular-nums', done ? 'text-gray-500' : 'text-gray-900')}>
+        {redeemed ?? '?'}/{units}
+      </span>
+    </div>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const st = statusUi(status)
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold', st.badge)}>
+      <span className={cn('size-1.5 rounded-full', st.dot)} aria-hidden />
+      {st.label}
+    </span>
+  )
+}
+
+function OrdersSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white" aria-busy="true">
+      <p className="sr-only">Cargando pedidos…</p>
+      {Array.from({ length: 7 }, (_, i) => (
+        <div key={i} className="flex items-center gap-4 border-t border-gray-100 px-4 py-4 first:border-t-0">
+          <div className="h-3 w-8 animate-pulse rounded bg-gray-100" />
+          <div className="size-7 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3 flex-1 animate-pulse rounded bg-gray-100" />
+          <div className="h-3 w-16 animate-pulse rounded bg-gray-100" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function OrdersView({ eventId }: { eventId: string }) {
+  const [hydrated, setHydrated] = useState(false)
   const [tab, setTab] = useState<OrdersTab>('orders')
   const [scanRefresh, setScanRefresh] = useState(0)
-  const [orders, setOrders] = useState<Order[]>([])
+  const [status, setStatus] = useState<StatusFilter>('all')
+  const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
+  const [cats, setCats] = useState<string[]>([])
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQ, setSearchQ] = useState('')
   const [page, setPage] = useState(1)
+
+  const [orders, setOrders] = useState<Order[]>([])
   const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, page_size: PAGE_SIZE, total: 0 })
+  const [statusCounts, setStatusCounts] = useState<OrdersStatusCounts | null>(null)
+  const [summary, setSummary] = useState<OrdersSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [searchQ, setSearchQ] = useState('')
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
-  const [detailOrder, setDetailOrder] = useState<Order | null>(null)
-  const [cancelStage, setCancelStage] = useState<'none' | 'first' | 'second'>('none')
-  const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState('')
   const [categories, setCategories] = useState<WorkspaceCategory[]>([])
-  const [selectedCats, setSelectedCats] = useState<Set<string>>(new Set())
-  const [catDropdownOpen, setCatDropdownOpen] = useState(false)
-  const catDropdownRef = useRef<HTMLDivElement>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  /** Pedidos marcados con la casilla (acciones en lote). Se limpia al cambiar de página o filtro. */
+  const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [exporting, setExporting] = useState(false)
+  /** Pedido abierto por enlace que no está en la página actual. */
+  const [externalOrder, setExternalOrder] = useState<Order | null>(null)
+  const [newIds, setNewIds] = useState<Set<string>>(new Set())
+  const seenIds = useRef<Set<string> | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  // Filtros desde la URL al montar.
+  useEffect(() => {
+    const s = readUrlState()
+    queueMicrotask(() => {
+      if (s.tab) setTab(s.tab)
+      if (s.status) setStatus(s.status)
+      if (s.payment) setPayment(s.payment)
+      if (s.cats) setCats(s.cats)
+      if (s.q) {
+        setSearchInput(s.q)
+        setSearchQ(s.q)
+      }
+      if (s.orderId) setSelectedId(s.orderId)
+      setHydrated(true)
+    })
+  }, [])
 
   useEffect(() => {
-    const t = window.setTimeout(() => setSearchQ(searchInput.trim()), 350)
+    if (!hydrated) return
+    writeUrlState({ tab, status, payment, cats, q: searchQ, orderId: selectedId })
+  }, [hydrated, tab, status, payment, cats, searchQ, selectedId])
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setSearchQ(searchInput.trim())
+      setPage(1)
+    }, 350)
     return () => window.clearTimeout(t)
   }, [searchInput])
 
-  useEffect(() => { setPage(1) }, [searchQ])
-
-  const changeTab = useCallback((next: OrdersTab) => {
-    setTab(next)
-    setSearchInput('')
+  // Reloj para las horas relativas ("hace 4 min").
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000)
+    return () => window.clearInterval(id)
   }, [])
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true)
-    else setRefreshing(true)
-    setError('')
-    const res = await fetchWorkspaceOrders(eventId, {
-      page,
-      pageSize: PAGE_SIZE,
-      paymentStatus: 'approved',
-      q: searchQ || undefined,
-    })
-    if (!res.ok) {
-      setError(res.error)
-      if (!silent) setOrders([])
-    } else {
-      setOrders(res.orders)
-      setPagination(res.pagination)
-      setLastRefresh(new Date())
+  // El buscador ⌘K abre pedidos acá mismo sin recargar la página.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id
+      if (!id) return
+      setTab('orders')
+      setExternalOrder(null)
+      setSelectedId(id)
     }
-    setLoading(false)
-    setRefreshing(false)
-  }, [eventId, page, searchQ])
-
-  const handleRefresh = useCallback(() => {
-    if (tab === 'orders') void load(true)
-    else setScanRefresh(n => n + 1)
-  }, [tab, load])
-
-  useEffect(() => { void load() }, [load])
-
-  const closeDetail = useCallback(() => {
-    setDetailOrder(null)
-    setCancelStage('none')
-    setCancelError('')
+    window.addEventListener(OPEN_ORDER_EVENT, onOpen)
+    return () => window.removeEventListener(OPEN_ORDER_EVENT, onOpen)
   }, [])
 
-  const handleCancelOrder = useCallback(async () => {
-    if (!detailOrder) return
-    setCancelling(true)
-    setCancelError('')
-    const res = await patchOrderStatus(eventId, detailOrder.id, 'cancelled')
-    setCancelling(false)
-    if (!res.ok) {
-      setCancelError(res.error)
-      return
+  // "/" enfoca el buscador (como en GitHub / Linear).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (e.key !== '/' || (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))) return
+      e.preventDefault()
+      searchRef.current?.focus()
     }
-    setDetailOrder(res.order)
-    setCancelStage('none')
-    setOrders(prev => prev.map(o => (o.id === res.order.id ? res.order : o)))
-  }, [detailOrder, eventId])
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
+
+  const load = useCallback(
+    async (silent = false) => {
+      if (silent) setRefreshing(true)
+      else {
+        setLoading(true)
+        setChecked(new Set())
+      }
+      setError('')
+      const res = await fetchWorkspaceOrders(eventId, {
+        page,
+        pageSize: PAGE_SIZE,
+        paymentStatus: 'approved',
+        q: searchQ || undefined,
+        status: status === 'all' ? undefined : status,
+        payment,
+        categories: cats,
+      })
+      if (!res.ok) {
+        setError(res.error)
+        if (!silent) setOrders([])
+      } else {
+        // En los refrescos automáticos, los pedidos que no estaban antes se resaltan un momento.
+        const prev = seenIds.current
+        if (silent && prev) {
+          const fresh = res.orders.filter(o => !prev.has(o.id)).map(o => o.id)
+          if (fresh.length) setNewIds(new Set(fresh))
+        }
+        seenIds.current = new Set([...(prev ?? []), ...res.orders.map(o => o.id)])
+        setOrders(res.orders)
+        setPagination(res.pagination)
+        setStatusCounts(res.statusCounts)
+        setSummary(res.summary)
+        setLastRefresh(new Date())
+      }
+      setLoading(false)
+      setRefreshing(false)
+    },
+    [eventId, page, searchQ, status, payment, cats],
+  )
 
   useEffect(() => {
-    if (tab !== 'orders') return
-    pollRef.current = setInterval(() => void load(true), POLL_INTERVAL)
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [load, tab])
+    if (!hydrated) return
+    const id = window.requestAnimationFrame(() => void load())
+    return () => window.cancelAnimationFrame(id)
+  }, [hydrated, load])
 
   useEffect(() => {
-    fetchAllCategories(eventId).then(res => {
+    if (!hydrated || tab !== 'orders') return
+    const id = window.setInterval(() => void load(true), POLL_INTERVAL)
+    return () => window.clearInterval(id)
+  }, [hydrated, load, tab])
+
+  useEffect(() => {
+    void fetchAllCategories(eventId).then(res => {
       if (res.ok) setCategories(res.categories)
     })
   }, [eventId])
 
-  useEffect(() => {
-    if (!catDropdownOpen) return
-    const handler = (e: MouseEvent) => {
-      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node))
-        setCatDropdownOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [catDropdownOpen])
+  const selectedOrder = useMemo(
+    () => (selectedId ? orders.find(o => o.id === selectedId) ?? (externalOrder?.id === selectedId ? externalOrder : null) : null),
+    [selectedId, orders, externalOrder],
+  )
 
-  const displayOrders = selectedCats.size === 0
-    ? orders
-    : orders.filter(o => o.items.some(i => i.categoryName && selectedCats.has(i.categoryName)))
+  // Un enlace a un pedido de otra página: se trae suelto.
+  useEffect(() => {
+    if (!selectedId || loading || orders.some(o => o.id === selectedId) || externalOrder?.id === selectedId) return
+    let cancelled = false
+    void fetchWorkspaceOrder(eventId, selectedId).then(res => {
+      if (cancelled) return
+      if (res.ok) setExternalOrder(res.order)
+      else setSelectedId(null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedId, loading, orders, externalOrder, eventId])
+
+  const selectedIndex = selectedOrder ? orders.findIndex(o => o.id === selectedOrder.id) : -1
+
+  const changeFilter = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v)
+    setPage(1)
+  }
+  const setStatusF = changeFilter(setStatus)
+  const setPaymentF = changeFilter(setPayment)
+  const setCatsF = changeFilter(setCats)
+
+  const handleCancelOrder = useCallback(
+    async (order: Order) => {
+      const res = await patchOrderStatus(eventId, order.id, 'cancelled')
+      if (!res.ok) return res
+      setOrders(prev => prev.map(o => (o.id === res.order.id ? res.order : o)))
+      setExternalOrder(prev => (prev?.id === res.order.id ? res.order : prev))
+      void load(true)
+      return { ok: true as const }
+    },
+    [eventId, load],
+  )
+
+  const totalAll = statusCounts
+    ? statusCounts.unredeemed + statusCounts.partially_delivered + statusCounts.delivered + statusCounts.cancelled
+    : null
+  const countFor = (k: StatusFilter) => (k === 'all' ? totalAll : statusCounts?.[k] ?? null)
+  const currentFilters = {
+    paymentStatus: 'approved',
+    q: searchQ || undefined,
+    status: status === 'all' ? undefined : status,
+    payment,
+    categories: cats,
+  }
+
+  const exportCsv = async (ids?: string[]) => {
+    setExporting(true)
+    const res = await downloadOrdersCsv(eventId, { ...currentFilters, ids })
+    setExporting(false)
+    if (!res.ok) setError(res.error)
+  }
+
+  const checkedOrders = orders.filter(o => checked.has(o.id))
+  const allChecked = orders.length > 0 && checkedOrders.length === orders.length
+  const toggleChecked = (id: string) =>
+    setChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const hasFilters = Boolean(searchQ || payment || cats.length || status !== 'all')
+  const redeemPct = summary && summary.units ? Math.round((summary.redeemed_units / summary.units) * 100) : null
 
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+    <div className="mx-auto max-w-[1180px]">
       <style>{`
-        @keyframes nb-spin { to { transform: rotate(360deg); } }
-        @keyframes nb-select-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .nb-orders-scroll { overflow-x: auto; }
-        .nb-orders-table-header { min-width: 760px; }
-        .nb-order-row { transition: background 0.12s; min-width: 760px; }
-        .nb-order-row:hover { background: #FAFAFA !important; }
-        .nb-search-input:focus { outline: none; border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
-        .nb-select-opt:hover { background: #F5F5F7 !important; }
-
-        /* ── Responsive ── */
-        @media (max-width: 768px) {
-          .nb-orders-filters { flex-wrap: wrap; }
-          .nb-orders-search { flex: 1 1 100% !important; }
-          .nb-orders-cats { min-width: 0 !important; flex: 1 !important; }
-          .nb-orders-tabs button { padding: 7px 14px !important; }
-
-          .nb-orders-table-header { display: none !important; }
-
-          .nb-orders-scroll { overflow-x: visible; }
-          .nb-order-row {
-            min-width: 0 !important;
-            grid-template-columns: 1fr auto auto !important;
-            grid-template-areas:
-              "num    status eye"
-              "items  items  items"
-              "scan   scan   scan"
-              "name   total  total"
-              "email  email  email" !important;
-            padding: 14px 16px !important;
-            gap: 6px 10px !important;
-          }
-          .nb-cell-num    { grid-area: num; }
-          .nb-cell-items  { grid-area: items; }
-          .nb-cell-scan   { grid-area: scan; }
-          .nb-cell-scan .nb-scan-label { display: inline !important; }
-          .nb-cell-name   { grid-area: name; font-size: 13px !important; color: #0A0A0F !important; font-weight: 500 !important; }
-          .nb-cell-email  { grid-area: email; font-size: 11px !important; color: #9A9AA8 !important; }
-          .nb-cell-name .nb-name-label, .nb-cell-email .nb-email-label { display: inline !important; }
-          .nb-cell-total  { grid-area: total; text-align: right; }
-          .nb-cell-status { grid-area: status; align-self: center; }
-          .nb-cell-eye    { grid-area: eye; align-self: center; }
-        }
-
-        @media (max-width: 480px) {
-          .nb-orders-tabs button { padding: 7px 10px !important; font-size: 12px !important; }
-        }
+        @keyframes nb-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+        @keyframes nb-fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes nb-sheet-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+        @keyframes nb-sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+        @keyframes nb-swap { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+        @keyframes nb-flash { 0%, 30% { background-color: #FEF9C3; } 100% { background-color: transparent; } }
+        .nb-pop { animation: nb-pop 160ms ease-out both; transform-origin: top left; }
+        .nb-fade { animation: nb-fade 200ms ease-out both; }
+        .nb-sheet { animation: nb-sheet-up 280ms cubic-bezier(0.22,1,0.36,1) both; }
+        @media (min-width: 768px) { .nb-sheet { animation-name: nb-sheet-in; } }
+        .nb-swap { animation: nb-swap 220ms ease-out both; }
+        .nb-flash { animation: nb-flash 2.6s ease-out both; }
+        @media (prefers-reduced-motion: reduce) { .nb-pop, .nb-fade, .nb-sheet, .nb-swap, .nb-flash { animation: none; } }
       `}</style>
 
-      <OrganizerToolHeading
-        title="Pedidos"
-        description={
-          tab === 'orders' ? (
-            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-              Actualización automática cada 15 s
-              {lastRefresh && (
-                <span style={{ marginLeft: '8px', color: '#C4C4CF' }}>
-                  · última: {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      {/* Encabezado */}
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Pedidos</h1>
+          <p className="mt-1 flex items-center gap-2 text-[13px] text-gray-400">
+            {tab === 'orders' ? (
+              <>
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
                 </span>
-              )}
-            </p>
-          ) : (
-            <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-              Comprados vs. escaneados por producto
-            </p>
-          )
-        }
-        actions={
-          <button
-            onClick={handleRefresh}
-            disabled={tab === 'orders' && (refreshing || loading)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '100px', padding: '7px 14px',
-              fontSize: '13px', fontWeight: 500, color: '#6B7280',
-              cursor: tab === 'orders' && (refreshing || loading) ? 'not-allowed' : 'pointer',
-              opacity: tab === 'orders' && refreshing ? 0.6 : 1,
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: tab === 'orders' && refreshing ? 'nb-spin 0.7s linear infinite' : 'none' }} />
-            Actualizar
-          </button>
-        }
-      />
-
-      {/* Filtros + pestañas (Pedidos / Escaneos a la derecha del buscador) */}
-      <div className="nb-orders-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        {/* Search — compartido por Pedidos y Escaneos */}
-        <div className="nb-orders-search" style={{ position: 'relative', flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-            style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9A9AA8', pointerEvents: 'none' }}>
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          <input
-            type="text"
-            className="nb-search-input"
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            placeholder={tab === 'orders' ? 'Buscar por cliente, producto o nº de pedido…' : 'Buscar producto…'}
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              paddingLeft: '38px', paddingRight: '14px', paddingTop: '10px', paddingBottom: '10px',
-              border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
-              fontSize: '13px', color: '#0A0A0F', background: '#FFFFFF',
-              transition: 'border-color 0.15s, box-shadow 0.15s',
-            }}
-          />
-        </div>
-
-        {/* Category multi-select */}
-        {tab === 'orders' && categories.length > 0 && (
-          <div ref={catDropdownRef} className="nb-orders-cats" style={{ position: 'relative', flexShrink: 0, minWidth: '160px' }}>
-            <button
-              type="button"
-              onClick={() => setCatDropdownOpen(o => !o)}
-              aria-haspopup="listbox"
-              aria-expanded={catDropdownOpen}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
-                borderRadius: '12px',
-                border: '1px solid ' + (catDropdownOpen ? '#0A0A0F' : 'rgba(0,0,0,0.1)'),
-                background: '#FAFAFA',
-                padding: '10px 14px',
-                fontSize: '13px', color: '#0A0A0F',
-                cursor: 'pointer', textAlign: 'left',
-                boxShadow: catDropdownOpen ? '0 0 0 3px rgba(0,0,0,0.06)' : 'none',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
-                outline: 'none', boxSizing: 'border-box',
-              }}
-            >
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {selectedCats.size === 0
-                  ? 'Todas las categorías'
-                  : selectedCats.size === 1
-                  ? [...selectedCats][0]
-                  : `${selectedCats.size} categorías`}
-              </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-                style={{ flexShrink: 0, color: '#6B7280', transform: catDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-
-            {catDropdownOpen && (
-              <div
-                role="listbox"
-                style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 60,
-                  background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '14px', boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
-                  padding: '6px', maxHeight: '260px', overflowY: 'auto',
-                  animation: 'nb-select-pop 0.15s cubic-bezier(0.16,1,0.3,1)',
-                  display: 'flex', flexDirection: 'column', gap: '6px',
-                }}
-              >
-                {categories.map(cat => {
-                  const active = selectedCats.has(cat.name)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      role="option"
-                      aria-selected={active}
-                      onClick={() => setSelectedCats(prev => {
-                        const next = new Set(prev)
-                        active ? next.delete(cat.name) : next.add(cat.name)
-                        return next
-                      })}
-                      className="nb-select-opt"
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
-                        background: active ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
-                        border: 'none', borderRadius: '10px',
-                        padding: '9px 12px', fontSize: '13px',
-                        color: active ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F', cursor: 'pointer', textAlign: 'left',
-                      }}
-                    >
-                      <span>{cat.name}</span>
-                      {active && (
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
-                          <path d="M2.5 6.5l3 3 5-5" stroke={ORGANIZER_ACCENT_FOREGROUND} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </button>
-                  )
-                })}
-                {selectedCats.size > 0 && (
-                  <>
-                    <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }} />
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedCats(new Set()); setCatDropdownOpen(false) }}
-                      className="nb-select-opt"
-                      style={{
-                        width: '100%', border: 'none', borderRadius: '10px',
-                        padding: '9px 12px', fontSize: '13px',
-                        color: '#9A9AA8', background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                      }}
-                    >
-                      Limpiar filtro
-                    </button>
-                  </>
+                Se actualiza solo
+                {lastRefresh && (
+                  <span className="tabular-nums">
+                    · {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })}
+                  </span>
                 )}
-              </div>
+              </>
+            ) : (
+              'Comprados vs. escaneados por producto'
             )}
-          </div>
-        )}
-
-        {/* Pestañas: Pedidos / Escaneos — mismo toggle animado que el resto del panel */}
-        <div
-          className="nb-orders-tabs"
-          role="tablist"
-          aria-label="Vista de pedidos"
-          style={{
-            position: 'relative', display: 'inline-grid', gridTemplateColumns: '1fr 1fr',
-            gap: '4px', padding: '4px', background: '#F5F5F7', borderRadius: '12px',
-            flexShrink: 0, marginLeft: 'auto',
-          }}
-        >
-          {/* Pastilla deslizante */}
-          <span
-            aria-hidden
-            style={{
-              position: 'absolute', top: '4px', bottom: '4px', left: '4px',
-              width: 'calc(50% - 6px)',
-              background: '#FFFFFF', borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              transform: tab === 'scans' ? 'translateX(calc(100% + 4px))' : 'translateX(0)',
-              transition: 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
-              pointerEvents: 'none',
-            }}
-          />
-          {([['orders', 'Pedidos'], ['scans', 'Escaneos']] as const).map(([key, label]) => {
-            const active = tab === key
-            return (
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div role="tablist" aria-label="Vista de pedidos" className="inline-flex rounded-xl bg-gray-100 p-1">
+            {(
+              [
+                ['orders', 'Pedidos'],
+                ['scans', 'Escaneos'],
+              ] as const
+            ).map(([key, label]) => (
               <button
                 key={key}
                 type="button"
                 role="tab"
-                aria-selected={active}
-                onClick={() => changeTab(key)}
-                style={{
-                  position: 'relative', zIndex: 1,
-                  background: 'transparent', border: 'none', borderRadius: '8px',
-                  padding: '7px 18px', fontSize: '13px', fontWeight: 600,
-                  letterSpacing: '-0.01em', whiteSpace: 'nowrap', cursor: 'pointer',
-                  color: active ? '#0A0A0F' : '#9A9AA8',
-                  transition: 'color 0.2s ease',
+                aria-selected={tab === key}
+                onClick={() => {
+                  setTab(key)
+                  setSearchInput('')
                 }}
+                className={cn(
+                  'rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors',
+                  tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900',
+                )}
               >
                 {label}
               </button>
-            )
-          })}
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => (tab === 'orders' ? void load(true) : setScanRefresh(n => n + 1))}
+            disabled={tab === 'orders' && (refreshing || loading)}
+            aria-label="Actualizar"
+            title="Actualizar"
+            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
+          >
+            <RotateCw size={16} strokeWidth={1.75} className={refreshing ? 'animate-spin' : ''} />
+          </button>
         </div>
+      </header>
+
+      {/* Pestañas de estado con conteo (vistas rápidas) */}
+      {tab === 'orders' && (
+        <div className="-mx-4 mb-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <div role="tablist" aria-label="Estado" className="flex min-w-max gap-1 border-b border-gray-200">
+            {STATUS_TABS.map(t => {
+              const active = status === t.key
+              const n = countFor(t.key)
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setStatusF(t.key)}
+                  className={cn(
+                    'relative -mb-px flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[13px] transition-colors',
+                    active ? 'border-gray-900 font-semibold text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900',
+                  )}
+                >
+                  {t.key !== 'all' && <span className={cn('size-1.5 rounded-full', statusUi(t.key === 'unredeemed' ? 'paid' : t.key).dot)} aria-hidden />}
+                  {t.label}
+                  {n != null && (
+                    <span
+                      className={cn(
+                        'rounded-md px-1.5 text-[11px] font-semibold tabular-nums',
+                        active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500',
+                      )}
+                    >
+                      {formatCount(n)}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Buscador y filtros */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1">
+          <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+          <input
+            ref={searchRef}
+            type="search"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                setSearchInput('')
+                e.currentTarget.blur()
+              }
+            }}
+            placeholder={tab === 'orders' ? 'Buscar por cliente, producto o nº de pedido…' : 'Buscar producto…'}
+            className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-10 text-[13px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)] focus:outline-none"
+          />
+          {!searchInput && (
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 px-1.5 font-sans text-[10px] font-semibold text-gray-400">
+              /
+            </kbd>
+          )}
+        </div>
+        {tab === 'orders' && (
+          <>
+            <FilterMenu
+              label="Pago"
+              options={PAYMENT_CONFIG.map(p => ({ value: p.key, label: p.label, swatch: p.color }))}
+              selected={payment ? [payment] : []}
+              onChange={v => setPaymentF((v[0] as DashboardPaymentKey | undefined) ?? null)}
+            />
+            {categories.length > 0 && (
+              <FilterMenu
+                label="Categoría"
+                multiple
+                options={categories.map(c => ({ value: c.name, label: c.name }))}
+                selected={cats}
+                onChange={setCatsF}
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => void exportCsv()}
+              disabled={exporting || pagination.total === 0}
+              title="Descargar los pedidos de este filtro en CSV (Excel / Sheets)"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
+            >
+              <Download size={14} strokeWidth={1.75} className={exporting ? 'animate-bounce' : ''} aria-hidden />
+              {exporting ? 'Exportando…' : 'Exportar'}
+            </button>
+          </>
+        )}
       </div>
 
-      {tab === 'scans' && (
-        <ProductScanSummaryView
-          key={scanRefresh}
-          eventId={eventId}
-          embedded
-          query={searchInput}
+      {tab === 'orders' && (payment || cats.length > 0) && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {payment && <FilterChip label="Pago" value={PAY_LABEL[payment]} onClear={() => setPaymentF(null)} />}
+          {cats.map(c => (
+            <FilterChip key={c} label="Categoría" value={c} onClear={() => setCatsF(cats.filter(x => x !== c))} />
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setPaymentF(null)
+              setCatsF([])
+            }}
+            className="px-1 text-[12px] font-medium text-gray-400 transition-colors hover:text-gray-900"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      )}
+
+      {tab === 'scans' && <ProductScanSummaryView key={scanRefresh} eventId={eventId} embedded query={searchInput} />}
+
+      {tab === 'orders' && (
+        <>
+          {/* Totales del filtro actual (Mercury) */}
+          {summary && !loading && (
+            <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[13px] text-gray-500">
+              <span>
+                <span className="font-semibold tabular-nums text-gray-900">{formatCount(pagination.total)}</span>{' '}
+                {pagination.total === 1 ? 'pedido' : 'pedidos'}
+              </span>
+              <span>
+                <Money value={summary.revenue} className="font-semibold tabular-nums text-gray-900" /> cobrado
+              </span>
+              {redeemPct != null && (
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-100">
+                    <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${redeemPct}%` }} />
+                  </span>
+                  <span>
+                    <span className="font-semibold tabular-nums text-gray-900">{redeemPct}%</span> retirado
+                    <span className="tabular-nums text-gray-400">
+                      {' '}
+                      ({formatCount(summary.redeemed_units)} de {formatCount(summary.units)} u.)
+                    </span>
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-3 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">{error}</div>
+          )}
+
+          {loading ? (
+            <OrdersSkeleton />
+          ) : orders.length === 0 ? (
+            <div className="rounded-2xl border border-gray-200/80 bg-white px-6 py-16 text-center">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-50">
+                <Search size={20} strokeWidth={1.5} className="text-gray-300" aria-hidden />
+              </div>
+              <p className="text-[15px] font-semibold text-gray-900">Sin pedidos</p>
+              <p className="mt-1 text-[13px] text-gray-400">
+                {hasFilters ? 'Probá otra búsqueda o quitá filtros.' : 'Los pedidos pagados aparecerán acá.'}
+              </p>
+            </div>
+          ) : (
+            <div className={cn('relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-opacity', refreshing && 'opacity-80')}>
+              {/* Encabezado de la tabla (escritorio) */}
+              <div className={cn('hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid', ORDERS_GRID)}>
+                <span className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    aria-label="Seleccionar todos los pedidos de la página"
+                    checked={allChecked}
+                    ref={el => {
+                      if (el) el.indeterminate = checkedOrders.length > 0 && !allChecked
+                    }}
+                    onChange={() => setChecked(allChecked ? new Set() : new Set(orders.map(o => o.id)))}
+                    className="size-4 cursor-pointer rounded border-gray-300 accent-gray-900"
+                  />
+                  #
+                </span>
+                <span>Cliente</span>
+                <span>Productos</span>
+                <span>Retiro</span>
+                <span className="text-right">Total</span>
+                <span>Estado</span>
+                <span className="text-right">Hora</span>
+              </div>
+              <ul>
+                {orders.map(order => {
+                  const selected = order.id === selectedId
+                  const payColor = PAYMENT_CONFIG.find(p => p.key === order.paymentMethod)?.color
+                  const open = () => {
+                    setExternalOrder(null)
+                    setSelectedId(order.id)
+                  }
+                  return (
+                    <li key={order.id} className="border-t border-gray-100 first:border-t-0">
+                      {/* Toda la fila abre el detalle con el mouse; el nº de pedido es el botón para teclado y lectores. */}
+                      <div
+                        onClick={open}
+                        aria-current={selected || undefined}
+                        className={cn(
+                          'relative grid cursor-pointer grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5 px-4 py-3.5 transition-colors md:gap-y-0 md:py-3',
+                          ORDERS_GRID,
+                          selected ? 'bg-gray-50' : checked.has(order.id) ? 'bg-gray-50/60' : 'hover:bg-gray-50/70',
+                          newIds.has(order.id) && 'nb-flash',
+                        )}
+                      >
+                        {selected && <span className="absolute inset-y-0 left-0 w-0.5 bg-gray-900" aria-hidden />}
+
+                        {/* # */}
+                        <span className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Seleccionar pedido ${order.orderNumber != null ? `#${order.orderNumber}` : ''}`.trim()}
+                            checked={checked.has(order.id)}
+                            onClick={e => e.stopPropagation()}
+                            onChange={() => toggleChecked(order.id)}
+                            className="size-4 shrink-0 cursor-pointer rounded border-gray-300 accent-gray-900"
+                          />
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation()
+                              open()
+                            }}
+                            aria-label={`Ver detalle del pedido ${order.orderNumber != null ? `#${order.orderNumber}` : ''}`.trim()}
+                            className="rounded text-[13px] font-semibold tabular-nums text-gray-900 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-gray-900/20"
+                          >
+                            {order.orderNumber != null ? `#${order.orderNumber}` : '—'}
+                          </button>
+                          <span className="text-[13px] text-gray-400 md:hidden">{relativeTime(order.createdAt, now)}</span>
+                        </span>
+
+                        {/* Estado en mobile va arriba a la derecha */}
+                        <span className="justify-self-end md:hidden">
+                          <StatusBadge status={order.status} />
+                        </span>
+
+                        {/* Cliente */}
+                        <div className="col-span-2 flex min-w-0 items-center gap-2.5 md:col-span-1">
+                          <span
+                            className="hidden size-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold text-gray-500 md:flex"
+                            aria-hidden
+                          >
+                            {initials(order.customerName)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className={cn('truncate text-[13px] font-medium', order.customerName ? 'text-gray-900' : 'text-gray-300')}>
+                              {order.customerName || 'Sin nombre'}
+                            </p>
+                            {order.customerEmail && <p className="truncate text-[11px] text-gray-400">{order.customerEmail}</p>}
+                          </div>
+                        </div>
+
+                        {/* Productos */}
+                        <div className="col-span-2 min-w-0 md:col-span-1">
+                          <p className="truncate text-[13px] text-gray-600" title={itemsSummary(order)}>
+                            {itemsSummary(order)}
+                          </p>
+                        </div>
+
+                        {/* Retiro */}
+                        <div>
+                          <ScanProgress order={order} />
+                        </div>
+
+                        {/* Total */}
+                        <div className="flex items-center justify-end gap-2">
+                          {payColor && (
+                            <span
+                              className="size-2 shrink-0 rounded-[3px]"
+                              style={{ backgroundColor: payColor }}
+                              title={PAY_LABEL[order.paymentMethod ?? ''] ?? ''}
+                              aria-label={PAY_LABEL[order.paymentMethod ?? ''] ?? undefined}
+                            />
+                          )}
+                          <Money
+                            value={order.total}
+                            className={cn(
+                              'text-[13px] font-semibold tabular-nums',
+                              order.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900',
+                            )}
+                          />
+                        </div>
+
+                        {/* Estado (escritorio) */}
+                        <span className="hidden md:block">
+                          <StatusBadge status={order.status} />
+                        </span>
+
+                        {/* Hora (escritorio) */}
+                        <span className="hidden whitespace-nowrap text-right text-[12px] tabular-nums text-gray-400 md:block" title={new Date(order.createdAt).toLocaleString('es-AR')}>
+                          {relativeTime(order.createdAt, now)}
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+
+          {!loading && pagination.total > PAGE_SIZE && (
+            <div className="mt-5 flex justify-center">
+              <PaginationBar page={page} pageSize={PAGE_SIZE} total={pagination.total} onPageChange={setPage} />
+            </div>
+          )}
+
+          {!loading && orders.length > 0 && (
+            <p className="mt-3 hidden text-center text-[11px] text-gray-400 md:block">
+              Tocá un pedido para ver el detalle · ↑ ↓ para recorrerlos · <kbd className="font-sans">/</kbd> para buscar
+            </p>
+          )}
+        </>
+      )}
+
+      {tab === 'orders' && checkedOrders.length > 0 && (
+        <BulkActionsBar
+          orders={checkedOrders}
+          exporting={exporting}
+          onExport={() => void exportCsv(checkedOrders.map(o => o.id))}
+          onClear={() => setChecked(new Set())}
+          onCancel={async target => {
+            const failed: string[] = []
+            for (const o of target) {
+              const res = await patchOrderStatus(eventId, o.id, 'cancelled')
+              if (!res.ok) failed.push(`#${o.orderNumber ?? '—'}: ${res.error}`)
+            }
+            // La selección queda para que la barra muestre el resultado; "Listo" la limpia.
+            void load(true)
+            return failed
+          }}
         />
       )}
 
-      {tab === 'orders' && (
-      <>
-      {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
-        </div>
+      {selectedOrder && (
+        <OrderDetailSheet
+          order={selectedOrder}
+          onClose={() => {
+            setSelectedId(null)
+            setExternalOrder(null)
+          }}
+          onPrev={selectedIndex > 0 ? () => setSelectedId(orders[selectedIndex - 1].id) : undefined}
+          onNext={selectedIndex >= 0 && selectedIndex < orders.length - 1 ? () => setSelectedId(orders[selectedIndex + 1].id) : undefined}
+          onCancelOrder={handleCancelOrder}
+        />
       )}
-
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: '12px' }}>
-          <Spinner size="lg" className="text-gray-900" />
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>Cargando pedidos…</p>
-        </div>
-      ) : displayOrders.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M4 4h14v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4z" stroke="#C8C8D0" strokeWidth="1.5" strokeLinejoin="round"/>
-              <path d="M8 4V2M14 4V2M4 9h14" stroke="#C8C8D0" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Sin pedidos</p>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: 0 }}>
-            {searchQ || selectedCats.size > 0 ? 'Probá otra búsqueda o quitá filtros.' : 'Los pedidos pagados aparecerán acá.'}
-          </p>
-        </div>
-      ) : (
-        <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
-          {refreshing && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.06)', zIndex: 2 }} />
-          )}
-
-          <div className="nb-orders-scroll">
-          {/* Header row */}
-          <div className="nb-orders-table-header" style={{ display: 'grid', gridTemplateColumns: ORDERS_GRID, gap: '12px', padding: '11px 16px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-            <span style={HEAD_CELL}>#</span>
-            <span style={HEAD_CELL}>Productos</span>
-            <span style={HEAD_CELL}>Nombre</span>
-            <span style={HEAD_CELL}>Email</span>
-            <span style={{ ...HEAD_CELL, justifySelf: 'end' }}>Total</span>
-            <span style={HEAD_CELL}>Escaneado</span>
-            <span style={HEAD_CELL}>Estado</span>
-            <span />
-          </div>
-
-          {displayOrders.map((order, idx) => {
-            const statusStyle = STATUS_STYLE[order.status] ?? STATUS_STYLE.pending
-            const statusLabel = STATUS_LABEL[order.status] ?? order.status
-            const scan = scanInfo(order)
-
-            return (
-              <div
-                key={order.id}
-                className="nb-order-row"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: ORDERS_GRID,
-                  gap: '12px',
-                  padding: '13px 16px',
-                  borderTop: idx === 0 ? 'none' : '1px solid rgba(0,0,0,0.04)',
-                  background: '#FFFFFF',
-                  alignItems: 'center',
-                }}
-              >
-                {/* Order number */}
-                <span className="nb-cell-num" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}>
-                  {order.orderNumber != null ? `#${order.orderNumber}` : '—'}
-                </span>
-
-                {/* Products summary */}
-                <div className="nb-cell-items" style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {order.items.map(i => `${i.name}${i.quantity > 1 ? ` ×${i.quantity}` : ''}`).join(', ')}
-                  </p>
-                  {order.items.some(i => i.categoryName) && (
-                    <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {[...new Set(order.items.map(i => i.categoryName).filter(Boolean))].join(' · ')}
-                    </p>
-                  )}
-                </div>
-
-                {/* Nombre */}
-                <div className="nb-cell-name" style={{ minWidth: 0, fontSize: '13px', color: order.customerName ? '#0A0A0F' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span className="nb-name-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Nombre:</span>
-                  {order.customerName ?? '—'}
-                </div>
-
-                {/* Email */}
-                <div className="nb-cell-email" style={{ minWidth: 0, fontSize: '12px', color: order.customerEmail ? '#6B7280' : '#C8C8D0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span className="nb-email-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Email:</span>
-                  {order.customerEmail ?? '—'}
-                </div>
-
-                {/* Total */}
-                <span className="nb-cell-total" style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', justifySelf: 'end', fontVariantNumeric: 'tabular-nums' }}>
-                  {formatPrice(order.total)}
-                </span>
-
-                {/* Escaneado */}
-                <div className="nb-cell-scan" style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {order.status === 'cancelled' ? (
-                    <span style={{ fontSize: '12px', color: '#C8C8D0' }}>—</span>
-                  ) : (
-                    <>
-                      <span aria-hidden style={{ width: '7px', height: '7px', borderRadius: '50%', background: SCAN_UI[scan.state].color, flexShrink: 0 }} />
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: SCAN_UI[scan.state].color, fontVariantNumeric: 'tabular-nums' }}>
-                        <span className="nb-scan-label" style={{ display: 'none', fontSize: '10px', color: '#9A9AA8', marginRight: '4px', fontWeight: 500 }}>Escaneado:</span>
-                        {scan.redeemed ?? '?'}/{scan.units}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Status badge */}
-                <div className="nb-cell-status">
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center',
-                    background: statusStyle.bg, color: statusStyle.color,
-                    fontSize: '11px', fontWeight: 600,
-                    padding: '3px 8px', borderRadius: '100px',
-                  }}>
-                    {statusLabel}
-                  </span>
-                </div>
-
-                {/* Eye button */}
-                <button
-                  type="button"
-                  className="nb-cell-eye"
-                  onClick={() => { setDetailOrder(order); setCancelStage('none'); setCancelError('') }}
-                  aria-label="Ver detalle"
-                  style={{
-                    width: '30px', height: '30px', borderRadius: '8px',
-                    border: '1px solid rgba(0,0,0,0.08)', background: '#FFFFFF',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', color: '#9A9AA8', flexShrink: 0,
-                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
-                  }}
-                  onMouseEnter={e => {
-                    const b = e.currentTarget
-                    b.style.background = '#F5F5F7'
-                    b.style.color = '#0A0A0F'
-                    b.style.borderColor = 'rgba(0,0,0,0.14)'
-                  }}
-                  onMouseLeave={e => {
-                    const b = e.currentTarget
-                    b.style.background = '#FFFFFF'
-                    b.style.color = '#9A9AA8'
-                    b.style.borderColor = 'rgba(0,0,0,0.08)'
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <ellipse cx="7" cy="7" rx="6" ry="4" stroke="currentColor" strokeWidth="1.3"/>
-                    <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
-                  </svg>
-                </button>
-              </div>
-            )
-          })}
-          </div>
-        </div>
-      )}
-
-      {!loading && pagination.total > PAGE_SIZE && (
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-          <PaginationBar
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={pagination.total}
-            onPageChange={setPage}
-          />
-        </div>
-      )}
-      </>
-      )}
-
-      {/* Order detail modal */}
-      <Modal
-        isOpen={detailOrder !== null}
-        onClose={closeDetail}
-        containerClassName="z-[70]"
-        className="!p-0 overflow-hidden max-w-md w-full"
-      >
-        {detailOrder && (() => {
-          const o = detailOrder
-          const statusStyle = STATUS_STYLE[o.status] ?? STATUS_STYLE.pending
-          const statusLabel = STATUS_LABEL[o.status] ?? o.status
-          const scan = scanInfo(o)
-          return (
-            <div>
-              {/* Header */}
-              <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <div>
-                  <p style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
-                    {o.orderNumber != null ? `Pedido #${o.orderNumber}` : 'Detalle del pedido'}
-                  </p>
-                  <p style={{ fontSize: '12px', color: '#9A9AA8', margin: '3px 0 0 0' }}>{fmtDate(o.createdAt)}</p>
-                </div>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  background: statusStyle.bg, color: statusStyle.color,
-                  fontSize: '12px', fontWeight: 600,
-                  padding: '4px 10px', borderRadius: '100px', flexShrink: 0,
-                }}>
-                  {statusLabel}
-                </span>
-              </div>
-
-              {/* Items */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8', margin: '0 0 10px 0', letterSpacing: '-0.01em' }}>Productos</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {o.items.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', fontWeight: 500, color: '#0A0A0F', margin: 0 }}>
-                          {item.quantity > 1 && <span style={{ fontWeight: 700, color: '#6B7280' }}>{item.quantity}×&nbsp;</span>}
-                          {item.name}
-                        </p>
-                        {item.categoryName && (
-                          <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0' }}>{item.categoryName}</p>
-                        )}
-                        {item.redeemedQuantity != null && (
-                          <p style={{
-                            fontSize: '11px', fontWeight: 600, margin: '2px 0 0 0',
-                            color: item.redeemedQuantity >= item.quantity ? '#047857' : item.redeemedQuantity > 0 ? '#B45309' : '#9A9AA8',
-                          }}>
-                            {item.redeemedQuantity >= item.quantity
-                              ? 'Escaneado'
-                              : `Escaneado ${item.redeemedQuantity}/${item.quantity}`}
-                          </p>
-                        )}
-                      </div>
-                      <span style={{ fontSize: '13px', color: '#6B7280', fontVariantNumeric: 'tabular-nums', flexShrink: 0, paddingTop: '1px' }}>
-                        {formatPrice(item.subtotal ?? item.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                {o.status !== 'cancelled' && (
-                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#9A9AA8' }}>Escaneado</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: SCAN_UI[scan.state].color, fontVariantNumeric: 'tabular-nums' }}>
-                      {SCAN_UI[scan.state].label} · {scan.redeemed ?? '?'}/{scan.units} unidades
-                    </span>
-                  </div>
-                )}
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F' }}>Total</span>
-                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{formatPrice(o.total)}</span>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8', margin: 0, letterSpacing: '-0.01em' }}>Información</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {o.customerName && (
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Cliente</p>
-                      <p style={{ fontSize: '13px', fontWeight: 500, color: '#0A0A0F', margin: 0 }}>{o.customerName}</p>
-                    </div>
-                  )}
-                  {o.customerPhone && (
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Teléfono</p>
-                      <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0 }}>{o.customerPhone}</p>
-                    </div>
-                  )}
-                  {o.customerEmail && (
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Email</p>
-                      <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0, overflowWrap: 'anywhere' }}>{o.customerEmail}</p>
-                    </div>
-                  )}
-                  {o.paymentMethod && (
-                    <div>
-                      <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '0 0 2px 0' }}>Método de pago</p>
-                      <p style={{ fontSize: '13px', color: '#0A0A0F', margin: 0 }}>{PAY_LABEL[o.paymentMethod] ?? o.paymentMethod}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Cancelación */}
-              {o.status !== 'cancelled' && o.status !== 'delivered' && (
-                <div style={{ padding: '0 20px 20px' }}>
-                  {cancelError && (
-                    <p style={{ fontSize: '12px', color: '#DC2626', margin: '0 0 10px 0' }}>{cancelError}</p>
-                  )}
-
-                  {cancelStage === 'none' && (
-                    <button
-                      type="button"
-                      onClick={() => { setCancelError(''); setCancelStage('first') }}
-                      style={{
-                        width: '100%', fontSize: '13px', fontWeight: 600, color: '#DC2626',
-                        background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)',
-                        borderRadius: '12px', padding: '10px 14px', cursor: 'pointer',
-                      }}
-                    >
-                      Cancelar pedido
-                    </button>
-                  )}
-
-                  {cancelStage === 'first' && (
-                    <div style={{ background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#991B1B', margin: 0 }}>¿Cancelar este pedido?</p>
-                      <p style={{ fontSize: '12px', color: '#7F1D1D', margin: 0 }}>
-                        El QR dejará de ser válido y no se podrá usar para retirar productos.
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={() => setCancelStage('none')}
-                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#6B7280', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', padding: '9px', cursor: 'pointer' }}
-                        >
-                          Volver
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCancelStage('second')}
-                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#FFFFFF', background: '#DC2626', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer' }}
-                        >
-                          Sí, cancelar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {cancelStage === 'second' && (
-                    <div style={{ background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#991B1B', margin: 0 }}>Confirmá una vez más</p>
-                      <p style={{ fontSize: '12px', color: '#7F1D1D', margin: 0 }}>
-                        Esta acción es permanente y no se puede deshacer. El pedido quedará marcado como cancelado.
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={() => setCancelStage('none')}
-                          disabled={cancelling}
-                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#6B7280', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', padding: '9px', cursor: cancelling ? 'not-allowed' : 'pointer' }}
-                        >
-                          Volver
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleCancelOrder()}
-                          disabled={cancelling}
-                          style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: '#FFFFFF', background: '#DC2626', border: 'none', borderRadius: '10px', padding: '9px', cursor: cancelling ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.7 : 1 }}
-                        >
-                          {cancelling ? 'Cancelando…' : 'Sí, cancelar definitivamente'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })()}
-      </Modal>
     </div>
   )
 }

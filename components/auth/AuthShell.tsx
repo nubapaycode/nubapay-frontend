@@ -1,9 +1,11 @@
 'use client'
 
+import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
 
 /**
- * Shell visual compartido por /login y /register.
+ * Shell visual compartido por /login, /register y /forgot-password.
  *
  * La tarjeta se presenta como un pase de acceso troquelado (stub + perforación +
  * muescas): es el artefacto propio del producto — la credencial con la que se
@@ -190,6 +192,18 @@ export const AUTH_CSS = `
   }
   .nba-input:disabled { opacity: 0.55; cursor: not-allowed; }
   textarea.nba-input { height: 128px; resize: none; line-height: 1.6; }
+  .nba-input-wrap { position: relative; }
+  .nba-input-wrap .nba-input { padding-right: 46px; }
+  .nba-eye {
+    position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    background: none; border: none; padding: 0; border-radius: 8px;
+    color: #9A9AA8; cursor: pointer;
+    transition: color 0.16s;
+  }
+  .nba-eye:hover:not(:disabled) { color: #0A0A0F; }
+  .nba-eye:disabled { opacity: 0.55; cursor: not-allowed; }
 
   .nba-hint { align-self: flex-end; font-size: 13px; color: #9A9AA8; text-decoration: none; margin-top: -4px; }
   .nba-hint:hover { color: #0A0A0F; }
@@ -204,6 +218,24 @@ export const AUTH_CSS = `
     line-height: 1.45;
     color: #DC2626;
   }
+
+  .nba-success {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: color-mix(in srgb, ${ACCENT} 14%, #FFFFFF);
+    border: 1px solid color-mix(in srgb, ${ACCENT} 55%, transparent);
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2A2A35;
+  }
+  .nba-success-icon {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 100px;
+    background: ${ACCENT}; color: ${ACCENT_INK};
+  }
+  .nba-success strong { color: #0A0A0F; font-weight: 600; word-break: break-word; }
+  .nba-note { font-size: 13px; line-height: 1.5; color: #9A9AA8; margin: 14px 0 0; }
 
   /* ── CTA: mismo pill con flecha que la landing ── */
   .nba-submit {
@@ -336,14 +368,34 @@ export function Mark({ on, children }: { on: boolean; children: React.ReactNode 
 export function AuthField({
   id,
   label,
+  type,
   ...rest
 }: { id: string; label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const [visible, setVisible] = useState(false)
+  const isPassword = type === 'password'
   return (
     <div className="nba-field">
       <label className="nba-label" htmlFor={id}>
         {label}
       </label>
-      <input id={id} className="nba-input" {...rest} />
+      {isPassword ? (
+        <div className="nba-input-wrap">
+          <input id={id} className="nba-input" type={visible ? 'text' : 'password'} {...rest} />
+          <button
+            type="button"
+            className="nba-eye"
+            onClick={() => setVisible(v => !v)}
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={visible}
+            aria-controls={id}
+            disabled={rest.disabled}
+          >
+            {visible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+          </button>
+        </div>
+      ) : (
+        <input id={id} className="nba-input" type={type} {...rest} />
+      )}
     </div>
   )
 }

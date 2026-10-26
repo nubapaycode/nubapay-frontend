@@ -12,6 +12,7 @@ import type { OrganizerStaffTools } from '@/lib/authSession'
 import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
+import { CommandPalette } from './CommandPalette'
 import { EventOrganizerSidebar } from './EventOrganizerSidebar'
 import { WorkspaceAccessProvider } from './WorkspaceAccessContext'
 
@@ -244,6 +245,13 @@ export function EventOrganizerShell({
           </WorkspaceAccessProvider>
         </div>
       </div>
+      <CommandPalette
+        eventId={eventId}
+        basePath={base}
+        pathname={pathname}
+        tools={tools}
+        membership={eventMeta.membership}
+      />
     </div>
   )
 }

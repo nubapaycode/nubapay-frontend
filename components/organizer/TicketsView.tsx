@@ -1,12 +1,18 @@
 'use client'
 
-import { Copy, ExternalLink } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Car, Crown, Plus, Ticket, Timer } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { ToggleSwitch } from '@/components/organizer/BlocksView'
-import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import { ShareLinkCard } from '@/components/organizer/tickets/ShareLinkCard'
+import { TicketCard } from '@/components/organizer/tickets/TicketCard'
+import {
+  EMPTY_TICKET_FORM,
+  TicketFormModal,
+  type TicketFormState,
+  type TicketPayload,
+} from '@/components/organizer/tickets/TicketFormModal'
 import { Modal } from '@/components/ui/Modal'
-import { Spinner } from '@/components/ui/Spinner'
 import { ticketsPath } from '@/lib/buyerRoutes'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
@@ -15,45 +21,61 @@ import {
   deleteTicket,
   fetchTickets,
   patchTicket,
+  reorderTickets,
   type WorkspaceTicket,
 } from '@/lib/organizerWorkspace'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
-import { formatPrice } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
-type FormState = { name: string; description: string; price: string; stock: string }
+/** Plantillas del estado vacío: abren el formulario con el nombre (y descripción) ya puestos. */
+const TEMPLATES: { label: string; icon: React.ReactNode; form: Partial<TicketFormState> }[] = [
+  { label: 'Entrada general', icon: <Ticket size={15} strokeWidth={1.75} />, form: { name: 'Entrada general' } },
+  { label: 'Anticipada', icon: <Timer size={15} strokeWidth={1.75} />, form: { name: 'Anticipada', description: 'Precio especial por tiempo limitado' } },
+  { label: 'VIP', icon: <Crown size={15} strokeWidth={1.75} />, form: { name: 'VIP', description: 'Acceso preferencial' } },
+  { label: 'Parking', icon: <Car size={15} strokeWidth={1.75} />, form: { name: 'Parking', description: 'Un vehículo por ticket' } },
+]
 
-const EMPTY_FORM: FormState = { name: '', description: '', price: '', stock: '' }
-
-const inputClass =
-  'nb-input w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-sm text-[#0A0A0F] outline-none transition-colors'
+function TicketsSkeleton() {
+  return (
+    <div aria-busy="true">
+      <p className="sr-only">Cargando tickets…</p>
+      <div className="mb-6 h-[72px] animate-pulse rounded-2xl bg-gray-100" />
+      <div className="grid gap-3 xl:grid-cols-2">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="h-[148px] animate-pulse rounded-2xl bg-gray-100" />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function TicketsView({ eventId }: { eventId: string }) {
   const [tickets, setTickets] = useState<WorkspaceTicket[]>([])
   const [eventSlug, setEventSlug] = useState('')
   const [hasCover, setHasCover] = useState(true)
-  const [copied, setCopied] = useState(false)
   const origin = usePublicOrigin()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const [formOpen, setFormOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<FormState>(EMPTY_FORM)
-  const [formError, setFormError] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState<WorkspaceTicket | null>(null)
+  const [formInitial, setFormInitial] = useState<TicketFormState>(EMPTY_TICKET_FORM)
 
   const [deleteTarget, setDeleteTarget] = useState<WorkspaceTicket | null>(null)
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
   const [togglePending, setTogglePending] = useState<Set<string>>(() => new Set())
 
+  const [dragId, setDragId] = useState<string | null>(null)
+  const dragOrderBefore = useRef<WorkspaceTicket[] | null>(null)
+
   useEffect(() => {
     let cancelled = false
-    fetchOrganizerEventDetail(eventId).then(res => {
+    void fetchOrganizerEventDetail(eventId).then(res => {
       if (cancelled || !res.ok) return
       setEventSlug(res.event.slug)
       setHasCover(Boolean(res.event.cover_image_url))
     })
-    fetchTickets(eventId).then(res => {
+    void fetchTickets(eventId).then(res => {
       if (cancelled) return
       if (!res.ok) setError(res.error)
       else setTickets(res.tickets)
@@ -64,51 +86,41 @@ export function TicketsView({ eventId }: { eventId: string }) {
     }
   }, [eventId])
 
-  const closeForm = () => {
-    setFormOpen(false)
-    setEditingId(null)
-    setForm(EMPTY_FORM)
-    setFormError('')
-  }
-
-  const openCreate = () => {
-    setEditingId(null)
-    setForm(EMPTY_FORM)
-    setFormError('')
+  const openCreate = (preset: Partial<TicketFormState> = {}) => {
+    setEditing(null)
+    setFormInitial({ ...EMPTY_TICKET_FORM, ...preset })
     setFormOpen(true)
   }
 
   const openEdit = (t: WorkspaceTicket) => {
-    setEditingId(t.id)
-    setForm({ name: t.name, description: t.description, price: String(t.price), stock: t.stock == null ? '' : String(t.stock) })
-    setFormError('')
+    setEditing(t)
+    setFormInitial({ name: t.name, description: t.description, price: String(t.price), stock: t.stock == null ? '' : String(t.stock) })
     setFormOpen(true)
   }
 
-  const handleSave = async () => {
-    if (saving) return
-    const name = form.name.trim()
-    const price = Number(form.price.replace(',', '.'))
-    if (name.length < 2) { setFormError('Ingresá un nombre (ej. Entrada general, Parking VIP)'); return }
-    if (form.price.trim() === '' || !Number.isFinite(price) || price < 0) { setFormError('Ingresá un precio válido'); return }
+  const closeForm = () => {
+    setFormOpen(false)
+    setEditing(null)
+  }
 
-    // Stock opcional: vacío = sin límite.
-    const stockText = form.stock.trim()
-    const stock = stockText === '' ? null : Number(stockText)
-    if (stock !== null && (!Number.isInteger(stock) || stock < 0)) { setFormError('El stock debe ser un número entero (o dejalo vacío para no limitarlo)'); return }
-
-    setSaving(true)
-    setFormError('')
-    const payload = { name, description: form.description.trim(), price, stock }
-    const res = editingId
-      ? await patchTicket(eventId, editingId, payload)
-      : await createTicket(eventId, payload)
-    setSaving(false)
-    if (!res.ok) { setFormError(res.error); return }
-    setTickets(list =>
-      editingId ? list.map(x => (x.id === res.ticket.id ? res.ticket : x)) : [...list, res.ticket],
-    )
+  const saveTicket = async (payload: TicketPayload): Promise<string | null> => {
+    const res = editing ? await patchTicket(eventId, editing.id, payload) : await createTicket(eventId, payload)
+    if (!res.ok) return res.error
+    setTickets(list => (editing ? list.map(x => (x.id === res.ticket.id ? res.ticket : x)) : [...list, res.ticket]))
     closeForm()
+    return null
+  }
+
+  const duplicate = async (t: WorkspaceTicket) => {
+    const res = await createTicket(eventId, {
+      name: `${t.name} (copia)`.slice(0, 150),
+      description: t.description,
+      price: t.price,
+      stock: t.stock,
+      is_active: false,
+    })
+    if (!res.ok) setError(res.error)
+    else setTickets(list => [...list, res.ticket])
   }
 
   const toggleActive = async (t: WorkspaceTicket) => {
@@ -140,225 +152,213 @@ export function TicketsView({ eventId }: { eventId: string }) {
     setDeleteTarget(null)
   }
 
-  const publicUrl = eventSlug && origin ? `${origin}${ticketsPath(eventSlug)}` : ''
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(publicUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setError('No se pudo copiar. Copiá el enlace manualmente.')
+  /** Guarda un orden nuevo; si falla, vuelve al anterior. */
+  const persistOrder = async (next: WorkspaceTicket[], previous: WorkspaceTicket[]) => {
+    setTickets(next)
+    const res = await reorderTickets(eventId, next.map(t => t.id))
+    if (!res.ok) {
+      setTickets(previous)
+      setError(res.error)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="w-full min-w-0 flex flex-col items-center justify-center py-24 gap-3">
-        <Spinner size="lg" className="text-gray-900" />
-        <p className="text-sm text-gray-400">Cargando tickets…</p>
-      </div>
-    )
+  const move = (index: number, delta: number) => {
+    const target = index + delta
+    if (target < 0 || target >= tickets.length) return
+    const next = [...tickets]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    void persistOrder(next, tickets)
   }
 
+  const totals = useMemo(() => {
+    const sold = tickets.reduce((a, t) => a + t.sold, 0)
+    const revenue = tickets.reduce((a, t) => a + (t.revenue ?? 0), 0)
+    const redeemed = tickets.reduce((a, t) => a + (t.redeemed ?? 0), 0)
+    const limited = tickets.length > 0 && tickets.every(t => t.stock != null)
+    const capacity = limited ? tickets.reduce((a, t) => a + (t.stock ?? 0), 0) : null
+    return { sold, revenue, redeemed, capacity }
+  }, [tickets])
+
+  const publicUrl = eventSlug && origin ? `${origin}${ticketsPath(eventSlug)}` : ''
+
   return (
-    <div className="w-full min-w-0 max-w-none" style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
-      <style>{`.nb-input:focus { border-color: #0A0A0F !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }`}</style>
+    <div className="mx-auto w-full min-w-0 max-w-[1180px]">
+      <style>{`
+        @keyframes nb-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes nb-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+        @keyframes nb-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .nb-rise { animation: nb-rise 420ms cubic-bezier(0.22,1,0.36,1) both; }
+        .nb-pop { animation: nb-pop 160ms ease-out both; transform-origin: top right; }
+        .nb-grow { transform-origin: left; animation: nb-grow 700ms cubic-bezier(0.22,1,0.36,1) both; }
+        @media (prefers-reduced-motion: reduce) { .nb-rise, .nb-pop, .nb-grow { animation: none; } }
+      `}</style>
 
-      <OrganizerToolHeading
-        title="Tickets"
-        description="Vendé entradas, parking o lo que quieras con categorías y precios propios. Aparecen en el catálogo como una sección aparte."
-        actions={
-          <button
-            type="button"
-            onClick={openCreate}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFFFFF', color: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            Nuevo ticket
-          </button>
-        }
-      />
-
-      {publicUrl && (
-        <div className="mb-5 rounded-2xl border border-black/[0.07] bg-white px-4 py-3.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Link de tickets para compartir</p>
-          <p className="mt-1.5 break-all font-mono text-sm text-gray-800">{publicUrl}</p>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void copyLink()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
-            >
-              <Copy className="h-3.5 w-3.5" aria-hidden />
-              {copied ? 'Copiado' : 'Copiar'}
-            </button>
-            <a
-              href={publicUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
-            >
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-              Abrir
-            </a>
-          </div>
-          {!hasCover && (
-            <p className="mt-2 text-xs text-amber-700">
-              Este evento todavía no tiene portada: el link no va a estar disponible hasta que la cargues en Storefront.
-            </p>
-          )}
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-[620px]">
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Tickets</h1>
+          <p className="mt-1 text-[13px] text-gray-500">
+            Entradas, parking o lo que quieras, con cupo y precio propios. Se venden en su propio link y aparecen en el catálogo como una sección aparte.
+          </p>
         </div>
-      )}
+        <button
+          type="button"
+          onClick={() => openCreate()}
+          style={organizerAccentFilledButtonStyle()}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
+        >
+          <Plus size={16} strokeWidth={2.25} aria-hidden />
+          Nuevo ticket
+        </button>
+      </header>
 
-      {error && (
-        <div role="alert" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>
-          {error}
-        </div>
-      )}
-
-      {tickets.length === 0 ? (
-        <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px 0' }}>Todavía no hay tickets</p>
-          <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 24px 0' }}>Creá el primero, por ejemplo “Entrada general” o “Parking VIP”.</p>
-          <button
-            type="button"
-            onClick={openCreate}
-            style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '10px 24px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-          >
-            Crear ticket
-          </button>
-        </div>
+      {loading ? (
+        <TicketsSkeleton />
       ) : (
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {tickets.map(t => (
-            <li
-              key={t.id}
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', opacity: t.is_active ? 1 : 0.6 }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{t.name}</p>
-                    {!t.is_active && (
-                      <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(0,0,0,0.06)', color: '#9A9AA8', padding: '2px 8px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>Pausado</span>
-                    )}
-                  </div>
-                  {t.description && (
-                    <p style={{ fontSize: '12px', color: '#9A9AA8', margin: '4px 0 0 0' }} className="line-clamp-2">{t.description}</p>
-                  )}
-                </div>
-                <ToggleSwitch checked={t.is_active} disabled={togglePending.has(t.id)} onChange={() => toggleActive(t)} />
+        <>
+          {publicUrl && <ShareLinkCard url={publicUrl} hasCover={hasCover} fileName={`tickets-${eventSlug}`} onError={setError} />}
+
+          {error && (
+            <div role="alert" className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">
+              {error}
+            </div>
+          )}
+
+          {tickets.length === 0 ? (
+            <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+              <div className="mx-auto mb-5 flex h-14 w-24 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 [mask:radial-gradient(circle_at_50%_0,transparent_7px,#000_7.5px)_top/100%_51%_no-repeat,radial-gradient(circle_at_50%_100%,transparent_7px,#000_7.5px)_bottom/100%_51%_no-repeat]">
+                <Ticket size={22} strokeWidth={1.5} className="text-gray-400" aria-hidden />
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px' }}>
-                <p style={{ fontSize: '20px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>{formatPrice(t.price, t.currency)}</p>
-                <p style={{ fontSize: '12px', fontWeight: 600, margin: 0, color: t.stock != null && t.sold >= t.stock ? '#DC2626' : '#9A9AA8' }}>
-                  {t.stock == null
-                    ? `${t.sold} vendidos`
-                    : t.sold >= t.stock
-                      ? `Agotado · ${t.sold}/${t.stock}`
-                      : `${t.sold}/${t.stock} vendidos`}
-                </p>
+              <p className="text-[16px] font-semibold text-gray-900">Todavía no hay tickets</p>
+              <p className="mx-auto mt-1 max-w-sm text-[13px] text-gray-500">
+                Empezá con una plantilla y ajustá el precio y el cupo.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {TEMPLATES.map(t => (
+                  <button
+                    key={t.label}
+                    type="button"
+                    onClick={() => openCreate(t.form)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,color,transform] hover:-translate-y-px hover:border-gray-300 hover:text-gray-900"
+                  >
+                    <span className="text-gray-400">{t.icon}</span>
+                    {t.label}
+                  </button>
+                ))}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                <button
-                  type="button"
-                  onClick={() => openEdit(t)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0', fontSize: '13px', fontWeight: 600, color: '#0A0A0F' }}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(t)}
-                  aria-label={`Eliminar ${t.name}`}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', color: '#C8C8D0', display: 'flex', alignItems: 'center' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden><path d="M2 3.5h10M4.5 3.5V2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v1M3.5 3.5l.75 7.5h5.5l.75-7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
+              <button
+                type="button"
+                onClick={() => openCreate()}
+                className="mt-4 text-[13px] font-medium text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
+              >
+                Crear ticket
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Totales de todos los tickets */}
+              <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-1 px-1 text-[13px] text-gray-500">
+                <span>
+                  <span className="font-semibold tabular-nums text-gray-900">{formatCount(totals.sold)}</span>
+                  {totals.capacity != null && <span className="tabular-nums"> de {formatCount(totals.capacity)}</span>} vendidos
+                </span>
+                <span>
+                  <Money value={totals.revenue} className="font-semibold tabular-nums text-gray-900" /> recaudado
+                </span>
+                <span>
+                  <span className="font-semibold tabular-nums text-gray-900">{formatCount(totals.redeemed)}</span> ingresaron
+                </span>
+                {tickets.length > 1 && (
+                  <span className="ml-auto hidden text-[11px] text-gray-400 md:inline">Arrastrá para cambiar el orden en que se muestran</span>
+                )}
               </div>
-            </li>
-          ))}
-        </ul>
+
+              <ul className="grid gap-3 xl:grid-cols-2">
+                {tickets.map((t, i) => (
+                  <li
+                    key={t.id}
+                    className={cn('nb-rise', dragId && dragId !== t.id && 'transition-transform')}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                    onDragOver={e => {
+                      if (!dragId || dragId === t.id) return
+                      e.preventDefault()
+                      // Reordena en vivo mientras se arrastra; se guarda al soltar.
+                      setTickets(list => {
+                        const from = list.findIndex(x => x.id === dragId)
+                        const to = list.findIndex(x => x.id === t.id)
+                        if (from < 0 || to < 0 || from === to) return list
+                        const next = [...list]
+                        const [moved] = next.splice(from, 1)
+                        next.splice(to, 0, moved)
+                        return next
+                      })
+                    }}
+                    onDrop={e => e.preventDefault()}
+                  >
+                    <TicketCard
+                      ticket={t}
+                      dragging={dragId === t.id}
+                      dragHandleProps={
+                        tickets.length > 1
+                          ? {
+                              draggable: true,
+                              onDragStart: e => {
+                                e.dataTransfer.effectAllowed = 'move'
+                                dragOrderBefore.current = tickets
+                                setDragId(t.id)
+                              },
+                              onDragEnd: () => {
+                                const before = dragOrderBefore.current
+                                setDragId(null)
+                                dragOrderBefore.current = null
+                                if (before && before.map(x => x.id).join() !== tickets.map(x => x.id).join()) {
+                                  void persistOrder(tickets, before)
+                                }
+                              },
+                            }
+                          : undefined
+                      }
+                      actions={{
+                        toggling: togglePending.has(t.id),
+                        onToggle: () => void toggleActive(t),
+                        onEdit: () => openEdit(t),
+                        onDuplicate: () => void duplicate(t),
+                        onMoveUp: i > 0 ? () => move(i, -1) : undefined,
+                        onMoveDown: i < tickets.length - 1 ? () => move(i, 1) : undefined,
+                        onDelete: () => setDeleteTarget(t),
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
       )}
 
-      <Modal isOpen={formOpen} onClose={closeForm} title={editingId ? 'Editar ticket' : 'Nuevo ticket'}>
-        <div className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Nombre / categoría
-            <input
-              className={inputClass}
-              value={form.name}
-              maxLength={150}
-              placeholder="Entrada general, Parking VIP…"
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Descripción <span className="font-normal text-gray-400">(opcional)</span>
-            <textarea
-              className={inputClass}
-              rows={2}
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Precio (ARS)
-            <input
-              className={inputClass}
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="0.01"
-              value={form.price}
-              placeholder="0"
-              onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Stock máximo <span className="font-normal text-gray-400">(opcional)</span>
-            <input
-              className={inputClass}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              value={form.stock}
-              placeholder="Sin límite"
-              onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
-            />
-          </label>
-          {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={closeForm} className="rounded-full px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100">
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '8px 22px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}
-            >
-              {saving ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <TicketFormModal open={formOpen} editing={editing} initial={formInitial} onClose={closeForm} onSubmit={saveTicket} />
 
       <Modal isOpen={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title="Eliminar ticket">
-        <p className="text-sm text-gray-600">
+        <p className="text-[14px] text-gray-600">
           ¿Eliminar “{deleteTarget?.name}”? Los pedidos que ya lo compraron no se modifican.
         </p>
+        {deleteTarget && deleteTarget.sold > 0 && (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
+            Ya se vendieron {formatCount(deleteTarget.sold)}. Si solo querés frenar la venta, pausalo en vez de eliminarlo.
+          </p>
+        )}
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={() => setDeleteTarget(null)} className="rounded-full px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100">
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(null)}
+            className="rounded-xl px-4 py-2 text-[14px] font-medium text-gray-600 transition-colors hover:bg-gray-100"
+          >
             Cancelar
           </button>
           <button
             type="button"
-            onClick={confirmDelete}
+            onClick={() => void confirmDelete()}
             disabled={deleteSubmitting}
-            className="rounded-full bg-red-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-xl bg-red-600 px-5 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
           >
             {deleteSubmitting ? 'Eliminando…' : 'Eliminar'}
           </button>
