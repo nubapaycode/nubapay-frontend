@@ -34,6 +34,7 @@ export type PlatformAdminEvent = {
     order_count: number
     total_revenue: number
     commission_amount: number
+    service_fee_amount: number
   }
 }
 
@@ -63,6 +64,7 @@ export type PlatformRevenueByEvent = {
   order_count: number
   total_revenue: number
   commission_amount: number
+  service_fee_amount: number
 }
 
 export type PlatformAdminSummary = {
@@ -71,6 +73,7 @@ export type PlatformAdminSummary = {
   total_orders: number
   total_revenue: number
   total_commission: number
+  total_service_fee: number
 }
 
 export type PlatformAdminOverview = {
@@ -353,6 +356,7 @@ export type TimeseriesPoint = {
   paid_orders: number
   revenue: number
   commission: number
+  service_fee: number
 }
 
 export type PeriodTotals = {
@@ -360,6 +364,8 @@ export type PeriodTotals = {
   paid_orders: number
   revenue: number
   commission: number
+  service_fee: number
+  platform_income: number
   avg_ticket: number
   conversion: number
 }
@@ -370,7 +376,7 @@ export type PlatformStats = {
   totals: PeriodTotals & { units: number }
   previous: PeriodTotals
   /** Variación % contra el período anterior (conversion en puntos). null = sin base. */
-  deltas: Record<'revenue' | 'commission' | 'paid_orders' | 'avg_ticket' | 'conversion', number | null>
+  deltas: Record<'revenue' | 'commission' | 'service_fee' | 'paid_orders' | 'avg_ticket' | 'conversion', number | null>
   funnel: {
     created: number
     paid: number
@@ -546,12 +552,14 @@ export type AdminEventDetail = {
     has_mp: boolean
     has_sipago: boolean
     cash_enabled: boolean
+    service_fee_enabled: boolean
   }
   stats: {
     orders_created: number
     paid_orders: number
     revenue: number
     commission: number
+    service_fee: number
     avg_ticket: number
     units_sold: number
     units_redeemed: number
@@ -561,15 +569,21 @@ export type AdminEventDetail = {
   }
   status_counts: Record<string, number>
   top_products: { name: string; quantity: number; revenue: number }[]
-  series: { date: string; revenue: number; commission: number; paid_orders: number }[]
+  series: { date: string; revenue: number; commission: number; service_fee: number; paid_orders: number }[]
   payment_methods: { provider: string; orders: number; revenue: number }[]
   /** null = todo el historial. */
   range: { from: string; to: string } | null
   /** Comisión que el organizador le debe a la plataforma (generada, no descuenta lo ya cobrado). */
   commission: {
     rate: number
+    /** Modo de cobro actual del evento. */
+    mode: 'commission' | 'service_fee'
     in_range: number
     all_time: number
+    service_fee_in_range: number
+    service_fee_all_time: number
+    platform_income_in_range: number
+    platform_income_all_time: number
     all_time_revenue: number
     all_time_paid_orders: number
   }
@@ -583,10 +597,19 @@ export function fetchPlatformEventDetail(eventId: string, range: DateRangeParams
 }
 
 export function setEventSalesActive(eventId: string, isActive: boolean) {
-  return sendJson<{ ok: true; is_active: boolean }>(
+  return sendJson<{ ok: true; is_active: boolean; service_fee_enabled: boolean }>(
     `/events/${encodeURIComponent(eventId)}/controls`,
     'PATCH',
     { is_active: isActive },
+  )
+}
+
+/** Switch de modo de cobro: true = costo de servicio al comprador, false = comisión 1%. */
+export function setEventServiceFeeEnabled(eventId: string, enabled: boolean) {
+  return sendJson<{ ok: true; is_active: boolean; service_fee_enabled: boolean }>(
+    `/events/${encodeURIComponent(eventId)}/controls`,
+    'PATCH',
+    { service_fee_enabled: enabled },
   )
 }
 
@@ -598,11 +621,13 @@ export type SettlementRow = {
   paid_orders: number
   revenue: number
   commission: number
+  service_fee: number
+  service_fee_enabled: boolean
+  /** Monto que le corresponde a la plataforma en esta sección (comisión 1% o costo de servicio). */
+  amount: number
 }
 
-export type Settlement = {
-  range: { from: string; to: string }
-  commission_rate: number
+export type SettlementSection = {
   events: SettlementRow[]
   organizers: {
     organizer_name: string
@@ -610,9 +635,19 @@ export type Settlement = {
     events: number
     paid_orders: number
     revenue: number
-    commission: number
+    amount: number
   }[]
-  totals: { revenue: number; commission: number; paid_orders: number }
+  totals: { revenue: number; amount: number; paid_orders: number }
+}
+
+export type Settlement = {
+  range: { from: string; to: string }
+  commission_rate: number
+  /** Eventos con comisión del 1% sobre lo facturado por el organizador. */
+  commission: SettlementSection
+  /** Eventos con costo de servicio cobrado al comprador. */
+  service_fee: SettlementSection
+  totals: { commission: number; service_fee: number; platform_income: number }
 }
 
 export function fetchSettlement(range: DateRangeParams) {

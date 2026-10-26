@@ -75,6 +75,20 @@ export type WorkspaceCatalogBlock = {
   }[]
 }
 
+export type WorkspaceTicket = {
+  id: string
+  name: string
+  description: string
+  price: number
+  currency: string
+  /** Stock máximo; `null` = sin límite. */
+  stock: number | null
+  /** Unidades vendidas o reservadas (pedidos no cancelados ni fallidos). */
+  sold: number
+  sort_order: number
+  is_active: boolean
+}
+
 export type PaginationMeta = {
   page: number
   page_size: number
@@ -606,6 +620,59 @@ export async function putCatalogBlockProducts(
   const body = (await res.json()) as { block?: WorkspaceCatalogBlock; error?: string }
   if (!res.ok || !body.block) return { ok: false, error: body.error ?? 'Error' }
   return { ok: true, block: body.block }
+}
+
+export async function fetchTickets(
+  eventId: string,
+): Promise<{ ok: true; tickets: WorkspaceTicket[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'tickets'), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { tickets?: WorkspaceTicket[]; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, tickets: body.tickets ?? [] }
+}
+
+export async function createTicket(
+  eventId: string,
+  payload: { name: string; price: number; description?: string; stock?: number | null; is_active?: boolean },
+): Promise<{ ok: true; ticket: WorkspaceTicket } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'tickets'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { ticket?: WorkspaceTicket; error?: string }
+  if (!res.ok || !body.ticket) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, ticket: body.ticket }
+}
+
+export async function patchTicket(
+  eventId: string,
+  ticketId: string,
+  payload: Partial<{ name: string; price: number; description: string; stock: number | null; is_active: boolean }>,
+): Promise<{ ok: true; ticket: WorkspaceTicket } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `tickets/${ticketId}`), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { ticket?: WorkspaceTicket; error?: string }
+  if (!res.ok || !body.ticket) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true, ticket: body.ticket }
+}
+
+export async function deleteTicket(
+  eventId: string,
+  ticketId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `tickets/${ticketId}`), {
+    method: 'DELETE',
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
+  return { ok: true }
 }
 
 export type WorkspaceProductPromotion = {

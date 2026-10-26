@@ -16,6 +16,7 @@ const LABELS: Record<string, string> = {
   all: 'Todos',
   descuentos: 'Descuentos',
   combos: 'Combos',
+  tickets: 'Tickets',
 }
 
 function CategoryIcon({ category, active }: { category: string; active: boolean }) {
@@ -39,6 +40,14 @@ function CategoryIcon({ category, active }: { category: string; active: boolean 
       <circle cx="7" cy="7" r="1.2" fill={color} />
       <path d="M13 12L7 7" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
       <circle cx="13" cy="12" r="1.2" fill={color} />
+    </svg>
+  )
+
+  // Tickets
+  if (key === 'tickets') return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M2.5 6.5a2 2 0 012-2h11a2 2 0 012 2v2a2 2 0 000 3v2a2 2 0 01-2 2h-11a2 2 0 01-2-2v-2a2 2 0 000-3v-2z" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M12.5 4.5v11" stroke={color} strokeWidth="1.6" strokeDasharray="2 2.4" />
     </svg>
   )
 
@@ -98,7 +107,7 @@ function CategoryIcon({ category, active }: { category: string; active: boolean 
 }
 
 export function CategorySheet({ open, onClose, categories, active, onChange, counts }: CategorySheetProps) {
-  const allOptions = ['all', 'descuentos', ...categories, 'combos']
+  const allOptions = ['all', ...((counts.tickets ?? 0) > 0 ? ['tickets'] : []), 'descuentos', ...categories, 'combos']
 
   useEffect(() => {
     if (!open) return

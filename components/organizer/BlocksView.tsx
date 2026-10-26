@@ -20,7 +20,7 @@ import {
   type WorkspaceProduct,
 } from '@/lib/organizerWorkspace'
 
-function ToggleSwitch({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
+export function ToggleSwitch({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
   return (
     <button
       type="button"

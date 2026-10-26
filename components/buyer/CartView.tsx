@@ -9,8 +9,9 @@ import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { cartItemsKey, loadPendingOrder, savePendingOrder } from '@/lib/pendingOrder'
+import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
-import type { Product } from '@/types'
+import type { Product, ServiceFeePercent } from '@/types'
 
 import { CartItemRow } from './CartItemRow'
 
@@ -22,6 +23,8 @@ interface CartViewProps {
   paymentsEnabled?: boolean
   /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
   availablePaymentMethods?: string[]
+  /** Costo de servicio (%) vigente según el backend; si falta se usan los valores por defecto. */
+  serviceFeePercent?: ServiceFeePercent
 }
 
 export function CartView({
@@ -30,6 +33,7 @@ export function CartView({
   products = [],
   paymentsEnabled = true,
   availablePaymentMethods = ['mp'],
+  serviceFeePercent,
 }: CartViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity, total } = useCart()
@@ -64,7 +68,7 @@ export function CartView({
             customer_name: '',
             customer_email: '',
             payment_method: 'mp',
-            items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
+            items: items.map(orderLinePayload),
             idempotency_key: crypto.randomUUID(),
           }),
         })
@@ -116,7 +120,7 @@ export function CartView({
     )
   }
 
-  const itemCount = items.reduce((s, i) => s + i.quantity, 0)
+  const { serviceFee, total: grandTotal } = computeCartTotals(items, serviceFeePercent)
   const listTotal = items.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
   const hasDiscount = listTotal > total
 
@@ -298,10 +302,14 @@ export function CartView({
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[15px] font-medium" style={{ color: '#000000' }}>Tarifa de servicio</span>
-            <span className="text-[15px] font-semibold" style={{ color: '#22C55E' }}>Gratis</span>
-          </div>
+          {serviceFee > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] font-medium" style={{ color: '#000000' }}>Costo de servicio</span>
+              <span className="text-[15px] font-semibold" style={{ color: BUYER_COLORS.text }}>
+                {formatPrice(serviceFee)}
+              </span>
+            </div>
+          )}
         </div>
 
       </div>
@@ -333,12 +341,12 @@ export function CartView({
                   </span>
                 </>
               )}
-              <span className="text-[22px] font-semibold" style={{ color: '#000000' }}>Subtotal</span>
+              <span className="text-[22px] font-semibold" style={{ color: '#000000' }}>Total</span>
               <span
                 className="text-right text-[22px] font-semibold tracking-tight"
                 style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}
               >
-                {formatPrice(total)}
+                {formatPrice(grandTotal)}
               </span>
             </div>
             <button

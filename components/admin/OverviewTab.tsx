@@ -17,7 +17,7 @@ import {
 import { formatPrice } from '@/lib/utils'
 
 type Preset = '7' | '30' | '90' | '365' | 'custom'
-type Metric = 'revenue' | 'paid_orders' | 'commission'
+type Metric = 'revenue' | 'paid_orders' | 'commission' | 'service_fee'
 
 const PRESETS: { value: Preset; label: string }[] = [
   { value: '7', label: '7 días' },
@@ -31,6 +31,7 @@ const METRICS: Record<Metric, { label: string; money: boolean }> = {
   revenue: { label: 'Facturación', money: true },
   paid_orders: { label: 'Órdenes pagas', money: false },
   commission: { label: 'Comisión', money: true },
+  service_fee: { label: 'Costo de servicio', money: true },
 }
 
 export function useDateRange(initial: Preset = '90') {
@@ -152,7 +153,7 @@ export function OverviewTab({ summary }: { summary: PlatformAdminOverview['summa
   const fmt = money ? (n: number) => formatPrice(n) : (n: number) => fmtInt(n)
   const axis = money ? fmtMoneyCompact : (n: number) => fmtInt(n)
 
-  const spark = (key: 'revenue' | 'paid_orders' | 'commission') => (data?.series ?? []).map((p) => p[key])
+  const spark = (key: 'revenue' | 'paid_orders' | 'commission' | 'service_fee') => (data?.series ?? []).map((p) => p[key])
   const t = data?.totals
   const d = data?.deltas
 
@@ -193,9 +194,10 @@ export function OverviewTab({ summary }: { summary: PlatformAdminOverview['summa
         </div>
       ) : data && t && d ? (
         <div className={cx('space-y-6 transition-opacity', loading && 'opacity-60')}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
             <Kpi hero label="Facturación" value={formatPrice(t.revenue)} delta={d.revenue} spark={spark('revenue')} />
             <Kpi label="Comisión (1%)" value={formatPrice(t.commission)} delta={d.commission} spark={spark('commission')} />
+            <Kpi label="Costo de servicio" value={formatPrice(t.service_fee)} delta={d.service_fee} spark={spark('service_fee')} />
             <Kpi label="Órdenes pagas" value={fmtInt(t.paid_orders)} delta={d.paid_orders} spark={spark('paid_orders')} />
             <Kpi label="Ticket promedio" value={formatPrice(t.avg_ticket)} delta={d.avg_ticket} />
             <Kpi label="Conversión" value={`${t.conversion.toLocaleString('es-AR')}%`} delta={d.conversion} deltaSuffix=" pp" />
@@ -297,7 +299,7 @@ export function OverviewTab({ summary }: { summary: PlatformAdminOverview['summa
             ))}
           </dl>
           <p className="mt-4 border-t border-white/[0.06] pt-3 text-xs text-white/40">
-            A cobrar en total: <span className="font-semibold text-white/80">{formatPrice(summary.total_commission)}</span>
+            A cobrar en total: <span className="font-semibold text-white/80">{formatPrice(summary.total_commission + summary.total_service_fee)}</span>
           </p>
         </Card>
       </div>

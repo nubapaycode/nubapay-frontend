@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Landmark, QrCode, Settings, User, Users } from 'lucide-react'
+import { Landmark, QrCode, Settings, Ticket, User, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
@@ -71,6 +71,7 @@ function navItems(basePath: string): NavItem[] {
     </svg>
   )
   const staffIcon = <Users size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
+  const ticketsIcon = <Ticket size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
   const scannerIcon = <QrCode size={20} strokeWidth={1.75} className="shrink-0" aria-hidden />
   return [
     {
@@ -89,6 +90,13 @@ function navItems(basePath: string): NavItem[] {
       mobileTabOrder: 1,
       section: 'catalogo',
       tourId: 'sidebar-catalog',
+    },
+    {
+      href: `${basePath}/tickets`,
+      label: 'Tickets',
+      icon: ticketsIcon,
+      showDesktop: true,
+      tool: 'products',
     },
     {
       href: `${basePath}/scanner`,

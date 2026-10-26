@@ -10,6 +10,7 @@ export const mockEvents: Event[] = [
     products: [],
     combos: [],
     blocks: [],
+    tickets: [],
     categories: [],
     showCategoryShortcuts: false,
     paymentsEnabled: true,

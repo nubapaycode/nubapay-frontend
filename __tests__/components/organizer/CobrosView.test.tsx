@@ -21,11 +21,11 @@ function renderCobros(access: WorkspaceAccess) {
 }
 
 describe('CobrosView', () => {
-  it('el dueño ve las tres herramientas de cobros con sus links', () => {
+  it('el dueño ve las herramientas de cobros con sus links (sin Comisión)', () => {
     renderCobros(owner)
     expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/events/e1/payments')
     expect(screen.getByRole('link', { name: /Métodos de pago/ })).toHaveAttribute('href', '/events/e1/metodos-pago')
-    expect(screen.getByRole('link', { name: /Comisión/ })).toHaveAttribute('href', '/events/e1/comision')
+    expect(screen.queryByRole('link', { name: /Comisión/ })).not.toBeInTheDocument()
   })
 
   it('un staff con permiso de pagos solo ve Pagos', () => {

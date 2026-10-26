@@ -37,6 +37,7 @@ export default async function CatalogoCheckoutPage({ params }: Props) {
         catalogSlug={slug}
         paymentsEnabled={data.payments_enabled ?? true}
         availablePaymentMethods={data.available_payment_methods ?? ['mp']}
+        serviceFeePercent={data.service_fee_percent}
       />
     </main>
   )

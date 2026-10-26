@@ -80,3 +80,33 @@ describe('CartView — con items', () => {
     expect(mockPush).toHaveBeenCalledWith('/demo')
   })
 })
+
+describe('CartView — costo de servicio', () => {
+  it('suma 5% por tickets y 2% por productos al total', () => {
+    ;(useCart as jest.Mock).mockReturnValue({
+      items: [
+        { productId: 't1', kind: 'ticket', name: 'Entrada general', price: 1000, quantity: 1 },
+        { productId: 'p1', name: 'Gaseosa', price: 500, quantity: 2 },
+      ],
+      updateQuantity: jest.fn(),
+      total: 2000,
+      count: 3,
+    })
+    render(<CartView eventId="demo" serviceFeePercent={{ ticket: 5, product: 2 }} />)
+    // 5% de 1000 + 2% de 1000 = 70
+    expect(screen.getByText('Costo de servicio').nextSibling).toHaveTextContent(/70/)
+    expect(screen.getByText('Total').nextSibling).toHaveTextContent(/2.070/)
+  })
+
+  it('no muestra costo de servicio si el evento usa comisión', () => {
+    ;(useCart as jest.Mock).mockReturnValue({
+      items: [{ productId: 't1', kind: 'ticket', name: 'Entrada general', price: 1000, quantity: 1 }],
+      updateQuantity: jest.fn(),
+      total: 1000,
+      count: 1,
+    })
+    render(<CartView eventId="demo" />)
+    expect(screen.queryByText('Costo de servicio')).not.toBeInTheDocument()
+    expect(screen.getByText('Total').nextSibling).toHaveTextContent(/1.000/)
+  })
+})

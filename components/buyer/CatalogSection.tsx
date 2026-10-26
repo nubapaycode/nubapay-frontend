@@ -1,9 +1,11 @@
 interface CatalogSectionProps {
   title: string
   children: React.ReactNode
+  /** Clases del grid de ítems (por defecto, 2 columnas en mobile y 4 en desktop). */
+  gridClassName?: string
 }
 
-export function CatalogSection({ title, children }: CatalogSectionProps) {
+export function CatalogSection({ title, children, gridClassName = 'grid-cols-2 md:grid-cols-4' }: CatalogSectionProps) {
   return (
     <section className="mb-10">
       <h2
@@ -12,7 +14,7 @@ export function CatalogSection({ title, children }: CatalogSectionProps) {
       >
         {title}
       </h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{children}</div>
+      <div className={`grid gap-3 ${gridClassName}`}>{children}</div>
     </section>
   )
 }

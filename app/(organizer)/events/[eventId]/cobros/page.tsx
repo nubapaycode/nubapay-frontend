@@ -6,7 +6,7 @@ import { organizerEventSectionMeta } from '@/lib/seo'
 export async function generateMetadata(): Promise<Metadata> {
   return organizerEventSectionMeta(
     'Cobros',
-    'Pagos, métodos de pago y comisiones de tu evento.',
+    'Pagos y métodos de pago de tu evento.',
   )
 }
 

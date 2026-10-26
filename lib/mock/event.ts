@@ -134,6 +134,7 @@ export const mockEvent: Event = {
     },
   ],
   blocks: [],
+  tickets: [],
   categories: ['Bebidas'],
   showCategoryShortcuts: false,
   paymentsEnabled: true,

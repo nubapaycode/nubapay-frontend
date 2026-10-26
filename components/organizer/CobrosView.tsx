@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, CreditCard, Landmark, Percent } from 'lucide-react'
+import { ChevronRight, CreditCard, Landmark } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -17,10 +17,6 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
     description: 'Conectá las pasarelas de pago que vas a usar para cobrar este evento.',
     icon: <Landmark size={16} strokeWidth={1.75} aria-hidden />,
   },
-  comision: {
-    description: '1% sobre cada transacción aprobada de tu evento.',
-    icon: <Percent size={16} strokeWidth={1.75} aria-hidden />,
-  },
 }
 
 /** Página de entrada de Cobros: una tarjeta por herramienta permitida. */
@@ -32,7 +28,7 @@ export function CobrosView() {
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-8">
       <OrganizerToolHeading
         title="Cobros"
-        description="Pagos recibidos, pasarelas conectadas y comisiones del evento."
+        description="Pagos recibidos y pasarelas conectadas del evento."
       />
 
       <div className="space-y-3">

@@ -59,7 +59,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
           <EmptyState title="Sin eventos" hint="Probá con otra búsqueda." />
         ) : (
           <div className={cx('transition-opacity', loading && 'opacity-60')}>
-            <Table min={940}>
+            <Table min={1040}>
               <thead className="border-b border-white/[0.06]">
                 <tr>
                   <Th>Evento</Th>
@@ -70,6 +70,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
                   <Th align="right">Órdenes</Th>
                   <Th align="right">Facturado</Th>
                   <Th align="right">Comisión</Th>
+                  <Th align="right">Costo de servicio</Th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
@@ -102,6 +103,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
                     <Td align="right">{fmtInt(e.stats.order_count)}</Td>
                     <Td align="right">{formatPrice(e.stats.total_revenue)}</Td>
                     <Td align="right">{formatPrice(e.stats.commission_amount)}</Td>
+                    <Td align="right">{formatPrice(e.stats.service_fee_amount)}</Td>
                   </tr>
                 ))}
               </tbody>

@@ -33,6 +33,7 @@ import {
   fetchPlatformEventDetail,
   fetchPlatformOrdersFiltered,
   setEventSalesActive,
+  setEventServiceFeeEnabled,
   type AdminEventDetail,
   type DateRangeParams,
   type OrderFilters,
@@ -43,7 +44,7 @@ import { formatPrice } from '@/lib/utils'
 const PAGE_SIZE = 20
 
 type Preset = 'all' | '1' | '7' | '30' | 'custom'
-type Metric = 'revenue' | 'commission' | 'paid_orders'
+type Metric = 'revenue' | 'commission' | 'service_fee' | 'paid_orders'
 
 const PRESETS: { value: Preset; label: string }[] = [
   { value: 'all', label: 'Todo' },
@@ -56,6 +57,7 @@ const PRESETS: { value: Preset; label: string }[] = [
 const METRICS: Record<Metric, { label: string; money: boolean }> = {
   revenue: { label: 'Facturación', money: true },
   commission: { label: 'Comisión', money: true },
+  service_fee: { label: 'Costo de servicio', money: true },
   paid_orders: { label: 'Órdenes pagas', money: false },
 }
 
@@ -151,6 +153,28 @@ export function EventPanel({
     }
   }
 
+  // --- modo de cobro (comisión 1% vs costo de servicio al comprador) ---
+  const [feeBusy, setFeeBusy] = useState(false)
+  async function toggleServiceFee() {
+    if (!d) return
+    const next = !d.event.service_fee_enabled
+    setFeeBusy(true)
+    const r = await setEventServiceFeeEnabled(d.event.id, next)
+    setFeeBusy(false)
+    if (r.ok) {
+      toast(
+        'success',
+        next
+          ? 'Costo de servicio activado: aplica a las compras nuevas (puede demorar hasta 30 s)'
+          : 'Costo de servicio desactivado: vuelve la comisión del 1% (puede demorar hasta 30 s)',
+      )
+      reload()
+      onChanged?.()
+    } else {
+      toast('error', r.error)
+    }
+  }
+
   const [exporting, setExporting] = useState(false)
   async function exportCsv() {
     setExporting(true)
@@ -195,6 +219,38 @@ export function EventPanel({
         </div>
       </div>
 
+      {d && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-[#12121A] px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">Costo de servicio al comprador</p>
+            <p className="mt-0.5 text-xs text-white/45">
+              {d.event.service_fee_enabled
+                ? 'Activado: el comprador paga 5% en tickets y 2% en productos, para Nubapay. No se cobra la comisión del 1% al organizador.'
+                : 'Desactivado: el comprador no paga extra y le cobrás el 1% de comisión al organizador sobre lo que factura.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={d.event.service_fee_enabled}
+            aria-label="Costo de servicio al comprador"
+            disabled={feeBusy}
+            onClick={toggleServiceFee}
+            className={cx(
+              'relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50',
+              d.event.service_fee_enabled ? 'bg-[#C6FF00]' : 'bg-white/15',
+            )}
+          >
+            <span
+              className={cx(
+                'absolute top-0.5 h-5 w-5 rounded-full bg-[#0A0A0F] shadow transition-[left]',
+                d.event.service_fee_enabled ? 'left-[22px]' : 'left-0.5',
+              )}
+            />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <Segmented label="Período" value={preset} onChange={setPreset} options={PRESETS} />
         {preset === 'custom' && (
@@ -221,19 +277,31 @@ export function EventPanel({
           {/* Comisión + KPIs */}
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-[#C6FF00]/25 bg-gradient-to-br from-[#C6FF00]/[0.09] to-transparent p-5 lg:row-span-1">
-              <p className="text-xs font-medium text-[#C6FF00]/80">Tu comisión a cobrar</p>
-              <p className="mt-2 text-4xl font-semibold tracking-tight text-[#C6FF00]">{formatPrice(d.commission.in_range)}</p>
+              <p className="text-xs font-medium text-[#C6FF00]/80">
+                {d.commission.mode === 'service_fee' ? 'Tu costo de servicio a cobrar' : 'Tu comisión a cobrar'}
+              </p>
+              <p className="mt-2 text-4xl font-semibold tracking-tight text-[#C6FF00]">{formatPrice(d.commission.platform_income_in_range)}</p>
               <p className="mt-1 text-xs text-white/50">
-                {(d.commission.rate * 100).toLocaleString('es-AR')}% sobre {formatPrice(d.stats.revenue)} facturados en {rangeLabel(d)}
+                {d.commission.mode === 'service_fee'
+                  ? `Costo de servicio pagado por los compradores en ${rangeLabel(d)}`
+                  : `${(d.commission.rate * 100).toLocaleString('es-AR')}% sobre ${formatPrice(d.stats.revenue)} facturados en ${rangeLabel(d)}`}
               </p>
               <dl className="mt-4 space-y-1.5 border-t border-white/10 pt-3 text-sm">
                 <div className="flex justify-between gap-3">
+                  <dt className="text-white/50">Comisión {(d.commission.rate * 100).toLocaleString('es-AR')}%</dt>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.in_range)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/50">Costo de servicio</dt>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.service_fee_in_range)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Histórico del evento</dt>
-                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.all_time)}</dd>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.platform_income_all_time)}</dd>
                 </div>
               </dl>
               <p className="mt-3 text-[11px] leading-snug text-white/30">
-                Es la comisión generada, que te corresponde a vos. No hay registro de pagos ya recibidos, así que no se descuenta lo que ya cobraste.
+                Es lo generado, que te corresponde a vos. No hay registro de pagos ya recibidos, así que no se descuenta lo que ya cobraste.
               </p>
             </div>
 

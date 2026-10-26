@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { CartItem, Product, Combo } from '@/types'
+import type { CartItem, Product, Combo, Ticket } from '@/types'
 
 const CART_KEY = 'nubapay_cart'
 
@@ -13,7 +13,7 @@ function getCartStorage(): Storage | null {
 
 interface UseCart {
   items: CartItem[]
-  addItem: (item: Product | Combo) => void
+  addItem: (item: Product | Combo | Ticket) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
@@ -56,7 +56,8 @@ export function useCart(): UseCart {
     }
   }, [items, isLoaded])
 
-  const addItem = (item: Product | Combo) => {
+  const addItem = (item: Product | Combo | Ticket) => {
+    const kind = 'kind' in item && item.kind === 'ticket' ? ('ticket' as const) : undefined
     setItems(prev => {
       const existing = prev.find(i => i.productId === item.id)
       if (existing) {
@@ -66,9 +67,9 @@ export function useCart(): UseCart {
                 ...i,
                 quantity: i.quantity + 1,
                 price: item.price,
-                listPrice: item.listPrice,
+                listPrice: 'listPrice' in item ? item.listPrice : undefined,
                 name: item.name,
-                imageUrl: item.imageUrl,
+                imageUrl: 'imageUrl' in item ? item.imageUrl : undefined,
               }
             : i,
         )
@@ -77,11 +78,12 @@ export function useCart(): UseCart {
         ...prev,
         {
           productId: item.id,
+          kind,
           name: item.name,
           price: item.price,
-          listPrice: item.listPrice,
+          listPrice: 'listPrice' in item ? item.listPrice : undefined,
           quantity: 1,
-          imageUrl: item.imageUrl,
+          imageUrl: 'imageUrl' in item ? item.imageUrl : undefined,
         },
       ]
     })

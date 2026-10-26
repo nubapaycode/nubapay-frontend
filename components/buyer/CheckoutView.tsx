@@ -10,7 +10,9 @@ import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
 import { cartItemsKey, clearPendingOrder, loadPendingOrder } from '@/lib/pendingOrder'
+import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
+import type { ServiceFeePercent } from '@/types'
 
 interface CheckoutViewProps {
   eventId: string
@@ -19,6 +21,8 @@ interface CheckoutViewProps {
   paymentsEnabled?: boolean
   /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
   availablePaymentMethods?: string[]
+  /** Costo de servicio (%) vigente según el backend; si falta se usan los valores por defecto. */
+  serviceFeePercent?: ServiceFeePercent
 }
 
 /** Marcas aceptadas por Sipago; se listan bajo el título del método. */
@@ -99,6 +103,7 @@ export function CheckoutView({
   catalogSlug,
   paymentsEnabled = true,
   availablePaymentMethods = ['mp'],
+  serviceFeePercent,
 }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
@@ -163,6 +168,7 @@ export function CheckoutView({
     }
   }, [items, catalogSlug, eventId])
 
+  const { serviceFee, total: grandTotal } = computeCartTotals(items, serviceFeePercent)
   const listTotal = items.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
   const hasDiscount = listTotal > total
 
@@ -234,7 +240,7 @@ export function CheckoutView({
             customer_name: name.trim(),
             customer_email: email.trim(),
             payment_method: paymentMethod,
-            items: items.map(it => ({ product_id: it.productId, quantity: it.quantity })),
+            items: items.map(orderLinePayload),
           }),
         })
 
@@ -255,14 +261,14 @@ export function CheckoutView({
         orderId,
         orderNumber,
         slug,
-        total,
+        total: grandTotal,
         createdAt: new Date().toISOString(),
       })
 
       if (checkoutUrl && paymentMethod === 'mp') {
         // El link de MP ya está listo: vamos directo, sin pasar por el tracker
         isNavigatingAway = true
-        window.location.href = checkoutUrl
+        window.location.assign(checkoutUrl)
         return
       }
       isNavigatingAway = true
@@ -535,6 +541,12 @@ export function CheckoutView({
         }}
       >
         <div className="mx-auto max-w-lg">
+          {serviceFee > 0 && (
+            <div className="mb-2 flex items-center justify-between text-[14px]" style={{ color: BUYER_COLORS.muted }}>
+              <span>Costo de servicio</span>
+              <span className="font-semibold">{formatPrice(serviceFee)}</span>
+            </div>
+          )}
           <div className="mb-3 flex items-end justify-between">
             <span className="text-[22px] font-semibold" style={{ color: '#000000' }}>Total</span>
             <div className="flex flex-col items-end">
@@ -561,7 +573,7 @@ export function CheckoutView({
                 </div>
               )}
               <span className="text-[22px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
-                {formatPrice(total)}
+                {formatPrice(grandTotal)}
               </span>
             </div>
           </div>

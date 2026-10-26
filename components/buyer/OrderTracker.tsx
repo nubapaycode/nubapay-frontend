@@ -22,12 +22,17 @@ interface OrderData {
   status: string
   payment_status: string
   total_amount: number
+  /** Costo de servicio ya incluido en `total_amount`. */
+  service_fee?: number
   customer_name: string | null
   payment_method: string | null
   checkout_url: string | null
   processing: boolean
   /** Estimación de pedidos delante en la cola (solo mientras processing). */
   queue_depth?: number
+  /** Presente cuando el pedido falló por un motivo que el comprador debe conocer. */
+  failure_reason?: 'out_of_stock'
+  failure_detail?: string
   items: { product_id: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
   created_at: string
 }
@@ -167,6 +172,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const isRejected = order?.payment_status === 'rejected'
   const isCancelled = order?.payment_status === 'cancelled'
   const isRefunded = order?.payment_status === 'refunded'
+  const isFailed = order?.status === 'failed'
 
   // Efectivo no tiene checkout externo: el comprador presenta el QR y el staff
   // confirma el cobro al escanearlo (ver ScannerView, panel organizador).
@@ -174,7 +180,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     !isPaid &&
     Boolean(order) &&
     order!.payment_method === 'cash' &&
-    !isRejected && !isCancelled
+    !isRejected && !isCancelled && !isFailed
 
   // Requiere `order` cargado (evita que esta tarjeta se solape con "Cargando tu
   // pedido…") y se basa en el estado real del backend, no en `payment_result`
@@ -256,6 +262,19 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
       heroBorder: '#BFDBFE',
       titleColor: '#1D4ED8',
       subtitleColor: '#3B82F6',
+    }
+    if (isFailed) return {
+      icon: <path d="M5 5l12 12M17 5L5 17" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />,
+      iconBg: '#DC2626',
+      title: order.failure_reason === 'out_of_stock' ? 'Sin stock' : 'No pudimos completar tu pedido',
+      subtitle:
+        order.failure_reason === 'out_of_stock'
+          ? `Se agotó “${order.failure_detail ?? 'el ticket'}” mientras comprabas. No se te cobró nada: volvé al catálogo e intentá con otra cantidad.`
+          : 'No se realizó ningún cobro. Volvé al catálogo e intentá de nuevo.',
+      heroBg: '#FEF2F2',
+      heroBorder: '#FECACA',
+      titleColor: '#991B1B',
+      subtitleColor: '#EF4444',
     }
     if (isRejected || isCancelled) return {
       icon: <path d="M5 5l12 12M17 5L5 17" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />,
@@ -818,6 +837,17 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 </div>
               ))}
             </div>
+            {(order.service_fee ?? 0) > 0 && (
+              <div
+                className="flex items-center justify-between px-4 py-3 mt-1"
+                style={{ borderTop: `1px solid ${BUYER_COLORS.border}` }}
+              >
+                <span className="text-[14px] font-medium" style={{ color: BUYER_COLORS.muted }}>Costo de servicio</span>
+                <span className="text-[13px] font-semibold" style={{ color: BUYER_COLORS.text }}>
+                  {formatPrice(order.service_fee ?? 0)}
+                </span>
+              </div>
+            )}
             <div
               className="flex items-center justify-between px-4 py-3 mt-1"
               style={{ borderTop: `1px solid ${BUYER_COLORS.border}` }}

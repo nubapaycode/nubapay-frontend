@@ -38,6 +38,7 @@ export default async function CatalogoCartPage({ params }: Props) {
         products={data.products}
         paymentsEnabled={data.payments_enabled ?? true}
         availablePaymentMethods={data.available_payment_methods ?? ['mp']}
+        serviceFeePercent={data.service_fee_percent}
       />
     </main>
   )

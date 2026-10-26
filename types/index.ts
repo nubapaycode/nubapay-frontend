@@ -9,6 +9,11 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled'
 
+export interface ServiceFeePercent {
+  ticket: number
+  product: number
+}
+
 export interface Product {
   id: string
   name: string
@@ -36,9 +41,24 @@ export interface Combo {
   available: boolean
 }
 
+/** Entrada, parking u otro acceso con categoría y precio propios (se vende aparte del catálogo). */
+export interface Ticket {
+  id: string
+  kind: 'ticket'
+  name: string
+  description: string
+  price: number
+  available: boolean
+  /** Unidades que quedan; `null`/ausente si el ticket no tiene stock máximo. */
+  remaining?: number | null
+}
+
 export interface CartItem {
   id?: string
+  /** Id del producto, combo o ticket (según `kind`). */
   productId: string
+  /** `'ticket'` para entradas; ausente para productos y combos. */
+  kind?: 'ticket'
   name: string
   price: number
   listPrice?: number
@@ -88,6 +108,9 @@ export interface Event {
   products: Product[]
   combos: Combo[]
   blocks: CatalogBlock[]
+  tickets: Ticket[]
+  /** Costo de servicio al comprador, en % sobre tickets y sobre productos. */
+  serviceFeePercent?: ServiceFeePercent
   /** Categorías activas con productos, en el orden configurado por el organizador. */
   categories: string[]
   /** Si está activo, /catalogo muestra primero botones de categoría antes de la lista de productos. */

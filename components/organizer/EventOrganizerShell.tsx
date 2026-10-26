@@ -160,6 +160,7 @@ export function EventOrganizerShell({
       storefront: 'storefront',
       products: 'products',
       blocks: 'products',
+      tickets: 'products',
       scanner: 'scanner',
       orders: 'orders',
       scans: 'orders',
