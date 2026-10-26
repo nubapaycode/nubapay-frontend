@@ -110,18 +110,25 @@ export function CheckoutView({
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
 
+  // Los tickets no se pueden pagar en efectivo (el backend también lo rechaza).
+  const hasTickets = items.some(i => i.kind === 'ticket')
+  const allowedMethodIds = useMemo(
+    () => availablePaymentMethods.filter(id => !(hasTickets && id === 'cash')),
+    [availablePaymentMethods, hasTickets],
+  )
+  const cashBlocked = hasTickets && availablePaymentMethods.includes('cash')
   const enabledMethods = useMemo(
-    () => paymentMethods.filter(m => availablePaymentMethods.includes(m.id)),
-    [availablePaymentMethods],
+    () => paymentMethods.filter(m => allowedMethodIds.includes(m.id)),
+    [allowedMethodIds],
   )
   const [paymentMethod, setPaymentMethod] = useState(() => availablePaymentMethods[0] ?? 'mp')
 
   useEffect(() => {
-    if (!availablePaymentMethods.includes(paymentMethod)) {
-      setPaymentMethod(availablePaymentMethods[0] ?? 'mp')
+    if (!allowedMethodIds.includes(paymentMethod)) {
+      setPaymentMethod(allowedMethodIds[0] ?? (cashBlocked ? '' : 'mp'))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availablePaymentMethods])
+  }, [allowedMethodIds])
 
   const [error, setError] = useState('')
   const [nameError, setNameError] = useState(false)
@@ -463,6 +470,11 @@ export function CheckoutView({
             Método de pago
           </p>
           <div className="grid gap-2" style={{ gridAutoRows: '1fr' }}>
+            {cashBlocked && (
+              <p className="text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+                Los tickets no se pueden pagar en efectivo.
+              </p>
+            )}
             {enabledMethods.map(method => {
               const selected = paymentMethod === method.id
               return (

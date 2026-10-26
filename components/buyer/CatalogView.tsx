@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { useLayoutEffect, useState } from 'react'
 import Image from 'next/image'
-import { buyerFlowPath } from '@/lib/buyerRoutes'
+import { buyerFlowPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { useCart } from '@/lib/hooks/useCart'
@@ -14,7 +14,6 @@ import { CatalogSection } from './CatalogSection'
 import { CatalogBlockSection } from './CatalogBlockSection'
 import { ProductCard } from './ProductCard'
 import { ComboCard } from './ComboCard'
-import { TicketCard } from './TicketCard'
 import { FloatingCart } from './FloatingCart'
 import { FloatingOrders } from './FloatingOrders'
 import type { Event } from '@/types'
@@ -115,8 +114,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   const promoProducts = event.products.filter(p => p.promoLabel?.trim())
 
   const counts: Record<string, number> = {
-    all: event.products.length + event.combos.length + event.tickets.length,
-    tickets: event.tickets.length,
+    all: event.products.length + event.combos.length,
     descuentos: promoProducts.length,
     combos: event.combos.length,
     ...Object.fromEntries(categories.map(c => [c, event.products.filter(p => p.category === c).length])),
@@ -146,8 +144,6 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   )
 
   const filteredCombos = sortItems(event.combos.filter(c => matchesQuery(c.name)), sortOrder)
-
-  const filteredTickets = sortItems(event.tickets.filter(t => matchesQuery(t.name)), sortOrder)
 
   const hasActiveFilters = activeCategory !== 'all' || sortOrder !== 'default' || q !== ''
 
@@ -300,7 +296,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
                   : activeCategory !== 'all' && sortOrder !== 'default'
                   ? `${activeCategory === 'all' ? 'Todos' : activeCategory} · ${sortOrder === 'asc' ? 'menor precio' : 'mayor precio'}`
                   : activeCategory !== 'all'
-                  ? activeCategory === 'descuentos' ? 'Descuentos' : activeCategory === 'combos' ? 'Combos' : activeCategory === 'tickets' ? 'Tickets' : activeCategory
+                  ? activeCategory === 'descuentos' ? 'Descuentos' : activeCategory === 'combos' ? 'Combos' : activeCategory
                   : sortOrder === 'asc' ? 'Menor precio primero' : 'Mayor precio primero'}
               </span>
               <button
@@ -330,22 +326,23 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
 
       {/* Productos */}
       <div className="mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
-        {(activeCategory === 'all' || activeCategory === 'tickets') && filteredTickets.length > 0 && (
-          <CatalogSection title="Tickets" gridClassName="grid-cols-1 md:grid-cols-2">
-            {filteredTickets.map(ticket => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                quantity={getQuantity(ticket.id)}
-                onAdd={handleAdd}
-                onUpdateQuantity={updateQuantity}
-                cartDisabled={!paymentsEnabled}
-              />
-            ))}
-          </CatalogSection>
+        {event.tickets.length > 0 && (
+          <a
+            href={ticketsPath(slug)}
+            className="mb-6 flex items-center justify-between gap-3 rounded-[18px] px-4 py-3.5 transition-opacity active:opacity-80"
+            style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+          >
+            <span>
+              <span className="block text-[15px] font-bold tracking-tight">Tickets</span>
+              <span className="block text-xs opacity-80">Comprá tus entradas</span>
+            </span>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+              <path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
         )}
 
-        {activeCategory !== 'tickets' && event.blocks.map(block => (
+        {event.blocks.map(block => (
           <CatalogBlockSection
             key={block.id}
             block={block}
@@ -357,7 +354,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           />
         ))}
 
-        {activeCategory !== 'combos' && activeCategory !== 'tickets' && filteredPromos.length > 0 && (
+        {activeCategory !== 'combos' && filteredPromos.length > 0 && (
           <CatalogSection title="Descuentos">
             {filteredPromos.map(product => (
               <ProductCard
@@ -389,7 +386,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           </CatalogSection>
         )}
 
-        {activeCategory !== 'combos' && activeCategory !== 'descuentos' && activeCategory !== 'tickets' && filteredProductGroups.map(group => (
+        {activeCategory !== 'combos' && activeCategory !== 'descuentos' && filteredProductGroups.map(group => (
           <CatalogSection key={group.category} title={group.category}>
             {group.items.map(product => (
               <ProductCard
@@ -405,7 +402,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           </CatalogSection>
         ))}
 
-        {activeCategory !== 'combos' && activeCategory !== 'tickets' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
+        {activeCategory !== 'combos' && activeCategory !== 'all' && filteredProducts.length === 0 && filteredPromos.length === 0 && (
           <EmptyState
             title="Sin productos en esta categoría"
             subtitle="Probá con otra categoría"
@@ -433,20 +430,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
           />
         )}
 
-        {activeCategory === 'tickets' && filteredTickets.length === 0 && (
-          <EmptyState
-            title="Sin tickets disponibles"
-            subtitle="Este evento todavía no tiene tickets a la venta"
-            icon={
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-                <path d="M4 10a3 3 0 013-3h18a3 3 0 013 3v3a3 3 0 000 6v3a3 3 0 01-3 3H7a3 3 0 01-3-3v-3a3 3 0 000-6v-3z" stroke={stroke} strokeWidth="1.75" strokeLinejoin="round" />
-                <path d="M20 7v18" stroke={stroke} strokeWidth="1.75" strokeDasharray="3 3.5" />
-              </svg>
-            }
-          />
-        )}
-
-        {activeCategory === 'all' && filteredProducts.length === 0 && event.combos.length === 0 && event.tickets.length === 0 && (
+        {activeCategory === 'all' && filteredProducts.length === 0 && event.combos.length === 0 && (
           <EmptyState
             title="Sin productos disponibles"
             subtitle="El organizador todavía no cargó productos"

@@ -5,11 +5,9 @@ import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { partnerTenantPaths } from '@/lib/api'
-import { authHeadersJson, getAuthUser } from '@/lib/authSession'
-import { browserFetch } from '@/lib/browserFetch'
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
-import { catalogPublicPath, getPublicSiteOriginForUi } from '@/lib/siteOrigin'
+import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
+import { catalogPublicPath } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
@@ -76,35 +74,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   }, [load])
 
   const hasCover = Boolean(event?.cover_image_url)
-  const [browserOrigin, setBrowserOrigin] = useState<string | null>(null)
-  useEffect(() => {
-    const id = window.requestAnimationFrame(() => setBrowserOrigin(window.location.origin))
-    return () => window.cancelAnimationFrame(id)
-  }, [])
-
-  const user = getAuthUser()
-  const partnerOrigin =
-    user?.tenant_partner_whitelabel_enabled && user?.tenant_subdomain
-      ? `https://${user.tenant_subdomain}.nubapay.app`
-      : null
-
-  const [verifiedDomain, setVerifiedDomain] = useState<string | null>(null)
-  useEffect(() => {
-    if (!user?.tenant_partner_whitelabel_enabled) return
-    let cancelled = false
-    void (async () => {
-      const res = await browserFetch(partnerTenantPaths.tenant(), { headers: authHeadersJson() })
-      if (!res.ok) return
-      const body = (await res.json()) as { tenant?: { domains?: { hostname: string; verified: boolean }[] } }
-      const verified = body.tenant?.domains?.find(d => d.verified)
-      if (!cancelled && verified) setVerifiedDomain(verified.hostname)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [user?.tenant_partner_whitelabel_enabled]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const publicOriginUi = verifiedDomain ? `https://${verifiedDomain}` : partnerOrigin ?? browserOrigin ?? getPublicSiteOriginForUi()
+  const publicOriginUi = usePublicOrigin()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
   const publicUrl =
     hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${catalogPublicPath(slugForUrl)}` : ''

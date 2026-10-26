@@ -1,11 +1,15 @@
 'use client'
 
+import { Copy, ExternalLink } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { ToggleSwitch } from '@/components/organizer/BlocksView'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
+import { ticketsPath } from '@/lib/buyerRoutes'
+import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
+import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import {
   createTicket,
   deleteTicket,
@@ -25,6 +29,10 @@ const inputClass =
 
 export function TicketsView({ eventId }: { eventId: string }) {
   const [tickets, setTickets] = useState<WorkspaceTicket[]>([])
+  const [eventSlug, setEventSlug] = useState('')
+  const [hasCover, setHasCover] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const origin = usePublicOrigin()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -40,6 +48,11 @@ export function TicketsView({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     let cancelled = false
+    fetchOrganizerEventDetail(eventId).then(res => {
+      if (cancelled || !res.ok) return
+      setEventSlug(res.event.slug)
+      setHasCover(Boolean(res.event.cover_image_url))
+    })
     fetchTickets(eventId).then(res => {
       if (cancelled) return
       if (!res.ok) setError(res.error)
@@ -127,6 +140,18 @@ export function TicketsView({ eventId }: { eventId: string }) {
     setDeleteTarget(null)
   }
 
+  const publicUrl = eventSlug && origin ? `${origin}${ticketsPath(eventSlug)}` : ''
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('No se pudo copiar. Copiá el enlace manualmente.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="w-full min-w-0 flex flex-col items-center justify-center py-24 gap-3">
@@ -154,6 +179,37 @@ export function TicketsView({ eventId }: { eventId: string }) {
           </button>
         }
       />
+
+      {publicUrl && (
+        <div className="mb-5 rounded-2xl border border-black/[0.07] bg-white px-4 py-3.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Link de tickets para compartir</p>
+          <p className="mt-1.5 break-all font-mono text-sm text-gray-800">{publicUrl}</p>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void copyLink()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+            >
+              <Copy className="h-3.5 w-3.5" aria-hidden />
+              {copied ? 'Copiado' : 'Copiar'}
+            </button>
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              Abrir
+            </a>
+          </div>
+          {!hasCover && (
+            <p className="mt-2 text-xs text-amber-700">
+              Este evento todavía no tiene portada: el link no va a estar disponible hasta que la cargues en Storefront.
+            </p>
+          )}
+        </div>
+      )}
 
       {error && (
         <div role="alert" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#DC2626', marginBottom: '16px' }}>

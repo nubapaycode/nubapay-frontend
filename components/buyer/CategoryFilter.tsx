@@ -11,7 +11,6 @@ const LABELS: Record<string, string> = {
   all: 'Todos',
   descuentos: 'Descuentos',
   combos: 'Combos',
-  tickets: 'Tickets',
 }
 
 export function CategoryFilter({ active, onOpen }: CategoryFilterProps) {

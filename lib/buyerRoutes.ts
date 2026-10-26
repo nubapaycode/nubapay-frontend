@@ -1,3 +1,8 @@
+/** Página de tickets (entradas, parking…) de un evento: `/tickets/:slug`. */
+export function ticketsPath(slug: string): string {
+  return `/tickets/${encodeURIComponent(slug.trim())}`
+}
+
 /**
  * Rutas del comprador. Si entró por `/catalogo/:slug`, se mantiene ese path
  * en lugar de exponer el UUID del evento en la barra de direcciones.

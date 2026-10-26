@@ -24,6 +24,11 @@ const general = {
   is_active: true,
 }
 
+jest.mock('@/lib/organizerEvents', () => ({
+  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({ ok: true, event: { slug: 'mi-fiesta', cover_image_url: 'https://x/y.jpg' } }),
+}))
+jest.mock('@/lib/hooks/usePublicOrigin', () => ({ usePublicOrigin: () => 'https://org.nubapay.app' }))
+
 beforeEach(() => jest.clearAllMocks())
 
 describe('TicketsView', () => {
@@ -32,6 +37,14 @@ describe('TicketsView', () => {
     render(<TicketsView eventId={eventId} />)
     expect(await screen.findByText('Entrada general')).toBeInTheDocument()
     expect(screen.getByText(/5.000/)).toBeInTheDocument()
+  })
+
+  it('muestra el link público de tickets del evento', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} />)
+    expect(await screen.findByText('https://org.nubapay.app/tickets/mi-fiesta')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Abrir/ })).toHaveAttribute('href', 'https://org.nubapay.app/tickets/mi-fiesta')
+    expect(screen.getByRole('button', { name: /Copiar/ })).toBeInTheDocument()
   })
 
   it('muestra el estado vacío', async () => {

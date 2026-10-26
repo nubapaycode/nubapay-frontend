@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { Spinner } from '@/components/ui/Spinner'
 import type { DashboardSummary } from '@/lib/organizerWorkspace'
-import { fetchEventDashboard } from '@/lib/organizerWorkspace'
+import { fetchEventDashboard, type DashboardRange } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 
@@ -46,7 +46,7 @@ function CountUp({ to, format = String, duration = 700 }: { to: number; format?:
   return <>{format(val)}</>
 }
 
-function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
+function LineChart({ data }: { data: { label: string; revenue: number }[] }) {
   const W = 400
   const H = 150
   const pad = { left: 4, right: 4, top: 8, bottom: 4 }
@@ -78,16 +78,66 @@ function LineChart({ data }: { data: { hour: string; revenue: number }[] }) {
   )
 }
 
+type Preset = 'all' | 'today' | '7' | '30' | 'custom'
+
+const PRESETS: { value: Preset; label: string }[] = [
+  { value: 'all', label: 'Todo' },
+  { value: 'today', label: 'Hoy' },
+  { value: '7', label: '7 días' },
+  { value: '30', label: '30 días' },
+  { value: 'custom', label: 'Rango' },
+]
+
+/** YYYY-MM-DD en hora local del navegador. */
+function isoLocal(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
+function daysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return isoLocal(d)
+}
+
+function formatDay(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
+function rangeForPreset(p: Preset, customFrom: string, customTo: string): DashboardRange | null {
+  if (p === 'all') return null
+  if (p === 'today') return { from: daysAgo(0), to: daysAgo(0) }
+  if (p === 'custom') return customFrom && customTo ? { from: customFrom, to: customTo } : null
+  return { from: daysAgo(Number(p) - 1), to: daysAgo(0) }
+}
+
 export function DashboardView({ eventId }: { eventId: string }) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [fetching, setFetching] = useState(false)
+
+  const [preset, setPreset] = useState<Preset>('all')
+  const [customFrom, setCustomFrom] = useState(() => daysAgo(6))
+  const [customTo, setCustomTo] = useState(() => isoLocal(new Date()))
+  // El rango se calcula al elegir el período (no en el render), así `new Date()` queda en los handlers.
+  const [range, setRange] = useState<DashboardRange | null>(null)
+
+  const choosePreset = (p: Preset) => {
+    setPreset(p)
+    setRange(rangeForPreset(p, customFrom, customTo))
+  }
+  const rangeFrom = range ? range.from : ''
+  const rangeTo = range ? range.to : ''
   const [barsVisible, setBarsVisible] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const load = useCallback(async () => {
     setLoadError('')
-    const res = await fetchEventDashboard(eventId)
+    setFetching(true)
+    const res = await fetchEventDashboard(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null)
     if (!res.ok) {
       setLoadError(res.error)
       setSummary(null)
@@ -95,16 +145,16 @@ export function DashboardView({ eventId }: { eventId: string }) {
       setSummary(res.data)
       setLastUpdated(new Date())
     }
+    setFetching(false)
     setLoading(false)
-  }, [eventId])
+  }, [eventId, rangeFrom, rangeTo])
 
   const silentRefresh = useCallback(async () => {
-    const res = await fetchEventDashboard(eventId)
+    const res = await fetchEventDashboard(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null)
     if (res.ok) { setSummary(res.data); setLastUpdated(new Date()) }
-  }, [eventId])
+  }, [eventId, rangeFrom, rangeTo])
 
   useEffect(() => {
-    setLoading(true)
     load()
   }, [load])
 
@@ -132,7 +182,11 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   const topProducts = summary?.top_products ?? []
   const maxQty = topProducts[0]?.quantity ?? 1
-  const hourlyData = summary?.hourly ?? []
+  const chartSeries = summary?.series
+  const chartPoints = chartSeries
+    ? chartSeries.points
+    : (summary?.hourly ?? []).map(h => ({ label: h.hour, revenue: h.revenue }))
+  const chartIsDaily = chartSeries?.kind === 'daily'
 
   const barStyle = (pct: number) => ({
     width: barsVisible ? `${pct}%` : '0%',
@@ -165,7 +219,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 transition-opacity ${fetching ? 'opacity-60' : ''}`}>
       <style>{`
         @keyframes nb-stat-in {
           from { opacity: 0; transform: translateY(10px); }
@@ -187,6 +241,53 @@ export function DashboardView({ eventId }: { eventId: string }) {
           ) : undefined
         }
       />
+
+      {/* Rango de fechas */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div role="group" aria-label="Período" className="inline-flex gap-1 rounded-xl bg-[#F5F5F7] p-1">
+          {PRESETS.map(p => (
+            <button
+              key={p.value}
+              type="button"
+              aria-pressed={preset === p.value}
+              onClick={() => choosePreset(p.value)}
+              className={`rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                preset === p.value ? 'bg-white text-[#0A0A0F] shadow-sm' : 'text-[#9A9AA8] hover:text-[#0A0A0F]'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {preset === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              aria-label="Desde"
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={e => { setCustomFrom(e.target.value); setRange(rangeForPreset('custom', e.target.value, customTo)) }}
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900"
+            />
+            <span className="text-xs text-gray-400">a</span>
+            <input
+              aria-label="Hasta"
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={e => { setCustomTo(e.target.value); setRange(rangeForPreset('custom', customFrom, e.target.value)) }}
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900"
+            />
+          </div>
+        )}
+        <span className="text-xs text-gray-400">
+          {range
+            ? range.from === range.to
+              ? `Mostrando ${formatDay(range.from)} · hora Argentina`
+              : `Mostrando ${formatDay(range.from)} – ${formatDay(range.to)} · hora Argentina`
+            : 'Mostrando todo el evento'}
+        </span>
+      </div>
 
       {/* Stat cards con fade+slide escalonado */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -240,14 +341,20 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-medium text-gray-400 tracking-wide">Ventas por hora</p>
-              <span className="text-xs text-gray-400">últimas 8h</span>
+              <p className="text-xs font-medium text-gray-400 tracking-wide">{chartIsDaily ? 'Ventas por día' : 'Ventas por hora'}</p>
+              <span className="text-xs text-gray-400">{chartIsDaily ? 'período elegido' : 'últimas 8h'}</span>
             </div>
-            <LineChart data={hourlyData.length ? hourlyData : Array.from({ length: 8 }, (_, i) => ({ hour: `${i}h`, revenue: 0 }))} />
+            <LineChart data={chartPoints.length ? chartPoints : Array.from({ length: 8 }, (_, i) => ({ label: `${i}h`, revenue: 0 }))} />
             <div className="flex justify-between mt-2">
-              {(hourlyData.length ? hourlyData : []).map(d => (
-                <span key={d.hour} className="text-[10px] text-gray-300">{d.hour}</span>
-              ))}
+              {/* Con muchos días solo se rotulan algunos para que no se encimen. */}
+              {chartPoints.map((d, i) => {
+                const step = Math.ceil(chartPoints.length / 8)
+                return (
+                  <span key={`${d.label}-${i}`} className="text-[10px] text-gray-300">
+                    {i % step === 0 || i === chartPoints.length - 1 ? d.label : ''}
+                  </span>
+                )
+              })}
             </div>
           </div>
 

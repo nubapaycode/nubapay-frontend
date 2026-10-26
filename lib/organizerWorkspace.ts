@@ -32,6 +32,10 @@ export type DashboardSummary = {
   delivered_orders: number
   by_status: Record<OrderStatus, number>
   hourly: { hour: string; revenue: number }[]
+  /** Gráfico de ventas: por hora (últimas 8 h) sin rango, por día con rango. */
+  series?: { kind: 'hourly' | 'daily'; points: { label: string; revenue: number }[] }
+  /** Rango aplicado (null = todo el evento). */
+  range?: { from: string; to: string } | null
   payment_breakdown: { key: 'mp' | 'cash' | 'transfer'; count: number; revenue: number }[]
   top_products: { name: string; quantity: number; revenue: number }[]
 }
@@ -125,10 +129,14 @@ function readPagination(body: { pagination?: Partial<PaginationMeta> }, itemCoun
   return { page: 1, page_size: Math.max(itemCount, 1), total: itemCount }
 }
 
-export async function fetchEventDashboard(eventId: string): Promise<
-  { ok: true; data: DashboardSummary } | { ok: false; error: string }
-> {
-  const res = await browserFetch(workspacePath(eventId, 'dashboard'), {
+/** Rango de fechas (YYYY-MM-DD, inclusive, hora de Argentina). Sin rango = todo el evento. */
+export type DashboardRange = { from: string; to: string }
+
+export async function fetchEventDashboard(
+  eventId: string,
+  range?: DashboardRange | null,
+): Promise<{ ok: true; data: DashboardSummary } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'dashboard', range ? { from: range.from, to: range.to } : undefined), {
     headers: authHeadersJson(),
   })
   const body = (await res.json()) as DashboardSummary & { error?: string }
