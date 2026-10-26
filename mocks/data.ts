@@ -739,5 +739,15 @@ export const mockStorefront = {
       ],
     },
   ],
+  // Casos variados para revisar el diseño de /tickets/:slug
+  tickets: [
+    { id: 'ticket-1', kind: 'ticket' as const, name: 'Entrada General', description: 'Acceso al predio desde las 18:00. Incluye acceso a todos los escenarios.', price: 15000, available: true, remaining: null },
+    { id: 'ticket-2', kind: 'ticket' as const, name: 'Entrada VIP', description: 'Acceso preferencial, zona VIP con barra exclusiva, baños privados y vista frontal al escenario principal.', price: 35000, available: true, remaining: 8 },
+    { id: 'ticket-3', kind: 'ticket' as const, name: 'Early Bird', description: 'Preventa con precio especial.', price: 10000, available: true, remaining: 0 },
+    { id: 'ticket-4', kind: 'ticket' as const, name: 'Estacionamiento', description: 'Un vehículo, válido por todo el evento.', price: 5000, available: true, remaining: 120 },
+    { id: 'ticket-5', kind: 'ticket' as const, name: 'Backstage Meet & Greet', description: 'Encuentro con los artistas después del show.', price: 80000, available: false, remaining: null },
+    { id: 'ticket-6', kind: 'ticket' as const, name: 'Menor (6 a 12 años)', description: '', price: 7500, available: true, remaining: 42 },
+  ],
+  service_fee_percent: { ticket: 5, product: 2 },
   theme: null,
 }

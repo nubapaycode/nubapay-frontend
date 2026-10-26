@@ -3,6 +3,11 @@ export function ticketsPath(slug: string): string {
   return `/tickets/${encodeURIComponent(slug.trim())}`
 }
 
+/** Checkout de entradas: `/tickets/:slug/comprar`. */
+export function ticketsCheckoutPath(slug: string): string {
+  return `${ticketsPath(slug)}/comprar`
+}
+
 /**
  * Rutas del comprador. Si entró por `/catalogo/:slug`, se mantiene ese path
  * en lugar de exponer el UUID del evento en la barra de direcciones.

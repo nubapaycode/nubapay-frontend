@@ -46,7 +46,7 @@ export default async function TicketsSlugPage({ params }: Props) {
   const event = mapStorefrontToEvent(data)
 
   return (
-    <main className="min-h-screen bg-white pb-32">
+    <main className="min-h-screen bg-[#F4F4F6] pb-32">
       <TicketsStoreView event={event} catalogSlug={slug} />
     </main>
   )

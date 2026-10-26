@@ -329,15 +329,17 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         {event.tickets.length > 0 && (
           <a
             href={ticketsPath(slug)}
-            className="mb-6 flex items-center justify-between gap-3 rounded-[18px] px-4 py-3.5 transition-opacity active:opacity-80"
-            style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+            className="mb-6 flex items-center justify-between gap-4 rounded-[20px] border bg-white px-5 py-4 transition-opacity active:opacity-75"
+            style={{ borderColor: BUYER_COLORS.border, color: BUYER_COLORS.text }}
           >
-            <span>
+            <span className="min-w-0">
               <span className="block text-[15px] font-bold tracking-tight">Tickets</span>
-              <span className="block text-xs opacity-80">Comprá tus entradas</span>
+              <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
+                Comprá tus entradas
+              </span>
             </span>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-              <path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden className="flex-shrink-0">
+              <path d="M7.5 4.5 13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </a>
         )}

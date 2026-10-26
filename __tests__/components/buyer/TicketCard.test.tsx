@@ -41,6 +41,22 @@ describe('TicketCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('con cantidad 0 muestra el − deshabilitado y el + agrega', async () => {
+    const onAdd = jest.fn()
+    render(<TicketCard ticket={ticket} quantity={0} onAdd={onAdd} onUpdateQuantity={jest.fn()} />)
+    expect(screen.getByRole('button', { name: 'Quitar uno' })).toBeDisabled()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Agregar Parking VIP/ }))
+    expect(onAdd).toHaveBeenCalledTimes(1)
+  })
+
+  it('trata remaining 0 como agotado aunque esté disponible', () => {
+    render(<TicketCard ticket={{ ...ticket, remaining: 0 }} quantity={0} onAdd={jest.fn()} onUpdateQuantity={jest.fn()} />)
+    expect(screen.getByText('Agotado')).toBeInTheDocument()
+    expect(screen.queryByText(/Quedan/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('avisa cuando quedan pocas unidades y frena el + en el tope', () => {
     render(<TicketCard ticket={{ ...ticket, remaining: 3 }} quantity={3} onAdd={jest.fn()} onUpdateQuantity={jest.fn()} />)
     expect(screen.getByText('¡Quedan 3!')).toBeInTheDocument()
