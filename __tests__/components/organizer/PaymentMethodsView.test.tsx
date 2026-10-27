@@ -27,7 +27,7 @@ function mockEvent(overrides: {
   })
 }
 
-const row = (name: string) => screen.getByRole('link', { name: new RegExp(name) })
+const row = (name: string) => screen.getByRole('link', { name: new RegExp(`^${name}`) })
 
 describe('PaymentMethodsView', () => {
   it('marca como conectada solo la pasarela que tiene credenciales', async () => {

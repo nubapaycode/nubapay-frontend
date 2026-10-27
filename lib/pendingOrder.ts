@@ -6,6 +6,7 @@
  */
 
 const KEY = 'nubapay_pending_order'
+const IDEM_PREFIX = 'nubapay_precreate_idem:'
 const MAX_AGE_MS = 10 * 60 * 1000
 
 export interface PendingOrder {
@@ -52,7 +53,7 @@ export function loadPendingOrder(
 
 /** Misma clave si el comprador recarga el checkout: el backend devuelve la orden ya encolada. */
 export function pendingIdempotencyKey(slug: string, itemsKey: string, paymentMethod: string): string {
-  const storageKey = `nubapay_precreate_idem:${slug}:${itemsKey}:${paymentMethod}`
+  const storageKey = `${IDEM_PREFIX}${slug}:${itemsKey}:${paymentMethod}`
   try {
     const existing = sessionStorage.getItem(storageKey)
     if (existing) return existing
@@ -72,9 +73,18 @@ export function savePendingOrder(order: PendingOrder): void {
   }
 }
 
+/**
+ * Además de la orden, descarta las claves de idempotencia: el backend las
+ * recuerda 1 hora, y si sobrevivieran a la compra, volver a pagar el mismo
+ * carrito devolvería la orden anterior (ya pagada) en vez de crear una nueva.
+ */
 export function clearPendingOrder(): void {
   try {
     sessionStorage.removeItem(KEY)
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i)
+      if (k?.startsWith(IDEM_PREFIX)) sessionStorage.removeItem(k)
+    }
   } catch {
     // noop
   }

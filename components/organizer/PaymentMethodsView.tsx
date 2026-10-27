@@ -147,11 +147,15 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">Tarjeta en el sitio</p>
             <p className="text-xs text-gray-400 mt-0.5">
-              {cardReady
-                ? 'Débito o crédito en la página, sin cuenta de Mercado Pago'
-                : event?.has_mp_token
-                  ? 'Pegá la clave pública de Mercado Pago para poder activarla'
-                  : 'Conectá Mercado Pago y pegá la clave pública para poder activarla'}
+              {cardReady ? (
+                'Débito o crédito en la página, sin cuenta de Mercado Pago'
+              ) : (
+                <Link href={mpHref} className="underline underline-offset-2 hover:text-gray-600">
+                  {event?.has_mp_token
+                    ? 'Pegá la clave pública de Mercado Pago para poder activarla'
+                    : 'Conectá Mercado Pago y pegá la clave pública para poder activarla'}
+                </Link>
+              )}
             </p>
           </div>
           <button
