@@ -32,7 +32,10 @@ type CardFormData = {
   }
 }
 
-type ThreeDsChallenge = { external_resource_url: string; creq: string }
+/** Error que entrega el Brick: `non_critical` son avisos (campos inválidos, etc.) que el propio Brick ya muestra. */
+type BrickError = { type?: 'critical' | 'non_critical'; cause?: string; message?: string }
+
+type ThreeDsChallenge ={ external_resource_url: string; creq: string }
 
 /**
  * Desafío 3DS del banco (típico de Visa). Mercado Pago pide abrirlo con un POST
@@ -151,8 +154,12 @@ export function CardPaymentBrick({
           onReady: () => {
             if (!cancelled) setReady(true)
           },
-          onError: () => {
-            if (!cancelled) setError('No se pudo mostrar el formulario de tarjeta.')
+          onError: (brickError?: BrickError) => {
+            // El detalle (cause/message) es lo único que dice por qué falló: sin esto no se puede diagnosticar.
+            console.error('[MercadoPago Brick]', brickError)
+            if (cancelled || brickError?.type === 'non_critical') return
+            const cause = brickError?.cause ? ` (${brickError.cause})` : ''
+            setError(`No se pudo mostrar el formulario de tarjeta.${cause}`)
           },
           onSubmit: (cardFormData: CardFormData & { formData?: CardFormData }) => {
             const formData = cardFormData.formData ?? cardFormData
