@@ -74,7 +74,13 @@ export function CartView({
         })
         if (res.ok) {
           const data = await res.json()
-          savePendingOrder({ orderId: data.order_id, slug, itemsKey, createdAt: Date.now() })
+          savePendingOrder({
+            orderId: data.order_id,
+            slug,
+            itemsKey,
+            createdAt: Date.now(),
+            paymentMethod: 'mp',
+          })
         }
       }
     } catch {

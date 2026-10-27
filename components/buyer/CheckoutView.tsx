@@ -9,7 +9,13 @@ import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { useCart } from '@/lib/hooks/useCart'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
-import { cartItemsKey, clearPendingOrder, loadPendingOrder } from '@/lib/pendingOrder'
+import {
+  cartItemsKey,
+  clearPendingOrder,
+  loadPendingOrder,
+  pendingIdempotencyKey,
+  savePendingOrder,
+} from '@/lib/pendingOrder'
 import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
 import type { ServiceFeePercent } from '@/types'
@@ -36,11 +42,16 @@ export function CheckoutView({
 }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
+  // Al pagar se vacía el carrito antes de que termine la navegación. Conservamos
+  // los ítems de este render para no mostrar "carrito vacío" en el medio.
+  const keptItemsRef = useRef(items)
+  if (items.length > 0) keptItemsRef.current = items
+  const displayItems = items.length > 0 ? items : keptItemsRef.current
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
 
   // Los tickets no se pueden pagar en efectivo (el backend también lo rechaza).
-  const hasTickets = items.some(i => i.kind === 'ticket')
+  const hasTickets = displayItems.some(i => i.kind === 'ticket')
   const allowedMethodIds = useMemo(
     () => availablePaymentMethods.filter(id => !(hasTickets && id === 'cash')),
     [availablePaymentMethods, hasTickets],
@@ -66,24 +77,80 @@ export function CheckoutView({
   const [emailFocused, setEmailFocused] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Orden pre-creada desde el carrito: mientras el usuario tipea sus datos,
-  // el backend ya está generando el link de Mercado Pago. Se pollea acá para
-  // poder redirigir directo a MP al confirmar, sin pasar por el tracker.
+  // La orden se encola apenas hay ítems, con el medio de pago elegido, para que
+  // el checkout del proveedor se arme mientras el comprador escribe sus datos.
   const pendingOrderIdRef = useRef<string | null>(null)
+  const precreateRef = useRef<Promise<string | null> | null>(null)
+  const [trackedOrderId, setTrackedOrderId] = useState<string | null>(null)
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (items.length === 0) return
-    const slug = catalogSlug ?? eventId
-    const pending = loadPendingOrder(slug, cartItemsKey(items))
-    pendingOrderIdRef.current = pending?.orderId ?? null
-    if (!pending) return
+  const itemsKey = cartItemsKey(items)
 
+  useEffect(() => {
+    if (items.length === 0 || !paymentMethod || !paymentsEnabled) {
+      precreateRef.current = null
+      return
+    }
+    const slug = catalogSlug ?? eventId
+    const existing = loadPendingOrder(slug, itemsKey, paymentMethod)
+    if (existing) {
+      pendingOrderIdRef.current = existing.orderId
+      setTrackedOrderId(existing.orderId)
+      precreateRef.current = Promise.resolve(existing.orderId)
+      return
+    }
+
+    let cancelled = false
+    const promise = (async (): Promise<string | null> => {
+      try {
+        const res = await fetch(catalogPaths.createOrder(slug), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Branded-Host': window.location.host,
+          },
+          body: JSON.stringify({
+            customer_name: '',
+            customer_email: '',
+            payment_method: paymentMethod,
+            items: items.map(orderLinePayload),
+            idempotency_key: pendingIdempotencyKey(slug, itemsKey, paymentMethod),
+          }),
+        })
+        if (!res.ok || cancelled) return null
+        const data = await res.json()
+        if (cancelled || !data.order_id) return null
+        savePendingOrder({
+          orderId: data.order_id,
+          slug,
+          itemsKey,
+          createdAt: Date.now(),
+          paymentMethod,
+        })
+        pendingOrderIdRef.current = data.order_id
+        setTrackedOrderId(data.order_id)
+        return data.order_id as string
+      } catch {
+        return null
+      }
+    })()
+    precreateRef.current = promise
+    return () => {
+      cancelled = true
+    }
+  }, [items, itemsKey, paymentMethod, paymentsEnabled, catalogSlug, eventId])
+
+  useEffect(() => {
+    setCheckoutUrl(null)
+  }, [paymentMethod])
+
+  useEffect(() => {
+    if (!trackedOrderId) return
     let cancelled = false
     let intervalId: ReturnType<typeof setInterval> | null = null
     const poll = async () => {
       try {
-        const res = await fetch(catalogPaths.orderStatus(pending.orderId), {
+        const res = await fetch(catalogPaths.orderStatus(trackedOrderId), {
           headers: { 'X-Branded-Host': window.location.host },
         })
         if (!res.ok) return
@@ -93,7 +160,7 @@ export function CheckoutView({
           if (intervalId) clearInterval(intervalId)
         }
       } catch {
-        // la orden sigue en cola; el tracker retoma el polling si hace falta
+        // la orden sigue en cola; el detalle de la orden retoma el polling
       }
     }
     poll()
@@ -102,10 +169,10 @@ export function CheckoutView({
       cancelled = true
       if (intervalId) clearInterval(intervalId)
     }
-  }, [items, catalogSlug, eventId])
+  }, [trackedOrderId])
 
-  const { serviceFee, total: grandTotal } = computeCartTotals(items, serviceFeePercent)
-  const listTotal = items.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
+  const { serviceFee, total: grandTotal } = computeCartTotals(displayItems, serviceFeePercent)
+  const listTotal = displayItems.reduce((s, i) => s + (i.listPrice ?? i.price) * i.quantity, 0)
   const hasDiscount = listTotal > total
 
   const handleConfirm = async () => {
@@ -120,7 +187,7 @@ export function CheckoutView({
     if (trimmedEmail === '') { setError('Ingresá tu email para continuar'); return }
     if (emailMalformed) { setError('Ingresá un email válido'); return }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
-    if (items.length === 0) return
+    if (displayItems.length === 0) return
 
     setLoading(true)
     setError('')
@@ -131,10 +198,12 @@ export function CheckoutView({
 
     try {
       const slug = catalogSlug ?? eventId
-      // La orden pre-creada desde el carrito siempre se crea con payment_method
-      // 'mp' (ver CartView) — si el usuario terminó eligiendo otro método acá,
-      // esa orden no sirve: se ignora y se crea una nueva con el método correcto.
-      let orderId = paymentMethod === 'mp' ? pendingOrderIdRef.current : null
+      const payItemsKey = cartItemsKey(displayItems)
+      let orderId = loadPendingOrder(slug, payItemsKey, paymentMethod)?.orderId ?? null
+      if (!orderId && precreateRef.current) {
+        orderId = await precreateRef.current
+        orderId = loadPendingOrder(slug, payItemsKey, paymentMethod)?.orderId ?? orderId
+      }
       let orderNumber: number | null = null
 
       if (orderId) {
@@ -176,7 +245,7 @@ export function CheckoutView({
             customer_name: name.trim(),
             customer_email: email.trim(),
             payment_method: paymentMethod,
-            items: items.map(orderLinePayload),
+            items: displayItems.map(orderLinePayload),
           }),
         })
 
@@ -201,7 +270,7 @@ export function CheckoutView({
         createdAt: new Date().toISOString(),
       })
 
-      if (checkoutUrl && paymentMethod === 'mp') {
+      if (checkoutUrl) {
         // El link de MP ya está listo: vamos directo, sin pasar por el tracker
         isNavigatingAway = true
         window.location.assign(checkoutUrl)
@@ -288,12 +357,12 @@ export function CheckoutView({
         {/* Tu pedido */}
         <p className="text-[18px] font-bold" style={{ color: BUYER_COLORS.text }}>Tu pedido</p>
 
-        {items.length === 0 ? (
+        {displayItems.length === 0 ? (
           <p className="text-[14px]" style={{ color: BUYER_COLORS.muted }}>No tenés items en el carrito</p>
         ) : (
           <>
             <div className="flex flex-col gap-3">
-              {items.map(item => (
+              {displayItems.map(item => (
                 <div
                   key={item.productId}
                   className="flex items-center justify-between rounded-[18px] bg-white px-4 py-3"
@@ -521,7 +590,7 @@ export function CheckoutView({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={items.length === 0 || loading || !paymentsEnabled}
+            disabled={displayItems.length === 0 || loading || !paymentsEnabled}
             className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
             style={{
               background: BUYER_COLORS.accent,
@@ -533,7 +602,7 @@ export function CheckoutView({
               ? 'Compra inhabilitada'
               : loading
               ? 'Procesando...'
-              : items.length > 0
+              : displayItems.length > 0
               ? 'Pagar'
               : 'Carrito vacío'}
           </button>

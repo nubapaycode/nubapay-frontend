@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { TicketCheckoutView, validateBuyer } from '@/components/buyer/TicketCheckoutView'
@@ -40,7 +40,6 @@ const validBuyer = {
   email: 'ana@mail.com',
   emailConfirm: 'ANA@mail.com ',
   phone: '11 5555-1234',
-  document: '30123456',
 }
 
 async function fillBuyer() {
@@ -48,7 +47,6 @@ async function fillBuyer() {
   await userEvent.type(screen.getByLabelText('Email'), validBuyer.email)
   await userEvent.type(screen.getByLabelText('Repetir email'), validBuyer.emailConfirm)
   await userEvent.type(screen.getByLabelText('Teléfono'), validBuyer.phone)
-  await userEvent.type(screen.getByLabelText('DNI o pasaporte'), validBuyer.document)
 }
 
 beforeEach(() => {
@@ -62,11 +60,10 @@ describe('validateBuyer', () => {
     expect(validateBuyer(validBuyer)).toEqual({})
   })
 
-  it('marca emails distintos, teléfono corto y documento vacío', () => {
-    expect(validateBuyer({ ...validBuyer, emailConfirm: 'otra@mail.com', phone: '123', document: '' })).toEqual({
+  it('marca emails distintos y teléfono corto', () => {
+    expect(validateBuyer({ ...validBuyer, emailConfirm: 'otra@mail.com', phone: '123' })).toEqual({
       emailConfirm: 'Los emails no coinciden',
       phone: 'Ingresá un teléfono válido',
-      document: 'Ingresá tu DNI o pasaporte',
     })
   })
 })
@@ -84,35 +81,45 @@ describe('TicketCheckoutView', () => {
     expect(screen.queryByText('Efectivo')).not.toBeInTheDocument()
   })
 
-  it('no crea la compra con datos inválidos', async () => {
+  it('no confirma la compra con datos inválidos', async () => {
     storeSelection()
     render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
     expect(screen.getByText('Ingresá tu nombre y apellido')).toBeInTheDocument()
-    expect(browserFetch).not.toHaveBeenCalled()
+    const methods = (browserFetch as jest.Mock).mock.calls.map(call => call[1]?.method)
+    expect(methods).not.toContain('PATCH')
   })
 
-  it('crea la orden con los datos del comprador y limpia la selección', async () => {
+  it('encola la orden al entrar y al pagar solo adjunta los datos', async () => {
     storeSelection()
     ;(browserFetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ order_id: 'o1', order_number: 7, checkout_url: null }),
     })
     render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
-    await fillBuyer()
-    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
 
-    const body = JSON.parse((browserFetch as jest.Mock).mock.calls[0][1].body)
-    expect(body).toEqual({
-      customer_name: 'Ana Pérez',
-      customer_email: 'ana@mail.com',
-      customer_phone: '11 5555-1234',
-      customer_document: '30123456',
+    const created = JSON.parse((browserFetch as jest.Mock).mock.calls[0][1].body)
+    expect(created).toMatchObject({
+      customer_name: '',
+      customer_email: '',
       payment_method: 'mp',
       items: [{ ticket_id: 't1', quantity: 2 }],
     })
+    expect(created.customer_document).toBeUndefined()
+
+    await fillBuyer()
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+
+    const patchCall = (browserFetch as jest.Mock).mock.calls.find(call => call[1]?.method === 'PATCH')
+    expect(JSON.parse(patchCall[1].body)).toEqual({
+      customer_name: 'Ana Pérez',
+      customer_email: 'ana@mail.com',
+      customer_phone: '11 5555-1234',
+    })
     expect(push).toHaveBeenCalledWith('/catalogo/fiesta/order/o1')
     expect(sessionStorage.getItem('nubapay_ticket_selection')).toBeNull()
+    expect(screen.queryByText('No elegiste entradas')).not.toBeInTheDocument()
   })
 
   it('cuando vence el tiempo pide volver a elegir', () => {

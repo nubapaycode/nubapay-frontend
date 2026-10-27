@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -11,6 +11,7 @@ import { buyerFlowPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { formatEventDateLong } from '@/lib/eventDate'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
+import { cartItemsKey, clearPendingOrder, loadPendingOrder, pendingIdempotencyKey, savePendingOrder } from '@/lib/pendingOrder'
 import { computeCartTotals } from '@/lib/serviceFee'
 import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
 import { cn, formatPrice } from '@/lib/utils'
@@ -29,7 +30,7 @@ interface TicketCheckoutViewProps {
 const MUTED = '#6B6B78'
 const DANGER = '#DC2626'
 
-export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone' | 'document'
+export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone'
 export type BuyerValues = Record<BuyerField, string>
 
 const FIELDS: {
@@ -41,14 +42,13 @@ const FIELDS: {
   inputMode?: 'email' | 'tel'
   full?: boolean
 }[] = [
-  { id: 'name', label: 'Nombre y apellido', placeholder: 'Como figura en tu documento', autoComplete: 'name', full: true },
+  { id: 'name', label: 'Nombre y apellido', placeholder: 'Tu nombre y apellido', autoComplete: 'name', full: true },
   { id: 'email', label: 'Email', placeholder: 'Ingresá tu correo electrónico', type: 'email', autoComplete: 'email', inputMode: 'email' },
   { id: 'emailConfirm', label: 'Repetir email', placeholder: 'Repetí tu correo electrónico', type: 'email', autoComplete: 'email', inputMode: 'email' },
-  { id: 'phone', label: 'Teléfono', placeholder: 'Tu teléfono', type: 'tel', autoComplete: 'tel', inputMode: 'tel' },
-  { id: 'document', label: 'DNI o pasaporte', placeholder: 'Ingresá tu DNI o pasaporte', autoComplete: 'off' },
+  { id: 'phone', label: 'Teléfono', placeholder: 'Tu teléfono', type: 'tel', autoComplete: 'tel', inputMode: 'tel', full: true },
 ]
 
-const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '', document: '' }
+const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '' }
 
 /** Errores por campo de los datos del comprador; objeto vacío si todo es válido. */
 export function validateBuyer(values: BuyerValues): Partial<Record<BuyerField, string>> {
@@ -62,9 +62,6 @@ export function validateBuyer(values: BuyerValues): Partial<Record<BuyerField, s
   const phoneDigits = values.phone.replace(/\D/g, '')
   if (!phoneDigits) errors.phone = 'Ingresá tu teléfono'
   else if (phoneDigits.length < 8) errors.phone = 'Ingresá un teléfono válido'
-  const documentId = values.document.replace(/[^0-9a-z]/gi, '')
-  if (!documentId) errors.document = 'Ingresá tu DNI o pasaporte'
-  else if (documentId.length < 6) errors.document = 'Ingresá un DNI o pasaporte válido'
   return errors
 }
 
@@ -105,8 +102,62 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   // Las entradas no se pagan en efectivo (el backend también lo rechaza).
   const methods = paymentMethods.filter(m => m.id !== 'cash' && availablePaymentMethods.includes(m.id))
   const [paymentMethod, setPaymentMethod] = useState(methods[0]?.id ?? '')
+  const paymentsEnabled = event.paymentsEnabled
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
+  const leavingRef = useRef(false)
+  const precreateRef = useRef<Promise<string | null> | null>(null)
+
+  const selectionKey = cartItemsKey(lines.map(line => ({ productId: line.ticketId, quantity: line.quantity })))
+
+  // La orden queda pendiente apenas hay entradas elegidas, para que el cobro
+  // se arme mientras el comprador escribe sus datos.
+  useEffect(() => {
+    if (!ready || lines.length === 0 || !paymentMethod || !paymentsEnabled) {
+      precreateRef.current = null
+      return
+    }
+    const existing = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)
+    if (existing) {
+      precreateRef.current = Promise.resolve(existing.orderId)
+      return
+    }
+
+    let cancelled = false
+    const items = lines.map(line => ({ ticket_id: line.ticketId, quantity: line.quantity }))
+    const promise = (async (): Promise<string | null> => {
+      try {
+        const res = await browserFetch(catalogPaths.createOrder(catalogSlug), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Branded-Host': window.location.host },
+          body: JSON.stringify({
+            customer_name: '',
+            customer_email: '',
+            payment_method: paymentMethod,
+            items,
+            idempotency_key: pendingIdempotencyKey(catalogSlug, selectionKey, paymentMethod),
+          }),
+        })
+        if (!res.ok || cancelled) return null
+        const data = await res.json()
+        if (cancelled || !data.order_id) return null
+        savePendingOrder({
+          orderId: data.order_id,
+          slug: catalogSlug,
+          itemsKey: selectionKey,
+          createdAt: Date.now(),
+          paymentMethod,
+        })
+        return data.order_id as string
+      } catch {
+        return null
+      }
+    })()
+    precreateRef.current = promise
+    return () => {
+      cancelled = true
+    }
+  }, [ready, lines, selectionKey, paymentMethod, paymentsEnabled, catalogSlug])
 
   // Entrada directa a esta página (sin pasar por "Comprar"): arranca el tiempo acá.
   useEffect(() => {
@@ -127,7 +178,6 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const venue = event.venue.trim()
   const dateLabel = formatEventDateLong(event.date)
   const backHref = ticketsPath(catalogSlug)
-  const paymentsEnabled = event.paymentsEnabled
 
   const restart = () => {
     clearTicketSelection()
@@ -158,35 +208,72 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     setSubmitError('')
     let navigating = false
     try {
-      const res = await browserFetch(catalogPaths.createOrder(catalogSlug), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Branded-Host': window.location.host },
-        body: JSON.stringify({
-          customer_name: values.name.trim(),
-          customer_email: values.email.trim(),
-          customer_phone: values.phone.trim(),
-          customer_document: values.document.trim(),
-          payment_method: paymentMethod,
-          items: selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity })),
-        }),
-      })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        setSubmitError(body.error ?? 'No se pudo crear la compra. Intentá de nuevo.')
-        return
+      const items = selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity }))
+      let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
+      if (!orderId && precreateRef.current) {
+        await precreateRef.current
+        orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       }
-      const data = await res.json()
-      const orderId = data.order_id as string
+      let orderNumber: number | null = null
+      let checkoutUrl: string | null = null
+
+      if (orderId) {
+        const res = await browserFetch(catalogPaths.updateOrderCustomer(orderId), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Branded-Host': window.location.host },
+          body: JSON.stringify({
+            customer_name: values.name.trim(),
+            customer_email: values.email.trim(),
+            customer_phone: values.phone.trim(),
+          }),
+        })
+        if (!res.ok && res.status !== 409) {
+          if (res.status === 404) {
+            clearPendingOrder()
+            orderId = null
+          } else {
+            const body = await res.json().catch(() => ({}))
+            setSubmitError(body.error ?? 'No se pudo confirmar la compra. Intentá de nuevo.')
+            return
+          }
+        }
+      }
+
+      if (!orderId) {
+        const res = await browserFetch(catalogPaths.createOrder(catalogSlug), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Branded-Host': window.location.host },
+          body: JSON.stringify({
+            customer_name: values.name.trim(),
+            customer_email: values.email.trim(),
+            customer_phone: values.phone.trim(),
+            payment_method: paymentMethod,
+            items,
+          }),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          setSubmitError(body.error ?? 'No se pudo crear la compra. Intentá de nuevo.')
+          return
+        }
+        const data = await res.json()
+        orderId = data.order_id as string
+        orderNumber = data.order_number ?? null
+        checkoutUrl = data.checkout_url ?? null
+      }
+
       saveOrder({
         orderId,
-        orderNumber: data.order_number ?? null,
+        orderNumber,
         slug: catalogSlug,
         total,
         createdAt: new Date().toISOString(),
       })
+      clearPendingOrder()
+      leavingRef.current = true
       clearTicketSelection()
       navigating = true
-      if (data.checkout_url) window.location.assign(data.checkout_url)
+      if (checkoutUrl) window.location.assign(checkoutUrl)
       else router.push(buyerFlowPath(event.id, { catalogSlug, path: `order/${orderId}` }))
     } catch {
       setSubmitError('Error de conexión. Revisá tu internet e intentá de nuevo.')
@@ -235,7 +322,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
 
   if (!ready) return shell(null)
 
-  if (selected.length === 0 || expired) {
+  if (!leavingRef.current && (selected.length === 0 || expired)) {
     return shell(
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">

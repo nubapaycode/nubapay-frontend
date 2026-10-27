@@ -79,7 +79,8 @@ describe('CheckoutView — con items', () => {
       json: async () => ({ order_id: 'test-order-uuid', checkout_url: null }),
     })
     render(<CheckoutView eventId="demo" />)
-    await userEvent.type(screen.getByRole('textbox'), 'Juan Pérez')
+    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Juan Pérez')
+    await userEvent.type(screen.getByLabelText('Tu email'), 'juan@email.com')
     await userEvent.click(screen.getByRole('button', { name: /Pagar/ }))
     await waitFor(() => expect(mockClearCart).toHaveBeenCalledTimes(1))
     expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/demo\/order\/.+/))

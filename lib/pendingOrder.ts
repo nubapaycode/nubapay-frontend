@@ -13,6 +13,8 @@ export interface PendingOrder {
   slug: string
   itemsKey: string
   createdAt: number
+  /** Método con el que se encoló. Las órdenes viejas del carrito no lo traen y se tratan como mp. */
+  paymentMethod?: string
 }
 
 /** Firma estable del carrito: cambia si cambian productos o cantidades. */
@@ -23,7 +25,11 @@ export function cartItemsKey(items: { productId: string; quantity: number }[]): 
     .join('|')
 }
 
-export function loadPendingOrder(slug: string, itemsKey: string): PendingOrder | null {
+export function loadPendingOrder(
+  slug: string,
+  itemsKey: string,
+  paymentMethod?: string,
+): PendingOrder | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = sessionStorage.getItem(KEY)
@@ -37,9 +43,24 @@ export function loadPendingOrder(slug: string, itemsKey: string): PendingOrder |
       sessionStorage.removeItem(KEY)
       return null
     }
+    if (paymentMethod && (stored.paymentMethod ?? 'mp') !== paymentMethod) return null
     return stored
   } catch {
     return null
+  }
+}
+
+/** Misma clave si el comprador recarga el checkout: el backend devuelve la orden ya encolada. */
+export function pendingIdempotencyKey(slug: string, itemsKey: string, paymentMethod: string): string {
+  const storageKey = `nubapay_precreate_idem:${slug}:${itemsKey}:${paymentMethod}`
+  try {
+    const existing = sessionStorage.getItem(storageKey)
+    if (existing) return existing
+    const key = crypto.randomUUID()
+    sessionStorage.setItem(storageKey, key)
+    return key
+  } catch {
+    return crypto.randomUUID()
   }
 }
 
