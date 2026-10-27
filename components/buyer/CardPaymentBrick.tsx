@@ -102,15 +102,6 @@ function loadMpSdk(): Promise<void> {
   return sdkPromise
 }
 
-function describeError(err: unknown): string {
-  if (err instanceof Error) return `${err.name}: ${err.message}`
-  try {
-    return JSON.stringify(err) ?? String(err)
-  } catch {
-    return String(err)
-  }
-}
-
 export function CardPaymentBrick({
   orderId,
   publicKey,
@@ -127,8 +118,6 @@ export function CardPaymentBrick({
   onReview: () => void
 }) {
   const [error, setError] = useState('')
-  /** Detalle técnico del último error, visible en pantalla para poder mandar una captura a soporte. */
-  const [errorDetail, setErrorDetail] = useState('')
   const [ready, setReady] = useState(false)
   const [challenge, setChallenge] = useState<ThreeDsChallenge | null>(null)
   const onPaidRef = useRef(onPaid)
@@ -141,17 +130,13 @@ export function CardPaymentBrick({
     let cancelled = false
     let controller: BrickController | null = null
     setError('')
-    setErrorDetail('')
     setReady(false)
 
     const mount = async () => {
       try {
         await loadMpSdk()
-      } catch (err) {
-        if (!cancelled) {
-          setError('No se pudo cargar el formulario de tarjeta. Recargá la página.')
-          setErrorDetail(`loadMpSdk: ${describeError(err)}`)
-        }
+      } catch {
+        if (!cancelled) setError('No se pudo cargar el formulario de tarjeta. Recargá la página.')
         return
       }
       if (cancelled || !window.MercadoPago) return
@@ -171,11 +156,8 @@ export function CardPaymentBrick({
             if (!cancelled) setReady(true)
           },
           onError: (brickError?: BrickError) => {
-            // El detalle (cause/message) es lo único que dice por qué falló: sin esto no se puede diagnosticar.
             console.error('[MercadoPago Brick]', brickError)
-            if (cancelled) return
-            setErrorDetail(`Brick onError: ${describeError(brickError)}`)
-            if (brickError?.type === 'non_critical') return
+            if (cancelled || brickError?.type === 'non_critical') return
             setError('No se pudo mostrar el formulario de tarjeta.')
           },
           onSubmit: (cardFormData: CardFormData & { formData?: CardFormData }) => {
@@ -198,10 +180,7 @@ export function CardPaymentBrick({
             })
               .then(async (res) => {
                 const data = await res.json().catch(() => ({}))
-                if (!res.ok) {
-                  setErrorDetail(`Cobro HTTP ${res.status}: ${data.error ?? '(sin mensaje)'}`)
-                  throw new Error(data.error || 'No se pudo cobrar la tarjeta')
-                }
+                if (!res.ok) throw new Error(data.error || 'No se pudo cobrar la tarjeta')
                 if (data.three_ds?.external_resource_url && data.three_ds?.creq) {
                   setChallenge(data.three_ds)
                   return
@@ -215,24 +194,14 @@ export function CardPaymentBrick({
                   return
                 }
                 if (data.status === 'rejected') {
-                  setErrorDetail(
-                    `Cobro rechazado: ${data.error ?? '(sin mensaje)'}${data.status_detail ? ` [${data.status_detail}]` : ''}`,
-                  )
                   throw new Error(data.error || 'El pago fue rechazado')
                 }
                 onReviewRef.current()
               })
-              .catch((err: unknown) => {
-                setErrorDetail(prev => prev || `Cobro: ${describeError(err)}`)
-                throw err
-              })
           },
         },
-      }).catch((err: unknown) => {
-        if (!cancelled) {
-          setError('No se pudo mostrar el formulario de tarjeta.')
-          setErrorDetail(`bricks.create: ${describeError(err)}`)
-        }
+      }).catch(() => {
+        if (!cancelled) setError('No se pudo mostrar el formulario de tarjeta.')
         return null
       })
       if (!brick) return
@@ -269,19 +238,6 @@ export function CardPaymentBrick({
       <div id={containerId} className={challenge ? 'hidden' : undefined} />
       {error && (
         <p className="text-[13px] font-medium" style={{ color: '#DC2626' }}>{error}</p>
-      )}
-      {errorDetail && (
-        <div className="rounded-lg p-2.5" style={{ background: BUYER_COLORS.subtleFill }}>
-          <p className="text-[11px] font-semibold" style={{ color: BUYER_COLORS.text }}>
-            Detalle técnico (mandá una captura a soporte):
-          </p>
-          <pre
-            className="mt-1 whitespace-pre-wrap break-all text-[11px] leading-snug"
-            style={{ color: BUYER_COLORS.muted }}
-          >
-            {errorDetail}
-          </pre>
-        </div>
       )}
       <p className="text-[11px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
         El formulario es de Mercado Pago. El número de tarjeta no pasa por Nubapay. Puede pedirte el documento del titular porque el cobro con tarjeta lo exige.
