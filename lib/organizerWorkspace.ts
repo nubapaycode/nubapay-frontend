@@ -75,6 +75,8 @@ export type WorkspacePayment = {
   paid_at: string | null
   created_at: string | null
   channel: string | null
+  /** Costo de servicio cobrado en el pedido. 0 cuando el evento usa comisión del 1%. */
+  service_fee?: number
 }
 
 export type WorkspacePickupPoint = {
@@ -602,7 +604,10 @@ export async function deleteWorkspaceProduct(
 export type PaymentsSort = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc'
 
 /** Cantidad y monto por estado del pago, con los filtros de canal y búsqueda aplicados. */
-export type PaymentsSummary = Record<'approved' | 'pending' | 'rejected' | 'refunded', { count: number; amount: number }>
+export type PaymentsSummary = Record<
+  'approved' | 'pending' | 'rejected' | 'refunded',
+  { count: number; amount: number; service_fee?: number }
+>
 
 export async function fetchWorkspacePayments(
   eventId: string,

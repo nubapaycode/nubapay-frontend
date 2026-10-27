@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useLayoutEffect, useRef, useState } from 'react'
 
+import { settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
 import { useWorkspaceAccess } from '@/components/organizer/WorkspaceAccessContext'
 import type { WorkspaceSectionKey } from '@/lib/organizerWorkspaceSections'
 import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
@@ -18,7 +19,11 @@ const PILL_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
 export function WorkspaceSectionTabs({ section, label }: { section: WorkspaceSectionKey; label: string }) {
   const access = useWorkspaceAccess()
   const pathname = usePathname()
+  const eventId = access?.basePath.match(/\/events\/([^/]+)/)?.[1] ?? ''
+  const serviceFeeMode = useServiceFeeMode(section === 'cobros' ? eventId : '')
   const tabs = access ? visibleSectionTabs(section, access) : []
+  const tabLabel = (segment: string, label: string) =>
+    segment === 'comision' && serviceFeeMode === true ? settlementToolLabel(true) : label
   const activeIndex = access ? tabs.findIndex(t => pathname === `${access.basePath}/${t.segment}`) : -1
 
   const listRef = useRef<HTMLDivElement>(null)
@@ -37,7 +42,7 @@ export function WorkspaceSectionTabs({ section, label }: { section: WorkspaceSec
     const ro = new ResizeObserver(measure)
     ro.observe(listRef.current)
     return () => ro.disconnect()
-  }, [activeIndex, tabs.length])
+  }, [activeIndex, tabs.length, serviceFeeMode])
 
   if (!access || tabs.length < 2 || activeIndex === -1) return null
 
@@ -88,7 +93,7 @@ export function WorkspaceSectionTabs({ section, label }: { section: WorkspaceSec
                   transition: 'color 0.2s ease',
                 }}
               >
-                {tab.label}
+                {tabLabel(tab.segment, tab.label)}
               </Link>
             )
           })}

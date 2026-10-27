@@ -30,6 +30,8 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   has_sipago_credentials: boolean
   /** true si el organizador acepta pagos en efectivo, confirmados por staff al escanear el QR. */
   cash_enabled: boolean
+  /** true = el comprador paga costo de servicio. false = el organizador paga comisión del 1%. */
+  service_fee_enabled: boolean
   created_at: string | null
   updated_at: string | null
   membership?: 'owner' | 'staff'

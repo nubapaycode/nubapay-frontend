@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
+import { settlementDue, settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
 import { Spinner } from '@/components/ui/Spinner'
 import { fetchAllApprovedPayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
-
-const COMMISSION_RATE = 0.01
 
 const channelLabels: Record<string, string> = {
   mp: 'Mercado Pago',
@@ -34,6 +33,8 @@ export function CommissionView({ eventId }: { eventId: string }) {
   const [payments, setPayments] = useState<WorkspacePayment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const serviceFeeMode = useServiceFeeMode(eventId)
+  const serviceFeeEnabled = serviceFeeMode === true
 
   useEffect(() => {
     setLoading(true)
@@ -44,14 +45,22 @@ export function CommissionView({ eventId }: { eventId: string }) {
     })
   }, [eventId])
 
-  const totalRevenue = payments.reduce((acc, p) => acc + p.amount, 0)
-  const totalCommission = totalRevenue * COMMISSION_RATE
+  const rowDue = (p: WorkspacePayment) => settlementDue(p.amount, p.service_fee ?? 0, serviceFeeEnabled)
+  const totalRevenue = payments.reduce((acc, p) => acc + Math.max(0, p.amount - (p.service_fee ?? 0)), 0)
+  const totalDue = payments.reduce((acc, p) => acc + rowDue(p), 0)
+  const title = settlementToolLabel(serviceFeeEnabled)
+  const dueLabel = serviceFeeEnabled ? 'A pagar por costo de servicio' : 'Comisión a pagar (1%)'
+  const dueHint = serviceFeeEnabled ? '5% en entradas y 2% en productos' : '1% sobre lo facturado'
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-5">
       <OrganizerToolHeading
-        title="Comisión"
-        description="1% sobre cada transacción aprobada de tu evento."
+        title={title}
+        description={
+          serviceFeeEnabled
+            ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
+            : '1% sobre cada transacción aprobada de tu evento.'
+        }
         prefix={
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900" aria-hidden>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -62,7 +71,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
         }
       />
 
-      {loading && (
+      {(loading || serviceFeeMode === null) && !error && (
         <div className="flex items-center justify-center py-16">
           <Spinner size="md" />
         </div>
@@ -74,7 +83,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && serviceFeeMode !== null && (
         <>
           {/* Resumen */}
           <div className="grid grid-cols-2 gap-3">
@@ -84,9 +93,9 @@ export function CommissionView({ eventId }: { eventId: string }) {
               <p className="text-xs text-gray-400">{payments.length} transacciones aprobadas</p>
             </div>
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 flex flex-col gap-1">
-              <p className="text-xs text-indigo-500 uppercase tracking-wider">Comisión a pagar (1%)</p>
-              <p className="text-2xl font-bold text-indigo-700 tracking-tight">{formatPrice(totalCommission)}</p>
-              <p className="text-xs text-indigo-400">1% sobre el total aprobado</p>
+              <p className="text-xs text-indigo-500 uppercase tracking-wider">{dueLabel}</p>
+              <p className="text-2xl font-bold text-indigo-700 tracking-tight">{formatPrice(totalDue)}</p>
+              <p className="text-xs text-indigo-400">{dueHint}</p>
             </div>
           </div>
 
@@ -101,7 +110,9 @@ export function CommissionView({ eventId }: { eventId: string }) {
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Fecha</p>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Canal</p>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Monto</p>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Comisión</p>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                  {serviceFeeEnabled ? 'A pagar' : 'Comisión'}
+                </p>
               </div>
               <div className="divide-y divide-gray-50">
                 {payments.map(p => (
@@ -110,8 +121,8 @@ export function CommissionView({ eventId }: { eventId: string }) {
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${channelClass[p.channel ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
                       {channelLabels[p.channel ?? ''] ?? p.channel ?? '—'}
                     </span>
-                    <p className="text-sm font-medium text-gray-900 text-right tabular-nums">{formatPrice(p.amount)}</p>
-                    <p className="text-sm font-semibold text-indigo-600 text-right tabular-nums">{formatPrice(p.amount * COMMISSION_RATE)}</p>
+                    <p className="text-sm font-medium text-gray-900 text-right tabular-nums">{formatPrice(Math.max(0, p.amount - (p.service_fee ?? 0)))}</p>
+                    <p className="text-sm font-semibold text-indigo-600 text-right tabular-nums">{formatPrice(rowDue(p))}</p>
                   </div>
                 ))}
               </div>
@@ -119,7 +130,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
                 <p className="text-sm font-semibold text-gray-700">Total</p>
                 <span />
                 <p className="text-sm font-semibold text-gray-900 text-right tabular-nums">{formatPrice(totalRevenue)}</p>
-                <p className="text-sm font-bold text-indigo-700 text-right tabular-nums">{formatPrice(totalCommission)}</p>
+                <p className="text-sm font-bold text-indigo-700 text-right tabular-nums">{formatPrice(totalDue)}</p>
               </div>
             </div>
           )}

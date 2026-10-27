@@ -1,10 +1,11 @@
 'use client'
 
-import { ChevronRight, CreditCard, Landmark } from 'lucide-react'
+import { BadgePercent, ChevronRight, CreditCard, Landmark } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import { settlementDue, settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
 import { useWorkspaceAccess } from '@/components/organizer/WorkspaceAccessContext'
 import { fetchWorkspacePayments, type PaymentsSummary } from '@/lib/organizerWorkspace'
 import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
@@ -18,6 +19,10 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
     description: 'Conectá las pasarelas de pago que vas a usar para cobrar este evento.',
     icon: <Landmark size={18} strokeWidth={1.75} aria-hidden />,
   },
+  comision: {
+    description: '1% sobre cada transacción aprobada de tu evento.',
+    icon: <BadgePercent size={18} strokeWidth={1.75} aria-hidden />,
+  },
 }
 
 /** Página de entrada de Cobros: una tarjeta por herramienta permitida, con el dato clave a la vista. */
@@ -26,6 +31,7 @@ export function CobrosView() {
   const tabs = access ? visibleSectionTabs('cobros', access) : []
   const canSeePayments = tabs.some(t => t.segment === 'payments')
   const eventId = access?.basePath.split('/').filter(Boolean).pop() ?? ''
+  const serviceFeeMode = useServiceFeeMode(eventId)
   const [summary, setSummary] = useState<PaymentsSummary | null>(null)
 
   useEffect(() => {
@@ -53,8 +59,19 @@ export function CobrosView() {
       <div className="space-y-3">
         {access &&
           tabs.map(tab => {
+            if (tab.segment === 'comision' && serviceFeeMode === null) return null
+            const serviceFeeEnabled = serviceFeeMode === true
+            const label = tab.segment === 'comision' ? settlementToolLabel(serviceFeeEnabled) : tab.label
             const details = CARD_DETAILS[tab.segment]
+            const description = tab.segment === 'comision' && serviceFeeEnabled
+              ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
+              : details?.description
             const showStats = tab.segment === 'payments' && summary
+            const approved = summary?.approved
+            const due = approved
+              ? settlementDue(approved.amount, approved.service_fee ?? 0, serviceFeeEnabled)
+              : 0
+            const showDue = tab.segment === 'comision' && summary && serviceFeeMode !== null
             return (
               <Link
                 key={tab.segment}
@@ -65,9 +82,15 @@ export function CobrosView() {
                   {details?.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-semibold text-gray-900">{tab.label}</p>
-                  {details && <p className="mt-0.5 text-[13px] text-gray-500">{details.description}</p>}
+                  <p className="text-[15px] font-semibold text-gray-900">{label}</p>
+                  {description && <p className="mt-0.5 text-[13px] text-gray-500">{description}</p>}
                 </div>
+                {showDue && (
+                  <div className="hidden shrink-0 text-right sm:block">
+                    <Money value={due} className="block text-[16px] font-semibold tabular-nums text-gray-900" />
+                    <span className="text-[12px] text-gray-400">a pagar</span>
+                  </div>
+                )}
                 {showStats && (
                   <div className="hidden shrink-0 text-right sm:block">
                     <Money value={summary.approved.amount} className="block text-[16px] font-semibold tabular-nums text-gray-900" />

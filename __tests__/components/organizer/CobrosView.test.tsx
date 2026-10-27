@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import { fetchWorkspacePayments } from '@/lib/organizerWorkspace'
 
 import { CobrosView } from '@/components/organizer/CobrosView'
@@ -7,9 +8,14 @@ import { WorkspaceAccessProvider } from '@/components/organizer/WorkspaceAccessC
 import { ORGANIZER_FULL_TOOLS, ORGANIZER_ZERO_TOOLS } from '@/lib/organizerStaffTools'
 
 jest.mock('@/lib/organizerWorkspace', () => ({ fetchWorkspacePayments: jest.fn() }))
+jest.mock('@/lib/organizerEvents', () => ({ fetchOrganizerEventDetail: jest.fn() }))
 
 beforeEach(() => {
   jest.clearAllMocks()
+  jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
+    ok: true,
+    event: { service_fee_enabled: false } as never,
+  })
   jest.mocked(fetchWorkspacePayments).mockResolvedValue({
     ok: true,
     payments: [],
@@ -39,10 +45,34 @@ function renderCobros(access: WorkspaceAccess) {
 }
 
 describe('CobrosView', () => {
-  it('el dueño ve las herramientas de cobros con sus links (sin Comisión)', () => {
+  it('el dueño ve Pagos, Métodos de pago y Comisión cuando el evento cobra el 1%', async () => {
     renderCobros(owner)
     expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/events/e1/payments')
     expect(screen.getByRole('link', { name: /Métodos de pago/ })).toHaveAttribute('href', '/events/e1/metodos-pago')
+    expect(await screen.findByRole('link', { name: /Comisión/ })).toHaveAttribute('href', '/events/e1/comision')
+    expect(screen.queryByRole('link', { name: /Costo de servicio/ })).not.toBeInTheDocument()
+  })
+
+  it('si el evento tiene costo de servicio, la tarjeta muestra ese monto y no la comisión', async () => {
+    jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
+      ok: true,
+      event: { service_fee_enabled: true } as never,
+    })
+    jest.mocked(fetchWorkspacePayments).mockResolvedValue({
+      ok: true,
+      payments: [],
+      pagination: { page: 1, page_size: 1, total: 1 },
+      summary: {
+        approved: { count: 1, amount: 1050, service_fee: 50 },
+        pending: { count: 0, amount: 0, service_fee: 0 },
+        rejected: { count: 0, amount: 0, service_fee: 0 },
+        refunded: { count: 0, amount: 0, service_fee: 0 },
+      },
+    })
+    renderCobros(owner)
+    const card = await screen.findByRole('link', { name: /Costo de servicio/ })
+    expect(card).toHaveAttribute('href', '/events/e1/comision')
+    expect(card).toHaveTextContent('50')
     expect(screen.queryByRole('link', { name: /Comisión/ })).not.toBeInTheDocument()
   })
 

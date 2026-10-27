@@ -34,6 +34,7 @@ export const WORKSPACE_SECTIONS: Record<WorkspaceSectionKey, WorkspaceSectionTab
   cobros: [
     { segment: 'payments', label: 'Pagos', tool: 'payments' },
     { segment: 'metodos-pago', label: 'Métodos de pago', ownerOnly: true },
+    { segment: 'comision', label: 'Comisión', ownerOnly: true },
   ],
 }
 

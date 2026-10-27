@@ -10,6 +10,13 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }))
 
+jest.mock('@/lib/organizerEvents', () => ({
+  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({
+    ok: true,
+    event: { service_fee_enabled: false },
+  }),
+}))
+
 const owner: WorkspaceAccess = {
   basePath: '/events/e1',
   membership: 'owner',
@@ -31,7 +38,7 @@ describe('WorkspaceSectionTabs', () => {
     renderTabs(owner, '/events/e1/metodos-pago')
     expect(screen.getByRole('navigation', { name: 'Secciones de cobros' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pagos' })).toHaveAttribute('href', '/events/e1/payments')
-    expect(screen.queryByRole('link', { name: 'Comisión' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Comisión' })).toHaveAttribute('href', '/events/e1/comision')
     expect(screen.getByRole('link', { name: 'Métodos de pago' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Pagos' })).not.toHaveAttribute('aria-current')
   })
