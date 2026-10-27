@@ -131,7 +131,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
       const data: OrderData = await res.json()
       setOrder(data)
       setLoadError(false)
-      if (processingRef.current && !data.processing) {
+      const confirming = paymentResult === 'success' && data.payment_status !== 'approved'
+      if (processingRef.current && !data.processing && !confirming) {
         processingRef.current = false
         if (pollRef.current) clearInterval(pollRef.current)
         pollRef.current = setInterval(fetchOrder, POLL_SLOW)
