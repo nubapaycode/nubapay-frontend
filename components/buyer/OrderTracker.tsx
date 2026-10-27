@@ -678,7 +678,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   {paymentResult === 'success'
                     ? 'Ya recibimos tu pago, estamos confirmándolo.'
                     : isCardOnSite
-                      ? 'Ingresá los datos de tu tarjeta. No hace falta una cuenta de Mercado Pago.'
+                      ? 'Ingresá los datos de tu tarjeta.'
                       : cardInReview
                         ? 'Mercado Pago está revisando el pago. Esta página se actualiza sola.'
                         : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}

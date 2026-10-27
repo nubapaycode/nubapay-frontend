@@ -95,7 +95,8 @@ describe('OrderTracker', () => {
     })
     render(<OrderTracker orderId="abc12345-def" eventId="demo" />)
     expect(await screen.findByText('Cargando el formulario de tarjeta…')).toBeInTheDocument()
-    expect(screen.getByText(/No hace falta una cuenta de Mercado Pago/)).toBeInTheDocument()
+    expect(screen.getByText('Ingresá los datos de tu tarjeta.')).toBeInTheDocument()
+    expect(screen.queryByText(/cuenta de Mercado Pago/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Pagar con/ })).not.toBeInTheDocument()
   })
 

@@ -59,6 +59,8 @@ export interface CartItem {
   productId: string
   /** `'ticket'` para entradas; ausente para productos y combos. */
   kind?: 'ticket'
+  /** Lo manda el backend en los pedidos del panel (escáner, listado): true si la línea es una entrada. */
+  isTicket?: boolean
   name: string
   price: number
   listPrice?: number

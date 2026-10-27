@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 import { BUYER_COLORS } from '@/lib/buyerUi'
 
 // Métodos de pago del comprador, compartidos por el checkout del catálogo y el de tickets.
@@ -11,8 +13,55 @@ export const SIPAGO_CARD_LOGOS = [
   { src: '/images/cards/naranja.png', alt: 'Naranja' },
 ]
 
+/** Tarjeta en el sitio (Mercado Pago): solo estas marcas, sin "y más". */
+const MP_CARD_BRANDS = ['Visa', 'Mastercard', 'Cabal', 'American Express']
+export const MP_CARD_LOGOS = SIPAGO_CARD_LOGOS.filter(logo => MP_CARD_BRANDS.includes(logo.alt))
+
 /** Métodos que pagan con tarjeta: listan las marcas aceptadas bajo el título. */
 export const CARD_LOGO_METHOD_IDS = ['sipago', 'mp_card']
+
+/** Logos que entran en una sola línea en mobile; el resto se resume en un chip "+N". */
+const MOBILE_VISIBLE_LOGOS = 3
+
+/** Marcas aceptadas en una sola línea: en mobile recorta con "+N", desde md muestra todas. */
+export function CardLogos({ methodId }: { methodId: string }) {
+  const onSite = methodId === 'mp_card'
+  const logos = onSite ? MP_CARD_LOGOS : SIPAGO_CARD_LOGOS
+  const mobileVisible = onSite ? logos.length : MOBILE_VISIBLE_LOGOS
+  const hidden = logos.length - mobileVisible
+  return (
+    <div className="mt-1.5 flex flex-nowrap items-center gap-x-1.5 md:gap-x-3">
+      {logos.map((logo, i) => (
+        <Image
+          key={logo.src}
+          src={logo.src}
+          alt={logo.alt}
+          width={32}
+          height={20}
+          unoptimized
+          className={`h-5 w-8 shrink-0 object-contain ${i >= mobileVisible ? 'hidden md:block' : ''}`}
+        />
+      ))}
+      {hidden > 0 && (
+        <span
+          className="flex h-5 shrink-0 items-center rounded-full px-1.5 text-[11px] font-semibold md:hidden"
+          style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.muted }}
+          aria-label={`y ${hidden} marcas más`}
+        >
+          +{hidden}
+        </span>
+      )}
+      {!onSite && (
+        <span
+          className="hidden h-5 items-center text-[12px] font-medium md:flex"
+          style={{ color: BUYER_COLORS.muted }}
+        >
+          y más
+        </span>
+      )}
+    </div>
+  )
+}
 
 export const paymentMethods = [
   {

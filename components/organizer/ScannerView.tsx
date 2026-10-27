@@ -64,6 +64,61 @@ type ScanState =
   | 'already_scanned'
   | 'error'
 
+type ScanKind = 'tickets' | 'products' | 'mixed'
+
+function scanKind(order: Order | null): ScanKind {
+  const items = order?.items ?? []
+  if (items.length > 0 && items.every(i => i.isTicket)) return 'tickets'
+  if (items.some(i => i.isTicket)) return 'mixed'
+  return 'products'
+}
+
+/** Las entradas se "usan"; los productos se "entregan". Un pedido mixto usa un texto neutro. */
+const SCAN_COPY: Record<ScanKind, {
+  prompt: string
+  confirmAll: string
+  confirmSome: (n: number) => string
+  verified: string
+  partial: string
+  pendingNote: string
+  alreadyDone: string
+}> = {
+  products: {
+    prompt: '¿Qué entregás ahora?',
+    confirmAll: 'Marcar entregados',
+    confirmSome: n => `Marcar ${n} entregado${n === 1 ? '' : 's'}`,
+    verified: 'Pedido verificado',
+    partial: 'Entrega parcial registrada',
+    pendingNote: 'Quedan productos pendientes. Podés volver a escanear este mismo QR más tarde para entregarlos.',
+    alreadyDone: 'El pedido ya fue entregado',
+  },
+  tickets: {
+    prompt: 'Entradas a usar',
+    confirmAll: 'Marcar entradas como usadas',
+    confirmSome: n => `Marcar ${n} entrada${n === 1 ? '' : 's'} como usada${n === 1 ? '' : 's'}`,
+    verified: 'Entradas verificadas',
+    partial: 'Uso parcial registrado',
+    pendingNote: 'Quedan entradas sin usar. Podés volver a escanear este mismo QR más tarde para usarlas.',
+    alreadyDone: 'Las entradas ya fueron usadas',
+  },
+  mixed: {
+    prompt: 'Entradas a usar y productos a entregar',
+    confirmAll: 'Confirmar',
+    confirmSome: n => `Confirmar ${n}`,
+    verified: 'Pedido verificado',
+    partial: 'Registro parcial guardado',
+    pendingNote: 'Quedan entradas o productos pendientes. Podés volver a escanear este mismo QR más tarde.',
+    alreadyDone: 'El pedido ya fue completado',
+  },
+}
+
+/** Etiquetas por línea: depende de si la línea es una entrada o un producto. */
+function itemWording(item: { isTicket?: boolean; quantity: number }) {
+  return item.isTicket
+    ? { alreadyDone: item.quantity === 1 ? 'ya usada' : 'ya usadas', done: item.quantity === 1 ? 'Usada' : 'Usadas', doneLower: 'usadas' }
+    : { alreadyDone: 'ya entregado', done: 'Entregado', doneLower: 'entregado' }
+}
+
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -76,6 +131,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({})
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
+  const copy = SCAN_COPY[scanKind(order)]
 
   const incQty = useCallback((id: string, max: number) => {
     setSelectedQty(prev => {
@@ -360,7 +416,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <OrderIdentity order={order} />
               <StatusChip tone="neutral" icon={PackageCheck}>
-                ¿Qué entregás ahora?
+                {copy.prompt}
               </StatusChip>
               <div className="flex flex-col gap-1">
                 {order.items.map((item, i) => {
@@ -383,12 +439,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
                         </span>
                         {redeemedQty > 0 && !fullyRedeemed && (
                           <span className="block text-[10px] font-medium text-amber-600 uppercase tracking-wide">
-                            {redeemedQty}/{item.quantity} ya entregado
+                            {redeemedQty}/{item.quantity} {itemWording(item).alreadyDone}
                           </span>
                         )}
                       </span>
                       {fullyRedeemed ? (
-                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Entregado</span>
+                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">{itemWording(item).done}</span>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <button
@@ -428,8 +484,8 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 {state === 'confirm_loading'
                   ? 'Confirmando…'
                   : selectedCount === 0
-                    ? 'Marcar entregados'
-                    : `Marcar ${selectedCount} entregado${selectedCount === 1 ? '' : 's'}`}
+                    ? copy.confirmAll
+                    : copy.confirmSome(selectedCount)}
               </button>
               <button
                 type="button"
@@ -449,7 +505,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <div className="bg-white rounded-2xl border border-green-100 p-4">
               <OrderIdentity order={order} />
               <StatusChip tone="success" icon={Check}>
-                Pedido verificado
+                {copy.verified}
               </StatusChip>
               <div className="flex flex-col gap-2">
                 {order.items.map((item, i) => (
@@ -477,7 +533,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <div className="bg-white rounded-2xl border border-amber-100 p-4">
               <OrderIdentity order={order} />
               <StatusChip tone="warning" icon={PackageCheck}>
-                Entrega parcial registrada
+                {copy.partial}
               </StatusChip>
               <div className="flex flex-col gap-2">
                 {order.items.map((item, i) => {
@@ -497,7 +553,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                       <span className={cn('text-sm', fullyRedeemed ? 'text-gray-800' : 'text-gray-400')}>{item.name}</span>
                       {partiallyRedeemed && (
                         <span className="text-[10px] font-medium text-gray-400">
-                          ({redeemedQty}/{item.quantity} entregado)
+                          ({redeemedQty}/{item.quantity} {itemWording(item).doneLower})
                         </span>
                       )}
                       {!fullyRedeemed && (
@@ -509,7 +565,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
               </div>
             </div>
             <p className="text-xs text-gray-400 text-center px-2">
-              Quedan productos pendientes. Podés volver a escanear este mismo QR más tarde para entregarlos.
+              {copy.pendingNote}
             </p>
             <button
               type="button"
@@ -528,7 +584,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <div className="bg-white rounded-2xl border border-amber-200 p-4">
               {order && <OrderIdentity order={order} />}
               <StatusChip tone="warning" icon={AlertTriangle}>
-                El pedido ya fue entregado
+                {copy.alreadyDone}
               </StatusChip>
               {order && (
                 <div className="flex flex-col gap-2">
