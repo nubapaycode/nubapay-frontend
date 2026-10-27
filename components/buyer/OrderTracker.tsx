@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatPrice } from '@/lib/utils'
 import { catalogPaths } from '@/lib/api/paths'
+import { ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { CardPaymentBrick } from '@/components/buyer/CardPaymentBrick'
 
@@ -37,7 +38,7 @@ interface OrderData {
   /** Presente cuando el pedido falló por un motivo que el comprador debe conocer. */
   failure_reason?: 'out_of_stock'
   failure_detail?: string
-  items: { product_id: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
+  items: { product_id: string | null; ticket_id?: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
   created_at: string
 }
 
@@ -166,6 +167,9 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   }, [order, paymentResult])
 
   const isPaid = order?.payment_status === 'approved'
+  // Un pedido de solo entradas viene de /tickets: "volver" lleva ahí y no al catálogo.
+  const isTicketOrder = Boolean(order && order.items.length > 0 && order.items.every(i => i.ticket_id))
+  const backPath = catalogSlug ? (isTicketOrder ? ticketsPath(catalogSlug) : `/catalogo/${catalogSlug}`) : null
   const isDelivered = order?.status === 'delivered'
   const isPartiallyDelivered = order?.status === 'partially_delivered'
 
@@ -390,13 +394,13 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           borderBottom: `1px solid ${BUYER_COLORS.border}`,
         } as React.CSSProperties}
       >
-        {catalogSlug && (
+        {backPath && (
           <button
             type="button"
-            onClick={() => router.push(`/catalogo/${catalogSlug}`)}
+            onClick={() => router.push(backPath)}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full transition-colors"
             style={{ background: BUYER_COLORS.subtleFill }}
-            aria-label="Volver al catálogo"
+            aria-label={isTicketOrder ? 'Volver a las entradas' : 'Volver al catálogo'}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
               <path d="M11 4L6 9l5 5" stroke={BUYER_COLORS.text} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
@@ -833,14 +837,14 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
         )}
 
         {/* Finalizado — CTA volver */}
-        {order && isDelivered && catalogSlug && (
+        {order && isDelivered && backPath && (
           <button
             type="button"
-            onClick={() => router.push(`/catalogo/${catalogSlug}`)}
+            onClick={() => router.push(backPath)}
             className="flex h-[50px] w-full items-center justify-center rounded-full text-[15px] font-bold transition-opacity active:opacity-80"
             style={{ background: '#16A34A', color: '#fff' }}
           >
-            Volver a pedir
+            {isTicketOrder ? 'Volver a las entradas' : 'Volver a pedir'}
           </button>
         )}
 

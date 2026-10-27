@@ -67,7 +67,7 @@ export const paymentMethods = [
   {
     id: 'mp',
     label: 'Mercado Pago',
-    sub: 'Te lleva a Mercado Pago',
+    sub: 'Dinero en cuenta o tarjetas',
     icon: (
       <svg width="44" height="30" viewBox="206 130 288 210" fill="none">
         <path fill="#00bcff" d="m350.04,138.92c-77.83,0-140.91,40.36-140.91,90.15s63.09,94.05,140.91,94.05,140.91-44.27,140.91-94.05-63.09-90.15-140.91-90.15Z"/>
