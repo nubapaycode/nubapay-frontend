@@ -215,7 +215,9 @@ export function CardPaymentBrick({
                   return
                 }
                 if (data.status === 'rejected') {
-                  setErrorDetail(`Cobro rechazado: ${data.error ?? '(sin mensaje)'}`)
+                  setErrorDetail(
+                    `Cobro rechazado: ${data.error ?? '(sin mensaje)'}${data.status_detail ? ` [${data.status_detail}]` : ''}`,
+                  )
                   throw new Error(data.error || 'El pago fue rechazado')
                 }
                 onReviewRef.current()
