@@ -59,7 +59,12 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
   const toggleCard = useCallback(async () => {
     if (!event || cardSaving) return
     if (!event.has_mp_token || !event.has_mp_public_key) {
-      showToast('Conectá Mercado Pago y pegá la clave pública antes de activar la tarjeta.', 'error')
+      showToast(
+        event.has_mp_token
+          ? 'Pegá la clave pública de Mercado Pago antes de activar la tarjeta.'
+          : 'Conectá Mercado Pago y pegá la clave pública antes de activar la tarjeta.',
+        'error',
+      )
       return
     }
     const next = !event.mp_card_enabled
@@ -144,7 +149,9 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
             <p className="text-xs text-gray-400 mt-0.5">
               {cardReady
                 ? 'Débito o crédito en la página, sin cuenta de Mercado Pago'
-                : 'Conectá Mercado Pago y pegá la clave pública para poder activarla'}
+                : event?.has_mp_token
+                  ? 'Pegá la clave pública de Mercado Pago para poder activarla'
+                  : 'Conectá Mercado Pago y pegá la clave pública para poder activarla'}
             </p>
           </div>
           <button

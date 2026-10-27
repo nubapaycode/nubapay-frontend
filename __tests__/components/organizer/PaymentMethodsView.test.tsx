@@ -47,7 +47,7 @@ describe('PaymentMethodsView', () => {
     const sw = await screen.findByRole('switch', { name: 'Tarjeta en el sitio' })
     expect(sw).not.toBeChecked()
     expect(sw).toBeDisabled()
-    expect(screen.getByText('Conectá Mercado Pago y pegá la clave pública para poder activarla')).toBeInTheDocument()
+    expect(screen.getByText('Pegá la clave pública de Mercado Pago para poder activarla')).toBeInTheDocument()
   })
 
   it('permite activar la tarjeta en el sitio cuando la clave pública ya está', async () => {
