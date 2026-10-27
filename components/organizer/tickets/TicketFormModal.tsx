@@ -80,6 +80,7 @@ export function TicketFormModal({
     price: Number.isFinite(previewPrice) ? previewPrice : 0,
     stock: previewStock != null && Number.isFinite(previewStock) ? previewStock : null,
     sold: editing?.sold ?? 0,
+    reserved: editing?.reserved,
     is_active: editing?.is_active ?? true,
   }
 
@@ -153,8 +154,8 @@ export function TicketFormModal({
             />
           </label>
         </div>
-        {editing && editing.sold > 0 && (
-          <p className="-mt-2 text-[12px] text-gray-400">Ya se vendieron {editing.sold}: el cupo no puede ser menor.</p>
+        {editing && (editing.reserved ?? editing.sold) > 0 && (
+          <p className="-mt-2 text-[12px] text-gray-400">Ya hay {editing.reserved ?? editing.sold} vendidas o reservadas: el cupo no puede ser menor.</p>
         )}
 
         {error && (

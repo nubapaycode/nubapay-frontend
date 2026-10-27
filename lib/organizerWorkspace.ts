@@ -115,7 +115,10 @@ export type WorkspaceTicket = {
   /** Stock máximo; `null` = sin límite. */
   stock: number | null
   /** Unidades vendidas o reservadas (pedidos no cancelados ni fallidos). */
+  /** Unidades ya pagadas. */
   sold: number
+  /** Unidades que ocupan cupo: pagadas o con el pago en curso. Ausente en respuestas viejas. */
+  reserved?: number
   /** Recaudado con pedidos pagados (sin cancelados). */
   revenue?: number
   /** Unidades ya escaneadas en la entrada. */

@@ -12,12 +12,14 @@ import type { WorkspaceTicket } from '@/lib/organizerWorkspace'
 const LOW_STOCK_PCT = 85
 
 export type TicketLike = Pick<WorkspaceTicket, 'name' | 'description' | 'price' | 'stock' | 'sold' | 'is_active'> &
-  Partial<Pick<WorkspaceTicket, 'id' | 'currency' | 'revenue' | 'redeemed'>>
+  Partial<Pick<WorkspaceTicket, 'id' | 'currency' | 'revenue' | 'redeemed' | 'reserved'>>
 
 export function ticketAvailability(t: TicketLike) {
-  const soldOut = t.stock != null && t.sold >= t.stock
-  const pct = t.stock ? Math.min((t.sold / t.stock) * 100, 100) : 0
-  const remaining = t.stock != null ? Math.max(t.stock - t.sold, 0) : null
+  // El cupo lo ocupan también las reservas con pago en curso; "vendidos" cuenta solo lo pagado.
+  const taken = t.reserved ?? t.sold
+  const soldOut = t.stock != null && taken >= t.stock
+  const pct = t.stock ? Math.min((taken / t.stock) * 100, 100) : 0
+  const remaining = t.stock != null ? Math.max(t.stock - taken, 0) : null
   const low = !soldOut && t.stock != null && pct >= LOW_STOCK_PCT
   return { soldOut, pct, remaining, low }
 }
@@ -187,7 +189,7 @@ export function TicketCard({
                   <span className="font-semibold text-gray-900">{formatCount(t.sold)}</span> vendidos · sin límite
                 </>
               ) : soldOut ? (
-                `Agotado · ${formatCount(t.sold)}/${formatCount(t.stock)}`
+                `Agotado · ${formatCount(t.reserved ?? t.sold)}/${formatCount(t.stock)}`
               ) : (
                 <>
                   <span className="font-semibold text-gray-900">{formatCount(t.sold)}</span> de {formatCount(t.stock)} vendidos
