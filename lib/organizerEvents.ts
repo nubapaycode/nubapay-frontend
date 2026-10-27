@@ -34,14 +34,16 @@ export async function patchOrganizerEvent(
     sipago_client_id: string | null
     /** String para guardar el client_secret de Sipago; null o "" para eliminarlo. */
     sipago_client_secret: string | null
+    mobbex_api_key: string | null
+    mobbex_access_token: string | null
   }>,
-): Promise<{ ok: true; event: OrganizerEventDetail } | { ok: false; error: string }> {
+): Promise<{ ok: true; event: OrganizerEventDetail; warning?: string } | { ok: false; error: string }> {
   const res = await browserFetch(eventsPaths.detail(eventId), {
     method: 'PATCH',
     headers: authHeadersJson(),
     body: JSON.stringify(payload),
   })
-  const body = (await res.json()) as { event?: OrganizerEventDetail; error?: string }
+  const body = (await res.json()) as { event?: OrganizerEventDetail; error?: string; warning?: string }
   if (!res.ok || !body.event) return { ok: false, error: body.error ?? 'No se pudo guardar' }
-  return { ok: true, event: body.event }
+  return { ok: true, event: body.event, warning: body.warning }
 }

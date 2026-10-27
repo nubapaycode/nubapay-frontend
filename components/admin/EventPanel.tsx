@@ -185,7 +185,7 @@ export function EventPanel({
 
   const active = d?.event.is_active ?? true
   const methods = d
-    ? [d.event.has_mp && 'Mercado Pago', d.event.has_sipago && 'Sipago', d.event.cash_enabled && 'Efectivo'].filter(Boolean)
+    ? [d.event.has_mp && 'Mercado Pago', d.event.has_sipago && 'Sipago', d.event.has_mobbex && 'Mobbex', d.event.cash_enabled && 'Efectivo'].filter(Boolean)
     : []
   const orderList = orders.data?.orders ?? []
 

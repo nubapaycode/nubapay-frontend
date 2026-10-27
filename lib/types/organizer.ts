@@ -28,6 +28,8 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   has_mp_token: boolean
   /** true si el evento tiene credenciales de Sipago propias configuradas. El valor nunca se devuelve. */
   has_sipago_credentials: boolean
+  /** true si el evento tiene credenciales de Mobbex. El valor nunca se devuelve. */
+  has_mobbex_credentials: boolean
   /** true si el organizador acepta pagos en efectivo, confirmados por staff al escanear el QR. */
   cash_enabled: boolean
   created_at: string | null
