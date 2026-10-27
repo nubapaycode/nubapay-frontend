@@ -13,10 +13,6 @@ export const SIPAGO_CARD_LOGOS = [
   { src: '/images/cards/naranja.png', alt: 'Naranja' },
 ]
 
-/** Tarjeta en el sitio (Mercado Pago): solo estas marcas, sin "y más". */
-const MP_CARD_BRANDS = ['Visa', 'Mastercard', 'Cabal', 'American Express']
-export const MP_CARD_LOGOS = SIPAGO_CARD_LOGOS.filter(logo => MP_CARD_BRANDS.includes(logo.alt))
-
 /** Métodos que pagan con tarjeta: listan las marcas aceptadas bajo el título. */
 export const CARD_LOGO_METHOD_IDS = ['sipago', 'mp_card']
 
@@ -26,9 +22,8 @@ const MOBILE_VISIBLE_LOGOS = 3
 /** Marcas aceptadas en una sola línea: en mobile recorta con "+N", desde md muestra todas. */
 export function CardLogos({ methodId }: { methodId: string }) {
   const onSite = methodId === 'mp_card'
-  const logos = onSite ? MP_CARD_LOGOS : SIPAGO_CARD_LOGOS
-  const mobileVisible = onSite ? logos.length : MOBILE_VISIBLE_LOGOS
-  const hidden = logos.length - mobileVisible
+  const logos = SIPAGO_CARD_LOGOS
+  const hidden = logos.length - MOBILE_VISIBLE_LOGOS
   return (
     <div className="mt-1.5 flex flex-nowrap items-center gap-x-1.5 md:gap-x-3">
       {logos.map((logo, i) => (
@@ -39,7 +34,7 @@ export function CardLogos({ methodId }: { methodId: string }) {
           width={32}
           height={20}
           unoptimized
-          className={`h-5 w-8 shrink-0 object-contain ${i >= mobileVisible ? 'hidden md:block' : ''}`}
+          className={`h-5 w-8 shrink-0 object-contain ${i >= MOBILE_VISIBLE_LOGOS ? 'hidden md:block' : ''}`}
         />
       ))}
       {hidden > 0 && (
