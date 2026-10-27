@@ -80,12 +80,8 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
             <h1 className="text-[26px] font-bold leading-[1.1] text-white md:text-[40px]" style={{ letterSpacing: '-0.03em' }}>
               {event.name}
             </h1>
-            {(venue || date) && (
-              <p className="mt-1.5 line-clamp-2 text-sm text-white/80 md:text-base">
-                {venue}
-                {venue && date ? ', ' : ''}
-                {date ? `desde las ${date.time}` : ''}
-              </p>
+            {venue && (
+              <p className="mt-1.5 line-clamp-2 text-sm text-white/80 md:text-base">{venue}</p>
             )}
           </div>
         </div>

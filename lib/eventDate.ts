@@ -23,10 +23,9 @@ export function eventDateParts(iso: string) {
   }
 }
 
-/** "15 de julio de 2026 a las 15:00", o '' si no hay fecha. */
+/** "15 de julio de 2026", o '' si no hay fecha. */
 export function formatEventDateLong(iso: string): string {
   const date = parse(iso)
   if (!date) return ''
-  const day = part(date, { day: 'numeric', month: 'long', year: 'numeric' })
-  return `${day} a las ${part(date, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`
+  return part(date, { day: 'numeric', month: 'long', year: 'numeric' })
 }

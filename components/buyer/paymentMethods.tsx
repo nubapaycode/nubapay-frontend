@@ -11,6 +11,9 @@ export const SIPAGO_CARD_LOGOS = [
   { src: '/images/cards/naranja.png', alt: 'Naranja' },
 ]
 
+/** Métodos que pagan con tarjeta: listan las marcas aceptadas bajo el título. */
+export const CARD_LOGO_METHOD_IDS = ['sipago', 'mp_card']
+
 export const paymentMethods = [
   {
     id: 'mp',
@@ -29,8 +32,8 @@ export const paymentMethods = [
   },
   {
     id: 'mp_card',
-    label: 'Tarjeta',
-    sub: 'Débito o crédito en esta página, sin cuenta de Mercado Pago',
+    label: 'Tarjeta de crédito o débito',
+    sub: 'Tarjetas permitidas',
     icon: (
       <svg
         width="30"

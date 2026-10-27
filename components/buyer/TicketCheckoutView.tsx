@@ -17,7 +17,7 @@ import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib
 import { cn, formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
-import { SIPAGO_CARD_LOGOS, paymentMethods } from './paymentMethods'
+import { CARD_LOGO_METHOD_IDS, SIPAGO_CARD_LOGOS, paymentMethods } from './paymentMethods'
 import { TICKET_PAGE_BG } from './TicketCard'
 
 interface TicketCheckoutViewProps {
@@ -528,7 +528,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                       {method.sub && (
                         <span className="mt-0.5 block text-[13px]" style={{ color: MUTED }}>{method.sub}</span>
                       )}
-                      {method.id === 'sipago' && (
+                      {CARD_LOGO_METHOD_IDS.includes(method.id) && (
                         <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                           {SIPAGO_CARD_LOGOS.map(logo => (
                             <Image key={logo.src} src={logo.src} alt={logo.alt} width={32} height={20} unoptimized className="h-5 w-8 object-contain" />

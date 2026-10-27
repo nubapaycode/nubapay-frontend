@@ -20,7 +20,7 @@ import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
 import type { ServiceFeePercent } from '@/types'
 
-import { SIPAGO_CARD_LOGOS, paymentMethods } from './paymentMethods'
+import { CARD_LOGO_METHOD_IDS, SIPAGO_CARD_LOGOS, paymentMethods } from './paymentMethods'
 
 interface CheckoutViewProps {
   eventId: string
@@ -501,7 +501,7 @@ export function CheckoutView({
                         {method.sub}
                       </p>
                     )}
-                    {method.id === 'sipago' && (
+                    {CARD_LOGO_METHOD_IDS.includes(method.id) && (
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                         {SIPAGO_CARD_LOGOS.map(logo => (
                           <Image
