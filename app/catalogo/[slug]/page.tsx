@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { CatalogView } from '@/components/buyer/CatalogView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
-import { SITE_URL, pageMeta } from '@/lib/seo'
+import { SITE_URL, pageMeta, withCoverImage } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -27,22 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const d = (data.event.description ?? '').trim()
   const description = d.length > 0 ? d.slice(0, 160) : `Menú y pedidos: ${data.event.name}`
   const base = pageMeta({ title, description })
-  const cover = data.event.coverImageUrl
-  if (!cover) {
-    return augmentMetadataWithTenant(base, theme, title)
-  }
-  const enriched: Metadata = {
-    ...base,
-    openGraph: {
-      ...base.openGraph,
-      images: [{ url: cover }],
-    },
-    twitter: {
-      ...base.twitter,
-      images: [cover],
-    },
-  }
-  return augmentMetadataWithTenant(enriched, theme, title)
+  return augmentMetadataWithTenant(withCoverImage(base, data.event.coverImageUrl), theme, title)
 }
 
 /** Catálogo público por slug: portada + productos/combos activos (API). */

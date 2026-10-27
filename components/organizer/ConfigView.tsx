@@ -11,10 +11,25 @@ import type { OrganizerEventDetail } from '@/lib/types/organizer'
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
 
+/**
+ * El backend guarda y devuelve la fecha en UTC pero sin sufijo de zona
+ * ("2026-07-15T18:00:00"); sin la "Z" el navegador la leería como hora local
+ * y la mostraría corrida (3 h en Argentina).
+ */
+function parseServerDate(iso: string): Date {
+  return new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`)
+}
+
+/** true si ambas fechas son el mismo instante (o ambas vacías). */
+function sameInstant(a: string | null, b: string | null): boolean {
+  if (!a || !b) return !a && !b
+  return parseServerDate(a).getTime() === parseServerDate(b).getTime()
+}
+
 /** Convierte ISO string a valor para <input type="datetime-local"> */
 function toDatetimeLocal(iso: string | null | undefined): string {
   if (!iso) return ''
-  const d = new Date(iso)
+  const d = parseServerDate(iso)
   if (isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
@@ -82,8 +97,8 @@ export function ConfigView({ eventId }: { eventId: string }) {
     event !== null && (
       nameDraft.trim() !== event.name ||
       (descDraft.trim() || null) !== event.description ||
-      fromDatetimeLocal(startsAtDraft) !== event.starts_at ||
-      fromDatetimeLocal(endsAtDraft) !== event.ends_at ||
+      !sameInstant(fromDatetimeLocal(startsAtDraft), event.starts_at) ||
+      !sameInstant(fromDatetimeLocal(endsAtDraft), event.ends_at) ||
       isActiveDraft !== event.is_active ||
       notifyPickupPointDraft !== event.notify_pickup_point
     )

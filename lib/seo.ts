@@ -74,6 +74,16 @@ export function pageMeta(opts: {
   return base
 }
 
+/** Usa la portada del evento como imagen de preview (og:image / twitter:image); sin portada deja la de Nubapay. */
+export function withCoverImage(meta: Metadata, cover: string | null | undefined): Metadata {
+  if (!cover) return meta
+  return {
+    ...meta,
+    openGraph: { ...meta.openGraph, images: [{ url: cover }] },
+    twitter: { ...meta.twitter, images: [cover] },
+  }
+}
+
 export function organizerEventSectionMeta(segment: string, description: string): Metadata {
   return pageMeta({ title: segment, description })
 }

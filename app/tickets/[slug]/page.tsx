@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { TicketsStoreView } from '@/components/buyer/TicketsStoreView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
-import { BUYER_PRIVATE_ROBOTS, SITE_URL, pageMeta } from '@/lib/seo'
+import { BUYER_PRIVATE_ROBOTS, SITE_URL, pageMeta, withCoverImage } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -14,15 +14,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const [theme, data] = await Promise.all([fetchTenantThemeForRequest(), fetchPublicStorefront(slug)])
   const title = data ? `Tickets · ${data.event.name}` : 'Tickets'
-  return augmentMetadataWithTenant(
-    pageMeta({
-      title,
-      description: data ? `Comprá entradas y tickets de ${data.event.name}.` : 'Este enlace no está disponible.',
-      robots: BUYER_PRIVATE_ROBOTS,
-    }),
-    theme,
+  const base = pageMeta({
     title,
-  )
+    description: data ? `Comprá entradas y tickets de ${data.event.name}.` : 'Este enlace no está disponible.',
+    robots: BUYER_PRIVATE_ROBOTS,
+  })
+  return augmentMetadataWithTenant(withCoverImage(base, data?.event.coverImageUrl), theme, title)
 }
 
 /** Tienda de tickets (entradas, parking…) de un evento: página aparte del catálogo. */
