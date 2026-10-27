@@ -163,7 +163,8 @@ export function CardPaymentBrick({
         },
         customization: {
           visual: { style: { theme: 'default' } },
-          paymentMethods: { minInstallments: 1, maxInstallments: 12 },
+          // Solo se cobra en un pago (sin cuotas).
+          paymentMethods: { minInstallments: 1, maxInstallments: 1 },
         },
         callbacks: {
           onReady: () => {
@@ -188,7 +189,7 @@ export function CardPaymentBrick({
               body: JSON.stringify({
                 token: formData.token,
                 payment_method_id: formData.payment_method_id,
-                installments: formData.installments,
+                installments: 1,
                 issuer_id: formData.issuer_id,
                 payer_email: formData.payer?.email,
                 identification_type: formData.payer?.identification?.type,
