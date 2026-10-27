@@ -517,6 +517,8 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
   const { show: showToast, ToastPortal } = useToast()
 
   const [tokenDraft, setTokenDraft] = useState('')
+  const [publicKeyDraft, setPublicKeyDraft] = useState('')
+  const [publicKeyError, setPublicKeyError] = useState('')
   const [tokenError, setTokenError] = useState('')
   const [showToken, setShowToken] = useState(false)
   const [replaceOpen, setReplaceOpen] = useState(false)
@@ -556,10 +558,36 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
     setApproved(true)
   }
 
+  const handleSavePublicKey = async () => {
+    const key = publicKeyDraft.trim()
+    if (!key) return
+    if (!key.startsWith('APP_USR-') && !key.startsWith('TEST-')) {
+      setPublicKeyError('La clave pública empieza con APP_USR- (producción) o TEST- (prueba).')
+      return
+    }
+    setPublicKeyError('')
+    setSaving(true)
+    const res = await patchOrganizerEvent(eventId, { mp_public_key: key })
+    setSaving(false)
+    if (!res.ok) { showToast(res.error, 'error'); return }
+    setEvent(res.event)
+    setPublicKeyDraft('')
+    showToast('Clave pública guardada. La tarjeta ya se puede cobrar en el sitio.', 'success')
+  }
+
+  const handleRemovePublicKey = async () => {
+    setSaving(true)
+    const res = await patchOrganizerEvent(eventId, { mp_public_key: null })
+    setSaving(false)
+    if (!res.ok) { showToast(res.error, 'error'); return }
+    setEvent(res.event)
+    showToast('La tarjeta en el sitio quedó desactivada. Checkout Pro sigue disponible.', 'success')
+  }
+
   const handleRemoveToken = async () => {
     setConfirmDisconnect(false)
     setSaving(true)
-    const res = await patchOrganizerEvent(eventId, { mp_access_token: null })
+    const res = await patchOrganizerEvent(eventId, { mp_access_token: null, mp_public_key: null })
     setSaving(false)
     if (!res.ok) { showToast(res.error, 'error'); return }
     setEvent(res.event)
@@ -639,6 +667,37 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
             <button type="button" onClick={() => setConfirmDisconnect(true)} disabled={saving}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-600 disabled:opacity-40 shrink-0 transition-colors">
               <Trash2 size={13} aria-hidden />Desconectar
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3 shadow-sm">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Tarjeta en el sitio</p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                Pegá la Public Key de la misma aplicación. Después activala con el switch de Métodos de pago: hasta entonces el comprador no la ve. Checkout Pro sigue disponible.
+              </p>
+            </div>
+            {event.has_mp_public_key && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium text-green-700">Clave pública guardada</p>
+                <button type="button" onClick={() => void handleRemovePublicKey()} disabled={saving}
+                  className="text-xs font-medium text-red-400 hover:text-red-600 disabled:opacity-40">
+                  Quitar
+                </button>
+              </div>
+            )}
+            <input
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-gray-900"
+              value={publicKeyDraft}
+              onChange={e => { setPublicKeyDraft(e.target.value); setPublicKeyError('') }}
+              placeholder="APP_USR-... o TEST-..."
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {publicKeyError && <p className="text-xs text-red-500">{publicKeyError}</p>}
+            <button type="button" onClick={() => void handleSavePublicKey()} disabled={saving || !publicKeyDraft.trim()}
+              className="w-full rounded-full bg-gray-900 text-white text-sm font-semibold py-3 hover:bg-gray-800 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+              {saving ? 'Guardando…' : 'Guardar clave pública'}
             </button>
           </div>
 

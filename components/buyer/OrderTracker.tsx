@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { formatPrice } from '@/lib/utils'
 import { catalogPaths } from '@/lib/api/paths'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
+import { CardPaymentBrick } from '@/components/buyer/CardPaymentBrick'
 
 interface OrderTrackerProps {
   orderId: string
@@ -27,6 +28,9 @@ interface OrderData {
   customer_name: string | null
   payment_method: string | null
   checkout_url: string | null
+  /** Public Key de MP, solo en pedidos que se cobran con tarjeta en el sitio. */
+  mp_public_key?: string | null
+  customer_email?: string | null
   processing: boolean
   /** Estimación de pedidos delante en la cola (solo mientras processing). */
   queue_depth?: number
@@ -39,6 +43,7 @@ interface OrderData {
 
 const paymentLabels: Record<string, string> = {
   mp: 'Mercado Pago',
+  mp_card: 'Tarjeta',
   cash: 'Efectivo',
   transfer: 'Transferencia',
   sipago: 'Sipago',
@@ -104,6 +109,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const [loadError, setLoadError] = useState(false)
   const [showFlash, setShowFlash] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
+  const [cardHold, setCardHold] = useState(false)
   const flashedRef = useRef(false)
   const loadingProgress = useLoadingProgress(!order && !loadError)
   const redirectProgress = useLoadingProgress(redirecting)
@@ -148,6 +154,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     if (
       !hasRedirectedRef.current &&
       order && !order.processing &&
+      order.payment_method !== 'mp_card' &&
       order.checkout_url &&
       order.payment_status !== 'approved' &&
       !paymentResult
@@ -197,8 +204,18 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   // asumir siempre Mercado Pago (ahora también puede ser Sipago).
   const methodMeta: Record<string, { label: string; color: string; bg: string }> = {
     mp: { label: 'Mercado Pago', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
+    mp_card: { label: 'Tarjeta', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
     sipago: { label: 'Sipago', color: '#4E358B', bg: 'rgba(78,53,139,0.18)' },
   }
+  const cardInReview =
+    cardHold || (order?.payment_method === 'mp_card' && order.payment_status === 'in_process')
+  const isCardOnSite =
+    order?.payment_method === 'mp_card' &&
+    !order.processing &&
+    Boolean(order.mp_public_key) &&
+    Number(order.total_amount) > 0 &&
+    !cardInReview &&
+    !isPaid
   const activeMethod = order?.payment_method ? methodMeta[order.payment_method] : undefined
   const paymentMethodLabel = activeMethod?.label ?? 'tu medio de pago'
 
@@ -206,10 +223,10 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   // que hay demanda (con la profundidad de cola si el backend la reporta).
   const [waitedLong, setWaitedLong] = useState(false)
   useEffect(() => {
-    if (!awaitingMpCheckout || mpCheckoutReady) return
+    if (!awaitingMpCheckout || mpCheckoutReady || order?.payment_method === 'mp_card') return
     const t = setTimeout(() => setWaitedLong(true), 10000)
     return () => clearTimeout(t)
-  }, [awaitingMpCheckout, mpCheckoutReady])
+  }, [awaitingMpCheckout, mpCheckoutReady, order?.payment_method])
   const queueDepth = order?.queue_depth ?? 0
 
   const formattedDate = order?.created_at
@@ -660,7 +677,11 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 <p className="text-[12px] mt-0.5" style={{ color: BUYER_COLORS.muted }}>
                   {paymentResult === 'success'
                     ? 'Ya recibimos tu pago, estamos confirmándolo.'
-                    : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
+                    : isCardOnSite
+                      ? 'Ingresá los datos de tu tarjeta. No hace falta una cuenta de Mercado Pago.'
+                      : cardInReview
+                        ? 'Mercado Pago está revisando el pago. Esta página se actualiza sola.'
+                        : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
                 </p>
               </div>
             </div>
@@ -675,6 +696,26 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 >
                   <Spinner size="sm" />
                   Confirmando tu pago…
+                </div>
+              ) : isCardOnSite && order?.mp_public_key ? (
+                <CardPaymentBrick
+                  orderId={order.order_id}
+                  publicKey={order.mp_public_key}
+                  amount={Number(order.total_amount)}
+                  email={order.customer_email}
+                  onPaid={() => { void fetchOrder() }}
+                  onReview={() => {
+                    setCardHold(true)
+                    void fetchOrder()
+                  }}
+                />
+              ) : cardInReview ? (
+                <div
+                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold"
+                  style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+                >
+                  <Spinner size="sm" />
+                  Pago en revisión…
                 </div>
               ) : (
               <button
@@ -716,7 +757,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 )}
               </button>
               )}
-              {paymentResult !== 'success' && !mpCheckoutReady && (
+              {paymentResult !== 'success' && !mpCheckoutReady && !isCardOnSite && !cardInReview && (
                 waitedLong ? (
                   <div
                     className="flex items-center gap-2.5 rounded-[14px] px-3.5 py-3"

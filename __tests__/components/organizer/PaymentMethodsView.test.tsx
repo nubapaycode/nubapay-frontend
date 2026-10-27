@@ -7,14 +7,21 @@ jest.mock('@/lib/organizerEvents', () => ({
   fetchOrganizerEventDetail: jest.fn(),
 }))
 
-function mockEvent(overrides: { has_mp_token?: boolean; has_sipago_credentials?: boolean }) {
+function mockEvent(overrides: {
+  has_mp_token?: boolean
+  has_mp_public_key?: boolean
+  has_sipago_credentials?: boolean
+  mp_card_enabled?: boolean
+}) {
   ;(fetchOrganizerEventDetail as jest.Mock).mockResolvedValue({
     ok: true,
     event: {
       id: 'e1',
       name: 'Demo',
       has_mp_token: false,
+      has_mp_public_key: false,
       has_sipago_credentials: false,
+      mp_card_enabled: false,
       ...overrides,
     },
   })
@@ -31,6 +38,25 @@ describe('PaymentMethodsView', () => {
     expect(within(row('Mercado Pago')).getByText('Conectada')).toBeInTheDocument()
     expect(within(row('Sipago')).queryByText('Conectada')).not.toBeInTheDocument()
     expect(within(row('Sipago')).getByText('Conectá tu cuenta para recibir pagos')).toBeInTheDocument()
+  })
+
+  it('deja apagada la tarjeta en el sitio hasta que haya clave pública', async () => {
+    mockEvent({ has_mp_token: true })
+    render(<PaymentMethodsView eventId="e1" />)
+
+    const sw = await screen.findByRole('switch', { name: 'Tarjeta en el sitio' })
+    expect(sw).not.toBeChecked()
+    expect(sw).toBeDisabled()
+    expect(screen.getByText('Conectá Mercado Pago y pegá la clave pública para poder activarla')).toBeInTheDocument()
+  })
+
+  it('permite activar la tarjeta en el sitio cuando la clave pública ya está', async () => {
+    mockEvent({ has_mp_token: true, has_mp_public_key: true, mp_card_enabled: true })
+    render(<PaymentMethodsView eventId="e1" />)
+
+    const sw = await screen.findByRole('switch', { name: 'Tarjeta en el sitio' })
+    expect(sw).toBeChecked()
+    expect(sw).toBeEnabled()
   })
 
   it('no marca ninguna si el evento no tiene pasarelas conectadas', async () => {

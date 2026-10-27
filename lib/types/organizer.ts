@@ -26,6 +26,10 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   user_id: string
   /** true si el evento tiene un token de MP propio configurado. El valor nunca se devuelve. */
   has_mp_token: boolean
+  /** true si hay Public Key para cobrar la tarjeta en el sitio. El valor nunca se devuelve. */
+  has_mp_public_key: boolean
+  /** Switch de Métodos de pago. Sin esto, el comprador no ve la tarjeta en el sitio. */
+  mp_card_enabled: boolean
   /** true si el evento tiene credenciales de Sipago propias configuradas. El valor nunca se devuelve. */
   has_sipago_credentials: boolean
   /** true si el organizador acepta pagos en efectivo, confirmados por staff al escanear el QR. */

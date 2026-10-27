@@ -116,11 +116,6 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
               <h2 className="text-xl font-bold tracking-tight md:text-2xl" style={{ color: BUYER_COLORS.text }}>
                 Elegí tus entradas
               </h2>
-              {ticketFee > 0 && (
-                <p className="mt-1 text-[13px] md:text-sm" style={{ color: '#6B6B78' }}>
-                  Al pagar se suma un {ticketFee}% de costo de servicio.
-                </p>
-              )}
             </div>
             <div className="flex flex-col gap-3 md:gap-4">
               {event.tickets.map(ticket => (

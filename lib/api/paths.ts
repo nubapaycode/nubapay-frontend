@@ -40,6 +40,10 @@ export const catalogPaths = {
   updateOrderCustomer: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/customer`)
   },
+  /** Cobra una orden con el token del Card Payment Brick. No manda el PAN. */
+  chargeOrderCard: (orderId: string) => {
+    return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/card-payment`)
+  },
 }
 
 export const partnerTenantPaths = {

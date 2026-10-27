@@ -28,8 +28,12 @@ export async function patchOrganizerEvent(
     notify_pickup_point: boolean
     show_category_shortcuts: boolean
     cash_enabled: boolean
+    /** Activa el cobro con tarjeta en el sitio. Hace falta token y clave pública. */
+    mp_card_enabled: boolean
     /** String para guardar el token; null o "" para eliminarlo. */
     mp_access_token: string | null
+    /** Public Key de la misma app de MP. null o "" para quitarla. */
+    mp_public_key: string | null
     /** String para guardar el client_id de Sipago; null o "" para eliminarlo. */
     sipago_client_id: string | null
     /** String para guardar el client_secret de Sipago; null o "" para eliminarlo. */

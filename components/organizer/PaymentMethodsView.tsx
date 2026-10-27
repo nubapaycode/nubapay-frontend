@@ -1,6 +1,6 @@
 'use client'
 
-import { Banknote, CheckCircle2, ChevronRight } from 'lucide-react'
+import { Banknote, CheckCircle2, ChevronRight, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -54,6 +54,24 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
   const sipagoHref = `/events/${eventId}/metodos-pago/sipago`
 
   const [cashSaving, setCashSaving] = useState(false)
+  const [cardSaving, setCardSaving] = useState(false)
+  const cardReady = Boolean(event?.has_mp_token && event?.has_mp_public_key)
+  const toggleCard = useCallback(async () => {
+    if (!event || cardSaving) return
+    if (!event.has_mp_token || !event.has_mp_public_key) {
+      showToast('Conectá Mercado Pago y pegá la clave pública antes de activar la tarjeta.', 'error')
+      return
+    }
+    const next = !event.mp_card_enabled
+    setCardSaving(true)
+    setEvent(prev => (prev ? { ...prev, mp_card_enabled: next } : prev))
+    const res = await patchOrganizerEvent(eventId, { mp_card_enabled: next })
+    if (!res.ok) {
+      setEvent(prev => (prev ? { ...prev, mp_card_enabled: !next } : prev))
+      showToast(res.error, 'error')
+    }
+    setCardSaving(false)
+  }, [event, cardSaving, eventId]) // eslint-disable-line react-hooks/exhaustive-deps
   const toggleCash = useCallback(async () => {
     if (!event || cashSaving) return
     const next = !event.cash_enabled
@@ -106,10 +124,47 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
             {!event?.has_mp_token && (
               <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para recibir pagos</p>
             )}
+            {event?.has_mp_token && !event.has_mp_public_key && (
+              <p className="text-xs text-gray-400 mt-0.5">Falta la clave pública para cobrar la tarjeta en el sitio</p>
+            )}
           </div>
           {event?.has_mp_token && <ConnectedBadge />}
           <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
         </Link>
+      </section>
+
+      {/* ── Tarjeta en el sitio (Checkout API). Apagada hasta que el organizador la active. ── */}
+      <section className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="w-8 h-8 rounded-lg bg-[#009EE3]/10 flex items-center justify-center shrink-0">
+            <CreditCard size={18} className="text-[#009EE3]" aria-hidden />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Tarjeta en el sitio</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {cardReady
+                ? 'Débito o crédito en la página, sin cuenta de Mercado Pago'
+                : 'Conectá Mercado Pago y pegá la clave pública para poder activarla'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label="Tarjeta en el sitio"
+            aria-checked={Boolean(event?.mp_card_enabled)}
+            disabled={!cardReady || cardSaving}
+            onClick={() => void toggleCard()}
+            className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-40 ${
+              event?.mp_card_enabled ? 'bg-gray-900' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                event?.mp_card_enabled ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
       </section>
 
       {/* ── Sipago ── */}

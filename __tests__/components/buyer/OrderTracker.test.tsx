@@ -74,6 +74,31 @@ describe('OrderTracker', () => {
     )
   })
 
+  it('muestra el formulario de tarjeta en el sitio y no redirige a Mercado Pago', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        order_id: 'abc12345-def',
+        order_number: 7,
+        status: 'pending_payment',
+        payment_status: 'pending',
+        total_amount: 1500,
+        customer_name: 'Test User',
+        customer_email: 'ana@example.com',
+        payment_method: 'mp_card',
+        mp_public_key: 'TEST-public',
+        checkout_url: null,
+        processing: false,
+        items: [],
+        created_at: '2025-01-01T12:00:00Z',
+      }),
+    })
+    render(<OrderTracker orderId="abc12345-def" eventId="demo" />)
+    expect(await screen.findByText('Cargando el formulario de tarjeta…')).toBeInTheDocument()
+    expect(screen.getByText(/No hace falta una cuenta de Mercado Pago/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Pagar con/ })).not.toBeInTheDocument()
+  })
+
   it('navega a la página QR al hacer click', async () => {
     mockFetchOrder('ready')
     render(<OrderTracker orderId="abc12345-def" eventId="demo" />)
