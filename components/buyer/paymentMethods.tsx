@@ -143,6 +143,29 @@ export const paymentMethods = [
     color: '#6D28D9',
   },
   {
+    id: 'mobbex_wallet',
+    label: 'Pago rápido con tarjeta guardada',
+    sub: 'Mobbex Wallet · modo prueba',
+    icon: (
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#6D28D9"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" />
+        <path d="M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2Z" />
+        <circle cx="16" cy="14.5" r="1" fill="#6D28D9" />
+      </svg>
+    ),
+    color: '#6D28D9',
+  },
+  {
     id: 'cash',
     label: 'Efectivo',
     sub: 'Pagás al retirar tu pedido',

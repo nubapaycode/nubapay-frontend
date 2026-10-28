@@ -11,6 +11,7 @@ import { catalogPaths } from '@/lib/api/paths'
 import { ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { CardPaymentBrick } from '@/components/buyer/CardPaymentBrick'
+import { MobbexWalletPanel } from '@/components/buyer/MobbexWalletPanel'
 
 interface OrderTrackerProps {
   orderId: string
@@ -49,6 +50,7 @@ const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia',
   sipago: 'Sipago',
   mobbex: 'Mobbex',
+  mobbex_wallet: 'Mobbex Wallet',
 }
 
 const POLL_FAST = 1500
@@ -212,6 +214,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     mp_card: { label: 'Tarjeta', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
     sipago: { label: 'Sipago', color: '#4E358B', bg: 'rgba(78,53,139,0.18)' },
     mobbex: { label: 'Mobbex', color: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
+    mobbex_wallet: { label: 'Mobbex Wallet', color: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
   }
   const cardInReview =
     cardHold || (order?.payment_method === 'mp_card' && order.payment_status === 'in_process')
@@ -222,6 +225,13 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     Number(order.total_amount) > 0 &&
     !cardInReview &&
     !isPaid
+  // Mobbex Wallet se paga acá mismo (sin checkout_url): panel embebido hasta que el pedido quede pagado.
+  const isWalletPending =
+    order?.payment_method === 'mobbex_wallet' &&
+    !order.processing &&
+    Number(order.total_amount) > 0 &&
+    !isPaid &&
+    paymentResult !== 'success'
   const activeMethod = order?.payment_method ? methodMeta[order.payment_method] : undefined
   const paymentMethodLabel = activeMethod?.label ?? 'tu medio de pago'
 
@@ -229,7 +239,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   // que hay demanda (con la profundidad de cola si el backend la reporta).
   const [waitedLong, setWaitedLong] = useState(false)
   useEffect(() => {
-    if (!awaitingMpCheckout || mpCheckoutReady || order?.payment_method === 'mp_card') return
+    if (!awaitingMpCheckout || mpCheckoutReady || order?.payment_method === 'mp_card' || order?.payment_method === 'mobbex_wallet') return
     const t = setTimeout(() => setWaitedLong(true), 10000)
     return () => clearTimeout(t)
   }, [awaitingMpCheckout, mpCheckoutReady, order?.payment_method])
@@ -685,6 +695,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                     ? 'Ya recibimos tu pago, estamos confirmándolo.'
                     : isCardOnSite
                       ? 'Ingresá los datos de tu tarjeta.'
+                      : isWalletPending
+                        ? 'Elegí una tarjeta guardada o cargá una nueva.'
                       : cardInReview
                         ? 'Mercado Pago está revisando el pago. Esta página se actualiza sola.'
                         : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}
@@ -714,6 +726,14 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                     setCardHold(true)
                     void fetchOrder()
                   }}
+                />
+              ) : isWalletPending && order ? (
+                <MobbexWalletPanel
+                  orderId={order.order_id}
+                  catalogSlug={catalogSlug}
+                  initialEmail={order.customer_email}
+                  amount={Number(order.total_amount)}
+                  onSettled={() => { void fetchOrder() }}
                 />
               ) : cardInReview ? (
                 <div
@@ -768,7 +788,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 )}
               </button>
               )}
-              {paymentResult !== 'success' && !mpCheckoutReady && !isCardOnSite && !cardInReview && (
+              {paymentResult !== 'success' && !mpCheckoutReady && !isCardOnSite && !isWalletPending && !cardInReview && (
                 waitedLong ? (
                   <div
                     className="flex items-center gap-2.5 rounded-[14px] px-3.5 py-3"

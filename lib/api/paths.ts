@@ -40,6 +40,19 @@ export const catalogPaths = {
   updateOrderCustomer: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/customer`)
   },
+  /** Mobbex Wallet: pide el código de verificación al email del comprador. */
+  mobbexWalletCode: () => apiUrl('/catalog/mobbex-wallet/otp'),
+  /** Mobbex Wallet: canjea el código por un token de sesión corto. */
+  mobbexWalletVerify: () => apiUrl('/catalog/mobbex-wallet/verify'),
+  /** Mobbex Wallet: crea el checkout del pedido y devuelve las tarjetas guardadas (requiere sesión). */
+  mobbexWalletCheckout: (orderId: string, slug?: string) => {
+    const query = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/mobbex-wallet/checkout${query}`)
+  },
+  /** Mobbex Wallet: concilia el estado del pago leyéndolo de Mobbex. */
+  mobbexWalletSync: (orderId: string) => {
+    return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/mobbex-wallet/sync`)
+  },
   /** Cobra una orden con el token del Card Payment Brick. No manda el PAN. */
   chargeOrderCard: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/card-payment`)
