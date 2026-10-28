@@ -50,7 +50,7 @@ export function CobrosView() {
   }, [canSeePayments, eventId])
 
   return (
-    <div className="w-full max-w-[720px]">
+    <div className="mx-auto w-full max-w-[720px]">
       <header className="mb-6">
         <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Cobros</h1>
         <p className="mt-1 text-[13px] text-gray-500">Pagos recibidos y pasarelas conectadas del evento.</p>

@@ -1,6 +1,7 @@
 'use client'
 
 import { CheckCircle2, ChevronDown, ChevronLeft, ExternalLink, Eye, EyeOff, Trash2 } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -182,11 +183,8 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
       </Link>
 
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#6D28D9]/10 flex items-center justify-center shrink-0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <rect x="3" y="6" width="18" height="12" rx="2" />
-            <path d="M7 12h4M13 12h4" />
-          </svg>
+        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0">
+          <Image src="/images/mobbex.png" alt="Mobbex" width={36} height={36} className="h-full w-full object-cover" />
         </div>
         <div>
           <h1 className="text-lg font-semibold text-gray-900 tracking-tight">Conectá tu Mobbex</h1>

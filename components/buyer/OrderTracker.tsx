@@ -50,7 +50,7 @@ const paymentLabels: Record<string, string> = {
   transfer: 'Transferencia',
   sipago: 'Sipago',
   mobbex: 'Mobbex',
-  mobbex_wallet: 'Mobbex Wallet',
+  mobbex_wallet: 'Tarjeta',
 }
 
 const POLL_FAST = 1500
@@ -214,7 +214,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     mp_card: { label: 'Tarjeta', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
     sipago: { label: 'Sipago', color: '#4E358B', bg: 'rgba(78,53,139,0.18)' },
     mobbex: { label: 'Mobbex', color: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
-    mobbex_wallet: { label: 'Mobbex Wallet', color: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
+    mobbex_wallet: { label: 'Tarjeta', color: BUYER_COLORS.text, bg: BUYER_COLORS.subtleFill },
   }
   const cardInReview =
     cardHold || (order?.payment_method === 'mp_card' && order.payment_status === 'in_process')
@@ -696,7 +696,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                     : isCardOnSite
                       ? 'Ingresá los datos de tu tarjeta.'
                       : isWalletPending
-                        ? 'Elegí una tarjeta guardada o cargá una nueva.'
+                        ? 'Te mandamos un código para confirmar el pago.'
                       : cardInReview
                         ? 'Mercado Pago está revisando el pago. Esta página se actualiza sola.'
                         : mpCheckoutReady ? 'Completá el pago para confirmar tu lugar.' : 'Esto tarda solo unos segundos.'}

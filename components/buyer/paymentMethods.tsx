@@ -14,7 +14,7 @@ export const SIPAGO_CARD_LOGOS = [
 ]
 
 /** Métodos que pagan con tarjeta: listan las marcas aceptadas bajo el título. */
-export const CARD_LOGO_METHOD_IDS = ['sipago', 'mp_card']
+export const CARD_LOGO_METHOD_IDS = ['sipago', 'mp_card', 'mobbex_wallet']
 
 /** Logos que entran en una sola línea en mobile; el resto se resume en un chip "+N". */
 const MOBILE_VISIBLE_LOGOS = 3
@@ -121,49 +121,27 @@ export const paymentMethods = [
     color: '#4E358B',
   },
   {
-    id: 'mobbex',
-    label: 'Mobbex',
-    sub: 'Tarjeta, QR o efectivo',
-    icon: (
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#6D28D9"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <rect x="3" y="6" width="18" height="12" rx="2" />
-        <path d="M7 12h4M13 12h4" />
-      </svg>
-    ),
-    color: '#6D28D9',
-  },
-  {
     id: 'mobbex_wallet',
-    label: 'Pago rápido con tarjeta guardada',
-    sub: 'Mobbex Wallet · modo prueba',
+    label: 'Tarjeta de débito o crédito',
+    sub: '',
     icon: (
       <svg
         width="30"
         height="30"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#6D28D9"
+        stroke={BUYER_COLORS.text}
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden
       >
-        <path d="M3 8a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2" />
-        <path d="M3 8v9a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2Z" />
-        <circle cx="16" cy="14.5" r="1" fill="#6D28D9" />
+        <rect x="2.5" y="5" width="19" height="14" rx="2" />
+        <path d="M2.5 10h19" />
+        <path d="M6 15h4" />
       </svg>
     ),
-    color: '#6D28D9',
+    color: BUYER_COLORS.text,
   },
   {
     id: 'cash',

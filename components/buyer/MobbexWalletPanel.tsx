@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 
 import { Spinner } from '@/components/ui/Spinner'
 import { BUYER_COLORS } from '@/lib/buyerUi'
@@ -10,6 +11,7 @@ import {
   loadMobbexEmbed,
   loadMobbexJs,
   loadWalletSession,
+  paySavedCard,
   requestWalletCode,
   saveWalletSession,
   syncWalletPayment,
@@ -21,15 +23,93 @@ import { formatPrice } from '@/lib/utils'
 
 type Step = 'email' | 'code' | 'loading' | 'cards' | 'confirming'
 
-const ACCENT = '#6D28D9'
 const SYNC_ATTEMPTS = 8
 const SYNC_DELAY_MS = 2000
+const APPROVED_STATUS = new Set(['200', '201', '300', '301', '302'])
 
-const TEST_CARDS = [
-  ['Visa crédito', '4507 9831 9008 2450'],
-  ['Mastercard crédito', '5323 6299 9312 1008'],
-  ['Visa débito', '4507 9900 0000 0010'],
-]
+function paymentStatusCode(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null
+  const body = data as { data?: { status?: { code?: unknown } }; status?: { code?: unknown }; code?: unknown }
+  const code = body.data?.status?.code ?? body.status?.code ?? body.code
+  if (code == null || code === '') return null
+  return String(code)
+}
+
+type CodeResult = Awaited<ReturnType<typeof requestWalletCode>>
+
+/** Una sola petición por pedido y email, también si React monta el panel dos veces. */
+const codeSends = new Map<string, Promise<CodeResult>>()
+
+function requestCodeOnce(orderId: string, email: string): Promise<CodeResult> {
+  const key = `${orderId}:${email.toLowerCase()}`
+  const existing = codeSends.get(key)
+  if (existing) return existing
+  const pending = requestWalletCode(email, orderId).then(res => {
+    if (!res.ok) codeSends.delete(key)
+    return res
+  })
+  codeSends.set(key, pending)
+  return pending
+}
+
+export function clearAutoSentWalletCodes() {
+  codeSends.clear()
+}
+
+function knownEmail(value?: string | null): string {
+  const next = value?.trim() ?? ''
+  return next.includes('@') ? next : ''
+}
+
+function asPx(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^(\d+(?:\.\d+)?)px?$/)
+    if (match) return Number(match[1])
+  }
+  return null
+}
+
+/** Alto del formulario que manda el iframe. Ignora el marco por defecto de 640×750. */
+function embedHeightFromMessage(data: unknown): number | null {
+  let found: number | null = null
+  const walk = (value: unknown, depth: number) => {
+    if (found || depth > 8 || value == null) return
+    if (typeof value === 'string') {
+      if (value.includes('height')) {
+        try {
+          walk(JSON.parse(value), depth + 1)
+        } catch {
+          /* no es JSON */
+        }
+      }
+      return
+    }
+    if (typeof value !== 'object') return
+    if (Array.isArray(value)) {
+      value.forEach(item => walk(item, depth + 1))
+      return
+    }
+    const record = value as Record<string, unknown>
+    const width = asPx(record.width)
+    const height = asPx(record.height)
+    const isDefaultFrame = width === 640 && height === 750
+    if (height != null && width != null && !isDefaultFrame && height >= 180 && height <= EMBED_MAX_HEIGHT && width >= 200 && width <= 1600) {
+      found = height
+      return
+    }
+    Object.values(record).forEach(item => walk(item, depth + 1))
+  }
+  walk(data, 0)
+  return found
+}
+
+/** El SDK también crea iframes auxiliares ocultos (prerender, detección de cierre): solo se toca el del formulario. */
+const REAL_FRAME = 'iframe[name^="__zoid__"]'
+const EMBED_MIN_HEIGHT = 732
+const EMBED_MAX_HEIGHT = 1400
+/** Franja en blanco de arriba del formulario de Mobbex (su contenedor lo baja 80px): se recorta subiendo el iframe. */
+const EMBED_CROP_TOP = 80
 
 const inputClass =
   'w-full rounded-[14px] border px-4 py-3.5 text-[15px] outline-none transition-shadow focus:ring-2'
@@ -43,7 +123,7 @@ function expiry(card: WalletCard): string {
 }
 
 /**
- * Pago embebido con Mobbex Wallet (Sandbox). El comprador verifica su email con un código,
+ * Pago con tarjetas guardadas. El comprador verifica su email con un código,
  * ve sus tarjetas guardadas en Mobbex y paga con una (solo CVV) o carga una nueva en el
  * checkout embebido de Mobbex. Nunca hay redirecciones: todo ocurre dentro de la página.
  */
@@ -61,9 +141,13 @@ export function MobbexWalletPanel({
   /** Se llama cuando el pedido pudo quedar pagado: el padre vuelve a leer el estado. */
   onSettled: () => void
 }) {
-  // Con una sesión verificada en esta pestaña se carga directo; si no, se empieza por el email.
-  const [step, setStep] = useState<Step>(() => (loadWalletSession() ? 'loading' : 'email'))
-  const [email, setEmail] = useState(initialEmail ?? '')
+  // Con una sesión verificada se cargan las tarjetas. Si ya hay email, el código sale solo.
+  const [step, setStep] = useState<Step>(() => {
+    if (loadWalletSession()) return 'loading'
+    return knownEmail(initialEmail) ? 'loading' : 'email'
+  })
+  const [email, setEmail] = useState(initialEmail?.trim() ?? '')
+  const [sendingCode, setSendingCode] = useState(() => !loadWalletSession() && Boolean(knownEmail(initialEmail)))
   const [code, setCode] = useState('')
   const [cooldown, setCooldown] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -74,15 +158,47 @@ export function MobbexWalletPanel({
   const [installment, setInstallment] = useState('')
   const [cvv, setCvv] = useState('')
   const alive = useRef(true)
+  const sessionRef = useRef<string | null>(null)
+  const paidInEmbedRef = useRef(false)
+  const confirmGen = useRef(0)
+  const embedRef = useRef<{ close: () => void } | null>(null)
+  const embedHeightRef = useRef<number | null>(null)
+  const embedFitStop = useRef<(() => void) | null>(null)
+  const embedSlot = useRef<HTMLDivElement>(null)
+  const [embedOpen, setEmbedOpen] = useState(false)
+  const [embedLoading, setEmbedLoading] = useState(false)
   const settledRef = useRef(onSettled)
   useEffect(() => {
     settledRef.current = onSettled
   })
 
   useEffect(() => {
+    const next = initialEmail?.trim() ?? ''
+    if (next) setEmail(current => (current.trim() ? current : next))
+    const address = knownEmail(next)
+    if (!address || loadWalletSession()) return
+    setSendingCode(true)
+    setStep(current => (current === 'email' ? 'loading' : current))
+    void requestCodeOnce(orderId, address).then(res => {
+      if (!alive.current) return
+      setSendingCode(false)
+      if (!res.ok) {
+        setError(res.error)
+        setStep('email')
+        return
+      }
+      setCode('')
+      setCooldown(res.data.cooldown)
+      setStep(current => (current === 'loading' || current === 'email' ? 'code' : current))
+    })
+  }, [initialEmail, orderId])
+
+  useEffect(() => {
     alive.current = true
     return () => {
       alive.current = false
+      embedFitStop.current?.()
+      embedFitStop.current = null
     }
   }, [])
 
@@ -96,6 +212,7 @@ export function MobbexWalletPanel({
     if (!alive.current) return
     if (!res.ok) {
       if (res.status === 401) {
+        sessionRef.current = null
         clearWalletSession()
       } else {
         setError(res.error)
@@ -127,13 +244,16 @@ export function MobbexWalletPanel({
   // Si ya verificó hace poco en esta pestaña, no se le vuelve a pedir el código.
   useEffect(() => {
     const session = loadWalletSession()
-    if (session) void createWalletCheckout(orderId, session, catalogSlug).then(applyCheckout)
+    if (session) {
+      sessionRef.current = session
+      void createWalletCheckout(orderId, session, catalogSlug).then(applyCheckout)
+    }
   }, [applyCheckout, orderId, catalogSlug])
 
   const sendCode = async () => {
     setBusy(true)
     setError('')
-    const res = await requestWalletCode(email.trim())
+    const res = await requestWalletCode(email.trim(), orderId)
     setBusy(false)
     if (!res.ok) {
       setError(res.error)
@@ -154,22 +274,25 @@ export function MobbexWalletPanel({
       return
     }
     saveWalletSession(res.data.session_token, res.data.expires_in)
+    sessionRef.current = res.data.session_token
     setBusy(false)
     await loadCards(res.data.session_token)
   }
 
   /** Mobbex avisa por webhook; acá se concilia contra su API sin depender de él. */
   const confirmPayment = useCallback(async () => {
+    const gen = ++confirmGen.current
     setStep('confirming')
     setError('')
     for (let i = 0; i < SYNC_ATTEMPTS; i++) {
       const res = await syncWalletPayment(orderId)
-      if (!alive.current) return
+      if (!alive.current || confirmGen.current !== gen) return
       if (res.ok && res.data.status === 'approved') {
         settledRef.current()
         return
       }
       if (res.ok && res.data.status === 'rejected') {
+        if (confirmGen.current !== gen) return
         setError('El pago fue rechazado. Probá con otra tarjeta.')
         const session = loadWalletSession()
         if (session) await loadCards(session)
@@ -178,26 +301,64 @@ export function MobbexWalletPanel({
       }
       await new Promise(r => setTimeout(r, SYNC_DELAY_MS))
     }
+    if (confirmGen.current !== gen) return
     setNotice('Seguimos confirmando tu pago. Esta página se actualiza sola.')
     settledRef.current()
   }, [orderId, loadCards])
 
   const payWithCard = async () => {
-    const card = checkout?.cards[selected]
-    if (!card) return
+    const current = checkout
+    const card = current?.cards[selected]
+    if (!current || !card) return
     if (!/^\d{3,4}$/.test(cvv)) {
       setError('Ingresá el código de seguridad de tu tarjeta.')
       return
     }
+    const securityCode = cvv
     setBusy(true)
     setError('')
     try {
-      const mobbex = await loadMobbexJs()
-      const result = await mobbex.operation.process({
-        intentToken: card.intent_token,
-        installment: installment || card.installments[0]?.reference || '',
-        securityCode: cvv,
-      })
+      const plan = installment || card.installments[0]?.reference || '1'
+      let intentToken = current.intent_token
+      let sourceId = card.source_id
+      if (card.source_id) {
+        const session = sessionRef.current || loadWalletSession()
+        if (!session) {
+          setError('La verificación venció. Ingresá tu email de nuevo.')
+          setStep('email')
+          setBusy(false)
+          return
+        }
+        const fresh = await createWalletCheckout(orderId, session, catalogSlug)
+        if (!alive.current) return
+        if (!fresh.ok || !('cards' in fresh.data)) {
+          applyCheckout(fresh)
+          setBusy(false)
+          return
+        }
+        const nextCard = fresh.data.cards.find(item => item.source_id === card.source_id) ?? fresh.data.cards[selected]
+        if (!fresh.data.intent_token || !nextCard?.source_id) {
+          setCheckout(fresh.data)
+          setError('No encontramos esa tarjeta. Elegí otra o pagá con una nueva.')
+          setBusy(false)
+          return
+        }
+        setCheckout(fresh.data)
+        intentToken = fresh.data.intent_token
+        sourceId = nextCard.source_id
+      }
+      const result = sourceId
+        ? await paySavedCard({
+            intentToken,
+            sourceId,
+            installment: plan,
+            securityCode,
+          })
+        : await (await loadMobbexJs()).operation.process({
+            intentToken: card.intent_token || '',
+            installment: plan,
+            securityCode,
+          })
       setCvv('')
       if (!result?.result) {
         setError(result?.error || result?.data?.status?.message || 'No se pudo procesar el pago. Probá con otra tarjeta.')
@@ -213,26 +374,166 @@ export function MobbexWalletPanel({
     }
   }
 
-  /** Checkout embebido de Mobbex: ahí se carga una tarjeta nueva y se guarda en la billetera. */
+  const closeEmbed = () => {
+    confirmGen.current += 1
+    paidInEmbedRef.current = false
+    embedRef.current = null
+    embedHeightRef.current = null
+    embedFitStop.current?.()
+    embedFitStop.current = null
+    setEmbedOpen(false)
+    setNotice('')
+    setStep(current => (current === 'confirming' ? 'cards' : current))
+    document.getElementById('mbbx-container')?.replaceChildren()
+  }
+
+  const backToCards = () => {
+    paidInEmbedRef.current = false
+    const embed = embedRef.current
+    if (!embed) {
+      closeEmbed()
+      return
+    }
+    try {
+      embed.close()
+    } catch {
+      closeEmbed()
+    }
+  }
+
+  /**
+   * El marco de Mobbex nace en 750px y centrado. Lo pegamos al formulario y le sacamos la X.
+   * Nunca baja de 732px: el alto que informa Mobbex es para su ancho de escritorio y en un panel
+   * angosto el formulario queda más alto, con lo que aparecería un scroll interno.
+   */
+  const applyEmbedHeight = (reported: number) => {
+    if (!Number.isFinite(reported) || reported < 180 || reported > EMBED_MAX_HEIGHT) return
+    const height = Math.max(reported, EMBED_MIN_HEIGHT)
+    embedHeightRef.current = height
+    const content = document.getElementById('mbbx-container')?.querySelector<HTMLElement>('[class*="-content"]')
+    if (!content) return
+    const px = `${Math.ceil(height)}px`
+    content.style.setProperty('height', px, 'important')
+    content.style.setProperty('min-height', px, 'important')
+    content.style.setProperty('max-height', px, 'important')
+  }
+
+  const pinEmbed = () => {
+    const root = document.getElementById('mbbx-container')
+    if (!root) return
+    root.style.setProperty('position', 'relative', 'important')
+    root.style.setProperty('top', '0', 'important')
+    root.style.setProperty('height', 'auto', 'important')
+    root.style.setProperty('min-height', '0', 'important')
+    root.querySelectorAll<HTMLElement>('[class*="-close"], [class*="-prerender"]').forEach(el => {
+      el.style.setProperty('display', 'none', 'important')
+      el.style.setProperty('height', '0', 'important')
+      el.style.setProperty('width', '0', 'important')
+      el.style.setProperty('min-height', '0', 'important')
+      el.style.setProperty('visibility', 'hidden', 'important')
+      el.style.setProperty('overflow', 'hidden', 'important')
+    })
+    root.querySelectorAll<HTMLElement>('[class*="-container"], [class*="-content"]').forEach(el => {
+      el.style.setProperty('position', 'relative', 'important')
+      el.style.setProperty('top', '0', 'important')
+      el.style.setProperty('left', '0', 'important')
+      el.style.setProperty('transform', 'none', 'important')
+      el.style.setProperty('margin', '0', 'important')
+      el.style.setProperty('width', '100%', 'important')
+      el.style.setProperty('max-width', '100%', 'important')
+    })
+    const content = root.querySelector<HTMLElement>('[class*="-content"]')
+    if (content) applyEmbedHeight(embedHeightRef.current ?? EMBED_MIN_HEIGHT)
+    const iframe = root.querySelector<HTMLIFrameElement>(REAL_FRAME)
+    if (!iframe) return
+    iframe.style.setProperty('position', 'absolute', 'important')
+    iframe.style.setProperty('display', 'block', 'important')
+    iframe.style.setProperty('top', `-${EMBED_CROP_TOP}px`, 'important')
+    iframe.style.setProperty('left', '0', 'important')
+    iframe.style.setProperty('right', '0', 'important')
+    iframe.style.setProperty('bottom', '0', 'important')
+    iframe.style.setProperty('margin', '0', 'important')
+    iframe.style.setProperty('width', '100%', 'important')
+    iframe.style.setProperty('height', `calc(100% + ${EMBED_CROP_TOP}px)`, 'important')
+    iframe.style.setProperty('border', '0', 'important')
+    iframe.setAttribute('scrolling', 'no')
+  }
+
+  /** El SDK de Mobbex abre un modal fijo. Lo montamos en el panel y pisamos ese overlay para que quede en la página. */
   const openEmbedded = async () => {
     if (!checkout) return
     setError('')
+    paidInEmbedRef.current = false
+    flushSync(() => {
+      setEmbedOpen(true)
+      setEmbedLoading(true)
+    })
+    const stopLoading = window.setTimeout(() => setEmbedLoading(false), 6000)
     try {
       const embedApi = await loadMobbexEmbed()
       const embed = embedApi.init({
-        onResult: () => embed.close(),
-        onClose: () => {
+        onResult: (data: unknown) => {
+          const code = paymentStatusCode(data)
+          if (!code || !APPROVED_STATUS.has(code)) return
+          paidInEmbedRef.current = true
+          setEmbedOpen(false)
           void confirmPayment()
+          embed.close()
+        },
+        onOpen: () => setEmbedLoading(false),
+        onClose: () => {
+          setEmbedLoading(false)
+          if (paidInEmbedRef.current) return
+          closeEmbed()
         },
         onError: () => setError('No se pudo abrir el checkout. Intentá de nuevo.'),
       })
+      embedRef.current = embed
+      embedHeightRef.current = null
+      embedFitStop.current?.()
+      const onMessage = (event: MessageEvent) => {
+        const frame = document.getElementById('mbbx-container')?.querySelector<HTMLIFrameElement>(REAL_FRAME)
+        const fromFrame = Boolean(frame && event.source === frame.contentWindow)
+        const fromMobbex = String(event.origin || '').includes('mobbex.com')
+        if (!fromFrame && !fromMobbex) return
+        const height = embedHeightFromMessage(event.data)
+        if (height) applyEmbedHeight(height)
+      }
+      window.addEventListener('message', onMessage)
+      embedFitStop.current = () => window.removeEventListener('message', onMessage)
       embed.open({ type: 'checkout', id: checkout.checkout_id })
+      pinEmbed()
+      embedSlot.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })
+      const pullSdkHeight = window.setInterval(() => {
+        const content = document.getElementById('mbbx-container')?.querySelector<HTMLElement>('[class*="-content"]')
+        const inline = asPx(content?.style.height ?? '')
+        const isDefaultFrame = inline === 750
+        if (inline && !isDefaultFrame) applyEmbedHeight(inline)
+      }, 200)
+      window.setTimeout(() => window.clearInterval(pullSdkHeight), 8000)
+      const stopFit = embedFitStop.current
+      embedFitStop.current = () => {
+        window.clearInterval(pullSdkHeight)
+        stopFit?.()
+      }
+      window.setTimeout(pinEmbed, 50)
+      window.setTimeout(pinEmbed, 300)
+      window.setTimeout(pinEmbed, 800)
     } catch {
+      window.clearTimeout(stopLoading)
+      setEmbedOpen(false)
+      setEmbedLoading(false)
       setError('No se pudo cargar el checkout de Mobbex. Intentá de nuevo.')
     }
   }
 
+  // El script de Mobbex se baja apenas se ven las tarjetas, así "Usar otra tarjeta" abre sin esperar la descarga.
+  useEffect(() => {
+    if (step === 'cards') void Promise.resolve(loadMobbexEmbed()).catch(() => undefined)
+  }, [step])
+
   const changeEmail = () => {
+    sessionRef.current = null
     clearWalletSession()
     setCheckout(null)
     setError('')
@@ -243,28 +544,9 @@ export function MobbexWalletPanel({
 
   return (
     <div className="flex flex-col gap-4" style={{ color: BUYER_COLORS.text }}>
-      <div className="flex items-center gap-2">
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={{ background: 'rgba(109,40,217,0.1)' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <rect x="3" y="11" width="18" height="10" rx="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-        </span>
-        <p className="text-[14px] font-bold">Mobbex Wallet</p>
-        <span
-          className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-          style={{ background: '#FEF3C7', color: '#92400E' }}
-        >
-          Modo prueba
-        </span>
-      </div>
-
       {step === 'loading' && (
         <div className="flex items-center justify-center gap-2.5 py-6 text-[13px]" style={{ color: BUYER_COLORS.muted }}>
-          <Spinner size="sm" /> Cargando…
+          <Spinner size="sm" /> {sendingCode ? 'Enviando el código…' : 'Cargando…'}
         </div>
       )}
 
@@ -277,8 +559,7 @@ export function MobbexWalletPanel({
           }}
         >
           <p className="text-[13px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
-            Ingresá tu email y te mandamos un código para ver tus tarjetas guardadas o guardar una nueva. Las
-            tarjetas quedan en Mobbex, no en Nubapay.
+            Te mandamos un código para confirmar el pago. Si ya pagaste con este email, vas a ver tus tarjetas.
           </p>
           <input
             type="email"
@@ -291,7 +572,7 @@ export function MobbexWalletPanel({
             style={{ borderColor: BUYER_COLORS.border, background: BUYER_COLORS.subtleFill }}
             aria-label="Email"
           />
-          <button type="submit" disabled={busy || !email.includes('@')} className={primaryButton} style={{ background: ACCENT }}>
+          <button type="submit" disabled={busy || !email.includes('@')} className={primaryButton} style={{ background: BUYER_COLORS.text }}>
             {busy ? <Spinner size="sm" className="text-white" /> : null}
             Enviarme el código
           </button>
@@ -320,7 +601,7 @@ export function MobbexWalletPanel({
             style={{ borderColor: BUYER_COLORS.border, background: BUYER_COLORS.subtleFill }}
             aria-label="Código de verificación"
           />
-          <button type="submit" disabled={busy || code.length !== 6} className={primaryButton} style={{ background: ACCENT }}>
+          <button type="submit" disabled={busy || code.length !== 6} className={primaryButton} style={{ background: BUYER_COLORS.text }}>
             {busy ? <Spinner size="sm" className="text-white" /> : null}
             Verificar
           </button>
@@ -347,11 +628,18 @@ export function MobbexWalletPanel({
           <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
             No cierres esta página.
           </p>
+          {notice && (
+            <p className="max-w-[260px] text-[12px]" style={{ color: BUYER_COLORS.muted }}>
+              {notice}
+            </p>
+          )}
         </div>
       )}
 
       {step === 'cards' && checkout && (
-        <div className="flex flex-col gap-3">
+        <div className={embedOpen ? 'flex flex-col gap-1' : 'flex flex-col gap-3'}>
+          {!embedOpen && (
+          <>
           <div className="flex items-center justify-between gap-2 text-[12px]" style={{ color: BUYER_COLORS.muted }}>
             <span className="truncate">
               Verificado: <b style={{ color: BUYER_COLORS.text }}>{checkout.email}</b>
@@ -369,7 +657,7 @@ export function MobbexWalletPanel({
                   const active = i === selected
                   return (
                     <button
-                      key={c.intent_token}
+                      key={c.source_id || c.intent_token}
                       type="button"
                       role="radio"
                       aria-checked={active}
@@ -380,13 +668,10 @@ export function MobbexWalletPanel({
                       }}
                       className="flex items-center gap-3 rounded-[14px] px-4 py-3 text-left transition-colors"
                       style={{
-                        border: active ? `2px solid ${ACCENT}` : `1.5px solid ${BUYER_COLORS.border}`,
-                        background: active ? 'rgba(109,40,217,0.04)' : '#fff',
+                        border: active ? `2px solid ${BUYER_COLORS.text}` : `1.5px solid ${BUYER_COLORS.border}`,
+                        background: active ? BUYER_COLORS.subtleFill : '#fff',
                       }}
                     >
-                      <span className="flex h-9 w-12 items-center justify-center rounded-[8px] text-[10px] font-bold uppercase" style={{ background: BUYER_COLORS.subtleFill }}>
-                        {c.brand.slice(0, 6) || 'Tarjeta'}
-                      </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[14px] font-bold">
                           {c.brand || 'Tarjeta'} •••• {c.last4}
@@ -397,10 +682,10 @@ export function MobbexWalletPanel({
                       </span>
                       <span
                         className="flex h-5 w-5 items-center justify-center rounded-full border-2"
-                        style={{ borderColor: active ? ACCENT : 'rgba(0,0,0,0.2)' }}
+                        style={{ borderColor: active ? BUYER_COLORS.text : 'rgba(0,0,0,0.2)' }}
                         aria-hidden
                       >
-                        {active && <span className="h-2.5 w-2.5 rounded-full" style={{ background: ACCENT }} />}
+                        {active && <span className="h-2.5 w-2.5 rounded-full" style={{ background: BUYER_COLORS.text }} />}
                       </span>
                     </button>
                   )
@@ -435,12 +720,12 @@ export function MobbexWalletPanel({
                 style={{ borderColor: BUYER_COLORS.border, background: BUYER_COLORS.subtleFill }}
                 aria-label="Código de seguridad"
               />
-              <button type="button" onClick={() => void payWithCard()} disabled={busy} className={primaryButton} style={{ background: ACCENT }}>
+              <button type="button" onClick={() => void payWithCard()} disabled={busy} className={primaryButton} style={{ background: BUYER_COLORS.text }}>
                 {busy ? <Spinner size="sm" className="text-white" /> : null}
                 Pagar {formatPrice(checkout.amount || amount)}
               </button>
               <p className="text-center text-[11px]" style={{ color: BUYER_COLORS.muted }}>
-                El código de seguridad lo procesa Mobbex. Nunca lo guardamos.
+                El código de seguridad no se guarda.
               </p>
               <div className="flex items-center gap-3 text-[11px]" style={{ color: BUYER_COLORS.muted }}>
                 <span className="h-px flex-1" style={{ background: BUYER_COLORS.border }} />o<span className="h-px flex-1" style={{ background: BUYER_COLORS.border }} />
@@ -448,23 +733,111 @@ export function MobbexWalletPanel({
             </>
           ) : (
             <p className="text-[13px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
-              Todavía no tenés tarjetas guardadas con este email. Pagá con una tarjeta nueva y quedará guardada en
-              tu billetera de Mobbex para la próxima compra.
+              Todavía no tenés tarjetas guardadas. Pagá con una nueva y la próxima vez va a estar acá.
             </p>
           )}
 
-          <button
-            type="button"
-            onClick={() => void openEmbedded()}
-            className="flex h-[48px] w-full items-center justify-center gap-2 rounded-full text-[14px] font-bold transition-opacity active:opacity-80"
-            style={
-              checkout.cards.length > 0
-                ? { border: `1.5px solid ${BUYER_COLORS.border}`, background: '#fff', color: BUYER_COLORS.text }
-                : { background: ACCENT, color: '#fff' }
+            <button
+              type="button"
+              onClick={() => void openEmbedded()}
+              className="flex h-[48px] w-full items-center justify-center gap-2 rounded-full text-[14px] font-bold transition-opacity active:opacity-80"
+              style={
+                checkout.cards.length > 0
+                  ? { border: `1.5px solid ${BUYER_COLORS.border}`, background: '#fff', color: BUYER_COLORS.text }
+                  : { background: BUYER_COLORS.text, color: '#fff' }
+              }
+            >
+              {checkout.cards.length > 0 ? 'Usar otra tarjeta' : `Pagar ${formatPrice(checkout.amount || amount)} con una tarjeta nueva`}
+            </button>
+          </>
+          )}
+
+          <style>{`
+            #mbbx-container.mbbx-inline,
+            #mbbx-container.mbbx-inline[class*="-main"] {
+              position: relative !important;
+              inset: auto !important;
+              top: 0 !important;
+              right: auto !important;
+              bottom: auto !important;
+              left: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              min-height: 0 !important;
+              max-height: none !important;
+              z-index: 1 !important;
+              background: transparent !important;
+              overflow: visible !important;
+              border-radius: 18px !important;
             }
-          >
-            {checkout.cards.length > 0 ? 'Usar otra tarjeta' : `Pagar ${formatPrice(checkout.amount || amount)} con una tarjeta nueva`}
-          </button>
+            #mbbx-container.mbbx-inline > div,
+            #mbbx-container.mbbx-inline [class*="-container"] {
+              position: relative !important;
+              inset: auto !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              min-height: 0 !important;
+              transform: none !important;
+              background: transparent !important;
+            }
+            #mbbx-container.mbbx-inline [class*="-content"] {
+              position: relative !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: auto !important;
+              transform: none !important;
+              margin: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              height: 732px !important;
+              min-height: 732px !important;
+              max-height: 732px !important;
+              overflow: hidden !important;
+              background: #fff !important;
+            }
+            #mbbx-container.mbbx-inline [class*="-close"],
+            #mbbx-container.mbbx-inline [class*="-prerender"] {
+              display: none !important;
+              height: 0 !important;
+              width: 0 !important;
+              min-height: 0 !important;
+              overflow: hidden !important;
+              visibility: hidden !important;
+            }
+            #mbbx-container.mbbx-inline iframe[name^="__zoid__"] {
+              position: absolute !important;
+              top: -${EMBED_CROP_TOP}px !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              left: 0 !important;
+              display: block !important;
+              width: 100% !important;
+              height: calc(100% + ${EMBED_CROP_TOP}px) !important;
+              margin: 0 !important;
+              border: 0 !important;
+            }
+          `}</style>
+          {embedOpen && (
+            <button
+              type="button"
+              onClick={backToCards}
+              className="self-start text-[13px] font-semibold underline"
+              style={{ color: BUYER_COLORS.text }}
+            >
+              {checkout.cards.length > 0 ? 'Volver a mis tarjetas' : 'Volver'}
+            </button>
+          )}
+          {embedOpen && embedLoading && (
+            <div className="flex items-center justify-center gap-2.5 py-10 text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+              <Spinner size="sm" /> Cargando…
+            </div>
+          )}
+          <div ref={embedSlot} className={embedOpen ? 'relative mt-2' : 'relative'}>
+            <div id="mbbx-container" className={embedOpen ? 'mbbx-inline overflow-hidden rounded-[18px]' : 'hidden'} />
+            {embedOpen && <span aria-hidden className="absolute right-2 top-2 z-[2] h-9 w-9" style={{ background: '#fff' }} />}
+          </div>
         </div>
       )}
 
@@ -473,28 +846,11 @@ export function MobbexWalletPanel({
           {error}
         </p>
       )}
-      {notice && (
-        <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
+      {notice && step !== 'confirming' && (
+        <p className="text-center text-[12px]" style={{ color: BUYER_COLORS.muted }}>
           {notice}
         </p>
       )}
-
-      <details className="rounded-[12px] px-3 py-2 text-[11px]" style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.muted }}>
-        <summary className="cursor-pointer font-semibold">Tarjetas de prueba (Sandbox)</summary>
-        <ul className="mt-2 flex flex-col gap-0.5">
-          {TEST_CARDS.map(([name, number]) => (
-            <li key={number}>
-              {name}: <span className="font-mono">{number}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2">
-          Vencimiento 12/34 · Nombre Demo · DNI 12123123. CVV <b>200</b> aprueba, <b>400</b> rechaza, <b>002</b> queda en espera.
-        </p>
-      </details>
-
-      {/* Contenedor que usa el SDK embebido de Mobbex para su modal. */}
-      <div id="mbbx-container" />
     </div>
   )
 }

@@ -11,6 +11,7 @@ function mockEvent(overrides: {
   has_mp_token?: boolean
   has_mp_public_key?: boolean
   has_sipago_credentials?: boolean
+  has_mobbex_credentials?: boolean
   mp_card_enabled?: boolean
 }) {
   ;(fetchOrganizerEventDetail as jest.Mock).mockResolvedValue({
@@ -21,6 +22,7 @@ function mockEvent(overrides: {
       has_mp_token: false,
       has_mp_public_key: false,
       has_sipago_credentials: false,
+      has_mobbex_credentials: false,
       mp_card_enabled: false,
       ...overrides,
     },
@@ -38,6 +40,8 @@ describe('PaymentMethodsView', () => {
     expect(within(row('Mercado Pago')).getByText('Conectada')).toBeInTheDocument()
     expect(within(row('Sipago')).queryByText('Conectada')).not.toBeInTheDocument()
     expect(within(row('Sipago')).getByText('Conectá tu cuenta para recibir pagos')).toBeInTheDocument()
+    expect(within(row('Mobbex')).queryByText('Conectada')).not.toBeInTheDocument()
+    expect(row('Mobbex')).toHaveAttribute('href', '/events/e1/metodos-pago/mobbex')
   })
 
   it('deja apagada la tarjeta en el sitio hasta que haya clave pública', async () => {

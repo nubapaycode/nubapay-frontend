@@ -97,7 +97,7 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="flex w-full max-w-[720px] flex-col items-center justify-center gap-3 py-24">
+      <div className="flex w-full flex-col items-center justify-center gap-3 py-24">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
       </div>
@@ -105,7 +105,7 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="w-full max-w-[720px] space-y-8">
+    <div className="w-full space-y-8">
       <ToastPortal />
 
       <OrganizerToolHeading
@@ -203,22 +203,19 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
         </Link>
       </section>
 
-      {/* ── Mobbex ── */}
+      {/* ── Mobbex (tarjetas guardadas) ── */}
       <section className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
         <Link
           href={mobbexHref}
           className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors"
         >
-          <div className="w-8 h-8 rounded-lg bg-[#6D28D9]/10 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="3" y="6" width="18" height="12" rx="2" />
-              <path d="M7 12h4M13 12h4" />
-            </svg>
+          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+            <Image src="/images/mobbex.png" alt="Mobbex" width={32} height={32} className="h-full w-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">Mobbex</p>
             {!event?.has_mobbex_credentials && (
-              <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para recibir pagos</p>
+              <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para cobrar con tarjeta</p>
             )}
           </div>
           {event?.has_mobbex_credentials && <ConnectedBadge />}
