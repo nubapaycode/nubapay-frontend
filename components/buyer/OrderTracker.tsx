@@ -48,6 +48,7 @@ const paymentLabels: Record<string, string> = {
   cash: 'Efectivo',
   transfer: 'Transferencia',
   sipago: 'Sipago',
+  mobbex: 'Mobbex',
 }
 
 const POLL_FAST = 1500
@@ -210,6 +211,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
     mp: { label: 'Mercado Pago', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
     mp_card: { label: 'Tarjeta', color: '#009EE3', bg: 'rgba(0,158,227,0.18)' },
     sipago: { label: 'Sipago', color: '#4E358B', bg: 'rgba(78,53,139,0.18)' },
+    mobbex: { label: 'Mobbex', color: '#6D28D9', bg: 'rgba(109,40,217,0.12)' },
   }
   const cardInReview =
     cardHold || (order?.payment_method === 'mp_card' && order.payment_status === 'in_process')
@@ -734,7 +736,12 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               >
                 {mpCheckoutReady ? (
                   <>
-                    {order?.payment_method === 'mp' ? (
+                    {order?.payment_method === 'mobbex' ? (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <rect x="3" y="6" width="18" height="12" rx="2" />
+                        <path d="M7 12h4M13 12h4" />
+                      </svg>
+                    ) : order?.payment_method === 'mp' ? (
                       <svg width="28" height="19" viewBox="206 130 288 210" fill="none" aria-hidden>
                         <path fill="#00bcff" d="m350.04,138.92c-77.83,0-140.91,40.36-140.91,90.15s63.09,94.05,140.91,94.05,140.91-44.27,140.91-94.05-63.09-90.15-140.91-90.15Z"/>
                         <path fill="#fff" d="m304.18,201.2c-.07.14-1.45,1.56-.55,2.71,2.18,2.78,8.91,4.38,15.72,2.85,4.05-.91,9.25-5.04,14.28-9.03,5.45-4.33,10.86-8.67,16.3-10.39,5.76-1.83,9.45-1.05,11.89-.31,2.67.8,5.82,2.56,10.84,6.32,9.45,7.1,47.43,40.26,54,45.99,5.28-2.39,30.47-12.56,62.39-19.6-2.78-17.02-13.01-33.25-28.72-45.99-21.89,9.19-50.42,14.7-76.58,1.93-.13-.05-14.29-6.75-28.25-6.42-20.75.48-29.74,9.46-39.25,18.97l-12.05,12.99Z"/>

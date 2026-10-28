@@ -11,13 +11,15 @@ interface OrderCardProps {
 }
 
 const paymentLabels: Record<string, string> = {
-  mp: 'Mercado Pago', cash: 'Efectivo', transfer: 'Transferencia',
+  mp: 'Mercado Pago', cash: 'Efectivo', transfer: 'Transferencia', sipago: 'Sipago', mobbex: 'Mobbex',
 }
 
 const paymentColors: Record<string, string> = {
   mp: '#009EE3',
   cash: '#6B7280',
   transfer: '#8B5CF6',
+  sipago: '#4E358B',
+  mobbex: '#6D28D9',
 }
 
 export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProps) {

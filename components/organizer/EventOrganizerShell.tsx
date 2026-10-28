@@ -30,6 +30,7 @@ export function EventOrganizerShell({
     membership: 'owner' | 'staff'
     hasMpToken: boolean
     hasSipagoCredentials: boolean
+    hasMobbexCredentials: boolean
     tools?: OrganizerStaffTools
   } | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -55,6 +56,7 @@ export function EventOrganizerShell({
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
           hasMpToken: body.event.has_mp_token ?? false,
           hasSipagoCredentials: body.event.has_sipago_credentials ?? false,
+          hasMobbexCredentials: body.event.has_mobbex_credentials ?? false,
           tools: body.event.tools,
         })
       }
@@ -93,15 +95,21 @@ export function EventOrganizerShell({
     const onMpDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasMpToken: false } : prev)
     const onSipagoConnected = () => setEventMeta(prev => prev ? { ...prev, hasSipagoCredentials: true } : prev)
     const onSipagoDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasSipagoCredentials: false } : prev)
+    const onMobbexConnected = () => setEventMeta(prev => prev ? { ...prev, hasMobbexCredentials: true } : prev)
+    const onMobbexDisconnected = () => setEventMeta(prev => prev ? { ...prev, hasMobbexCredentials: false } : prev)
     window.addEventListener('nubapay-mp-connected', onMpConnected)
     window.addEventListener('nubapay-mp-disconnected', onMpDisconnected)
     window.addEventListener('nubapay-sipago-connected', onSipagoConnected)
     window.addEventListener('nubapay-sipago-disconnected', onSipagoDisconnected)
+    window.addEventListener('nubapay-mobbex-connected', onMobbexConnected)
+    window.addEventListener('nubapay-mobbex-disconnected', onMobbexDisconnected)
     return () => {
       window.removeEventListener('nubapay-mp-connected', onMpConnected)
       window.removeEventListener('nubapay-mp-disconnected', onMpDisconnected)
       window.removeEventListener('nubapay-sipago-connected', onSipagoConnected)
       window.removeEventListener('nubapay-sipago-disconnected', onSipagoDisconnected)
+      window.removeEventListener('nubapay-mobbex-connected', onMobbexConnected)
+      window.removeEventListener('nubapay-mobbex-disconnected', onMobbexDisconnected)
     }
   }, [])
 
@@ -235,6 +243,7 @@ export function EventOrganizerShell({
         }}
         hasMpToken={eventMeta.hasMpToken}
         hasSipagoCredentials={eventMeta.hasSipagoCredentials}
+        hasMobbexCredentials={eventMeta.hasMobbexCredentials}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-20 md:pb-0">

@@ -551,6 +551,7 @@ export type AdminEventDetail = {
     organizer: { id: string; name: string; email: string } | null
     has_mp: boolean
     has_sipago: boolean
+    has_mobbex: boolean
     cash_enabled: boolean
     service_fee_enabled: boolean
   }

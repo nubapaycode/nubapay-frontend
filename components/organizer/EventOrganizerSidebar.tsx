@@ -219,6 +219,7 @@ type Props = {
   tools: OrganizerStaffTools
   hasMpToken?: boolean
   hasSipagoCredentials?: boolean
+  hasMobbexCredentials?: boolean
 }
 
 export function EventOrganizerSidebar({
@@ -230,6 +231,7 @@ export function EventOrganizerSidebar({
   tools,
   hasMpToken = false,
   hasSipagoCredentials = false,
+  hasMobbexCredentials = false,
 }: Props) {
   const pubTheme = useOrganizerPublicTheme()
   const { bg: ORG_ACC, fg: ORG_INK } = useMemo(() => organizerAccentColorsFromTheme(pubTheme), [pubTheme])
@@ -244,7 +246,7 @@ export function EventOrganizerSidebar({
       ? pubBranding.displayName.trim()
       : ''
 
-  const hasAnyPaymentMethod = hasMpToken || hasSipagoCredentials
+  const hasAnyPaymentMethod = hasMpToken || hasSipagoCredentials || hasMobbexCredentials
   const [mpState, setMpState] = useState<'normal' | 'connected' | 'hidden'>(
     hasAnyPaymentMethod ? 'hidden' : 'normal'
   )

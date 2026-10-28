@@ -121,6 +121,28 @@ export const paymentMethods = [
     color: '#4E358B',
   },
   {
+    id: 'mobbex',
+    label: 'Mobbex',
+    sub: 'Tarjeta, QR o efectivo',
+    icon: (
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#6D28D9"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <rect x="3" y="6" width="18" height="12" rx="2" />
+        <path d="M7 12h4M13 12h4" />
+      </svg>
+    ),
+    color: '#6D28D9',
+  },
+  {
     id: 'cash',
     label: 'Efectivo',
     sub: 'Pagás al retirar tu pedido',

@@ -24,6 +24,7 @@ export const FUNNEL_STEPS = ['#1c5cab', '#3987e5', '#86b6ef']
 export const PROVIDER_COLOR: Record<string, string> = {
   mercadopago: SERIES.blue,
   sipago: SERIES.orange,
+  mobbex: '#6D28D9',
   cash: SERIES.aqua,
   transfer: SERIES.yellow,
 }
@@ -31,6 +32,7 @@ export const PROVIDER_COLOR: Record<string, string> = {
 export const PROVIDER_LABEL: Record<string, string> = {
   mercadopago: 'Mercado Pago',
   sipago: 'Sipago',
+  mobbex: 'Mobbex',
   cash: 'Efectivo',
   transfer: 'Transferencia',
   stripe: 'Stripe',

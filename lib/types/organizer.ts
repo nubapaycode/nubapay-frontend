@@ -32,6 +32,8 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   mp_card_enabled: boolean
   /** true si el evento tiene credenciales de Sipago propias configuradas. El valor nunca se devuelve. */
   has_sipago_credentials: boolean
+  /** true si el evento tiene credenciales de Mobbex. El valor nunca se devuelve. */
+  has_mobbex_credentials: boolean
   /** true si el organizador acepta pagos en efectivo, confirmados por staff al escanear el QR. */
   cash_enabled: boolean
   /** true = el comprador paga costo de servicio. false = el organizador paga comisión del 1%. */

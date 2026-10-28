@@ -87,7 +87,7 @@ export interface Order {
   createdAt: string
   updatedAt: string
   pickupPoint?: string
-  paymentMethod?: 'mp' | 'cash' | 'transfer'
+  paymentMethod?: 'mp' | 'cash' | 'transfer' | 'sipago' | 'mobbex'
 }
 
 /** Sección curada del catálogo: banner propio + productos/combos elegidos a mano por el organizador. */

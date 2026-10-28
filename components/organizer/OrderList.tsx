@@ -27,6 +27,8 @@ const paymentLabels: Record<string, string> = {
   mp: 'Mercado Pago',
   cash: 'Efectivo',
   transfer: 'Transferencia',
+  sipago: 'Sipago',
+  mobbex: 'Mobbex',
 }
 
 function itemsSummary(order: Order, maxLen = 72): string {

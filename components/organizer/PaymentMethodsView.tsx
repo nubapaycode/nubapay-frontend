@@ -42,16 +42,21 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
     window.addEventListener('nubapay-mp-disconnected', onDisconnected)
     window.addEventListener('nubapay-sipago-connected', onConnected)
     window.addEventListener('nubapay-sipago-disconnected', onDisconnected)
+    window.addEventListener('nubapay-mobbex-connected', onConnected)
+    window.addEventListener('nubapay-mobbex-disconnected', onDisconnected)
     return () => {
       window.removeEventListener('nubapay-mp-connected', onConnected)
       window.removeEventListener('nubapay-mp-disconnected', onDisconnected)
       window.removeEventListener('nubapay-sipago-connected', onConnected)
       window.removeEventListener('nubapay-sipago-disconnected', onDisconnected)
+      window.removeEventListener('nubapay-mobbex-connected', onConnected)
+      window.removeEventListener('nubapay-mobbex-disconnected', onDisconnected)
     }
   }, [load])
 
   const mpHref = `/events/${eventId}/metodos-pago/mercadopago`
   const sipagoHref = `/events/${eventId}/metodos-pago/sipago`
+  const mobbexHref = `/events/${eventId}/metodos-pago/mobbex`
 
   const [cashSaving, setCashSaving] = useState(false)
   const [cardSaving, setCardSaving] = useState(false)
@@ -194,6 +199,29 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
             )}
           </div>
           {event?.has_sipago_credentials && <ConnectedBadge />}
+          <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
+        </Link>
+      </section>
+
+      {/* ── Mobbex ── */}
+      <section className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+        <Link
+          href={mobbexHref}
+          className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-lg bg-[#6D28D9]/10 flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="3" y="6" width="18" height="12" rx="2" />
+              <path d="M7 12h4M13 12h4" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Mobbex</p>
+            {!event?.has_mobbex_credentials && (
+              <p className="text-xs text-gray-400 mt-0.5">Conectá tu cuenta para recibir pagos</p>
+            )}
+          </div>
+          {event?.has_mobbex_credentials && <ConnectedBadge />}
           <ChevronRight size={16} className="text-gray-300 shrink-0" aria-hidden />
         </Link>
       </section>
