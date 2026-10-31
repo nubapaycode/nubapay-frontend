@@ -7,6 +7,7 @@ import { AreaChart, BarList, SeriesTable } from './charts'
 import { fmtDateTime, fmtDay, fmtInt, fmtMoneyCompact, isoDate, plural } from './format'
 import { EVENT_STATUS_LABEL, providerColor, providerLabel } from './theme'
 import {
+  AdminPortal,
   Btn,
   Card,
   EmptyState,
@@ -20,6 +21,7 @@ import {
   Table,
   Td,
   Th,
+  Toggle,
   cx,
   inputAutoCls,
   inputCls,
@@ -72,10 +74,10 @@ const GROUPS: { key: 'all' | OrderGroup; label: string; hint: string }[] = [
 
 function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#12121A] px-5 py-4">
-      <p className="text-xs text-white/45">{label}</p>
-      <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-white">{value}</p>
-      {sub && <p className="mt-0.5 text-[11px] text-white/35">{sub}</p>}
+    <div className="admin-panel px-5 py-4">
+      <p className="text-xs text-white/60">{label}</p>
+      <p className="mt-1.5 text-2xl font-medium tabular-nums tracking-tight text-white">{value}</p>
+      {sub && <p className="mt-0.5 text-[11px] text-white/50">{sub}</p>}
     </div>
   )
 }
@@ -201,12 +203,12 @@ export function EventPanel({
             <h2 className="truncate text-2xl font-semibold tracking-tight text-white">{d?.event.name ?? 'Cargando evento…'}</h2>
             {d && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-white/45">
+                <span className="text-sm text-white/60">
                   {d.event.tenant_subdomain ?? 'sin tenant'} · /{d.event.slug}
                 </span>
                 <Pill tone={d.event.status === 'active' ? 'good' : 'neutral'}>{EVENT_STATUS_LABEL[d.event.status] ?? d.event.status}</Pill>
                 <Pill tone={active ? 'good' : 'critical'}>{active ? 'Ventas abiertas' : 'Ventas pausadas'}</Pill>
-                <span className="text-xs text-white/40">{d.event.starts_at ? `Inicia ${fmtDateTime(d.event.starts_at)}` : 'Sin fecha de inicio'}</span>
+                <span className="text-xs text-white/55">{d.event.starts_at ? `Inicia ${fmtDateTime(d.event.starts_at)}` : 'Sin fecha de inicio'}</span>
               </div>
             )}
           </div>
@@ -220,34 +222,21 @@ export function EventPanel({
       </div>
 
       {d && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-[#12121A] px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 admin-panel px-5 py-4">
           <div className="min-w-0">
             <p className="text-sm font-medium text-white">Costo de servicio al comprador</p>
-            <p className="mt-0.5 text-xs text-white/45">
+            <p className="mt-0.5 text-xs text-white/60">
               {d.event.service_fee_enabled
                 ? 'Activado: el comprador paga 5% en tickets y 2% en productos, para Nubapay. No se cobra la comisión del 1% al organizador.'
                 : 'Desactivado: el comprador no paga extra y le cobrás el 1% de comisión al organizador sobre lo que factura.'}
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={d.event.service_fee_enabled}
-            aria-label="Costo de servicio al comprador"
+          <Toggle
+            label="Costo de servicio al comprador"
+            checked={d.event.service_fee_enabled}
             disabled={feeBusy}
-            onClick={toggleServiceFee}
-            className={cx(
-              'relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50',
-              d.event.service_fee_enabled ? 'bg-[#C6FF00]' : 'bg-white/15',
-            )}
-          >
-            <span
-              className={cx(
-                'absolute top-0.5 h-5 w-5 rounded-full bg-[#0A0A0F] shadow transition-[left]',
-                d.event.service_fee_enabled ? 'left-[22px]' : 'left-0.5',
-              )}
-            />
-          </button>
+            onChange={toggleServiceFee}
+          />
         </div>
       )}
 
@@ -256,11 +245,11 @@ export function EventPanel({
         {preset === 'custom' && (
           <div className="flex flex-wrap items-center gap-2">
             <input aria-label="Desde" type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={cx(inputAutoCls, 'py-1.5')} />
-            <span className="text-xs text-white/35">a</span>
+            <span className="text-xs text-white/50">a</span>
             <input aria-label="Hasta" type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className={cx(inputAutoCls, 'py-1.5')} />
           </div>
         )}
-        {d && <span className="text-xs text-white/35">Mostrando {rangeLabel(d)} · hora Argentina</span>}
+        {d && <span className="text-xs text-white/50">Mostrando {rangeLabel(d)} · hora Argentina</span>}
       </div>
 
       {error && !d && <ErrorNote message={error} onRetry={reload} />}
@@ -275,12 +264,12 @@ export function EventPanel({
       ) : (
         <div className={cx('space-y-6 transition-opacity', loading && 'opacity-60')}>
           {/* Comisión + KPIs */}
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-[#C6FF00]/25 bg-gradient-to-br from-[#C6FF00]/[0.09] to-transparent p-5 lg:row-span-1">
-              <p className="text-xs font-medium text-[#C6FF00]/80">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="rounded-lg border border-admin-accent/25 bg-admin-accent/[0.05] p-5 lg:row-span-1">
+              <p className="text-xs font-medium text-admin-accent/80">
                 {d.commission.mode === 'service_fee' ? 'Tu costo de servicio a cobrar' : 'Tu comisión a cobrar'}
               </p>
-              <p className="mt-2 text-4xl font-semibold tracking-tight text-[#C6FF00]">{formatPrice(d.commission.platform_income_in_range)}</p>
+              <p className="mt-2 text-4xl font-medium tracking-tight tabular-nums text-admin-accent">{formatPrice(d.commission.platform_income_in_range)}</p>
               <p className="mt-1 text-xs text-white/50">
                 {d.commission.mode === 'service_fee'
                   ? `Costo de servicio pagado por los compradores en ${rangeLabel(d)}`
@@ -289,18 +278,18 @@ export function EventPanel({
               <dl className="mt-4 space-y-1.5 border-t border-white/10 pt-3 text-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Comisión {(d.commission.rate * 100).toLocaleString('es-AR')}%</dt>
-                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.in_range)}</dd>
+                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.in_range)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Costo de servicio</dt>
-                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.service_fee_in_range)}</dd>
+                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.service_fee_in_range)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Histórico del evento</dt>
-                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.platform_income_all_time)}</dd>
+                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.platform_income_all_time)}</dd>
                 </div>
               </dl>
-              <p className="mt-3 text-[11px] leading-snug text-white/30">
+              <p className="mt-3 text-[11px] leading-snug text-white/45">
                 Es lo generado, que te corresponde a vos. No hay registro de pagos ya recibidos, así que no se descuenta lo que ya cobraste.
               </p>
             </div>
@@ -340,7 +329,7 @@ export function EventPanel({
             ) : asTable ? (
               <SeriesTable points={points} format={fmt} label={METRICS[metric].label} />
             ) : (
-              <AreaChart points={points} seriesName={METRICS[metric].label} format={fmt} axisFormat={axis} loading={loading} />
+              <AreaChart points={points} seriesName={METRICS[metric].label} format={fmt} axisFormat={axis} loading={loading} drawKey={metric} />
             )}
           </Card>
 
@@ -369,13 +358,13 @@ export function EventPanel({
                     title={g.hint}
                     onClick={() => setGroup(g.key)}
                     className={cx(
-                      'flex-shrink-0 rounded-xl border px-3.5 py-2 text-left transition-colors',
-                      on ? 'border-[#C6FF00]/50 bg-[#C6FF00]/[0.07]' : 'border-white/[0.08] hover:bg-white/[0.04]',
+                      'flex-shrink-0 rounded-lg border px-3.5 py-2 text-left transition-colors',
+                      on ? 'border-admin-accent/50 bg-admin-accent/[0.07]' : 'border-white/[0.08] hover:bg-white/[0.04]',
                     )}
                   >
-                    <span className={cx('block text-xs', on ? 'text-[#C6FF00]' : 'text-white/50')}>{g.label}</span>
-                    <span className="block text-lg font-semibold tabular-nums leading-tight text-white">{fmtInt(stat.count)}</span>
-                    <span className="block text-[11px] tabular-nums text-white/35">{fmtMoneyCompact(stat.amount)}</span>
+                    <span className={cx('block text-xs', on ? 'text-admin-accent' : 'text-white/50')}>{g.label}</span>
+                    <span className="block text-lg font-medium tabular-nums leading-tight text-white">{fmtInt(stat.count)}</span>
+                    <span className="block text-[11px] tabular-nums text-white/50">{fmtMoneyCompact(stat.amount)}</span>
                   </button>
                 )
               })}
@@ -383,7 +372,7 @@ export function EventPanel({
 
             <div className="border-t border-white/[0.06] px-5 py-3">
               <div className="relative max-w-sm">
-                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
                 <input
                   aria-label="Buscar en las órdenes del evento"
                   value={q}
@@ -433,7 +422,7 @@ export function EventPanel({
                         </Td>
                         <Td className="max-w-[260px]">
                           <p className="truncate">{o.customer_name ?? '—'}</p>
-                          <p className="truncate text-xs text-white/40">{o.customer_email ?? ''}</p>
+                          <p className="truncate text-xs text-white/55">{o.customer_email ?? ''}</p>
                         </Td>
                         <Td>
                           <OrderStatusPill status={o.status_raw} />
@@ -455,7 +444,7 @@ export function EventPanel({
           </Card>
 
           {/* Detalle */}
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card title="Productos más vendidos" subtitle="Unidades con pago aprobado">
               <BarList
                 emptyLabel="Sin ventas en el período"
@@ -486,7 +475,7 @@ export function EventPanel({
                   ['Staff', fmtInt(d.stats.staff_count)],
                 ].map(([k, v]) => (
                   <div key={k as string} className="flex justify-between gap-4 py-2">
-                    <dt className="text-white/45">{k}</dt>
+                    <dt className="text-white/60">{k}</dt>
                     <dd className="break-words text-right text-white/90">{v}</dd>
                   </div>
                 ))}
@@ -498,24 +487,26 @@ export function EventPanel({
       )}
 
       {confirming && d && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setConfirming(false)} aria-hidden />
-          <div role="alertdialog" aria-modal="true" className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#14141D] p-5 shadow-2xl">
-            <h3 className="text-base font-semibold text-white">Pausar ventas de “{d.event.name}”</h3>
-            <p className="mt-2 text-sm text-white/60">
-              El catálogo deja de estar disponible y no se pueden crear órdenes nuevas. Las órdenes ya pagadas y sus QR siguen funcionando. El
-              corte total puede tardar hasta 30 segundos.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <Btn onClick={() => setConfirming(false)} disabled={busy}>
-                Volver
-              </Btn>
-              <Btn variant="danger" onClick={toggleSales} disabled={busy}>
-                {busy ? 'Pausando…' : 'Pausar ventas'}
-              </Btn>
+        <AdminPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="admin-fade absolute inset-0 bg-black/70" onClick={() => setConfirming(false)} aria-hidden />
+            <div role="alertdialog" aria-modal="true" className="admin-pop relative w-full max-w-md rounded-lg border border-white/10 bg-admin-raised p-5 shadow-2xl">
+              <h3 className="text-base font-semibold text-white">Pausar ventas de “{d.event.name}”</h3>
+              <p className="mt-2 text-sm text-white/60">
+                El catálogo deja de estar disponible y no se pueden crear órdenes nuevas. Las órdenes ya pagadas y sus QR siguen funcionando. El
+                corte total puede tardar hasta 30 segundos.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <Btn onClick={() => setConfirming(false)} disabled={busy}>
+                  Volver
+                </Btn>
+                <Btn variant="danger" onClick={toggleSales} disabled={busy}>
+                  {busy ? 'Pausando…' : 'Pausar ventas'}
+                </Btn>
+              </div>
             </div>
           </div>
-        </div>
+        </AdminPortal>
       )}
     </div>
   )

@@ -90,7 +90,7 @@ export function OrdersTab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
           <input
             aria-label="Buscar órdenes"
             value={q}
@@ -104,7 +104,7 @@ export function OrdersTab({
         <Select label="Orden" value={sort} onChange={setSort} options={SORT_OPTIONS} className="w-auto" />
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-white/45">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
           Desde
           <input aria-label="Desde" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={cx(inputAutoCls, 'py-1.5')} />
           hasta
@@ -180,7 +180,7 @@ export function OrdersTab({
                     <Td className="max-w-[200px] truncate">{o.event_name ?? '—'}</Td>
                     <Td className="max-w-[220px]">
                       <p className="truncate">{o.customer_name ?? '—'}</p>
-                      <p className="truncate text-xs text-white/40">{o.customer_email ?? ''}</p>
+                      <p className="truncate text-xs text-white/55">{o.customer_email ?? ''}</p>
                     </Td>
                     <Td>
                       <OrderStatusPill status={o.status_raw} />

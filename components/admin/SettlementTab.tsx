@@ -11,9 +11,9 @@ import { formatPrice } from '@/lib/utils'
 
 function Total({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#12121A] p-5">
-      <p className="text-xs font-medium text-white/45">{label}</p>
-      <p className={cx('mt-2 font-semibold tracking-tight', strong ? 'text-3xl text-[#C6FF00]' : 'text-2xl text-white')}>{value}</p>
+    <div className="admin-panel p-5">
+      <p className="text-xs font-medium text-white/60">{label}</p>
+      <p className={cx('mt-2 font-medium tracking-tight tabular-nums', strong ? 'text-[28px] text-admin-accent' : 'text-[22px] text-white')}>{value}</p>
     </div>
   )
 }
@@ -33,10 +33,10 @@ function SettlementSectionView({
     <section className="space-y-4">
       <div>
         <h2 className="text-base font-semibold text-white">{title}</h2>
-        <p className="mt-0.5 text-xs text-white/40">{subtitle}</p>
+        <p className="mt-0.5 text-xs text-white/55">{subtitle}</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Total strong label={amountLabel} value={formatPrice(section.totals.amount)} />
         <Total label="Facturado por los organizadores" value={formatPrice(section.totals.revenue)} />
         <Total label="Órdenes pagas" value={fmtInt(section.totals.paid_orders)} />
@@ -46,7 +46,7 @@ function SettlementSectionView({
         {section.organizers.length === 0 ? (
           <EmptyState title="Sin ventas en el período" />
         ) : (
-          <Table min={760}>
+          <Table min={680}>
             <thead className="border-b border-white/[0.06]">
               <tr>
                 <Th>Organizador</Th>
@@ -61,12 +61,12 @@ function SettlementSectionView({
                 <tr key={o.organizer_email} className="hover:bg-white/[0.02]">
                   <Td>
                     <p className="font-medium text-white">{o.organizer_name}</p>
-                    <p className="text-xs text-white/40">{o.organizer_email}</p>
+                    <p className="text-xs text-white/55">{o.organizer_email}</p>
                   </Td>
                   <Td align="right">{fmtInt(o.events)}</Td>
                   <Td align="right">{fmtInt(o.paid_orders)}</Td>
                   <Td align="right">{formatPrice(o.revenue)}</Td>
-                  <Td align="right" className="!font-semibold !text-[#C6FF00]">
+                  <Td align="right" className="!font-semibold !text-admin-accent">
                     {formatPrice(o.amount)}
                   </Td>
                 </tr>
@@ -80,7 +80,7 @@ function SettlementSectionView({
         {section.events.length === 0 ? (
           <EmptyState title="Sin ventas en el período" />
         ) : (
-          <Table min={760}>
+          <Table min={680}>
             <thead className="border-b border-white/[0.06]">
               <tr>
                 <Th>Evento</Th>
@@ -139,20 +139,20 @@ export function SettlementTab() {
       {error && <ErrorNote message={error} onRetry={reload} />}
 
       {!data && loading ? (
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
       ) : data ? (
         <div className={cx('space-y-6 transition-opacity', loading && 'opacity-60')}>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-white/55">
             {fmtDayLong(data.range.from)} – {fmtDayLong(data.range.to)} · órdenes creadas en el período con pago aprobado. Los
             compradores le pagan directo a cada organizador: acá solo figura lo que te corresponde cobrar a vos. El modo de cobro
             (comisión o costo de servicio) se configura por evento y queda registrado en cada orden. No incluye órdenes de test.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Total strong label="Total a cobrar" value={formatPrice(data.totals.platform_income)} />
             <Total label={`Comisión ${(data.commission_rate * 100).toLocaleString('es-AR')}%`} value={formatPrice(data.totals.commission)} />
             <Total label="Costo de servicio" value={formatPrice(data.totals.service_fee)} />

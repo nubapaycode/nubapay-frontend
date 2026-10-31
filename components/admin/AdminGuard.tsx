@@ -57,7 +57,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (state === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0F]">
+      <div className="flex min-h-screen items-center justify-center bg-admin-canvas">
         <Spinner size="lg" className="text-white" />
       </div>
     )
@@ -65,7 +65,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (state === 'error') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0A0A0F] px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-admin-canvas px-4 text-center">
         <p className="text-white/80">No se pudo verificar tu sesión. Tu login sigue guardado.</p>
         <button
           type="button"
@@ -73,7 +73,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
             setState('loading')
             setAttempt((n) => n + 1)
           }}
-          className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
+          className="rounded-md bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
         >
           Reintentar
         </button>
@@ -83,12 +83,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (state === 'denied') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0A0A0F] px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-admin-canvas px-4 text-center">
         <p className="text-white/80">Esta cuenta no tiene acceso al panel de administración.</p>
         <button
           type="button"
           onClick={() => router.replace('/events')}
-          className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
+          className="rounded-md bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
         >
           Ir al panel de organizador
         </button>

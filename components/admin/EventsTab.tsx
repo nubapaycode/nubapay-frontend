@@ -39,7 +39,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
           <input aria-label="Buscar eventos" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre o slug del evento…" className={cx(inputCls, 'pl-9')} />
         </div>
         <Select label="Estado" value={status} onChange={setStatus} options={STATUS_OPTIONS} className="w-auto" />
@@ -84,7 +84,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
                   >
                     <Td className="max-w-[240px]">
                       <p className="truncate font-medium text-white">{e.name}</p>
-                      <p className="truncate text-xs text-white/40">
+                      <p className="truncate text-xs text-white/55">
                         {e.tenant_subdomain ?? 'sin tenant'} · /{e.slug}
                       </p>
                     </Td>
