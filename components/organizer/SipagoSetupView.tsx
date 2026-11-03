@@ -258,7 +258,7 @@ export function SipagoSetupView({ eventId }: { eventId: string }) {
     showToast('Cuenta desconectada.', 'success')
   }
 
-  const backHref = `/events/${eventId}/metodos-pago`
+  const backHref = `/eventos/${eventId}/metodos-pago`
 
   if (loading) {
     return (

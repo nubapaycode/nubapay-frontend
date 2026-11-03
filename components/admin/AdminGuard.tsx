@@ -25,7 +25,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = getAuthToken()
     if (!token) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`)
+      router.replace(`/ingresar?next=${encodeURIComponent(pathname)}`)
       return
     }
 
@@ -34,7 +34,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         const res = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
         if (isSessionRejected(res)) {
           clearAuthSession()
-          router.replace(`/login?next=${encodeURIComponent(pathname)}&expired=1`)
+          router.replace(`/ingresar?next=${encodeURIComponent(pathname)}&expired=1`)
           return
         }
         if (!res.ok) {
@@ -87,7 +87,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         <p className="text-white/80">Esta cuenta no tiene acceso al panel de administración.</p>
         <button
           type="button"
-          onClick={() => router.replace('/events')}
+          onClick={() => router.replace('/eventos')}
           className="rounded-md bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/15"
         >
           Ir al panel de organizador

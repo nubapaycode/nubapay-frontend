@@ -83,11 +83,11 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         const body = (await res.json()) as { events?: { id: string }[] }
         const firstId = body.events?.[0]?.id
         if (!cancelled && firstId) {
-          router.replace(`/events/${firstId}/all`)
+          router.replace(`/eventos/${firstId}/mis-eventos`)
           return
         }
       } catch {}
-      if (!cancelled) router.replace('/events')
+      if (!cancelled) router.replace('/eventos')
     })()
     return () => {
       cancelled = true
@@ -112,11 +112,11 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
       const body = (await res.json()) as { events?: { id: string }[] }
       const firstId = body.events?.[0]?.id
       if (firstId) {
-        router.push(`/events/${firstId}/all`)
+        router.push(`/eventos/${firstId}/mis-eventos`)
         return
       }
     } catch {}
-    router.push('/events')
+    router.push('/eventos')
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -175,7 +175,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
 
   const switchMode = (target: Mode) => {
     setError('')
-    router.push(target === 'login' ? '/login' : '/register')
+    router.push(target === 'login' ? '/ingresar' : '/registro')
   }
 
   const isLogin = mode === 'login'
@@ -241,7 +241,7 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
         />
 
         {isLogin && (
-          <Link href="/forgot-password" className="nba-hint">
+          <Link href="/recuperar-clave" className="nba-hint">
             ¿Olvidaste tu contraseña?
           </Link>
         )}

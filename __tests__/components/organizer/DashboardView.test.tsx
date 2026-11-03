@@ -37,7 +37,7 @@ async function renderLoaded() {
 beforeEach(() => {
   ;(fetchEventDashboard as jest.Mock).mockReset()
   ;(fetchEventDashboard as jest.Mock).mockResolvedValue({ ok: true, data: dashboardPayload })
-  window.history.replaceState(null, '', '/events/demo-event/dashboard')
+  window.history.replaceState(null, '', '/eventos/demo-event/resumen')
   window.localStorage.clear()
 })
 
@@ -143,7 +143,7 @@ describe('DashboardView', () => {
     })
 
     it('lee el período desde la URL al cargar', async () => {
-      window.history.replaceState(null, '', '/events/demo-event/dashboard?periodo=custom&desde=2026-08-01&hasta=2026-08-15')
+      window.history.replaceState(null, '', '/eventos/demo-event/resumen?periodo=custom&desde=2026-08-01&hasta=2026-08-15')
       await renderLoaded()
       expect(lastCall()[1]).toEqual({ from: '2026-08-01', to: '2026-08-15' })
     })

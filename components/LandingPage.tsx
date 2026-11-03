@@ -667,7 +667,7 @@ export function LandingPage() {
               </p>
 
               <div className="nb-cta nb-hero-cta" style={{ display: 'flex', gap: '14px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link href="/register" className="nb-hero-cta-btn nb-hero-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '60px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 20px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '18px', fontWeight: 400, letterSpacing: '-0.02em' }}>
+                <Link href="/registro" className="nb-hero-cta-btn nb-hero-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '60px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 20px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '18px', fontWeight: 400, letterSpacing: '-0.02em' }}>
                   Crear evento
                   <span className="nb-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '100px', background: '#0A0F00', marginLeft: '6px' }}>
                     <ArrowRight color="#C6FF00" size={18} strokeWidth={1} />
@@ -1051,7 +1051,7 @@ export function LandingPage() {
 
           <div className="nb-reveal" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px', marginTop: '64px', textAlign: 'center' }}>
             <p style={{ fontSize: '16px', color: S.muted, margin: 0, maxWidth: '420px' }}>¿No ves tu tipo de evento? Lo adaptamos a lo que necesites.</p>
-            <a href="/register" className="nb-bc-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 22px', height: '52px', boxSizing: 'border-box', borderRadius: '100px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, letterSpacing: '-0.01em' }}>
+            <a href="/registro" className="nb-bc-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 22px', height: '52px', boxSizing: 'border-box', borderRadius: '100px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, letterSpacing: '-0.01em' }}>
               Empezá gratis
               <span className="nb-bc-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', borderRadius: '100px', background: '#0A0F00' }}>
                 <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="#C6FF00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1142,13 +1142,13 @@ export function LandingPage() {
               Registrate gratis, creá tu evento en minutos y empezá a vender. Sin costos fijos. Solo pagás cuando vendés.
             </p>
             <div className="nb-cta-buttons" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <Link href="/register" className="nb-cta-btn nb-hero-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '58px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 400, letterSpacing: '-0.02em' }}>
+              <Link href="/registro" className="nb-cta-btn nb-hero-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '58px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 400, letterSpacing: '-0.02em' }}>
                 Crear mi evento gratis
                 <span className="nb-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '100px', background: '#0A0F00' }}>
                   <ArrowRight color="#C6FF00" size={18} strokeWidth={1} />
                 </span>
               </Link>
-              <Link href="/login" className="nb-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', height: '58px', boxSizing: 'border-box', color: '#FFFFFF', padding: '0 30px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', fontSize: '15px', fontWeight: 400 }}>
+              <Link href="/ingresar" className="nb-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', height: '58px', boxSizing: 'border-box', color: '#FFFFFF', padding: '0 30px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', fontSize: '15px', fontWeight: 400 }}>
                 Ya tengo cuenta
               </Link>
             </div>

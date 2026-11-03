@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 const owner: WorkspaceAccess = {
-  basePath: '/events/e1',
+  basePath: '/eventos/e1',
   membership: 'owner',
   tools: ORGANIZER_FULL_TOOLS,
   partnerBrand: false,
@@ -47,9 +47,9 @@ function renderCobros(access: WorkspaceAccess) {
 describe('CobrosView', () => {
   it('el dueño ve Pagos, Métodos de pago y Comisión cuando el evento cobra el 1%', async () => {
     renderCobros(owner)
-    expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/events/e1/payments')
-    expect(screen.getByRole('link', { name: /Métodos de pago/ })).toHaveAttribute('href', '/events/e1/metodos-pago')
-    expect(await screen.findByRole('link', { name: /Comisión/ })).toHaveAttribute('href', '/events/e1/comision')
+    expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/eventos/e1/pagos')
+    expect(screen.getByRole('link', { name: /Métodos de pago/ })).toHaveAttribute('href', '/eventos/e1/metodos-pago')
+    expect(await screen.findByRole('link', { name: /Comisión/ })).toHaveAttribute('href', '/eventos/e1/comision')
     expect(screen.queryByRole('link', { name: /Costo de servicio/ })).not.toBeInTheDocument()
   })
 
@@ -71,7 +71,7 @@ describe('CobrosView', () => {
     })
     renderCobros(owner)
     const card = await screen.findByRole('link', { name: /Costo de servicio/ })
-    expect(card).toHaveAttribute('href', '/events/e1/comision')
+    expect(card).toHaveAttribute('href', '/eventos/e1/comision')
     expect(card).toHaveTextContent('50')
     expect(screen.queryByRole('link', { name: /Comisión/ })).not.toBeInTheDocument()
   })
@@ -79,7 +79,7 @@ describe('CobrosView', () => {
   it('un staff con permiso de pagos solo ve Pagos', () => {
     renderCobros({ ...owner, membership: 'staff', tools: { ...ORGANIZER_ZERO_TOOLS, payments: true } })
     expect(screen.getAllByRole('link')).toHaveLength(1)
-    expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/events/e1/payments')
+    expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/eventos/e1/pagos')
   })
 
   it('la tarjeta de Pagos muestra lo cobrado y los pendientes', async () => {

@@ -171,7 +171,7 @@ export function RegisterRequestForm() {
 
       <div className="nba-foot">
         ¿Ya tenés cuenta?{' '}
-        <Link href="/login" className="nba-foot-link">
+        <Link href="/ingresar" className="nba-foot-link">
           Iniciá sesión
         </Link>
       </div>

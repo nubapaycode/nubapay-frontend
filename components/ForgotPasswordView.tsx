@@ -126,7 +126,7 @@ export function ForgotPasswordView() {
 
       <div className="nba-foot">
         ¿Te acordaste?{' '}
-        <Link href="/login" className="nba-foot-link">
+        <Link href="/ingresar" className="nba-foot-link">
           Iniciá sesión
         </Link>
       </div>

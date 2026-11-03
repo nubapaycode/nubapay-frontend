@@ -1,0 +1,31 @@
+import type { Metadata } from 'next'
+
+import { CommissionView } from '@/components/organizer/CommissionView'
+import { OrganizerBackLink } from '@/components/organizer/OrganizerBackLink'
+import { organizerEventSectionMeta } from '@/lib/seo'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ eventId: string }>
+}): Promise<Metadata> {
+  await params
+  return organizerEventSectionMeta(
+    'Comisión',
+    'Monto a pagar a Nubapay: costo de servicio o comisión del 1%, según cómo cobre el evento.',
+  )
+}
+
+export default async function EventComisionPage({
+  params,
+}: {
+  params: Promise<{ eventId: string }>
+}) {
+  const { eventId } = await params
+  return (
+    <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
+      <OrganizerBackLink href={`/eventos/${eventId}/cobros`} label="Volver a Cobros" className="mb-8" />
+      <CommissionView eventId={eventId} />
+    </main>
+  )
+}

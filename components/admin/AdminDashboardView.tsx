@@ -67,7 +67,7 @@ const isTab = (v: string): v is TabKey => TABS.some((t) => t.key === v)
 const HEALTH_BADGE_MS = 60_000
 
 /** Medidas del menú lateral: de acá sale la posición del indicador que se desliza. */
-const NAV_ITEM_PX = 36
+const NAV_ITEM_PX = 34
 const NAV_GAP_PX = 2
 const NAV_LABEL_PX = 28
 const NAV_GROUP_GAP_PX = 14
@@ -164,10 +164,20 @@ function Dashboard() {
         e.preventDefault()
         setSearchOpen((o) => !o)
       }
+      // 1–7 cambian de sección (como las teclas que muestra el menú), salvo escribiendo o con un diálogo abierto.
+      else if (!e.metaKey && !e.ctrlKey && !e.altKey && /^[1-9]$/.test(e.key)) {
+        const el = e.target as HTMLElement | null
+        const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
+        const next = TABS[Number(e.key) - 1]
+        if (!typing && next && !document.querySelector('[aria-modal="true"]')) {
+          setEventId(null)
+          setTab(next.key)
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [setTab])
 
   // Con "Más" abierto: Esc cierra, el fondo no scrollea y el foco vuelve al botón al salir.
   useEffect(() => {
@@ -255,22 +265,36 @@ function Dashboard() {
           navOpen ? 'translate-y-0 opacity-100 transition-[transform,opacity]' : 'invisible translate-y-2 opacity-0 transition-[transform,opacity,visibility]',
         )}
       >
-        <div className="flex h-14 flex-shrink-0 items-center justify-between border-b border-white/[0.07] px-4">
+        <div className="flex h-14 flex-shrink-0 items-center justify-between gap-2 px-4">
           <p className="text-sm font-semibold lg:hidden">Todas las herramientas</p>
-          <p className="hidden text-[15px] font-semibold tracking-tight text-admin-brand lg:block">
-            Nubapay <span className="ml-1 font-admin-mono text-[10.5px] font-normal uppercase tracking-[0.08em] text-white/45">admin</span>
+          <p className="hidden items-center gap-2 text-[15px] font-semibold tracking-tight text-admin-brand lg:flex">
+            <span aria-hidden className="flex size-6 items-center justify-center rounded-md bg-admin-brand text-[12px] font-bold text-black">
+              N
+            </span>
+            Nubapay
+            <span className="rounded border border-white/10 px-1.5 py-px font-admin-mono text-[10px] font-normal uppercase tracking-[0.08em] text-white/50">
+              admin
+            </span>
           </p>
         </div>
 
-        <nav className="relative flex-shrink-0 px-3 py-2 lg:min-h-0 lg:flex-1 lg:flex-shrink lg:overflow-y-auto lg:py-3" aria-label="Secciones">
+        {/* Lo crítico arriba y siempre a la vista: estado del sistema e interruptor de pagos. */}
+        <div className="flex-shrink-0 px-3 pb-1">
+          <div className="overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.02]">
+            <SystemStatus alerts={alerts} onOpen={() => go('health')} />
+            <div className="border-t border-white/[0.06] [&>div]:rounded-none [&>div]:border-0 [&>div]:bg-transparent [&>div]:px-3">
+              <PaymentsStrip onChanged={onDataChanged} onState={setPayments} />
+            </div>
+          </div>
+        </div>
+
+        <nav className="relative flex-shrink-0 px-3 py-2 lg:min-h-0 lg:flex-1 lg:flex-shrink lg:overflow-y-auto" aria-label="Secciones">
           <div className="relative">
             <span
               aria-hidden
-              className="absolute inset-x-0 top-0 hidden rounded-md bg-white/[0.07] transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] lg:block"
+              className="absolute inset-x-0 top-0 hidden rounded-md bg-white/[0.06] ring-1 ring-inset ring-white/[0.08] transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none lg:block"
               style={{ height: NAV_ITEM_PX, transform: `translateY(${navOffset(tab)}px)` }}
-            >
-              <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-admin-primary" />
-            </span>
+            />
             {NAV_GROUPS.map((group) => (
               <div key={group.label} style={{ marginBottom: NAV_GROUP_GAP_PX }}>
                 <p
@@ -280,52 +304,73 @@ function Dashboard() {
                   {group.label}
                 </p>
                 <ul className="grid grid-cols-2 gap-1.5 lg:flex lg:flex-col lg:gap-0.5">
-                  {group.items.map((t) => (
-                    <li key={t.key}>
-                      <button
-                        type="button"
-                        onClick={() => go(t.key)}
-                        aria-current={tab === t.key ? 'page' : undefined}
-                        className={cx(
-                          'relative flex h-[72px] w-full flex-col items-start justify-center gap-2 rounded-lg border border-white/[0.07] bg-admin-surface px-3 text-sm font-medium transition-colors duration-150',
-                          'lg:h-9 lg:flex-row lg:items-center lg:justify-start lg:gap-2.5 lg:rounded-md lg:border-0 lg:bg-transparent lg:px-2.5 lg:text-[13px]',
-                          'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-admin-accent',
-                          tab === t.key ? 'border-admin-primary/50 text-white lg:bg-transparent' : 'text-white/70 hover:bg-white/[0.04] hover:text-white/90 lg:text-white/60',
-                        )}
-                      >
-                        <t.icon size={15} aria-hidden className={tab === t.key ? 'text-admin-accent' : 'text-white/45'} />
-                        <span className="text-left lg:flex-1">{t.label}</span>
-                        {t.key === 'health' && !!alerts?.total && (
-                          <span
+                  {group.items.map((t) => {
+                    const on = tab === t.key
+                    const n = TABS.findIndex((x) => x.key === t.key) + 1
+                    return (
+                      <li key={t.key}>
+                        <button
+                          type="button"
+                          onClick={() => go(t.key)}
+                          aria-current={on ? 'page' : undefined}
+                          aria-keyshortcuts={String(n)}
+                          className={cx(
+                            'group relative flex h-[72px] w-full flex-col items-start justify-center gap-2 rounded-lg border border-white/[0.07] bg-admin-surface px-3 text-sm font-medium transition-colors duration-150',
+                            'lg:h-[34px] lg:flex-row lg:items-center lg:justify-start lg:gap-2.5 lg:rounded-md lg:border-0 lg:bg-transparent lg:px-2.5 lg:text-[13px]',
+                            'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-admin-accent',
+                            on ? 'border-admin-primary/50 text-white' : 'text-white/70 hover:bg-white/[0.04] hover:text-white/90 lg:text-white/60',
+                          )}
+                        >
+                          <t.icon size={15} aria-hidden className={on ? 'text-admin-accent' : 'text-white/40 group-hover:text-white/60'} />
+                          <span className="text-left lg:flex-1">{t.label}</span>
+                          {t.key === 'health' && !!alerts?.total && (
+                            <span
+                              className={cx(
+                                'absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 font-admin-mono text-[10px] font-medium leading-none lg:static',
+                                alerts.critical ? 'bg-red-500 text-white' : 'bg-amber-400 text-black',
+                              )}
+                              aria-label={`${alerts.total} alertas`}
+                            >
+                              {alerts.total}
+                            </span>
+                          )}
+                          <kbd
+                            aria-hidden
                             className={cx(
-                              'absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 font-admin-mono text-[10px] font-medium leading-none lg:static',
-                              alerts.critical ? 'bg-red-500 text-white' : 'bg-amber-400 text-black',
+                              'hidden h-[18px] min-w-[18px] items-center justify-center rounded border px-1 font-admin-mono text-[10px] leading-none transition-colors lg:flex',
+                              on ? 'border-white/15 text-white/60' : 'border-white/[0.07] text-white/30 group-hover:text-white/50',
                             )}
-                            aria-label={`${alerts.total} alertas`}
                           >
-                            {alerts.total}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
+                            {n}
+                          </kbd>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             ))}
           </div>
         </nav>
 
-        <div className="mt-auto flex-shrink-0 space-y-2 border-t border-white/[0.07] p-3">
-          <SystemStatus alerts={alerts} onOpen={() => go('health')} />
-          <PaymentsStrip onChanged={onDataChanged} onState={setPayments} />
+        <div className="mt-auto flex-shrink-0 border-t border-white/[0.07] p-3">
           {/* En celular Salir va a la izquierda: a la derecha quedaría bajo el dedo que tocó "Más". */}
-          <div className="flex flex-row-reverse items-center justify-between gap-2 px-1 pt-1 lg:flex-row">
-            <span className="min-w-0 truncate text-xs text-white/50">{user?.email}</span>
+          <div className="flex flex-row-reverse items-center justify-between gap-2.5 lg:flex-row">
+            <span
+              aria-hidden
+              className="hidden size-7 flex-shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-[11px] font-semibold uppercase text-white/80 lg:flex"
+            >
+              {user?.email?.charAt(0) ?? '·'}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs text-white/75" title={user?.email}>{user?.email}</span>
+              <span className="block font-admin-mono text-[10px] uppercase tracking-[0.08em] text-white/35">Administrador</span>
+            </span>
             <button
               type="button"
               onClick={() => {
                 clearAuthSession()
-                router.replace('/login')
+                router.replace('/ingresar')
               }}
               aria-label="Salir"
               title="Salir"
