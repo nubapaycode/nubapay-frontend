@@ -214,7 +214,8 @@
 .lv2-menu-roll > span { display: block; white-space: nowrap; }
 .lv2-menu-roll > span + span, .lv2-menu-link.is-here .lv2-menu-roll > span:first-child { color: var(--lv-lime); }
 .lv2-menu-ctas { display: grid; gap: 10px; margin-top: auto; }
-.lv2-menu-ctas .lv2-btn { justify-content: space-between; width: 100%; }
+.lv2-menu-ctas .lv2-btn { justify-content: center; width: 100%; }
+.lv2-menu-ctas .lv2-btn-arrow { margin-left: auto; }
 .lv2-menu-ctas .lv2-btn--ghost { justify-content: center; }
 .lv2-menu-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; }
 .lv2-root .lv2-menu-meta a { color: rgba(255, 255, 255, 0.5); text-decoration: none; }
@@ -622,7 +623,8 @@
 /* Los dos botones ocupan juntos el ancho de las tarjetas, en dos columnas iguales */
 .lv2-tix-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 6px; }
 .lv2-tix-cta .lv2-btn { justify-content: center; }
-.lv2-tix-cta .lv2-btn:not(.lv2-btn--ghost) { justify-content: space-between; }
+/* Ancho fijo: la flecha va a la derecha con margen automático; en hover ese margen se anima y el texto queda centrado */
+.lv2-tix-cta .lv2-btn-arrow { margin-left: auto; }
 
 /* ── Entradas / pases ── */
 .lv2-passes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 14px 0 20px; }
