@@ -59,7 +59,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
         description={
           serviceFeeEnabled
             ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
-            : '1% sobre cada transacción aprobada de tu evento.'
+            : 'Lo que le corresponde a Nubapay por las ventas aprobadas de tu evento.'
         }
         prefix={
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900" aria-hidden>

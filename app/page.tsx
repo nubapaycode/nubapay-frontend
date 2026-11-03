@@ -44,7 +44,7 @@ const FAQ_JSONLD = JSON.stringify({
 export default async function LandingRootPage() {
   const theme = await fetchTenantThemeForRequest()
   if (theme.dedicated_partner_host) {
-    redirect('/login')
+    redirect('/ingresar')
   }
   const faqLdHtml = { __html: FAQ_JSONLD }
   return (

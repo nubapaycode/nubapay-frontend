@@ -36,6 +36,7 @@ const BAR_Y = 44
 const PAGES = [
   { href: '/nosotros', label: 'Nosotros' },
   { href: '/seguridad', label: 'Seguridad' },
+  { href: '/ayuda', label: 'Centro de ayuda' },
 ]
 
 const CONTACT_EMAIL = 'contacto@nubapay.app'
@@ -347,7 +348,7 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
         </Link>
         {center && <div className="lv2-nav-center">{center}</div>}
         <div className="lv2-nav-actions">
-          <Link href="/login" className="lv2-nav-chip lv2-nav-login" onMouseEnter={fadeIn} onMouseLeave={fadeOut}>
+          <Link href="/ingresar" className="lv2-nav-chip lv2-nav-login" onMouseEnter={fadeIn} onMouseLeave={fadeOut}>
             <span>Iniciar sesión</span>
           </Link>
           <A
@@ -454,7 +455,7 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
                 Agendá una demo
                 <span className="lv2-btn-arrow"><ArrowRight size={18} strokeWidth={1.6} /></span>
               </A>
-              <Link href="/login" tabIndex={tab} className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Iniciar sesión</Link>
+              <Link href="/ingresar" tabIndex={tab} className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Iniciar sesión</Link>
             </div>
             <div className="lv2-menu-meta">
               <a href={`mailto:${CONTACT_EMAIL}`} tabIndex={tab} onMouseEnter={metaIn} onMouseLeave={metaOut}>{CONTACT_EMAIL}</a>

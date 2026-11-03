@@ -6,6 +6,7 @@
  */
 import {
   MOCK_EVENT_ID,
+  mockBlocks,
   mockCategories,
   mockDashboard,
   mockEvent,
@@ -14,10 +15,11 @@ import {
   mockPickupPoints,
   mockProducts,
   mockStorefront,
+  mockTickets,
   mockUser,
 } from './data'
 
-type MockHandler = (segments: string[], method: string, body?: unknown) => unknown
+type MockHandler = (segments: string[], method: string, body?: unknown, query?: URLSearchParams) => unknown
 
 type MockRoute = {
   method: string | '*'
@@ -162,11 +164,29 @@ const routes: MockRoute[] = [
   // ── Products ──────────────────────────────────────────────────────────────
   {
     method: 'GET',
-    match: (s) => s[0] === 'events' && s[2] === 'products' && !s[3],
+    match: (s) => s[0] === 'events' && s[2] === 'products' && s[3] === 'scan-summary',
     handler: () => ({
-      products: mockProducts,
-      pagination: { page: 1, page_size: 100, total: mockProducts.length },
+      products: [
+        { name: 'Cerveza Rubia 500ml', purchased: 412, scanned: 371 },
+        { name: 'Fernet con Coca', purchased: 268, scanned: 240 },
+        { name: 'Hamburguesa Clásica', purchased: 191, scanned: 158 },
+        { name: 'Combo Clásico', purchased: 122, scanned: 97 },
+        { name: 'Agua Mineral 500ml', purchased: 118, scanned: 118 },
+        { name: 'Papas Fritas', purchased: 84, scanned: 52 },
+      ],
     }),
+  },
+  {
+    method: 'GET',
+    match: (s) => s[0] === 'events' && s[2] === 'products' && !s[3],
+    handler: (_s, _m, _b, query) => {
+      const type = query?.get('type')
+      const categoryId = query?.get('category_id')
+      const products = mockProducts.filter(
+        (p) => (!type || p.type === type) && (!categoryId || p.category_id === categoryId),
+      )
+      return { products, pagination: { page: 1, page_size: 100, total: products.length } }
+    },
   },
   {
     method: 'POST',
@@ -216,14 +236,55 @@ const routes: MockRoute[] = [
     handler: () => ({ promotions: [] }),
   },
 
+  // ── Scanner ───────────────────────────────────────────────────────────────
+  {
+    method: 'POST',
+    match: (s) => s[0] === 'events' && s[2] === 'scan-qr' && s[3] === 'preview',
+    handler: (_s, _m, body) => {
+      const id = (body as { order_id?: string })?.order_id
+      return { order: mockOrders.find((o) => o.id === id) ?? mockOrders[0] }
+    },
+  },
+  {
+    method: 'POST',
+    match: (s) => s[0] === 'events' && s[2] === 'scan-qr' && !s[3],
+    handler: (_s, _m, body) => {
+      const b = body as { order_id?: string; item_quantities?: Record<string, number> }
+      const order = mockOrders.find((o) => o.id === b?.order_id) ?? mockOrders[0]
+      const qty = b?.item_quantities ?? {}
+      const items = order.items.map((i) => {
+        const add = qty[i.id] ?? 0
+        const redeemedQuantity = Math.min(i.quantity, (i.redeemedQuantity ?? 0) + add)
+        return { ...i, redeemedQuantity, redeemedAt: add > 0 ? new Date().toISOString() : i.redeemedAt }
+      })
+      const done = items.every((i) => i.redeemedQuantity >= i.quantity)
+      return { order: { ...order, items, status: done ? 'delivered' : 'partially_delivered' } }
+    },
+  },
+
+  // ── Catalog blocks ────────────────────────────────────────────────────────
+  {
+    method: 'GET',
+    match: (s) => s[0] === 'events' && s[2] === 'blocks' && !s[3],
+    handler: () => ({ blocks: mockBlocks }),
+  },
+
+  // ── Tickets ───────────────────────────────────────────────────────────────
+  {
+    method: 'GET',
+    match: (s) => s[0] === 'events' && s[2] === 'tickets' && !s[3],
+    handler: () => ({ tickets: mockTickets }),
+  },
+
   // ── Payments ──────────────────────────────────────────────────────────────
   {
     method: 'GET',
     match: (s) => s[0] === 'events' && s[2] === 'payments',
-    handler: () => ({
-      payments: mockPayments,
-      pagination: { page: 1, page_size: 20, total: mockPayments.length },
-    }),
+    handler: (_s, _m, _b, query) => {
+      const status = query?.get('status')
+      const payments = status ? mockPayments.filter((p) => p.status === status) : mockPayments
+      return { payments, pagination: { page: 1, page_size: 20, total: payments.length } }
+    },
   },
 
   // ── Pickup points ─────────────────────────────────────────────────────────
@@ -355,6 +416,7 @@ export function resolveMock(
   segments: string[],
   method: string,
   body?: unknown,
+  query?: URLSearchParams,
 ): { status: number; json: unknown } | null {
   const route = routes.find(
     (r) => (r.method === '*' || r.method === method) && r.match(segments, method),
@@ -364,7 +426,7 @@ export function resolveMock(
     return { status: 404, json: { error: `Mock: ruta no encontrada: ${method} /${segments.join('/')}` } }
   }
   try {
-    const data = route.handler(segments, method, body)
+    const data = route.handler(segments, method, body, query)
     return { status: 200, json: data }
   } catch (err) {
     console.error('[MOCK] Error en handler:', err)

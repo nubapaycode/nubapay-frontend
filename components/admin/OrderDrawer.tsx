@@ -28,7 +28,7 @@ import { formatPrice } from '@/lib/utils'
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-white/35">{title}</h3>
+      <h3 className="mb-2 text-xs font-medium text-white/50">{title}</h3>
       {children}
     </section>
   )
@@ -37,7 +37,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 function Row({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-1.5 text-sm">
-      <dt className="flex-shrink-0 text-white/45">{k}</dt>
+      <dt className="flex-shrink-0 text-white/60">{k}</dt>
       <dd className="min-w-0 break-words text-right text-white/90">{v || '—'}</dd>
     </div>
   )
@@ -138,7 +138,7 @@ export function OrderDrawer({
             </div>
 
             <Block title="Comprador y evento">
-              <dl className="divide-y divide-white/[0.05] rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-1">
+              <dl className="divide-y divide-white/[0.05] rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-1">
                 <Row k="Nombre" v={order.customer_name} />
                 <Row k="Email" v={order.customer_email} />
                 <Row k="Teléfono" v={order.customer_phone} />
@@ -152,14 +152,14 @@ export function OrderDrawer({
             </Block>
 
             <Block title={`Productos (${order.items.length})`}>
-              <ul className="divide-y divide-white/[0.05] rounded-xl border border-white/[0.07] bg-white/[0.02]">
+              <ul className="divide-y divide-white/[0.05] rounded-lg border border-white/[0.07] bg-white/[0.02]">
                 {order.items.map((it, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                     <div className="min-w-0">
                       <p className="truncate text-white/90">
                         {it.quantity} × {it.name}
                       </p>
-                      <p className="text-xs text-white/40">
+                      <p className="text-xs text-white/55">
                         Retirados {it.redeemed_quantity}/{it.quantity} · {formatPrice(it.unit_price, order.currency)} c/u
                       </p>
                     </div>
@@ -171,21 +171,21 @@ export function OrderDrawer({
 
             <Block title="Pagos">
               {order.payments.length === 0 ? (
-                <p className="text-sm text-white/40">Sin pagos registrados.</p>
+                <p className="text-sm text-white/55">Sin pagos registrados.</p>
               ) : (
                 <ul className="space-y-2">
                   {order.payments.map((p, i) => (
-                    <li key={i} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-2.5">
+                    <li key={i} className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium text-white/90">{providerLabel(p.provider)}</span>
                         <PaymentStatusPill status={p.status} />
                       </div>
-                      <p className="mt-1 text-xs text-white/45">
+                      <p className="mt-1 text-xs text-white/60">
                         {formatPrice(p.amount, order.currency)}
                         {p.paid_at ? ` · pagado ${fmtDateTime(p.paid_at)}` : ` · creado ${fmtDateTime(p.created_at)}`}
                       </p>
                       {p.provider_payment_id && (
-                        <p className="mt-0.5 font-mono text-[11px] text-white/35 break-all">ID {p.provider_payment_id}</p>
+                        <p className="mt-0.5 font-mono text-[11px] text-white/50 break-all">ID {p.provider_payment_id}</p>
                       )}
                     </li>
                   ))}
@@ -197,19 +197,19 @@ export function OrderDrawer({
               <ol className="relative space-y-3 border-l border-white/10 pl-4">
                 {order.history.map((h, i) => (
                   <li key={i} className="relative">
-                    <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-white/30 ring-4 ring-[#0E0E15]" />
+                    <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-white/30 ring-4 ring-admin-surface" />
                     <p className="text-sm text-white/85">
                       {h.from_status && h.from_status !== h.to_status ? `${h.from_status} → ` : ''}
                       <b>{h.to_status}</b>
                     </p>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/55">
                       {fmtDateTime(h.created_at)}
                       {h.by ? ` · ${h.by}` : ''}
                     </p>
                     {h.note && <p className="mt-0.5 break-words text-xs text-white/55">{h.note}</p>}
                   </li>
                 ))}
-                {order.history.length === 0 && <li className="text-sm text-white/40">Sin historial.</li>}
+                {order.history.length === 0 && <li className="text-sm text-white/55">Sin historial.</li>}
               </ol>
             </Block>
 
@@ -220,9 +220,9 @@ export function OrderDrawer({
                     <li key={i} className="flex justify-between gap-3 text-sm">
                       <span className="text-white/75">
                         {l.result}
-                        {l.message ? <span className="text-white/40"> · {l.message}</span> : null}
+                        {l.message ? <span className="text-white/55"> · {l.message}</span> : null}
                       </span>
-                      <span className="flex-shrink-0 text-xs text-white/40">{fmtDateTime(l.created_at)}</span>
+                      <span className="flex-shrink-0 text-xs text-white/55">{fmtDateTime(l.created_at)}</span>
                     </li>
                   ))}
                 </ul>

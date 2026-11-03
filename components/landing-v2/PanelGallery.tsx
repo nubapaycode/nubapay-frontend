@@ -8,12 +8,12 @@ import { lockScroll } from './hooks'
 
 /** Capturas reales del panel del organizador (modo mock, 2880×1800). */
 const SHOTS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: 'dashboard', title: 'Métricas en vivo', text: 'Recaudación, pedidos por estado, métodos de pago y ventas por hora, actualizados mientras pasa el evento.' },
-  { id: 'pedidos', label: 'Pedidos', icon: ReceiptText, path: 'orders', title: 'Todos los pedidos', text: 'Cada pedido con sus productos, total y estado de pago y entrega. La lista se actualiza sola.' },
-  { id: 'catalogo', label: 'Catálogo', icon: ListChecks, path: 'products', title: 'Catálogo y stock', text: 'Productos con foto, precio y categoría. Activá o pausá cada uno con un toque y armá combos.' },
-  { id: 'puntos-retiro', label: 'Puntos de retiro', icon: MapPin, path: 'pickup-points', title: 'Puntos de retiro', text: 'Cada barra o sector con los productos que entrega. Activalos o pausalos según el momento del evento.' },
-  { id: 'pagos', label: 'Pagos', icon: CreditCard, path: 'payments', title: 'Pagos y conciliación', text: 'Cada cobro con su proveedor, canal, estado y monto. Filtrá por estado, canal o fecha.' },
-  { id: 'equipo', label: 'Equipo', icon: Users, path: 'staff', title: 'Equipo y permisos', text: 'Invitá a tu staff por email y elegí qué herramientas usa cada uno: barras, caja, catálogo o retiro con QR.' },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: 'resumen', title: 'Métricas en vivo', text: 'Recaudación, pedidos por estado, métodos de pago y ventas por hora, actualizados mientras pasa el evento.' },
+  { id: 'pedidos', label: 'Pedidos', icon: ReceiptText, path: 'pedidos', title: 'Todos los pedidos', text: 'Cada pedido con sus productos, total y estado de pago y entrega. La lista se actualiza sola.' },
+  { id: 'catalogo', label: 'Catálogo', icon: ListChecks, path: 'productos', title: 'Catálogo y stock', text: 'Productos con foto, precio y categoría. Activá o pausá cada uno con un toque y armá combos.' },
+  { id: 'puntos-retiro', label: 'Puntos de retiro', icon: MapPin, path: 'puntos-de-retiro', title: 'Puntos de retiro', text: 'Cada barra o sector con los productos que entrega. Activalos o pausalos según el momento del evento.' },
+  { id: 'pagos', label: 'Pagos', icon: CreditCard, path: 'pagos', title: 'Pagos y conciliación', text: 'Cada cobro con su proveedor, canal, estado y monto. Filtrá por estado, canal o fecha.' },
+  { id: 'equipo', label: 'Equipo', icon: Users, path: 'equipo', title: 'Equipo y permisos', text: 'Invitá a tu staff por email y elegí qué herramientas usa cada uno: barras, caja, catálogo o retiro con QR.' },
 ] as const
 
 const AUTOPLAY_SECONDS = 6
@@ -140,7 +140,7 @@ export default function PanelGallery() {
           <div className="lv2-gal-window">
             <div className="lv2-gal-bar" aria-hidden="true">
               <span className="lv2-gal-dots"><i /><i /><i /></span>
-              <span className="lv2-gal-url">nubapay.app/events/demo-fest/<b>{shot.path}</b></span>
+              <span className="lv2-gal-url">nubapay.app/eventos/demo-fest/<b>{shot.path}</b></span>
               <span />
             </div>
             <button type="button" className="lv2-gal-stage" onClick={() => setLightbox(active)} aria-label={`Ver en grande: ${shot.label}`}>

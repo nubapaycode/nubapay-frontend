@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { fmtDay, fmtDayLong } from './format'
 import { FUNNEL_STEPS, INK, SERIES, SURFACE } from './theme'
@@ -54,6 +54,7 @@ export function AreaChart({
   color = SERIES.blue,
   height = 260,
   loading,
+  drawKey,
 }: {
   points: SeriesPoint[]
   seriesName: string
@@ -63,12 +64,14 @@ export function AreaChart({
   height?: number
   /** Mientras recarga conserva el último render con opacidad reducida (sin saltos). */
   loading?: boolean
+  /** Al cambiar (otra métrica o período) la línea se vuelve a dibujar. */
+  drawKey?: string
 }) {
   const [ref, width] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<number | null>(null)
   const gid = useId().replace(/:/g, '')
 
-  const m = { top: 14, right: 18, bottom: 28, left: 50 }
+  const m = { top: 14, right: 18, bottom: 28, left: 64 }
   const innerW = Math.max(40, width - m.left - m.right)
   const innerH = height - m.top - m.bottom
   const n = points.length
@@ -119,19 +122,19 @@ export function AreaChart({
           else if (e.key === 'ArrowRight') setHover((h) => Math.min(n - 1, (h ?? -1) + 1))
           else if (e.key === 'Escape') setHover(null)
         }}
-        className="block touch-pan-y select-none outline-none focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-[#C6FF00]/50"
+        className="block touch-pan-y select-none outline-none focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-admin-accent/50"
       >
         <defs>
           <linearGradient id={`g${gid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor={color} stopOpacity="0.22" />
-            <stop offset="1" stopColor={color} stopOpacity="0.02" />
+            <stop offset="0" stopColor={color} stopOpacity="0.2" />
+            <stop offset="1" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
 
         {scale.values.map((v) => (
           <g key={v}>
             <line x1={m.left} x2={width - m.right} y1={y(v)} y2={y(v)} stroke={v === 0 ? INK.axis : INK.grid} strokeWidth={1} />
-            <text x={m.left - 8} y={y(v)} dy="0.32em" textAnchor="end" fontSize={11} fill={INK.muted}>
+            <text x={m.left - 8} y={y(v)} dy="0.32em" textAnchor="end" fontSize={10.5} fill={INK.muted} className="font-admin-mono">
               {axisFormat(v)}
             </text>
           </g>
@@ -143,15 +146,28 @@ export function AreaChart({
             x={x(i)}
             y={height - 8}
             textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
-            fontSize={11}
+            fontSize={10.5}
             fill={INK.muted}
+            className="font-admin-mono"
           >
             {fmtDay(points[i].date)}
           </text>
         ))}
 
-        {n > 0 && <path d={area} fill={`url(#g${gid})`} />}
-        {n > 0 && <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />}
+        {n > 0 && <path key={`a${drawKey}`} className="admin-area" d={area} fill={`url(#g${gid})`} />}
+        {n > 0 && (
+          <path
+            key={`l${drawKey}`}
+            className="admin-draw"
+            pathLength={1}
+            d={line}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.75}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
 
         {n > 0 && hover === null && (
           <circle cx={x(n - 1)} cy={y(points[n - 1].value)} r={4} fill={color} stroke={SURFACE} strokeWidth={2} />
@@ -167,7 +183,7 @@ export function AreaChart({
 
       {active && hover !== null && (
         <div
-          className="pointer-events-none absolute top-2 z-10 min-w-[128px] rounded-lg border border-white/10 bg-[#1b1b25]/95 px-3 py-2 shadow-xl backdrop-blur"
+          className="pointer-events-none absolute top-2 z-10 min-w-[128px] rounded-md border border-white/10 bg-admin-raised/95 px-3 py-2 shadow-xl backdrop-blur"
           style={flip ? { right: width - tipLeft + 12 } : { left: tipLeft + 12 }}
         >
           <p className="text-[11px] text-white/50">{fmtDayLong(active.date)}</p>
@@ -175,7 +191,7 @@ export function AreaChart({
             <span className="inline-block h-0.5 w-3 rounded" style={{ background: color }} />
             <span className="font-semibold text-white">{format(active.value)}</span>
           </p>
-          <p className="text-[11px] text-white/45">{seriesName}</p>
+          <p className="text-[11px] text-white/60">{seriesName}</p>
         </div>
       )}
     </div>
@@ -185,12 +201,12 @@ export function AreaChart({
 /** Vista de tabla equivalente al gráfico (los valores nunca dependen del hover). */
 export function SeriesTable({ points, format, label }: { points: SeriesPoint[]; format: (n: number) => string; label: string }) {
   return (
-    <div className="max-h-[260px] overflow-auto rounded-lg border border-white/[0.06]">
+    <div className="max-h-[260px] overflow-auto rounded-md border border-white/[0.06]">
       <table className="w-full text-left text-sm">
-        <thead className="sticky top-0 bg-[#16161f]">
+        <thead className="sticky top-0 bg-admin-raised">
           <tr>
-            <th className="px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-white/35">Día</th>
-            <th className="px-3 py-2 text-right text-[11px] font-medium uppercase tracking-wider text-white/35">{label}</th>
+            <th className="px-3 py-2 text-xs font-medium text-white/50">Día</th>
+            <th className="px-3 py-2 text-right text-xs font-medium text-white/50">{label}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.04]">
@@ -207,21 +223,29 @@ export function SeriesTable({ points, format, label }: { points: SeriesPoint[]; 
 }
 
 // ---------------------------------------------------------------------------
-// Sparkline
+// Latido: una barra por revisión de salud
 // ---------------------------------------------------------------------------
 
-export function Sparkline({ values, color = SERIES.blue, width = 96, height = 30 }: { values: number[]; color?: string; width?: number; height?: number }) {
-  if (values.length < 2) return <div style={{ width, height }} aria-hidden />
-  const max = Math.max(...values, 1)
-  const pad = 4
-  const x = (i: number) => pad + (i / (values.length - 1)) * (width - pad * 2)
-  const y = (v: number) => height - pad - (v / max) * (height - pad * 2)
-  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
+export type Beat = { at: string; ok: boolean; ms: number | null }
+
+/** Últimas revisiones hechas desde este navegador; los huecos marcan lo que todavía no se midió. */
+export function Heartbeat({ beats, slots = 30, unit = 'ms' }: { beats: Beat[]; slots?: number; unit?: string }) {
+  const recent = beats.slice(-slots)
+  const max = Math.max(...recent.map((b) => b.ms ?? 0), 1)
   return (
-    <svg width={width} height={height} aria-hidden className="flex-shrink-0">
-      <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" strokeOpacity={0.9} />
-      <circle cx={x(values.length - 1)} cy={y(values[values.length - 1])} r={3.5} fill={color} stroke={SURFACE} strokeWidth={2} />
-    </svg>
+    <div className="flex h-6 items-end gap-[2px]" aria-hidden>
+      {Array.from({ length: slots - recent.length }).map((_, i) => (
+        <span key={`e${i}`} className="h-1 flex-1 rounded-[1px] bg-white/[0.06]" />
+      ))}
+      {recent.map((b) => (
+        <span
+          key={b.at}
+          title={b.ms === null ? 'Sin medición' : `${b.ms} ${unit}`}
+          className={cx('admin-fade flex-1 rounded-[1px]', b.ok ? 'bg-emerald-400/70' : 'bg-red-400')}
+          style={{ height: b.ok && b.ms !== null ? `${Math.max(25, (b.ms / max) * 100)}%` : '100%' }}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -243,10 +267,10 @@ export function BarList({
   emptyLabel?: string
 }) {
   const max = Math.max(...rows.map((r) => r.value), 0)
-  if (!rows.length || max <= 0) return <p className="py-6 text-center text-sm text-white/40">{emptyLabel}</p>
+  if (!rows.length || max <= 0) return <p className="py-6 text-center text-sm text-white/55">{emptyLabel}</p>
   return (
     <ul className="space-y-3">
-      {rows.map((r) => {
+      {rows.map((r, i) => {
         const pct = Math.max(2, (r.value / max) * 100)
         return (
           <li key={r.key} className="group" title={`${r.label}: ${format(r.value)}`}>
@@ -255,15 +279,15 @@ export function BarList({
                 <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-[3px]" style={{ background: r.color ?? color }} />
                 <span className="truncate">{r.label}</span>
               </span>
-              <span className="flex-shrink-0 text-sm font-semibold tabular-nums text-white">{format(r.value)}</span>
+              <span className="flex-shrink-0 font-admin-mono text-[13px] tabular-nums text-white">{format(r.value)}</span>
             </div>
-            <div className="mt-1.5 h-2 rounded-full bg-white/[0.05]">
+            <div className="mt-1.5 h-1 rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-r-[4px] rounded-l-sm transition-[width,filter] duration-300 group-hover:brightness-125"
-                style={{ width: `${pct}%`, background: r.color ?? color }}
+                className="admin-grow h-full rounded-full transition-[width,filter] duration-300 group-hover:brightness-125"
+                style={{ width: `${pct}%`, background: r.color ?? color, '--i': i } as CSSProperties}
               />
             </div>
-            {r.sub && <p className="mt-1 text-[11px] text-white/40">{r.sub}</p>}
+            {r.sub && <p className="mt-1 text-[11px] text-white/55">{r.sub}</p>}
           </li>
         )
       })}
@@ -290,14 +314,14 @@ export function Funnel({ steps }: { steps: FunnelStep[] }) {
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="text-white/75">{s.label}</span>
               <span className="tabular-nums">
-                <span className="font-semibold text-white">{s.value.toLocaleString('es-AR')}</span>
-                {rate !== null && <span className="ml-2 text-xs text-white/40">{rate}% del paso anterior</span>}
+                <span className="font-admin-mono text-[13px] text-white">{s.value.toLocaleString('es-AR')}</span>
+                {rate !== null && <span className="ml-2 text-xs text-white/55">{rate}% del paso anterior</span>}
               </span>
             </div>
-            <div className="h-6 rounded-md bg-white/[0.04]">
+            <div className="h-2 rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-r-[4px] rounded-l-sm transition-[width] duration-300"
-                style={{ width: `${pct}%`, background: FUNNEL_STEPS[Math.min(i, FUNNEL_STEPS.length - 1)] }}
+                className="admin-grow h-full rounded-full transition-[width] duration-300"
+                style={{ width: `${pct}%`, background: FUNNEL_STEPS[Math.min(i, FUNNEL_STEPS.length - 1)], '--i': i } as CSSProperties}
               />
             </div>
           </li>

@@ -29,7 +29,7 @@ function Field({ label, value }: { label: string; value: string }) {
 
 /** Detalle de un arrepentimiento: datos del comprador, captura y pedidos asociados a su e-mail. */
 export function RegretDetailView({ eventId, regretId }: { eventId: string; regretId: string }) {
-  const listPath = `/events/${eventId}/arrepentimientos`
+  const listPath = `/eventos/${eventId}/arrepentimientos`
   const { show, ToastPortal } = useToast()
   const [regret, setRegret] = useState<WorkspaceRegret | null>(null)
   const [orders, setOrders] = useState<Order[]>([])

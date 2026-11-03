@@ -3,7 +3,7 @@ import type { OrganizerStaffTools } from '@/lib/authSession'
 export type WorkspaceSectionKey = 'catalogo' | 'cobros'
 
 export type WorkspaceSectionTab = {
-  /** Segmento de ruta bajo `/events/:eventId/`. */
+  /** Segmento de ruta bajo `/eventos/:eventId/`. */
   segment: string
   label: string
   /** Permiso requerido (omitir solo para pestañas `ownerOnly`). */
@@ -28,11 +28,11 @@ export const WORKSPACE_SECTION_HUBS: Partial<Record<WorkspaceSectionKey, string>
 /** Herramientas agrupadas en una sola entrada del sidebar (con pestañas o con página de entrada). */
 export const WORKSPACE_SECTIONS: Record<WorkspaceSectionKey, WorkspaceSectionTab[]> = {
   catalogo: [
-    { segment: 'products', label: 'Productos y combos', tool: 'products' },
-    { segment: 'blocks', label: 'Bloques destacados', tool: 'products' },
+    { segment: 'productos', label: 'Productos y combos', tool: 'products' },
+    { segment: 'bloques', label: 'Bloques destacados', tool: 'products' },
   ],
   cobros: [
-    { segment: 'payments', label: 'Pagos', tool: 'payments' },
+    { segment: 'pagos', label: 'Pagos', tool: 'payments' },
     { segment: 'metodos-pago', label: 'Métodos de pago', ownerOnly: true },
     { segment: 'comision', label: 'Comisión', ownerOnly: true },
   ],

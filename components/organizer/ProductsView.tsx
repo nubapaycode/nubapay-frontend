@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { BadgePercent, Boxes, Camera, Link2, ListTree, Package, Search } from 'lucide-react'
+import { BadgePercent, Boxes, Link2, ListTree, Package, Search, X } from 'lucide-react'
 
 import { CatalogItemRow, NewItemMenu } from '@/components/organizer/catalog/CatalogParts'
 import { StorefrontSettingsView } from '@/components/organizer/StorefrontSettingsView'
@@ -1352,40 +1352,55 @@ export function ProductsView({ eventId }: { eventId: string }) {
           )}
         </div>
 
-        {/* Totales del tipo elegido; cada uno es un filtro rápido */}
+        {/* Estado (segmentado, como las pestañas de arriba) y, aparte, "Sin foto": es otra dimensión, no un estado. */}
         {catalogCounts && (
-          <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
-            {([
-              { key: 'all' as const, label: catalogTab === 'products' ? 'Todos' : 'Todos', n: catalogCounts.total },
-              { key: 'active' as const, label: 'En venta', n: catalogCounts.active },
-              { key: 'paused' as const, label: 'Pausados', n: catalogCounts.paused },
-              { key: 'no_image' as const, label: 'Sin foto', n: catalogCounts.no_image },
-            ]).map(({ key, label, n }) => {
-              if (key !== 'all' && n === 0 && filterStatus !== key) return null
-              const active = filterStatus === key
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg bg-gray-100 p-0.5" role="group" aria-label="Filtrar por estado">
+              {([
+                { key: 'all' as const, label: 'Todos', n: catalogCounts.total },
+                { key: 'active' as const, label: 'En venta', n: catalogCounts.active },
+                { key: 'paused' as const, label: 'Pausados', n: catalogCounts.paused },
+              ]).map(({ key, label, n }) => {
+                if (key !== 'all' && n === 0 && filterStatus !== key) return null
+                const active = filterStatus === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => chooseStatus(key)}
+                    className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors ${
+                      active
+                        ? 'bg-white text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    {label}
+                    <span className={`tabular-nums ${active ? 'text-gray-400' : 'text-gray-400/80'}`}>{n}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {(catalogCounts.no_image > 0 || filterStatus === 'no_image') && (() => {
+              const active = filterStatus === 'no_image'
               return (
                 <button
-                  key={key}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => chooseStatus(active && key !== 'all' ? 'all' : key)}
+                  onClick={() => chooseStatus(active ? 'all' : 'no_image')}
                   className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors ${
                     active
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : key === 'no_image'
-                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900'
+                      ? 'border-gray-300 bg-gray-100 text-gray-900'
+                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-900'
                   }`}
                 >
-                  {key === 'no_image' && !active && <Camera size={13} strokeWidth={1.75} aria-hidden />}
-                  {label}
-                  <span className="tabular-nums opacity-70">{n}</span>
+                  Sin foto
+                  <span className="tabular-nums text-gray-400">{catalogCounts.no_image}</span>
+                  {active && <X size={12} strokeWidth={2} className="-mr-0.5 text-gray-400" aria-hidden />}
                 </button>
               )
-            })}
-            {filterStatus === 'no_image' && (
-              <span className="ml-1 text-[12px] text-gray-500">Los productos con foto se venden más: tocá uno para subirle una.</span>
-            )}
+            })()}
           </div>
         )}
 
@@ -2098,15 +2113,15 @@ export function ProductsView({ eventId }: { eventId: string }) {
       {/* Bulk action bar */}
       <div
         style={{
-          position: 'fixed', bottom: '54px', left: 'calc(50% + 132px)',
+          position: 'fixed', bottom: '54px', left: 'calc(50% + var(--nb-sidebar-w, 0px) / 2)',
           transform: selectedIds.size > 0
             ? 'translateX(-50%) translateY(0px) scaleX(1)'
             : 'translateX(-50%) translateY(20px) scaleX(0.72)',
           opacity: selectedIds.size > 0 ? 1 : 0,
           pointerEvents: selectedIds.size > 0 ? 'auto' : 'none',
           transition: selectedIds.size > 0
-            ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease'
-            : 'transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease',
+            ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease, left 200ms cubic-bezier(0.22, 1, 0.36, 1)'
+            : 'transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s ease, left 200ms cubic-bezier(0.22, 1, 0.36, 1)',
           zIndex: 30, background: '#FFFFFF', color: '#0A0A0F',
           borderRadius: '100px', padding: '8px 8px 8px 22px',
           display: 'flex', alignItems: 'center', gap: '14px',

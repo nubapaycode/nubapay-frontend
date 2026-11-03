@@ -1,25 +1,25 @@
-/** Tokens del admin (dark). Los colores de datos son la paleta categórica validada sobre #12121A. */
-export const SURFACE = '#12121A'
+/** Tokens de gráficos del admin. Debe coincidir con `--color-admin-surface` de globals.css. */
+export const SURFACE = '#0e1219'
 
 export const INK = {
-  primary: '#f0efec',
-  secondary: '#c3c2b7',
-  muted: '#898781',
-  grid: '#2c2c2a',
-  axis: '#383835',
+  primary: '#eef2f8',
+  secondary: '#c0cada',
+  muted: '#8e9bb0',
+  grid: '#1b212c',
+  axis: '#2c3442',
 }
 
 /** Slots categóricos en orden fijo (dark). El color sigue a la entidad, no a su ranking. */
 export const SERIES = {
-  blue: '#3987e5',
+  blue: '#4f9bff',
   orange: '#d95926',
   aqua: '#199e70',
   yellow: '#c98500',
-  other: '#898781',
+  other: '#8e9bb0',
 }
 
 /** Escalón ordinal (embudo): más claro = más avanzado en el flujo. */
-export const FUNNEL_STEPS = ['#1c5cab', '#3987e5', '#86b6ef']
+export const FUNNEL_STEPS = ['#1c5cab', '#4a94f0', '#8fbdf4']
 
 export const PROVIDER_COLOR: Record<string, string> = {
   mercadopago: SERIES.blue,

@@ -28,7 +28,7 @@ describe('OrganizerGuard', () => {
         <div>Contenido protegido</div>
       </OrganizerGuard>,
     )
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ingresar'))
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
   })
 
@@ -74,7 +74,7 @@ describe('OrganizerGuard', () => {
         <div>Contenido protegido</div>
       </OrganizerGuard>,
     )
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login?expired=1'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ingresar?expired=1'))
     expect(localStorage.getItem('nubapay_token')).toBeNull()
   })
 

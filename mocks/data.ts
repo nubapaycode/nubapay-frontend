@@ -23,7 +23,7 @@ export const mockEvent = {
   slug: MOCK_CATALOG_SLUG,
   description: 'Evento de demostración con todos los tipos de productos.',
   venue: 'Estadio Centenario, Montevideo',
-  cover_image_url: null,
+  cover_image_url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&q=80',
   starts_at: '2026-07-15T18:00:00Z',
   ends_at: null,
   status: 'active',
@@ -398,6 +398,45 @@ const makeMockOrder = (
   updated_at: `2026-07-15T${String(10 + n).padStart(2, '0')}:${String(n * 7 % 60).padStart(2, '0')}:00Z`,
 })
 
+const MOCK_CUSTOMERS = [
+  ['María García', 'maria.garcia@ejemplo.com'],
+  ['Juan López', 'juanlopez@ejemplo.com'],
+  ['Ana Martínez', 'ana.martinez@ejemplo.com'],
+  ['Carlos Rodríguez', 'carlos.r@ejemplo.com'],
+  ['Laura Pérez', 'lauperez@ejemplo.com'],
+  ['Sofía Fernández', 'sofi.fernandez@ejemplo.com'],
+  ['Martín Gómez', 'martin.gomez@ejemplo.com'],
+  ['Valentina Díaz', 'valen.diaz@ejemplo.com'],
+] as const
+
+/** Alias en camelCase: el panel del organizador lee los pedidos con estos nombres. */
+const withCamelCase = (o: ReturnType<typeof makeMockOrder>) => {
+  const [name, email] = MOCK_CUSTOMERS[(o.order_number - 1) % MOCK_CUSTOMERS.length]
+  const redeemed = o.status === 'delivered'
+  const items = o.items.map((i, idx) => ({
+    ...i,
+    id: `${o.id}-item-${idx}`,
+    productId: i.product_id,
+    categoryName: i.category_name,
+    redeemedQuantity: redeemed ? i.quantity : 0,
+    redeemedAt: redeemed ? o.updated_at : null,
+  }))
+  return {
+    ...o,
+    customer_name: name,
+    items,
+    orderNumber: 1040 + o.order_number,
+    eventId: o.event_id,
+    customerName: name,
+    customerEmail: email,
+    paymentStatus: o.payment_status,
+    paymentMethod: o.payment_method,
+    qrToken: o.qr_token,
+    createdAt: o.created_at,
+    updatedAt: o.updated_at,
+  }
+}
+
 export const mockOrders = [
   makeMockOrder(1, 'pending', 'mp'),
   makeMockOrder(2, 'pending', 'cash'),
@@ -407,11 +446,13 @@ export const mockOrders = [
   makeMockOrder(6, 'delivered', 'mp'),
   makeMockOrder(7, 'delivered', 'cash'),
   makeMockOrder(8, 'pending', 'mp'),
-]
+].map(withCamelCase)
 
 export const mockPayments = mockOrders.map((o, i) => ({
   id: `pay-${i + 1}`,
   order_id: o.id,
+  order_number: o.orderNumber,
+  customer_name: o.customerName,
   amount: o.total,
   currency: 'ARS',
   status: o.payment_status === 'paid' ? 'approved' : 'pending',
@@ -765,3 +806,36 @@ export const mockStorefront = {
   service_fee_percent: { ticket: 5, product: 2 },
   theme: null,
 }
+
+export const mockBlocks = [
+  {
+    id: 'block-1',
+    title: 'Para arrancar la noche',
+    banner_image_url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1200&q=80',
+    sort_order: 0,
+    is_active: true,
+    products: [
+      { product_id: 'prod-1', name: 'Cerveza Rubia 500ml', type: 'single', is_active: true },
+      { product_id: 'prod-3', name: 'Fernet con Coca', type: 'single', is_active: true },
+      { product_id: 'prod-2', name: 'IPA Artesanal 500ml', type: 'single', is_active: true },
+    ],
+  },
+  {
+    id: 'block-2',
+    title: 'Combos para compartir',
+    banner_image_url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&q=80',
+    sort_order: 1,
+    is_active: true,
+    products: [
+      { product_id: 'prod-9', name: 'Hamburguesa Clásica', type: 'single', is_active: true },
+      { product_id: 'prod-10', name: 'Hamburguesa BBQ', type: 'single', is_active: true },
+    ],
+  },
+]
+
+export const mockTickets = [
+  { id: 'tk-1', name: 'General', description: 'Acceso al predio desde las 18 h', price: 15000, currency: 'ARS', stock: 2000, sold: 1240, reserved: 1262, revenue: 18600000, redeemed: 812, sort_order: 0, is_active: true },
+  { id: 'tk-2', name: 'Campo VIP', description: 'Sector preferencial frente al escenario', price: 32000, currency: 'ARS', stock: 400, sold: 371, reserved: 380, revenue: 11872000, redeemed: 205, sort_order: 1, is_active: true },
+  { id: 'tk-3', name: 'Menor (6 a 12 años)', description: 'Con un adulto responsable', price: 7500, currency: 'ARS', stock: null, sold: 96, reserved: 96, revenue: 720000, redeemed: 41, sort_order: 2, is_active: true },
+  { id: 'tk-4', name: 'Preventa', description: 'Primera tanda, agotada', price: 11000, currency: 'ARS', stock: 500, sold: 500, reserved: 500, revenue: 5500000, redeemed: 388, sort_order: 3, is_active: false },
+]

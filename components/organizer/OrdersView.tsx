@@ -7,7 +7,9 @@ import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNum
 import { FilterChip, PAYMENT_CONFIG } from '@/components/organizer/dashboard/Panels'
 import { OPEN_ORDER_EVENT } from '@/components/organizer/commandEvents'
 import { BulkActionsBar } from '@/components/organizer/orders/BulkActionsBar'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { FilterMenu } from '@/components/organizer/orders/FilterMenu'
+import { StatusSelect } from '@/components/organizer/orders/StatusSelect'
 import { OrderDetailSheet } from '@/components/organizer/orders/OrderDetailSheet'
 import {
   PAY_LABEL,
@@ -48,7 +50,8 @@ const ORDERS_GRID = 'md:grid-cols-[92px_minmax(150px,1.2fr)_minmax(160px,1.6fr)_
 
 type UrlState = {
   tab: OrdersTab
-  status: StatusFilter
+  /** Estados elegidos; vacío = todos. */
+  status: StatusFilter[]
   payment: DashboardPaymentKey | null
   cats: string[]
   q: string
@@ -61,7 +64,10 @@ function readUrlState(): Partial<UrlState> {
   const out: Partial<UrlState> = {}
   if (p.get('vista') === 'escaneos') out.tab = 'scans'
   const estado = p.get('estado')
-  if (estado && STATUS_TABS.some(t => t.key === estado)) out.status = estado as StatusFilter
+  if (estado) {
+    const sts = estado.split(',').filter((k): k is StatusFilter => k !== 'all' && STATUS_TABS.some(t => t.key === k))
+    if (sts.length) out.status = sts
+  }
   const pago = p.get('pago')
   if (pago && PAYMENT_CONFIG.some(c => c.key === pago)) out.payment = pago as DashboardPaymentKey
   const cat = p.get('categoria')
@@ -77,7 +83,7 @@ function writeUrlState(s: UrlState) {
   const p = new URLSearchParams(window.location.search)
   for (const k of ['vista', 'estado', 'pago', 'categoria', 'q', 'pedido']) p.delete(k)
   if (s.tab === 'scans') p.set('vista', 'escaneos')
-  if (s.status !== 'all') p.set('estado', s.status)
+  if (s.status.length) p.set('estado', s.status.join(','))
   if (s.payment) p.set('pago', s.payment)
   if (s.cats.length) p.set('categoria', s.cats.join(','))
   if (s.q) p.set('q', s.q)
@@ -136,7 +142,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [hydrated, setHydrated] = useState(false)
   const [tab, setTab] = useState<OrdersTab>('orders')
   const [scanRefresh, setScanRefresh] = useState(0)
-  const [status, setStatus] = useState<StatusFilter>('all')
+  const [status, setStatus] = useState<StatusFilter[]>([])
   const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
   const [cats, setCats] = useState<string[]>([])
   const [searchInput, setSearchInput] = useState('')
@@ -238,7 +244,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
         pageSize: PAGE_SIZE,
         paymentStatus: 'approved',
         q: searchQ || undefined,
-        status: status === 'all' ? undefined : status,
+        status: status.length ? status.join(',') : undefined,
         payment,
         categories: cats,
       })
@@ -331,7 +337,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const currentFilters = {
     paymentStatus: 'approved',
     q: searchQ || undefined,
-    status: status === 'all' ? undefined : status,
+    status: status.length ? status.join(',') : undefined,
     payment,
     categories: cats,
   }
@@ -353,7 +359,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       return next
     })
 
-  const hasFilters = Boolean(searchQ || payment || cats.length || status !== 'all')
+  const hasFilters = Boolean(searchQ || payment || cats.length || status.length)
   const redeemPct = summary && summary.units ? Math.round((summary.redeemed_units / summary.units) * 100) : null
 
   return (
@@ -381,10 +387,6 @@ export function OrdersView({ eventId }: { eventId: string }) {
           <p className="mt-1 flex items-center gap-2 text-[13px] text-gray-400">
             {tab === 'orders' ? (
               <>
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
-                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                </span>
                 Se actualiza solo
                 {lastRefresh && (
                   <span className="tabular-nums">
@@ -436,47 +438,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
         </div>
       </header>
 
-      {/* Pestañas de estado con conteo (vistas rápidas) */}
-      {tab === 'orders' && (
-        <div className="-mx-4 mb-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-          <div role="tablist" aria-label="Estado" className="flex min-w-max gap-1 border-b border-gray-200">
-            {STATUS_TABS.map(t => {
-              const active = status === t.key
-              const n = countFor(t.key)
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setStatusF(t.key)}
-                  className={cn(
-                    'relative -mb-px flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-[13px] transition-colors',
-                    active ? 'border-gray-900 font-semibold text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900',
-                  )}
-                >
-                  {t.key !== 'all' && <span className={cn('size-1.5 rounded-full', statusUi(t.key === 'unredeemed' ? 'paid' : t.key).dot)} aria-hidden />}
-                  {t.label}
-                  {n != null && (
-                    <span
-                      className={cn(
-                        'rounded-md px-1.5 text-[11px] font-semibold tabular-nums',
-                        active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500',
-                      )}
-                    >
-                      {formatCount(n)}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Buscador y filtros */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
+        <div className={cn('relative w-full', tab === 'orders' ? 'md:w-auto md:min-w-[220px] md:flex-1' : 'md:max-w-[360px]')}>
           <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
           <input
             ref={searchRef}
@@ -489,7 +453,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 e.currentTarget.blur()
               }
             }}
-            placeholder={tab === 'orders' ? 'Buscar por cliente, producto o nº de pedido…' : 'Buscar producto…'}
+            placeholder={tab === 'orders' ? 'Buscar pedido…' : 'Buscar producto…'}
+            aria-label={tab === 'orders' ? 'Buscar por cliente, producto o número de pedido' : 'Buscar producto'}
             className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-10 text-[13px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)] focus:outline-none"
           />
           {!searchInput && (
@@ -498,6 +463,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
             </kbd>
           )}
         </div>
+        {tab === 'orders' && <StatusSelect value={status} onChange={setStatusF} countFor={countFor} />}
         {tab === 'orders' && (
           <>
             <FilterMenu
@@ -548,7 +514,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
         </div>
       )}
 
-      {tab === 'scans' && <ProductScanSummaryView key={scanRefresh} eventId={eventId} embedded query={searchInput} />}
+      {tab === 'scans' && <ProductScanSummaryView key={scanRefresh} eventId={eventId} query={searchInput} />}
 
       {tab === 'orders' && (
         <>
@@ -600,15 +566,11 @@ export function OrdersView({ eventId }: { eventId: string }) {
               {/* Encabezado de la tabla (escritorio) */}
               <div className={cn('hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid', ORDERS_GRID)}>
                 <span className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    aria-label="Seleccionar todos los pedidos de la página"
+                  <Checkbox
+                    label="Seleccionar todos los pedidos de la página"
                     checked={allChecked}
-                    ref={el => {
-                      if (el) el.indeterminate = checkedOrders.length > 0 && !allChecked
-                    }}
+                    indeterminate={checkedOrders.length > 0 && !allChecked}
                     onChange={() => setChecked(allChecked ? new Set() : new Set(orders.map(o => o.id)))}
-                    className="size-4 cursor-pointer rounded border-gray-300 accent-gray-900"
                   />
                   #
                 </span>
@@ -644,13 +606,10 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
                         {/* # */}
                         <span className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            aria-label={`Seleccionar pedido ${order.orderNumber != null ? `#${order.orderNumber}` : ''}`.trim()}
+                          <Checkbox
+                            label={`Seleccionar pedido ${order.orderNumber != null ? `#${order.orderNumber}` : ''}`.trim()}
                             checked={checked.has(order.id)}
-                            onClick={e => e.stopPropagation()}
                             onChange={() => toggleChecked(order.id)}
-                            className="size-4 shrink-0 cursor-pointer rounded border-gray-300 accent-gray-900"
                           />
                           <button
                             type="button"

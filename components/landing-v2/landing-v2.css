@@ -214,7 +214,8 @@
 .lv2-menu-roll > span { display: block; white-space: nowrap; }
 .lv2-menu-roll > span + span, .lv2-menu-link.is-here .lv2-menu-roll > span:first-child { color: var(--lv-lime); }
 .lv2-menu-ctas { display: grid; gap: 10px; margin-top: auto; }
-.lv2-menu-ctas .lv2-btn { justify-content: space-between; width: 100%; }
+.lv2-menu-ctas .lv2-btn { justify-content: center; width: 100%; }
+.lv2-menu-ctas .lv2-btn-arrow { margin-left: auto; }
 .lv2-menu-ctas .lv2-btn--ghost { justify-content: center; }
 .lv2-menu-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; }
 .lv2-root .lv2-menu-meta a { color: rgba(255, 255, 255, 0.5); text-decoration: none; }
@@ -622,7 +623,8 @@
 /* Los dos botones ocupan juntos el ancho de las tarjetas, en dos columnas iguales */
 .lv2-tix-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 6px; }
 .lv2-tix-cta .lv2-btn { justify-content: center; }
-.lv2-tix-cta .lv2-btn:not(.lv2-btn--ghost) { justify-content: space-between; }
+/* Ancho fijo: la flecha va a la derecha con margen automático; en hover ese margen se anima y el texto queda centrado */
+.lv2-tix-cta .lv2-btn-arrow { margin-left: auto; }
 
 /* ── Entradas / pases ── */
 .lv2-passes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 14px 0 20px; }
@@ -747,12 +749,12 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 /* Recorta sólo arriba y abajo (para la subida); a los costados no, porque el letter-spacing negativo hace que el dibujo se salga de la caja */
 .lv2-cta3-mask { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.04em 0 0.1em; margin-bottom: -0.1em; }
 .lv2-cta3-char { display: inline-block; transform-origin: 0% 100%; }
-.lv2-cta3-dot { color: var(--lv-lime); }
+.lv2-cta3-dot { color: #fff; }
 .lv2-cta3-sub {
   display: block; margin-top: 0.5em; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em;
   line-height: 1.1; color: rgba(255, 255, 255, 0.6);
 }
-.lv2-cta3-sub em { font-style: normal; color: #fff; }
+.lv2-cta3-sub em { font-style: normal; color: var(--lv-lime); }
 .lv2-cta3-circle {
   position: absolute; top: 64px; right: 64px; z-index: 2; display: grid; place-items: center; width: 168px; height: 168px;
   border-radius: 50%; background: var(--lv-lime); color: var(--lv-lime-fg); text-decoration: none;

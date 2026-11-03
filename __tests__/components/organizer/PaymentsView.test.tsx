@@ -115,7 +115,7 @@ describe('PaymentsView', () => {
   it('muestra el nº de pedido y enlaza a su detalle en Pedidos', async () => {
     render(<PaymentsView eventId={eventId} />)
     const link = (await screen.findByText('#567')).closest('a')
-    expect(link).toHaveAttribute('href', `/events/${eventId}/orders?pedido=aaaaaaaa-bbbb-cccc-dddd-000000000001`)
+    expect(link).toHaveAttribute('href', `/eventos/${eventId}/pedidos?pedido=aaaaaaaa-bbbb-cccc-dddd-000000000001`)
     expect(screen.getByText('Facu')).toBeInTheDocument()
   })
 

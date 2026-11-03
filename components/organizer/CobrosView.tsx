@@ -11,7 +11,7 @@ import { fetchWorkspacePayments, type PaymentsSummary } from '@/lib/organizerWor
 import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
 
 const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
-  payments: {
+  pagos: {
     description: 'Cada cobro del evento, con su estado y el pedido al que pertenece.',
     icon: <CreditCard size={18} strokeWidth={1.75} aria-hidden />,
   },
@@ -20,7 +20,7 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
     icon: <Landmark size={18} strokeWidth={1.75} aria-hidden />,
   },
   comision: {
-    description: '1% sobre cada transacción aprobada de tu evento.',
+    description: 'Lo que le corresponde a Nubapay por las ventas aprobadas de tu evento.',
     icon: <BadgePercent size={18} strokeWidth={1.75} aria-hidden />,
   },
 }
@@ -29,7 +29,7 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
 export function CobrosView() {
   const access = useWorkspaceAccess()
   const tabs = access ? visibleSectionTabs('cobros', access) : []
-  const canSeePayments = tabs.some(t => t.segment === 'payments')
+  const canSeePayments = tabs.some(t => t.segment === 'pagos')
   const eventId = access?.basePath.split('/').filter(Boolean).pop() ?? ''
   const serviceFeeMode = useServiceFeeMode(eventId)
   const [summary, setSummary] = useState<PaymentsSummary | null>(null)
@@ -66,7 +66,7 @@ export function CobrosView() {
             const description = tab.segment === 'comision' && serviceFeeEnabled
               ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
               : details?.description
-            const showStats = tab.segment === 'payments' && summary
+            const showStats = tab.segment === 'pagos' && summary
             const approved = summary?.approved
             const due = approved
               ? settlementDue(approved.amount, approved.service_fee ?? 0, serviceFeeEnabled)

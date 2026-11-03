@@ -10,7 +10,7 @@ jest.mock('@/lib/authSession', () => ({
 }))
 
 const owner: WorkspaceAccess = {
-  basePath: '/events/e1',
+  basePath: '/eventos/e1',
   membership: 'owner',
   tools: ORGANIZER_FULL_TOOLS,
   partnerBrand: true,
@@ -30,7 +30,7 @@ describe('CuentaView', () => {
     const session = screen.getByText('Sesión activa')
     const brandLink = screen.getByRole('link', { name: /Marca y dominios/ })
     expect(screen.getByText('demo@nubapay.app')).toBeInTheDocument()
-    expect(brandLink).toHaveAttribute('href', '/events/e1/brand')
+    expect(brandLink).toHaveAttribute('href', '/eventos/e1/marca')
     expect(session.compareDocumentPosition(brandLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 

@@ -19,7 +19,7 @@ const PILL_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
 export function WorkspaceSectionTabs({ section, label }: { section: WorkspaceSectionKey; label: string }) {
   const access = useWorkspaceAccess()
   const pathname = usePathname()
-  const eventId = access?.basePath.match(/\/events\/([^/]+)/)?.[1] ?? ''
+  const eventId = access?.basePath.match(/\/eventos\/([^/]+)/)?.[1] ?? ''
   const serviceFeeMode = useServiceFeeMode(section === 'cobros' ? eventId : '')
   const tabs = access ? visibleSectionTabs(section, access) : []
   const tabLabel = (segment: string, label: string) =>

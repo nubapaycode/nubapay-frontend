@@ -1,7 +1,7 @@
 import type { TourStep } from './types'
 
-const onEventsList = (p: string) => p === '/events'
-const onEventWorkspace = (p: string) => /^\/events\/[^/]+\/.+/.test(p)
+const onEventsList = (p: string) => p === '/eventos'
+const onEventWorkspace = (p: string) => /^\/eventos\/[^/]+\/.+/.test(p)
 
 export const TOUR_TOTAL = 6
 

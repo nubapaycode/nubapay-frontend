@@ -35,8 +35,8 @@ const order = {
   customerName: 'Facu',
 }
 
-function renderPalette(pathname = '/events/ev/dashboard', tools = allTools) {
-  render(<CommandPalette eventId="ev" basePath="/events/ev" pathname={pathname} tools={tools} membership="owner" />)
+function renderPalette(pathname = '/eventos/ev/resumen', tools = allTools) {
+  render(<CommandPalette eventId="ev" basePath="/eventos/ev" pathname={pathname} tools={tools} membership="owner" />)
 }
 
 const openPalette = () => fireEvent.keyDown(document, { key: 'k', metaKey: true })
@@ -68,11 +68,11 @@ describe('CommandPalette', () => {
     await userEvent.type(await screen.findByRole('combobox'), 'configuracion')
     expect(screen.getByRole('option', { name: /Configuración/ })).toBeInTheDocument()
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' })
-    expect(push).toHaveBeenCalledWith('/events/ev/config')
+    expect(push).toHaveBeenCalledWith('/eventos/ev/configuracion')
   })
 
   it('no muestra herramientas sin permiso', async () => {
-    renderPalette('/events/ev/dashboard', { ...allTools, orders: false })
+    renderPalette('/eventos/ev/resumen', { ...allTools, orders: false })
     openPalette()
     await screen.findByRole('combobox')
     expect(screen.queryByRole('option', { name: /^Pedidos/ })).not.toBeInTheDocument()
@@ -86,13 +86,13 @@ describe('CommandPalette', () => {
     const result = await screen.findByRole('option', { name: /#567 · Facu/ })
     expect(fetchWorkspaceOrders).toHaveBeenLastCalledWith('ev', expect.objectContaining({ q: '567' }))
     await userEvent.click(result)
-    expect(push).toHaveBeenCalledWith('/events/ev/orders?pedido=order-1')
+    expect(push).toHaveBeenCalledWith('/eventos/ev/pedidos?pedido=order-1')
   })
 
   it('si ya está en Pedidos, abre el pedido sin navegar', async () => {
     const onOpen = jest.fn()
     window.addEventListener(OPEN_ORDER_EVENT, onOpen)
-    renderPalette('/events/ev/orders')
+    renderPalette('/eventos/ev/pedidos')
     openPalette()
     await userEvent.type(await screen.findByRole('combobox'), 'facu')
     await userEvent.click(await screen.findByRole('option', { name: /#567 · Facu/ }))

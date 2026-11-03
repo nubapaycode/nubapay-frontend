@@ -44,7 +44,7 @@ const NAV = [
       { label: 'Entradas y parking', href: '/#entradas-y-parking' },
       { label: 'Tipos de evento', href: '/#eventos' },
       { label: 'Preguntas frecuentes', href: '/#faq' },
-      { label: 'Para organizadores', href: '/register' },
+      { label: 'Para organizadores', href: '/registro' },
     ],
   },
   {
@@ -80,7 +80,7 @@ export default function SiteFooter() {
               <p style={{ fontSize: '15px', color: '#FFFFFF', lineHeight: '1.7', margin: '0 0 32px 0', maxWidth: '340px' }}>
                 Más ventas, menos filas. Para los que organizan eventos que la gente recuerda.
               </p>
-              <Link href="/register" className="nb-footer-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '58px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 400, letterSpacing: '-0.02em' }}>
+              <Link href="/registro" className="nb-footer-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '58px', boxSizing: 'border-box', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 32px', borderRadius: '100px', textDecoration: 'none', fontSize: '16px', fontWeight: 400, letterSpacing: '-0.02em' }}>
                 Empezá ahora
                 <span className="nb-footer-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '100px', background: '#0A0F00' }}>
                   <svg width="18" height="18" viewBox="0 0 14 14" fill="none">

@@ -63,7 +63,7 @@ async function renderLoaded() {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  window.history.replaceState(null, '', '/events/demo-event/orders')
+  window.history.replaceState(null, '', '/eventos/demo-event/pedidos')
   jest.mocked(fetchWorkspaceOrders).mockResolvedValue({
     ok: true,
     orders: [mockOrderPending, mockOrderReady],
@@ -87,7 +87,7 @@ describe('OrdersView', () => {
 
   it('muestra el campo de búsqueda', async () => {
     await renderLoaded()
-    expect(screen.getByPlaceholderText(/Buscar por cliente, producto/)).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: /Buscar por cliente, producto/ })).toBeInTheDocument()
   })
 
   it('lista los pedidos y pide solo pagados del evento', async () => {
@@ -98,16 +98,21 @@ describe('OrdersView', () => {
 
   it('muestra los conteos por estado y los totales del filtro', async () => {
     await renderLoaded()
-    expect(screen.getByRole('tab', { name: /Todos\s*8/ })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Sin retirar\s*2/ })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Estado: Todos/ }))
+    expect(screen.getByRole('option', { name: /Todos\s*8/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Sin retirar\s*2/ })).toBeInTheDocument()
     expect(screen.getByText('33%')).toBeInTheDocument()
   })
 
-  it('filtra por estado desde las pestañas y lo guarda en la URL', async () => {
+  it('filtra por varios estados desde el selector y los guarda en la URL', async () => {
     await renderLoaded()
-    await userEvent.click(screen.getByRole('tab', { name: /Entregados/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Estado:/ }))
+    await userEvent.click(screen.getByRole('option', { name: /Entregados/ }))
     await waitFor(() => expect(lastCall()?.[1]).toEqual(expect.objectContaining({ status: 'delivered', page: 1 })))
     expect(window.location.search).toContain('estado=delivered')
+    await userEvent.click(screen.getByRole('option', { name: /Cancelados/ }))
+    await waitFor(() => expect(lastCall()?.[1]).toEqual(expect.objectContaining({ status: 'delivered,cancelled' })))
+    expect(decodeURIComponent(window.location.search)).toContain('estado=delivered,cancelled')
   })
 
   it('filtra por método de pago en el servidor y muestra la etiqueta', async () => {
@@ -144,7 +149,7 @@ describe('OrdersView', () => {
   })
 
   it('abre un pedido enlazado que no está en la página', async () => {
-    window.history.replaceState(null, '', '/events/demo-event/orders?pedido=otro-id')
+    window.history.replaceState(null, '', '/eventos/demo-event/pedidos?pedido=otro-id')
     jest.mocked(fetchWorkspaceOrder).mockResolvedValue({
       ok: true,
       order: { ...mockOrderReady, id: 'otro-id', orderNumber: 99 },
@@ -168,7 +173,8 @@ describe('OrdersView', () => {
   it('exporta a CSV con los filtros actuales', async () => {
     jest.mocked(downloadOrdersCsv).mockResolvedValue({ ok: true })
     await renderLoaded()
-    await userEvent.click(screen.getByRole('tab', { name: /Sin retirar/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Estado:/ }))
+    await userEvent.click(screen.getByRole('option', { name: /Sin retirar/ }))
     await waitFor(() => expect(lastCall()?.[1]).toEqual(expect.objectContaining({ status: 'unredeemed' })))
     await userEvent.click(screen.getByRole('button', { name: 'Exportar' }))
     expect(downloadOrdersCsv).toHaveBeenCalledWith(

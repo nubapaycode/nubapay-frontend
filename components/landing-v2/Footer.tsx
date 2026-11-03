@@ -25,9 +25,9 @@ const COLUMNS = [
     title: 'Empresa',
     links: [
       { label: 'Sobre Nubapay', href: '/nosotros' },
-      { label: 'Agendá una demo', href: '#contacto' },
-      { label: 'Probá una demo', href: '/register' },
-      { label: 'Iniciar sesión', href: '/login' },
+      { label: 'Centro de ayuda', href: '/ayuda' },
+      { label: 'Probá una demo', href: '/registro' },
+      { label: 'Iniciar sesión', href: '/ingresar' },
     ],
   },
   {

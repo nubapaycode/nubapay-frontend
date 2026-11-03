@@ -125,7 +125,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
   const setSortF = withPageReset(setSort)
 
   const hasFilters = Boolean(q || statusFilter.length || channelFilter.length)
-  const ordersHref = (orderId: string) => `/events/${eventId}/orders?pedido=${orderId}`
+  const ordersHref = (orderId: string) => `/eventos/${eventId}/pedidos?pedido=${orderId}`
 
   if (loading) return <PaymentsSkeleton />
 

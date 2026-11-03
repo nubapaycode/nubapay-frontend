@@ -13,7 +13,7 @@ export function CuentaView() {
   const access = useWorkspaceAccess()
   /** Marca y dominios es de la cuenta partner: solo la ve el dueño (misma regla que el guard del shell). */
   const brandHref =
-    access?.membership === 'owner' && access.partnerBrand ? `${access.basePath}/brand` : null
+    access?.membership === 'owner' && access.partnerBrand ? `${access.basePath}/marca` : null
 
   useEffect(() => { setEmail(getAuthUser()?.email ?? '') }, [])
 

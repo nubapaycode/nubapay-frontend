@@ -21,7 +21,7 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
   return (
     <div className="space-y-4">
       <div className="relative max-w-md">
-        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
         <input aria-label="Buscar usuarios" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre o email…" className={cx(inputCls, 'pl-9')} />
       </div>
 

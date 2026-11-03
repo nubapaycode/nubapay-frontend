@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Money } from '@/components/organizer/dashboard/AnimatedNumber'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import type { WorkspaceProduct, WorkspaceProductPromotion } from '@/lib/organizerWorkspace'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { cn } from '@/lib/utils'
 
 /** Botón principal "Nuevo" con menú: producto o combo. */
@@ -170,23 +171,7 @@ export function CatalogItemRow({
         </span>
       )}
       {onToggleChecked && (
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={Boolean(checked)}
-          aria-label={`Seleccionar ${item.name}`}
-          onClick={onToggleChecked}
-          className={cn(
-            'flex size-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-colors',
-            checked ? 'border-gray-900 bg-gray-900' : 'border-gray-300 bg-white hover:border-gray-400',
-          )}
-        >
-          {checked && (
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden>
-              <path d="M1 4l2.5 2.5 5.5-5.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </button>
+        <Checkbox label={`Seleccionar ${item.name}`} checked={Boolean(checked)} onChange={onToggleChecked} />
       )}
 
       <div className={cn('flex min-w-0 flex-1 items-center gap-3', !item.is_active && 'opacity-60')}>

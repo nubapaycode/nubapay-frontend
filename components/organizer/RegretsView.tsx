@@ -37,7 +37,7 @@ export function RegretStatusBadge({ status }: { status: RegretStatus }) {
 
 /** Herramienta "Arrepentimientos": solicitudes que los compradores envían desde el botón del catálogo. */
 export function RegretsView({ eventId }: { eventId: string }) {
-  const basePath = `/events/${eventId}/arrepentimientos`
+  const basePath = `/eventos/${eventId}/arrepentimientos`
   const [filter, setFilter] = useState<Filter>('pending')
   const [page, setPage] = useState(1)
   const [regrets, setRegrets] = useState<WorkspaceRegret[]>([])

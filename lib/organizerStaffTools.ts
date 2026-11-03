@@ -33,7 +33,7 @@ export function workspaceToolsForEvent(
   membership: 'owner' | 'staff' | undefined,
   eventId: string,
   staffMemberships: StaffMembership[] | undefined,
-  /** Preferido: tools del GET /events/:id (siempre al día). */
+  /** Preferido: tools del GET /eventos/:id (siempre al día). */
   eventTools?: Partial<OrganizerStaffTools> | null,
 ): OrganizerStaffTools {
   if (eventTools) {
@@ -53,13 +53,13 @@ export function workspaceToolsForEvent(
 
 /** Orden alineado con el panel: primera herramienta permitida para abrir el evento. */
 const FIRST_ROUTE_FOR_TOOL: { key: keyof OrganizerStaffTools; segment: string }[] = [
-  { key: 'dashboard', segment: 'dashboard' },
-  { key: 'storefront', segment: 'storefront' },
-  { key: 'products', segment: 'products' },
-  { key: 'scanner', segment: 'scanner' },
-  { key: 'orders', segment: 'orders' },
-  { key: 'pickup_points', segment: 'pickup-points' },
-  { key: 'payments', segment: 'payments' },
+  { key: 'dashboard', segment: 'resumen' },
+  { key: 'storefront', segment: 'tienda' },
+  { key: 'products', segment: 'productos' },
+  { key: 'scanner', segment: 'escaner' },
+  { key: 'orders', segment: 'pedidos' },
+  { key: 'pickup_points', segment: 'puntos-de-retiro' },
+  { key: 'payments', segment: 'pagos' },
 ]
 
 /** Segmento de ruta (`dashboard`, `orders`, …) o `all` si no hay ninguna herramienta activa. */
@@ -67,5 +67,5 @@ export function firstAllowedWorkspaceSegment(tools: OrganizerStaffTools): string
   for (const { key, segment } of FIRST_ROUTE_FOR_TOOL) {
     if (tools[key]) return segment
   }
-  return 'all'
+  return 'mis-eventos'
 }
