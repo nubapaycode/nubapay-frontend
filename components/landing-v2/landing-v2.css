@@ -747,12 +747,12 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 /* Recorta sólo arriba y abajo (para la subida); a los costados no, porque el letter-spacing negativo hace que el dibujo se salga de la caja */
 .lv2-cta3-mask { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.04em 0 0.1em; margin-bottom: -0.1em; }
 .lv2-cta3-char { display: inline-block; transform-origin: 0% 100%; }
-.lv2-cta3-dot { color: var(--lv-lime); }
+.lv2-cta3-dot { color: #fff; }
 .lv2-cta3-sub {
   display: block; margin-top: 0.5em; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em;
   line-height: 1.1; color: rgba(255, 255, 255, 0.6);
 }
-.lv2-cta3-sub em { font-style: normal; color: #fff; }
+.lv2-cta3-sub em { font-style: normal; color: var(--lv-lime); }
 .lv2-cta3-circle {
   position: absolute; top: 64px; right: 64px; z-index: 2; display: grid; place-items: center; width: 168px; height: 168px;
   border-radius: 50%; background: var(--lv-lime); color: var(--lv-lime-fg); text-decoration: none;
