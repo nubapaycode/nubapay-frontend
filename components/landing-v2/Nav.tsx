@@ -36,6 +36,7 @@ const BAR_Y = 44
 const PAGES = [
   { href: '/nosotros', label: 'Nosotros' },
   { href: '/seguridad', label: 'Seguridad' },
+  { href: '/ayuda', label: 'Centro de ayuda' },
 ]
 
 const CONTACT_EMAIL = 'contacto@nubapay.app'
