@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import type { DocImage, DocStep } from '@/lib/docs/organizerDocs'
+import type { DocImage, DocImageStep, DocStep } from '@/lib/docs/organizerDocs'
 import { cn } from '@/lib/utils'
 
 const ACCENT = 'var(--organizer-accent, #C6FF00)'
@@ -88,7 +88,7 @@ function Lightbox({
   onPrev,
   onNext,
 }: {
-  step: DocStep
+  step: DocImageStep
   index: number
   total: number
   onClose: () => void
@@ -167,7 +167,7 @@ function Lightbox({
  * y al lado (debajo en pantallas chicas) la explicación y la lista de pasos.
  * Se navega con clic, con los botones o con ← →.
  */
-export function DocWalkthrough({ steps }: { steps: DocStep[] }) {
+export function DocWalkthrough({ steps }: { steps: DocImageStep[] }) {
   const [active, setActive] = useState(0)
   const [zoom, setZoom] = useState(false)
   const step = steps[active]

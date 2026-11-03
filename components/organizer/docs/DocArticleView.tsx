@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, ArrowUpRight, Lightbulb, MapPin, ShieldCheck } from 'lucide-react'
 
 import { DocThumb } from '@/components/organizer/docs/DocThumb'
+import { DocStepList } from '@/components/organizer/docs/DocStepList'
 import { DocWalkthrough } from '@/components/organizer/docs/DocWalkthrough'
 import { DocsShell, docsHref } from '@/components/organizer/docs/DocsShell'
-import { DOC_GROUPS, getAdjacentArticles, getDocArticle, type DocArticle } from '@/lib/docs/organizerDocs'
+import { DOC_GROUPS, getAdjacentArticles, getDocArticle, isIllustrated, type DocArticle } from '@/lib/docs/organizerDocs'
 
 function groupLabel(a: DocArticle) {
   return DOC_GROUPS.find(g => g.key === a.group)?.label ?? ''
@@ -91,10 +92,16 @@ export function DocArticleView({ eventId, slug }: { eventId?: string; slug: stri
 
           <section className="mb-10">
             <SectionTitle id="como-funciona">Cómo funciona</SectionTitle>
-            <DocWalkthrough key={article.slug} steps={article.steps} />
-            <p className="mt-2 text-[12px] text-gray-400">
-              Tocá un paso o usá las flechas ← → para avanzar. Las capturas usan datos de ejemplo.
-            </p>
+            {isIllustrated(article.steps) ? (
+              <>
+                <DocWalkthrough key={article.slug} steps={article.steps} />
+                <p className="mt-2 text-[12px] text-gray-400">
+                  Tocá un paso o usá las flechas ← → para avanzar. Las capturas usan datos de ejemplo.
+                </p>
+              </>
+            ) : (
+              <DocStepList steps={article.steps} />
+            )}
           </section>
 
           {article.notes?.length ? (

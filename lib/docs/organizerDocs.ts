@@ -29,9 +29,18 @@ export type DocImage = {
 export type DocStep = {
   title: string
   body: string
-  image: DocImage
+  /** Captura del paso. Si ningún paso del artículo la tiene, se muestra como lista de pasos. */
+  image?: DocImage
   /** Punto a señalar sobre la captura, en porcentaje (0–100). */
   spot?: { x: number; y: number }
+}
+
+/** Paso con captura: lo que necesita el recorrido interactivo. */
+export type DocImageStep = DocStep & { image: DocImage }
+
+/** Un artículo es ilustrado cuando todos sus pasos traen captura. */
+export function isIllustrated(steps: DocStep[]): steps is DocImageStep[] {
+  return steps.length > 0 && steps.every(s => s.image !== undefined)
 }
 
 export type DocArticle = {
@@ -327,6 +336,50 @@ export const DOC_ARTICLES: DocArticle[] = [
     ],
     tips: ['Usalo desde el celular: en la barra inferior el escáner es el botón central.'],
     related: ['pedidos', 'puntos-retiro', 'tickets'],
+  },
+
+  {
+    slug: 'arrepentimientos',
+    group: 'operacion',
+    title: 'Arrepentimientos',
+    summary: 'Recibí las solicitudes de compradores que se arrepintieron y cancelá el QR de sus pedidos.',
+    toolPath: 'arrepentimientos',
+    location: 'Operación → Arrepentimientos',
+    access: 'Permiso “Pedidos”',
+    steps: [
+      {
+        title: 'El comprador usa el botón del catálogo',
+        body: 'Al final de tu catálogo hay un botón “Botón de arrepentimiento”. Lleva a un formulario donde el comprador deja su nombre y apellido, e-mail, alias o datos bancarios del titular, WhatsApp, el detalle de la compra y un screenshot de la confirmación. Todos los campos son obligatorios.',
+      },
+      {
+        title: 'Compartí el link si hace falta',
+        body: 'Arriba de la lista está el “Link del formulario”. Tocá “Copiar link” para mandárselo a un comprador que te escribe por fuera del catálogo.',
+      },
+      {
+        title: 'Revisá las solicitudes',
+        body: 'La lista muestra cada solicitud con nombre, e-mail, fecha y cuántos pedidos tiene ese e-mail en el evento. Filtrá por Pendientes, Gestionados o Todos. El número junto a “Pendientes” cuenta las que todavía no atendiste.',
+      },
+      {
+        title: 'Entrá al detalle',
+        body: 'Ves todos los datos que cargó el comprador (con el screenshot ampliable) y, abajo, los pedidos del evento hechos con ese mismo e-mail. Comparalos con el detalle y el screenshot para confirmar que es su compra.',
+      },
+      {
+        title: 'Cancelá el QR del pedido',
+        body: 'En el pedido que corresponda tocá “Cancelar QR”. Te pedimos confirmación y te recordamos que solo se cancela el QR. El pedido pasa a Cancelado, el QR deja de funcionar en el escáner y el comprador recibe un aviso por e-mail.',
+      },
+      {
+        title: 'Devolvé el pago y marcá la solicitud',
+        body: 'Cancelar el QR no devuelve el dinero: el reembolso lo hacés vos, a la cuenta que el comprador indicó en “Alias o datos bancarios”, y lo coordinás con él por WhatsApp. Cuando termines, tocá “Marcar como gestionado” para sacarla de Pendientes.',
+      },
+    ],
+    notes: [
+      'Cancelar el QR no devuelve el pago. Nubapay no hace reembolsos: el organizador del evento es quien devuelve el dinero.',
+      'Cancelar un QR no se puede deshacer. Los pedidos ya entregados no se pueden cancelar.',
+      'Si no aparece ningún pedido, es que el comprador usó otro e-mail al comprar. Buscalo en Pedidos por nombre o por el detalle que dejó.',
+      'Cada persona puede enviar hasta 3 solicitudes por evento cada 24 horas.',
+    ],
+    tips: ['Respondé por WhatsApp apenas llegue la solicitud: confirma que la recibiste y evita que la repita.'],
+    related: ['pedidos', 'escaner', 'pagos'],
   },
 
   // ── Catálogo ──────────────────────────────────────────────────────────────
@@ -685,6 +738,50 @@ export const DOC_ARTICLES: DocArticle[] = [
     ],
     notes: ['Los cambios se aplican al tocar “Guardar cambios”.'],
     related: ['puntos-retiro'],
+  },
+
+  {
+    slug: 'dominio-propio',
+    group: 'ajustes',
+    title: 'Dominio propio',
+    summary: 'Conectá tu dominio (por ejemplo pedidos.tumarca.com) para que tu catálogo salga bajo tu propia dirección.',
+    toolPath: 'marca',
+    location: 'Ajustes → Cuenta → Marca y dominios',
+    access: 'Solo el dueño, en cuentas con marca blanca',
+    steps: [
+      {
+        title: 'Entrá a Marca y dominios',
+        body: 'En Ajustes → Cuenta tocá “Marca y dominios” y bajá hasta la sección “Tu propio dominio”. Si no ves esa opción, tu cuenta todavía no tiene la marca blanca habilitada.',
+      },
+      {
+        title: 'Escribí tu dirección web',
+        body: 'En “Dirección web” ingresá el dominio completo, por ejemplo pedidos.tumarca.com, y tocá “Agregar”. Recomendamos un subdominio (pedidos., entradas., tienda.) para no tocar el sitio principal de tu marca.',
+      },
+      {
+        title: 'Copiá los registros DNS',
+        body: 'Te mostramos los registros que tenés que cargar: un CNAME apuntando a cname.vercel-dns.com (si usás un dominio sin subdominio, un registro A con la IP que ves en pantalla y un CNAME para www) y un registro TXT con tu código de verificación. Copialos antes de cerrar la página: el código TXT no se vuelve a mostrar.',
+      },
+      {
+        title: 'Cargalos en tu proveedor de dominio',
+        body: 'Entrá al panel de donde compraste el dominio (GoDaddy, Namecheap, Cloudflare, etc.), abrí la zona de DNS y creá cada registro con el tipo, el nombre y el valor exactos. En Cloudflare dejá el CNAME en “Solo DNS” (nube gris).',
+      },
+      {
+        title: 'Verificá el dominio',
+        body: 'Volvé a Nubapay y tocá “Verificar”. Si los registros ya se propagaron, el dominio pasa de Pendiente a Activo. La propagación puede tardar hasta 48 horas: si falla, esperá y probá de nuevo.',
+      },
+      {
+        title: 'Compartí tu nueva dirección',
+        body: 'Cuando el dominio está Activo, el catálogo, los tickets y el botón de arrepentimiento también se abren desde tu dominio, y los links que copiás en el panel ya usan esa dirección.',
+      },
+    ],
+    notes: [
+      'El código TXT se muestra una sola vez, al agregar el dominio. Si lo perdés, eliminá el dominio y agregalo de nuevo para generar uno nuevo.',
+      'El dominio sin verificar no sirve tu catálogo: hasta que figure Activo, seguí compartiendo tu dirección de Nubapay.',
+      'Eliminar un dominio es definitivo y deja de funcionar al instante: actualizá los QR y links impresos antes de borrarlo.',
+      'No necesitás dominio propio para vender: tu catálogo funciona desde el primer momento en tu dirección de Nubapay.',
+    ],
+    tips: ['Si no sabés dónde cargar los DNS, pedile a quien administra tu dominio que cree los tres registros que te mostramos.'],
+    related: ['link-catalogo', 'configuracion'],
   },
 
   // ── Comprador ─────────────────────────────────────────────────────────────

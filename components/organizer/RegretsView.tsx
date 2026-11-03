@@ -1,12 +1,15 @@
 'use client'
 
-import { ChevronRight, Undo2 } from 'lucide-react'
+import { Check, ChevronRight, Copy, Undo2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 
 import { fullDateTime, initials } from '@/components/organizer/orders/orderUi'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { PaginationBar } from '@/components/ui/PaginationBar'
+import { regretPath } from '@/lib/buyerRoutes'
+import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
+import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import { fetchRegrets, type PaginationMeta, type RegretStatus, type WorkspaceRegret } from '@/lib/organizerWorkspace'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +35,65 @@ export function RegretStatusBadge({ status }: { status: RegretStatus }) {
       <span className={cn('size-1.5 rounded-full', resolved ? 'bg-emerald-500' : 'bg-amber-400')} aria-hidden />
       {resolved ? 'Gestionado' : 'Pendiente'}
     </span>
+  )
+}
+
+/** Link público del formulario de arrepentimiento, listo para copiar y compartir. */
+function RegretLinkCard({ eventId }: { eventId: string }) {
+  const origin = usePublicOrigin()
+  const [slug, setSlug] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchOrganizerEventDetail(eventId)
+      .then(res => {
+        if (!cancelled && res.ok) setSlug(res.event.slug ?? '')
+      })
+      .catch(() => {
+        /* sin slug no hay link: la tarjeta queda deshabilitada */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  const url = slug.trim() && origin ? `${origin}${regretPath(slug)}` : ''
+
+  const copy = () => {
+    if (!url) return
+    void navigator.clipboard?.writeText(url).then(() => {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    })
+  }
+
+  return (
+    <div className="mb-5 rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <p className="text-[13px] font-semibold text-gray-900">Link del formulario</p>
+      <p className="mt-0.5 text-[12px] text-gray-500">
+        Es el mismo que abre el botón del catálogo. Compartilo si un comprador te lo pide.
+      </p>
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          readOnly
+          value={url}
+          placeholder="Cargando…"
+          aria-label="Link del formulario de arrepentimiento"
+          onFocus={e => e.currentTarget.select()}
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-700 outline-none focus:border-gray-300"
+        />
+        <button
+          type="button"
+          onClick={copy}
+          disabled={!url}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
+        >
+          {copied ? <Check size={14} strokeWidth={2} aria-hidden /> : <Copy size={14} strokeWidth={1.75} aria-hidden />}
+          {copied ? 'Copiado' : 'Copiar link'}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -80,6 +142,8 @@ export function RegretsView({ eventId }: { eventId: string }) {
         title="Arrepentimientos"
         description="Solicitudes de compradores que se arrepintieron de su compra."
       />
+
+      <RegretLinkCard eventId={eventId} />
 
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filtrar por estado">
         {FILTERS.map(f => (
