@@ -346,6 +346,82 @@ export async function patchOrderStatus(
   return { ok: true, order: body.order }
 }
 
+export type RegretStatus = 'pending' | 'resolved'
+
+export type WorkspaceRegret = {
+  id: string
+  eventId: string
+  fullName: string
+  email: string
+  bankAlias: string
+  whatsapp: string
+  purchaseDetail: string
+  screenshotUrl: string
+  status: RegretStatus
+  createdAt: string
+  /** Pedidos del evento hechos con el mismo e-mail. */
+  orderCount?: number
+}
+
+export async function fetchRegrets(
+  eventId: string,
+  opts?: { page?: number; pageSize?: number; status?: RegretStatus },
+): Promise<
+  | { ok: true; regrets: WorkspaceRegret[]; pagination: PaginationMeta; pendingCount: number }
+  | { ok: false; error: string }
+> {
+  const res = await browserFetch(
+    workspacePath(eventId, 'regrets', {
+      page: opts?.page ?? 1,
+      page_size: opts?.pageSize ?? 30,
+      status: opts?.status,
+    }),
+    { headers: authHeadersJson() },
+  )
+  const body = (await res.json()) as {
+    regrets?: WorkspaceRegret[]
+    pagination?: Partial<PaginationMeta>
+    pending_count?: number
+    error?: string
+  }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error al cargar los arrepentimientos' }
+  const regrets = body.regrets ?? []
+  return {
+    ok: true,
+    regrets,
+    pagination: readPagination(body, regrets.length),
+    pendingCount: body.pending_count ?? 0,
+  }
+}
+
+/** Detalle de un arrepentimiento junto con los pedidos asociados a su e-mail. */
+export async function fetchRegret(
+  eventId: string,
+  regretId: string,
+): Promise<{ ok: true; regret: WorkspaceRegret; orders: Order[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `regrets/${encodeURIComponent(regretId)}`), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { regret?: WorkspaceRegret; orders?: Order[]; error?: string }
+  if (!res.ok || !body.regret) return { ok: false, error: body.error ?? 'Solicitud no encontrada' }
+  return { ok: true, regret: body.regret, orders: body.orders ?? [] }
+}
+
+export async function patchRegretStatus(
+  eventId: string,
+  regretId: string,
+  status: RegretStatus,
+): Promise<{ ok: true; regret: WorkspaceRegret } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `regrets/${encodeURIComponent(regretId)}`), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ status }),
+  })
+  const body = (await res.json()) as { regret?: WorkspaceRegret; error?: string }
+  if (!res.ok || !body.regret) return { ok: false, error: body.error ?? 'No se pudo actualizar' }
+  return { ok: true, regret: body.regret }
+}
+
 export async function previewQr(
   eventId: string,
   orderId: string,

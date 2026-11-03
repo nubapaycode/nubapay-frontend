@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronsUpDown, Landmark, LogOut, QrCode, Search, Settings, Ticket, User, Users } from 'lucide-react'
+import { ChevronsUpDown, Landmark, LogOut, QrCode, Search, Settings, Ticket, Undo2, User, Users } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { OPEN_COMMAND_EVENT } from '@/components/organizer/commandEvents'
@@ -132,6 +132,14 @@ function navItems(basePath: string): NavItem[] {
       mobileTabOrder: 2,
       tool: 'orders',
       tourId: 'sidebar-orders',
+    },
+    {
+      href: `${basePath}/arrepentimientos`,
+      label: 'Arrepentimientos',
+      group: 'operacion',
+      icon: <Undo2 size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />,
+      showDesktop: true,
+      tool: 'orders',
     },
     {
       href: `${basePath}/pickup-points`,

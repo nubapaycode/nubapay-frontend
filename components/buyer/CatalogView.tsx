@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { useLayoutEffect, useState } from 'react'
 import Image from 'next/image'
-import { buyerFlowPath, ticketsPath } from '@/lib/buyerRoutes'
+import { buyerFlowPath, regretPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { useCart } from '@/lib/hooks/useCart'
@@ -449,6 +449,30 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             }
           />
         )}
+
+        {/* Arrepentimiento de compra: al final de la página, discreto y siempre a mano. */}
+        <div
+          className="mt-10 flex flex-col items-center gap-2 pt-6 text-center"
+          style={{ borderTop: `1px solid ${BUYER_COLORS.border}` }}
+        >
+          <p className="text-xs" style={{ color: BUYER_COLORS.muted }}>
+            ¿Te arrepentiste de tu compra?
+          </p>
+          <a
+            href={regretPath(slug)}
+            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors active:opacity-70"
+            style={{
+              background: BUYER_COLORS.chipInactiveBg,
+              border: `1px solid ${BUYER_COLORS.chipInactiveBorder}`,
+              color: BUYER_COLORS.text,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+              <path d="M4.5 2.5L2 5l2.5 2.5M2 5h5.5a3 3 0 010 6H5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Botón de arrepentimiento
+          </a>
+        </div>
       </div>
       </>
       )}
