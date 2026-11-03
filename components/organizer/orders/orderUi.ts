@@ -1,3 +1,4 @@
+import { arDayKey, formatArDayMonth, formatArDayMonthShort, formatArTime, parseApiDate } from '@/lib/dateTime'
 import type { Order } from '@/types'
 
 export type StatusFilter = 'all' | 'unredeemed' | 'partially_delivered' | 'delivered' | 'cancelled'
@@ -42,26 +43,22 @@ export function scanInfo(order: Order): { units: number; redeemed: number | null
   return { units, redeemed: 0 }
 }
 
-// Formato 24 h: "20:12" entra en una línea y se lee mejor que "08:12 p. m." en eventos nocturnos.
-const TIME_FMT = new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
-const DAY_FMT = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' })
-
-/** "hace 4 min" para lo reciente; "26/10 · 14:32" para lo anterior a hoy. */
+/** "hace 4 min" para lo reciente; "26/10 · 14:32" para lo anterior a hoy (hora argentina, 24 h). */
 export function relativeTime(iso: string, now: number): string {
-  const t = new Date(iso).getTime()
+  const d = parseApiDate(iso)
+  const t = d.getTime()
   if (Number.isNaN(t)) return '—'
   const mins = Math.floor((now - t) / 60_000)
   if (mins < 1) return 'recién'
   if (mins < 60) return `hace ${mins} min`
-  const d = new Date(t)
-  if (new Date(now).toDateString() === d.toDateString()) return TIME_FMT.format(d)
-  return `${DAY_FMT.format(d)} · ${TIME_FMT.format(d)}`
+  if (arDayKey(new Date(now)) === arDayKey(d)) return formatArTime(d)
+  return `${formatArDayMonth(d)} · ${formatArTime(d)}`
 }
 
 export function fullDateTime(iso: string): string {
-  const d = new Date(iso)
+  const d = parseApiDate(iso)
   if (Number.isNaN(d.getTime())) return '—'
-  return `${d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} · ${TIME_FMT.format(d)}`
+  return `${formatArDayMonthShort(d)} · ${formatArTime(d)}`
 }
 
 export function itemsSummary(order: Order): string {

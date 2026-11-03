@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Download } from 'lucide-react'
 import Image from 'next/image'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatArDateTime } from '@/lib/dateTime'
 import { formatPrice } from '@/lib/utils'
 import { catalogPaths } from '@/lib/api/paths'
 import { ticketsPath } from '@/lib/buyerRoutes'
@@ -234,10 +235,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const queueDepth = order?.queue_depth ?? 0
 
   const formattedDate = order?.created_at
-    ? new Date(order.created_at).toLocaleString('es-AR', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-      })
+    ? formatArDateTime(order.created_at)
     : ''
 
   // Status hero config

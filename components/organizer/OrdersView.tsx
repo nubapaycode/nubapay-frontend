@@ -37,6 +37,7 @@ import type {
   PaginationMeta,
   WorkspaceCategory,
 } from '@/lib/organizerWorkspace'
+import { AR_TIME_ZONE, formatArDateTime } from '@/lib/dateTime'
 import { cn } from '@/lib/utils'
 import type { Order } from '@/types'
 
@@ -390,7 +391,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
                 Se actualiza solo
                 {lastRefresh && (
                   <span className="tabular-nums">
-                    · {lastRefresh.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })}
+                    · {lastRefresh.toLocaleTimeString('es-AR', { timeZone: AR_TIME_ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })}
                   </span>
                 )}
               </>
@@ -683,7 +684,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
                         </span>
 
                         {/* Hora (escritorio) */}
-                        <span className="hidden whitespace-nowrap text-right text-[12px] tabular-nums text-gray-400 md:block" title={new Date(order.createdAt).toLocaleString('es-AR')}>
+                        <span className="hidden whitespace-nowrap text-right text-[12px] tabular-nums text-gray-400 md:block" title={formatArDateTime(order.createdAt)}>
                           {relativeTime(order.createdAt, now)}
                         </span>
                       </div>

@@ -22,6 +22,7 @@ import {
   type Preset,
 } from '@/components/organizer/dashboard/PeriodPicker'
 import { SalesChart, pointValue, type ChartMetric } from '@/components/organizer/dashboard/SalesChart'
+import { AR_TIME_ZONE } from '@/lib/dateTime'
 import type { DashboardPaymentKey, DashboardRange, DashboardSummary } from '@/lib/organizerWorkspace'
 import { fetchEventDashboard } from '@/lib/organizerWorkspace'
 
@@ -294,7 +295,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="flex shrink-0 items-center gap-1.5">
           {lastUpdated && (
             <span className="mr-1 text-[12px] tabular-nums text-gray-400">
-              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
+              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { timeZone: AR_TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
             </span>
           )}
           <button

@@ -15,6 +15,7 @@ import {
   type PaymentsSummary,
   type WorkspacePayment,
 } from '@/lib/organizerWorkspace'
+import { formatArDateTime } from '@/lib/dateTime'
 import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
@@ -308,7 +309,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
                     </span>
                     <span
                       className="col-span-2 whitespace-nowrap text-[12px] tabular-nums text-gray-400 md:col-span-1 md:text-right"
-                      title={when ? new Date(when).toLocaleString('es-AR', { hourCycle: 'h23' }) : undefined}
+                      title={when ? formatArDateTime(when, { second: '2-digit' }) : undefined}
                     >
                       {when ? relativeTime(when, now) : '—'}
                     </span>

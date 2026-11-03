@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { settlementDue, settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatArDateTime } from '@/lib/dateTime'
 import { fetchAllApprovedPayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 
@@ -21,12 +22,7 @@ const channelClass: Record<string, string> = {
 
 function fmtDate(s: string | null | undefined) {
   if (!s) return '—'
-  const d = new Date(s)
-  return (
-    d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-    + ' '
-    + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  )
+  return formatArDateTime(s, { year: '2-digit' })
 }
 
 export function CommissionView({ eventId }: { eventId: string }) {
