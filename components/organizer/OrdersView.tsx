@@ -198,7 +198,6 @@ export function OrdersView({ eventId }: { eventId: string }) {
       if (s.status) setStatus(s.status)
       if (s.payment) setPayment(s.payment)
       if (s.unpaid) setUnpaid(true)
-      setIsPlatformAdmin(Boolean(getAuthUser()?.is_platform_admin))
       if (s.cats) setCats(s.cats)
       if (s.q) {
         setSearchInput(s.q)
@@ -207,6 +206,14 @@ export function OrdersView({ eventId }: { eventId: string }) {
       if (s.orderId) setSelectedId(s.orderId)
       setHydrated(true)
     })
+  }, [])
+
+  // El guard del organizador refresca la sesión (/auth/me) después de montar: se vuelve a leer al cambiar.
+  useEffect(() => {
+    const sync = () => setIsPlatformAdmin(Boolean(getAuthUser()?.is_platform_admin))
+    sync()
+    window.addEventListener('nubapay-auth-change', sync)
+    return () => window.removeEventListener('nubapay-auth-change', sync)
   }, [])
 
   useEffect(() => {
