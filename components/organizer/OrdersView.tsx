@@ -54,6 +54,8 @@ type UrlState = {
   /** Estados elegidos; vacío = todos. */
   status: StatusFilter[]
   payment: DashboardPaymentKey | null
+  /** Incluye pedidos sin pago aprobado (por defecto solo se listan los pagados). */
+  unpaid: boolean
   cats: string[]
   q: string
   orderId: string | null
@@ -71,6 +73,7 @@ function readUrlState(): Partial<UrlState> {
   }
   const pago = p.get('pago')
   if (pago && PAYMENT_CONFIG.some(c => c.key === pago)) out.payment = pago as DashboardPaymentKey
+  if (p.get('sinpagar') === '1') out.unpaid = true
   const cat = p.get('categoria')
   if (cat) out.cats = cat.split(',').filter(Boolean)
   const q = p.get('q')
@@ -82,15 +85,26 @@ function readUrlState(): Partial<UrlState> {
 
 function writeUrlState(s: UrlState) {
   const p = new URLSearchParams(window.location.search)
-  for (const k of ['vista', 'estado', 'pago', 'categoria', 'q', 'pedido']) p.delete(k)
+  for (const k of ['vista', 'estado', 'pago', 'sinpagar', 'categoria', 'q', 'pedido']) p.delete(k)
   if (s.tab === 'scans') p.set('vista', 'escaneos')
   if (s.status.length) p.set('estado', s.status.join(','))
   if (s.payment) p.set('pago', s.payment)
+  if (s.unpaid) p.set('sinpagar', '1')
   if (s.cats.length) p.set('categoria', s.cats.join(','))
   if (s.q) p.set('q', s.q)
   if (s.orderId) p.set('pedido', s.orderId)
   const qs = p.toString()
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`)
+}
+
+/** Marca los pedidos que todavía no tienen el pago aprobado (solo visibles con "Incluir sin pagar"). */
+function UnpaidBadge({ order }: { order: Order }) {
+  if (order.paymentStatus === 'approved') return null
+  return (
+    <span className="whitespace-nowrap rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+      Sin pagar
+    </span>
+  )
 }
 
 function ScanProgress({ order }: { order: Order }) {
@@ -145,6 +159,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [scanRefresh, setScanRefresh] = useState(0)
   const [status, setStatus] = useState<StatusFilter[]>([])
   const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
+  const [unpaid, setUnpaid] = useState(false)
   const [cats, setCats] = useState<string[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [searchQ, setSearchQ] = useState('')
@@ -178,6 +193,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       if (s.tab) setTab(s.tab)
       if (s.status) setStatus(s.status)
       if (s.payment) setPayment(s.payment)
+      if (s.unpaid) setUnpaid(true)
       if (s.cats) setCats(s.cats)
       if (s.q) {
         setSearchInput(s.q)
@@ -190,8 +206,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     if (!hydrated) return
-    writeUrlState({ tab, status, payment, cats, q: searchQ, orderId: selectedId })
-  }, [hydrated, tab, status, payment, cats, searchQ, selectedId])
+    writeUrlState({ tab, status, payment, unpaid, cats, q: searchQ, orderId: selectedId })
+  }, [hydrated, tab, status, payment, unpaid, cats, searchQ, selectedId])
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -243,7 +259,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       const res = await fetchWorkspaceOrders(eventId, {
         page,
         pageSize: PAGE_SIZE,
-        paymentStatus: 'approved',
+        paymentStatus: unpaid ? undefined : 'approved',
         q: searchQ || undefined,
         status: status.length ? status.join(',') : undefined,
         payment,
@@ -269,7 +285,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       setLoading(false)
       setRefreshing(false)
     },
-    [eventId, page, searchQ, status, payment, cats],
+    [eventId, page, searchQ, status, payment, unpaid, cats],
   )
 
   useEffect(() => {
@@ -317,6 +333,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
   }
   const setStatusF = changeFilter(setStatus)
   const setPaymentF = changeFilter(setPayment)
+  const setUnpaidF = changeFilter(setUnpaid)
   const setCatsF = changeFilter(setCats)
 
   const handleCancelOrder = useCallback(
@@ -336,7 +353,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
     : null
   const countFor = (k: StatusFilter) => (k === 'all' ? totalAll : statusCounts?.[k] ?? null)
   const currentFilters = {
-    paymentStatus: 'approved',
+    paymentStatus: unpaid ? undefined : 'approved',
     q: searchQ || undefined,
     status: status.length ? status.join(',') : undefined,
     payment,
@@ -360,7 +377,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       return next
     })
 
-  const hasFilters = Boolean(searchQ || payment || cats.length || status.length)
+  const hasFilters = Boolean(searchQ || payment || unpaid || cats.length || status.length)
   const redeemPct = summary && summary.units ? Math.round((summary.redeemed_units / summary.units) * 100) : null
 
   return (
@@ -473,6 +490,20 @@ export function OrdersView({ eventId }: { eventId: string }) {
               selected={payment ? [payment] : []}
               onChange={v => setPaymentF((v[0] as DashboardPaymentKey | undefined) ?? null)}
             />
+            <button
+              type="button"
+              aria-pressed={unpaid}
+              onClick={() => setUnpaidF(!unpaid)}
+              title="Mostrar también los pedidos que todavía no tienen el pago aprobado"
+              className={cn(
+                'inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors',
+                unpaid
+                  ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+              )}
+            >
+              Incluir sin pagar
+            </button>
             {categories.length > 0 && (
               <FilterMenu
                 label="Categoría"
@@ -496,9 +527,10 @@ export function OrdersView({ eventId }: { eventId: string }) {
         )}
       </div>
 
-      {tab === 'orders' && (payment || cats.length > 0) && (
+      {tab === 'orders' && (payment || unpaid || cats.length > 0) && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {payment && <FilterChip label="Pago" value={PAY_LABEL[payment]} onClear={() => setPaymentF(null)} />}
+          {unpaid && <FilterChip label="Incluye" value="Sin pagar" onClear={() => setUnpaidF(false)} />}
           {cats.map(c => (
             <FilterChip key={c} label="Categoría" value={c} onClear={() => setCatsF(cats.filter(x => x !== c))} />
           ))}
@@ -506,6 +538,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => {
               setPaymentF(null)
+              setUnpaidF(false)
               setCatsF([])
             }}
             className="px-1 text-[12px] font-medium text-gray-400 transition-colors hover:text-gray-900"
@@ -627,7 +660,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
                         </span>
 
                         {/* Estado en mobile va arriba a la derecha */}
-                        <span className="justify-self-end md:hidden">
+                        <span className="flex items-center gap-1.5 justify-self-end md:hidden">
+                          <UnpaidBadge order={order} />
                           <StatusBadge status={order.status} />
                         </span>
 
@@ -679,8 +713,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
                         </div>
 
                         {/* Estado (escritorio) */}
-                        <span className="hidden md:block">
+                        <span className="hidden flex-col items-start gap-1 md:flex">
                           <StatusBadge status={order.status} />
+                          <UnpaidBadge order={order} />
                         </span>
 
                         {/* Hora (escritorio) */}
