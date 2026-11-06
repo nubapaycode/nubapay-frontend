@@ -12,7 +12,7 @@ export async function generateMetadata({
   await params
   return organizerEventSectionMeta(
     'Comisión',
-    'Monto a pagar a Nubapay: costo de servicio o comisión del 1%, según cómo cobre el evento.',
+    'Monto total a pagar a Nubapay por tu evento (comisión y costo de servicio), por rango de fechas.',
   )
 }
 

@@ -10,13 +10,6 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }))
 
-jest.mock('@/lib/organizerEvents', () => ({
-  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({
-    ok: true,
-    event: { service_fee_enabled: false },
-  }),
-}))
-
 const owner: WorkspaceAccess = {
   basePath: '/eventos/e1',
   membership: 'owner',

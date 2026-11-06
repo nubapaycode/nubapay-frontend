@@ -202,6 +202,29 @@ export async function fetchEventDashboard(
   return { ok: true, data: body as DashboardSummary }
 }
 
+/** Lo que el evento le debe a Nubapay (comisión 1% + costo de servicio). Pedidos cancelados no cuentan. */
+export type CommissionSummary = {
+  range: DashboardRange | null
+  total_due: number
+  /** Facturado por el organizador en el período (sin costo de servicio). */
+  revenue: number
+  paid_orders: number
+  /** Pedidos pagos que se cancelaron y quedaron fuera del total. */
+  cancelled_orders: number
+}
+
+export async function fetchEventCommission(
+  eventId: string,
+  range?: DashboardRange | null,
+): Promise<{ ok: true; data: CommissionSummary } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'commission', { from: range?.from, to: range?.to }), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as CommissionSummary & { error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error al cargar la comisión' }
+  return { ok: true, data: body }
+}
+
 export type WorkspaceOrdersFilters = {
   q?: string
   /** Estado de la UI; `unredeemed` agrupa los pagados que todavía no se retiraron. */

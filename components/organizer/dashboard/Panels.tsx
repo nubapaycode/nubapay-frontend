@@ -227,7 +227,8 @@ export function TopProductsPanel({
 }
 
 export function StatusPanel({ summary }: { summary: DashboardSummary }) {
-  const total = summary.order_count || 0
+  // Los cancelados no cuentan en `order_count` (ni en lo recaudado), pero acá se listan: el total es la suma de las filas.
+  const total = STATUS_CONFIG.reduce((acc, s) => acc + (summary.by_status?.[s.key] ?? 0), 0)
   return (
     <Panel title="Estado de los pedidos" aside={<span className="text-[11px] tabular-nums text-gray-400">{formatCount(total)} en total</span>}>
       <ul className="flex flex-col gap-3">

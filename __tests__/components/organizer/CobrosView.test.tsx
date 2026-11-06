@@ -1,20 +1,18 @@
-import { render, screen } from '@testing-library/react'
-import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
-import { fetchWorkspacePayments } from '@/lib/organizerWorkspace'
+import { render, screen, waitFor } from '@testing-library/react'
+import { fetchEventCommission, fetchWorkspacePayments } from '@/lib/organizerWorkspace'
 
 import { CobrosView } from '@/components/organizer/CobrosView'
 import type { WorkspaceAccess } from '@/components/organizer/WorkspaceAccessContext'
 import { WorkspaceAccessProvider } from '@/components/organizer/WorkspaceAccessContext'
 import { ORGANIZER_FULL_TOOLS, ORGANIZER_ZERO_TOOLS } from '@/lib/organizerStaffTools'
 
-jest.mock('@/lib/organizerWorkspace', () => ({ fetchWorkspacePayments: jest.fn() }))
-jest.mock('@/lib/organizerEvents', () => ({ fetchOrganizerEventDetail: jest.fn() }))
+jest.mock('@/lib/organizerWorkspace', () => ({ fetchWorkspacePayments: jest.fn(), fetchEventCommission: jest.fn() }))
 
 beforeEach(() => {
   jest.clearAllMocks()
-  jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
+  jest.mocked(fetchEventCommission).mockResolvedValue({
     ok: true,
-    event: { service_fee_enabled: false } as never,
+    data: { range: null, total_due: 2345.5, revenue: 4500, paid_orders: 2, cancelled_orders: 0 },
   })
   jest.mocked(fetchWorkspacePayments).mockResolvedValue({
     ok: true,
@@ -45,7 +43,7 @@ function renderCobros(access: WorkspaceAccess) {
 }
 
 describe('CobrosView', () => {
-  it('el dueño ve Pagos, Métodos de pago y Comisión cuando el evento cobra el 1%', async () => {
+  it('el dueño ve Pagos, Métodos de pago y Comisión', async () => {
     renderCobros(owner)
     expect(screen.getByRole('link', { name: /Pagos/ })).toHaveAttribute('href', '/eventos/e1/pagos')
     expect(screen.getByRole('link', { name: /Métodos de pago/ })).toHaveAttribute('href', '/eventos/e1/metodos-pago')
@@ -53,27 +51,11 @@ describe('CobrosView', () => {
     expect(screen.queryByRole('link', { name: /Costo de servicio/ })).not.toBeInTheDocument()
   })
 
-  it('si el evento tiene costo de servicio, la tarjeta muestra ese monto y no la comisión', async () => {
-    jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
-      ok: true,
-      event: { service_fee_enabled: true } as never,
-    })
-    jest.mocked(fetchWorkspacePayments).mockResolvedValue({
-      ok: true,
-      payments: [],
-      pagination: { page: 1, page_size: 1, total: 1 },
-      summary: {
-        approved: { count: 1, amount: 1050, service_fee: 50 },
-        pending: { count: 0, amount: 0, service_fee: 0 },
-        rejected: { count: 0, amount: 0, service_fee: 0 },
-        refunded: { count: 0, amount: 0, service_fee: 0 },
-      },
-    })
+  it('la tarjeta de Comisión muestra el total a pagar (1% + costo de servicio) sin canceladas', async () => {
     renderCobros(owner)
-    const card = await screen.findByRole('link', { name: /Costo de servicio/ })
-    expect(card).toHaveAttribute('href', '/eventos/e1/comision')
-    expect(card).toHaveTextContent('50')
-    expect(screen.queryByRole('link', { name: /Comisión/ })).not.toBeInTheDocument()
+    const card = await screen.findByRole('link', { name: /Comisión/ })
+    await waitFor(() => expect(card).toHaveTextContent('2.345'))
+    expect(fetchEventCommission).toHaveBeenCalledWith('e1')
   })
 
   it('un staff con permiso de pagos solo ve Pagos', () => {
@@ -92,5 +74,6 @@ describe('CobrosView', () => {
   it('sin permiso de pagos no pide el resumen', () => {
     renderCobros({ ...owner, membership: 'staff', tools: ORGANIZER_ZERO_TOOLS })
     expect(fetchWorkspacePayments).not.toHaveBeenCalled()
+    expect(fetchEventCommission).not.toHaveBeenCalled()
   })
 })

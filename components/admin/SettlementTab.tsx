@@ -149,7 +149,7 @@ export function SettlementTab() {
           <p className="text-xs text-white/55">
             {fmtDayLong(data.range.from)} – {fmtDayLong(data.range.to)} · órdenes creadas en el período con pago aprobado. Los
             compradores le pagan directo a cada organizador: acá solo figura lo que te corresponde cobrar a vos. El modo de cobro
-            (comisión o costo de servicio) se configura por evento y queda registrado en cada orden. No incluye órdenes de test.
+            (comisión o costo de servicio) se configura por evento y queda registrado en cada orden. No incluye órdenes de test ni canceladas.
           </p>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
