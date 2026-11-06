@@ -38,6 +38,8 @@ import type {
   WorkspaceCategory,
 } from '@/lib/organizerWorkspace'
 import { AR_TIME_ZONE, formatArDateTime } from '@/lib/dateTime'
+import { getAuthUser } from '@/lib/authSession'
+import { markOrderPaidAsAdmin } from '@/lib/platformAdmin'
 import { cn } from '@/lib/utils'
 import type { Order } from '@/types'
 
@@ -160,6 +162,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [status, setStatus] = useState<StatusFilter[]>([])
   const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
   const [unpaid, setUnpaid] = useState(false)
+  // Solo los admins de plataforma ven "Marcar como pagada"; el backend lo vuelve a exigir.
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
   const [cats, setCats] = useState<string[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [searchQ, setSearchQ] = useState('')
@@ -194,6 +198,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       if (s.status) setStatus(s.status)
       if (s.payment) setPayment(s.payment)
       if (s.unpaid) setUnpaid(true)
+      setIsPlatformAdmin(Boolean(getAuthUser()?.is_platform_admin))
       if (s.cats) setCats(s.cats)
       if (s.q) {
         setSearchInput(s.q)
@@ -346,6 +351,19 @@ export function OrdersView({ eventId }: { eventId: string }) {
       return { ok: true as const }
     },
     [eventId, load],
+  )
+
+  const handleMarkPaid = useCallback(
+    async (order: Order, reason: string) => {
+      const res = await markOrderPaidAsAdmin(order.id, reason)
+      if (!res.ok) return res
+      const paid = (o: Order): Order => (o.id === order.id ? { ...o, paymentStatus: 'approved' } : o)
+      setOrders(prev => prev.map(paid))
+      setExternalOrder(prev => (prev ? paid(prev) : prev))
+      void load(true)
+      return { ok: true as const }
+    },
+    [load],
   )
 
   const totalAll = statusCounts
@@ -773,6 +791,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           onPrev={selectedIndex > 0 ? () => setSelectedId(orders[selectedIndex - 1].id) : undefined}
           onNext={selectedIndex >= 0 && selectedIndex < orders.length - 1 ? () => setSelectedId(orders[selectedIndex + 1].id) : undefined}
           onCancelOrder={handleCancelOrder}
+          onMarkPaid={isPlatformAdmin ? handleMarkPaid : undefined}
         />
       )}
     </div>

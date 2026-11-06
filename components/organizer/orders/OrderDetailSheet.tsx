@@ -17,9 +17,9 @@ function buildTimeline(order: Order): TimelineEvent[] {
   const events: TimelineEvent[] = [
     {
       at: order.createdAt,
-      title: 'Pedido pagado',
+      title: order.paymentStatus === 'approved' ? 'Pedido pagado' : 'Pedido creado, pago sin confirmar',
       detail: order.paymentMethod ? `con ${PAY_LABEL[order.paymentMethod] ?? order.paymentMethod}` : undefined,
-      tone: 'done',
+      tone: order.paymentStatus === 'approved' ? 'done' : 'warn',
     },
   ]
   // Los ítems retirados juntos comparten la marca de tiempo: se agrupan en un solo paso.
@@ -80,23 +80,33 @@ export function OrderDetailSheet({
   onPrev,
   onNext,
   onCancelOrder,
+  onMarkPaid,
 }: {
   order: Order
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
   onCancelOrder: (order: Order) => Promise<{ ok: true } | { ok: false; error: string }>
+  /** Solo se pasa a admins de plataforma: aprueba el pago a mano y envía el mail con el QR. */
+  onMarkPaid?: (order: Order, reason: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }) {
   const [cancelStage, setCancelStage] = useState<'none' | 'first' | 'second'>('none')
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
+  const [payOpen, setPayOpen] = useState(false)
+  const [payReason, setPayReason] = useState('')
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState('')
   // Al pasar a otro pedido con ↑/↓ se descarta una cancelación a medio confirmar.
   const [stageOrderId, setStageOrderId] = useState(order.id)
   if (stageOrderId !== order.id) {
     setStageOrderId(order.id)
     setCancelStage('none')
     setCancelError('')
+    setPayOpen(false)
+    setPayReason('')
+    setPayError('')
   }
 
   // Esc cierra; ↑/↓ o K/J pasan al pedido anterior/siguiente de la lista (como en Mercury / Linear).
@@ -122,6 +132,21 @@ export function OrderDetailSheet({
   const timeline = buildTimeline(order)
   const payColor = PAYMENT_CONFIG.find(p => p.key === order.paymentMethod)?.color
   const canCancel = order.status !== 'cancelled' && order.status !== 'delivered'
+  const canMarkPaid = Boolean(onMarkPaid) && order.paymentStatus !== 'approved' && canCancel
+
+  const confirmMarkPaid = async () => {
+    if (!onMarkPaid) return
+    setPaying(true)
+    setPayError('')
+    const res = await onMarkPaid(order, payReason.trim())
+    setPaying(false)
+    if (!res.ok) {
+      setPayError(res.error)
+      return
+    }
+    setPayOpen(false)
+    setPayReason('')
+  }
 
   const confirmCancel = async () => {
     setCancelling(true)
@@ -325,6 +350,62 @@ export function OrderDetailSheet({
               )}
             </div>
           </section>
+
+          {/* Marcar como pagada (solo admins de plataforma) */}
+          {canMarkPaid && (
+            <section className="border-t border-gray-100 px-5 py-4">
+              {payError && <p className="mb-2 text-[12px] text-red-600">{payError}</p>}
+              {!payOpen ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPayError('')
+                    setPayOpen(true)
+                  }}
+                  className="text-[13px] font-medium text-emerald-700 transition-colors hover:text-emerald-800"
+                >
+                  Marcar como pagada…
+                </button>
+              ) : (
+                <div className="nb-pop rounded-xl border border-emerald-100 bg-emerald-50/70 p-3.5">
+                  <p className="text-[13px] font-semibold text-emerald-900">Marcar como pagada</p>
+                  <p className="mt-1 text-[12px] text-emerald-800/80">
+                    Aprueba el pago <b>sin consultar al proveedor</b> y envía el mail con el QR al comprador. Usalo solo si ya
+                    verificaste el cobro.
+                  </p>
+                  <label className="mt-3 block text-[11px] font-medium text-emerald-900" htmlFor="mark-paid-reason">
+                    Motivo (mínimo 8 caracteres)
+                  </label>
+                  <input
+                    id="mark-paid-reason"
+                    value={payReason}
+                    onChange={e => setPayReason(e.target.value)}
+                    maxLength={300}
+                    placeholder="Ej: cobro verificado en Sipago, webhook perdido"
+                    className="mt-1 h-9 w-full rounded-lg border border-emerald-200 bg-white px-3 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:outline-none"
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPayOpen(false)}
+                      disabled={paying}
+                      className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void confirmMarkPaid()}
+                      disabled={paying || payReason.trim().length < 8}
+                      className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {paying ? 'Confirmando…' : 'Confirmar pago'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Cancelación en dos pasos */}
           {canCancel && (
