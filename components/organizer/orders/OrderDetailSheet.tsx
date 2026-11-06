@@ -87,7 +87,7 @@ export function OrderDetailSheet({
   onPrev?: () => void
   onNext?: () => void
   onCancelOrder: (order: Order) => Promise<{ ok: true } | { ok: false; error: string }>
-  /** Solo se pasa a admins de plataforma: aprueba el pago a mano y envía el mail con el QR. */
+  /** Solo se pasa al organizador (dueño) del evento: aprueba el pago a mano y envía el mail con el QR. */
   onMarkPaid?: (order: Order, reason: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }) {
   const [cancelStage, setCancelStage] = useState<'none' | 'first' | 'second'>('none')
@@ -351,7 +351,7 @@ export function OrderDetailSheet({
             </div>
           </section>
 
-          {/* Marcar como pagada (solo admins de plataforma) */}
+          {/* Marcar como pagada (solo el organizador del evento) */}
           {canMarkPaid && (
             <section className="border-t border-gray-100 px-5 py-4">
               {payError && <p className="mb-2 text-[12px] text-red-600">{payError}</p>}

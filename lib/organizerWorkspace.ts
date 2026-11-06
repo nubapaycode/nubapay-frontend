@@ -346,6 +346,26 @@ export async function patchOrderStatus(
   return { ok: true, order: body.order }
 }
 
+/** Aprueba a mano el pago de un pedido y envía el mail con el QR. Solo el organizador (dueño) del evento. */
+export async function markOrderPaid(
+  eventId: string,
+  orderId: string,
+  reason: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const res = await browserFetch(workspacePath(eventId, `orders/${orderId}/mark-paid`), {
+      method: 'POST',
+      headers: authHeadersJson(),
+      body: JSON.stringify({ reason }),
+    })
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo marcar como pagado' }
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'No se pudo conectar con el servidor' }
+  }
+}
+
 export type RegretStatus = 'pending' | 'resolved'
 
 export type WorkspaceRegret = {

@@ -28,6 +28,7 @@ import {
   fetchAllCategories,
   fetchWorkspaceOrder,
   fetchWorkspaceOrders,
+  markOrderPaid,
   patchOrderStatus,
 } from '@/lib/organizerWorkspace'
 import type {
@@ -39,7 +40,6 @@ import type {
 } from '@/lib/organizerWorkspace'
 import { AR_TIME_ZONE, formatArDateTime } from '@/lib/dateTime'
 import { getAuthUser } from '@/lib/authSession'
-import { markOrderPaidAsAdmin } from '@/lib/platformAdmin'
 import { cn } from '@/lib/utils'
 import type { Order } from '@/types'
 
@@ -162,8 +162,8 @@ export function OrdersView({ eventId }: { eventId: string }) {
   const [status, setStatus] = useState<StatusFilter[]>([])
   const [payment, setPayment] = useState<DashboardPaymentKey | null>(null)
   const [unpaid, setUnpaid] = useState(false)
-  // Solo los admins de plataforma ven "Marcar como pagada"; el backend lo vuelve a exigir.
-  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
+  // Solo el organizador (dueño) ve "Marcar como pagada": el staff del evento no; el backend lo vuelve a exigir.
+  const [isOwner, setIsOwner] = useState(false)
   const [cats, setCats] = useState<string[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [searchQ, setSearchQ] = useState('')
@@ -209,12 +209,13 @@ export function OrdersView({ eventId }: { eventId: string }) {
   }, [])
 
   // El guard del organizador refresca la sesión (/auth/me) después de montar: se vuelve a leer al cambiar.
+  // Con una membresía de staff para este evento no es el dueño.
   useEffect(() => {
-    const sync = () => setIsPlatformAdmin(Boolean(getAuthUser()?.is_platform_admin))
+    const sync = () => setIsOwner(!getAuthUser()?.staff_memberships?.some(m => m.event_id === eventId))
     sync()
     window.addEventListener('nubapay-auth-change', sync)
     return () => window.removeEventListener('nubapay-auth-change', sync)
-  }, [])
+  }, [eventId])
 
   useEffect(() => {
     if (!hydrated) return
@@ -362,7 +363,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
 
   const handleMarkPaid = useCallback(
     async (order: Order, reason: string) => {
-      const res = await markOrderPaidAsAdmin(order.id, reason)
+      const res = await markOrderPaid(eventId, order.id, reason)
       if (!res.ok) return res
       const paid = (o: Order): Order => (o.id === order.id ? { ...o, paymentStatus: 'approved' } : o)
       setOrders(prev => prev.map(paid))
@@ -370,7 +371,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
       void load(true)
       return { ok: true as const }
     },
-    [load],
+    [eventId, load],
   )
 
   const totalAll = statusCounts
@@ -798,7 +799,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           onPrev={selectedIndex > 0 ? () => setSelectedId(orders[selectedIndex - 1].id) : undefined}
           onNext={selectedIndex >= 0 && selectedIndex < orders.length - 1 ? () => setSelectedId(orders[selectedIndex + 1].id) : undefined}
           onCancelOrder={handleCancelOrder}
-          onMarkPaid={isPlatformAdmin ? handleMarkPaid : undefined}
+          onMarkPaid={isOwner ? handleMarkPaid : undefined}
         />
       )}
     </div>
