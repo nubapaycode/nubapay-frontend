@@ -465,6 +465,132 @@ export async function patchRegretStatus(
   return { ok: true, regret: body.regret }
 }
 
+export type AnnouncementAudienceType = 'all' | 'products' | 'categories' | 'tickets'
+
+export type AnnouncementAudience = { type: AnnouncementAudienceType; ids: string[] }
+
+export type AnnouncementStatus = 'sending' | 'sent' | 'partial' | 'failed'
+
+/** Contenido editable del aviso (también lo usa la vista previa). */
+export type AnnouncementContent = {
+  subject: string
+  title: string
+  body: string
+  ctaLabel: string
+  ctaUrl: string
+  accentColor: string
+  showCover: boolean
+  greetByName: boolean
+}
+
+export type WorkspaceAnnouncement = Omit<AnnouncementContent, 'ctaLabel' | 'ctaUrl'> & {
+  id: string
+  ctaLabel: string | null
+  ctaUrl: string | null
+  audience: AnnouncementAudience
+  audienceLabel: string
+  recipientCount: number
+  sentCount: number
+  failedCount: number
+  status: AnnouncementStatus
+  error: string | null
+  createdAt: string
+  finishedAt: string | null
+}
+
+export type AnnouncementDefaults = {
+  accentColor: string
+  storefrontUrl: string
+  hasCover: boolean
+  ownerEmail: string
+}
+
+export async function fetchAnnouncements(
+  eventId: string,
+): Promise<
+  | { ok: true; announcements: WorkspaceAnnouncement[]; defaults: AnnouncementDefaults }
+  | { ok: false; error: string }
+> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements'), { headers: authHeadersJson() })
+  const body = (await res.json()) as {
+    announcements?: WorkspaceAnnouncement[]
+    defaults?: AnnouncementDefaults
+    error?: string
+  }
+  if (!res.ok || !body.defaults) return { ok: false, error: body.error ?? 'Error al cargar los avisos' }
+  return { ok: true, announcements: body.announcements ?? [], defaults: body.defaults }
+}
+
+export async function fetchAnnouncement(
+  eventId: string,
+  announcementId: string,
+): Promise<{ ok: true; announcement: WorkspaceAnnouncement } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `announcements/${encodeURIComponent(announcementId)}`), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { announcement?: WorkspaceAnnouncement; error?: string }
+  if (!res.ok || !body.announcement) return { ok: false, error: body.error ?? 'Aviso no encontrado' }
+  return { ok: true, announcement: body.announcement }
+}
+
+/** Cantidad de compradores (e-mails únicos) que recibirían el aviso. */
+export async function countAnnouncementAudience(
+  eventId: string,
+  audience: AnnouncementAudience,
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/audience'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ audience }),
+  })
+  const body = (await res.json()) as { count?: number; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo calcular la audiencia' }
+  return { ok: true, count: body.count ?? 0 }
+}
+
+/** HTML del mail renderizado por el backend (mismo diseño que el envío real). */
+export async function previewAnnouncement(
+  eventId: string,
+  content: AnnouncementContent,
+): Promise<{ ok: true; html: string } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/preview'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(content),
+  })
+  const body = (await res.json()) as { html?: string; error?: string }
+  if (!res.ok || body.html == null) return { ok: false, error: body.error ?? 'No se pudo generar la vista previa' }
+  return { ok: true, html: body.html }
+}
+
+export async function sendTestAnnouncement(
+  eventId: string,
+  content: AnnouncementContent,
+): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/test'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(content),
+  })
+  const body = (await res.json()) as { email?: string; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo enviar la prueba' }
+  return { ok: true, email: body.email ?? '' }
+}
+
+export async function createAnnouncement(
+  eventId: string,
+  payload: AnnouncementContent & { audience: AnnouncementAudience },
+): Promise<{ ok: true; announcement: WorkspaceAnnouncement } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { announcement?: WorkspaceAnnouncement; error?: string }
+  if (!res.ok || !body.announcement) return { ok: false, error: body.error ?? 'No se pudo enviar el aviso' }
+  return { ok: true, announcement: body.announcement }
+}
+
 export async function previewQr(
   eventId: string,
   orderId: string,

@@ -15,6 +15,7 @@ import {
   Link2,
   LogOut,
   MapPin,
+  Megaphone,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
@@ -148,6 +149,14 @@ function navItems(basePath: string): NavItem[] {
       icon: icon(Undo2),
       showDesktop: true,
       tool: 'orders',
+    },
+    {
+      href: `${basePath}/avisos`,
+      label: 'Avisos',
+      group: 'operacion',
+      icon: icon(Megaphone),
+      showDesktop: true,
+      ownerOnly: true,
     },
     {
       href: `${basePath}/puntos-de-retiro`,
