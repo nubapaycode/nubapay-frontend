@@ -232,8 +232,19 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     if (!hydrated) return
-    const id = setInterval(() => void load(true), 30_000)
-    return () => clearInterval(id)
+    // Con la pestaña oculta no se refresca (cada carga recorre todos los pedidos del evento);
+    // al volver se trae lo último.
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') void load(true)
+    }, 30_000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void load(true)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [hydrated, load])
 
   if (loading) return <DashboardSkeleton />
