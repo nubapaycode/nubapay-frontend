@@ -10,15 +10,8 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }))
 
-jest.mock('@/lib/organizerEvents', () => ({
-  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({
-    ok: true,
-    event: { service_fee_enabled: false },
-  }),
-}))
-
 const owner: WorkspaceAccess = {
-  basePath: '/events/e1',
+  basePath: '/eventos/e1',
   membership: 'owner',
   tools: ORGANIZER_FULL_TOOLS,
   partnerBrand: false,
@@ -35,10 +28,10 @@ function renderTabs(access: WorkspaceAccess, pathname: string) {
 
 describe('WorkspaceSectionTabs', () => {
   it('muestra las pestañas de cobros y marca la activa', () => {
-    renderTabs(owner, '/events/e1/metodos-pago')
+    renderTabs(owner, '/eventos/e1/metodos-pago')
     expect(screen.getByRole('navigation', { name: 'Secciones de cobros' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Pagos' })).toHaveAttribute('href', '/events/e1/payments')
-    expect(screen.getByRole('link', { name: 'Comisión' })).toHaveAttribute('href', '/events/e1/comision')
+    expect(screen.getByRole('link', { name: 'Pagos' })).toHaveAttribute('href', '/eventos/e1/pagos')
+    expect(screen.getByRole('link', { name: 'Comisión' })).toHaveAttribute('href', '/eventos/e1/comision')
     expect(screen.getByRole('link', { name: 'Métodos de pago' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Pagos' })).not.toHaveAttribute('aria-current')
   })
@@ -49,12 +42,12 @@ describe('WorkspaceSectionTabs', () => {
       membership: 'staff',
       tools: { ...ORGANIZER_ZERO_TOOLS, payments: true },
     }
-    const { container } = renderTabs(staff, '/events/e1/payments')
+    const { container } = renderTabs(staff, '/eventos/e1/pagos')
     expect(container).toBeEmptyDOMElement()
   })
 
   it('no se muestra en subrutas como la configuración de Mercado Pago', () => {
-    const { container } = renderTabs(owner, '/events/e1/metodos-pago/mercadopago')
+    const { container } = renderTabs(owner, '/eventos/e1/metodos-pago/mercadopago')
     expect(container).toBeEmptyDOMElement()
   })
 })

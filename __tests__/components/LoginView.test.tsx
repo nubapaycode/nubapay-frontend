@@ -91,14 +91,14 @@ describe('LoginView', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'demo@nubapay.app')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'demo123')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/eventos'))
     expect(getAuthToken()).toBe('test-jwt')
   })
 
   it('modo login: el botón de cambio navega a /register', async () => {
     render(<LoginView initialMode="login" />)
     await userEvent.click(screen.getByRole('button', { name: /Registrate/i }))
-    expect(mockPush).toHaveBeenCalledWith('/register')
+    expect(mockPush).toHaveBeenCalledWith('/registro')
   })
 
   it('registro crea sesión y va a eventos', async () => {
@@ -107,14 +107,14 @@ describe('LoginView', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'new@test.com')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'password12')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta y entrar/i }))
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/events'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/eventos'))
     expect(getAuthToken()).toBe('reg-jwt')
   })
 
   it('modo register: el botón de cambio navega a /login', async () => {
     render(<LoginView initialMode="register" />)
     await userEvent.click(screen.getByRole('button', { name: /Iniciá sesión/i }))
-    expect(mockPush).toHaveBeenCalledWith('/login')
+    expect(mockPush).toHaveBeenCalledWith('/ingresar')
   })
 })
 
@@ -162,7 +162,7 @@ describe('LoginView con sesión guardada', () => {
       return { ok: false, status: 500, json: async () => ({}) } as Response
     })
     render(<LoginView />)
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/events'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/eventos'))
     expect(getAuthToken()).toBe('valid')
   })
 })

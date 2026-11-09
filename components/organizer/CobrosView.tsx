@@ -5,13 +5,12 @@ import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
-import { settlementDue, settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
 import { useWorkspaceAccess } from '@/components/organizer/WorkspaceAccessContext'
-import { fetchWorkspacePayments, type PaymentsSummary } from '@/lib/organizerWorkspace'
+import { fetchEventCommission, fetchWorkspacePayments, type PaymentsSummary } from '@/lib/organizerWorkspace'
 import { visibleSectionTabs } from '@/lib/organizerWorkspaceSections'
 
 const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
-  payments: {
+  pagos: {
     description: 'Cada cobro del evento, con su estado y el pedido al que pertenece.',
     icon: <CreditCard size={18} strokeWidth={1.75} aria-hidden />,
   },
@@ -20,7 +19,7 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
     icon: <Landmark size={18} strokeWidth={1.75} aria-hidden />,
   },
   comision: {
-    description: '1% sobre cada transacción aprobada de tu evento.',
+    description: 'Total a pagar a Nubapay por las ventas de tu evento, sin contar órdenes canceladas.',
     icon: <BadgePercent size={18} strokeWidth={1.75} aria-hidden />,
   },
 }
@@ -29,10 +28,11 @@ const CARD_DETAILS: Record<string, { description: string; icon: ReactNode }> = {
 export function CobrosView() {
   const access = useWorkspaceAccess()
   const tabs = access ? visibleSectionTabs('cobros', access) : []
-  const canSeePayments = tabs.some(t => t.segment === 'payments')
+  const canSeePayments = tabs.some(t => t.segment === 'pagos')
   const eventId = access?.basePath.split('/').filter(Boolean).pop() ?? ''
-  const serviceFeeMode = useServiceFeeMode(eventId)
+  const canSeeCommission = tabs.some(t => t.segment === 'comision')
   const [summary, setSummary] = useState<PaymentsSummary | null>(null)
+  const [totalDue, setTotalDue] = useState<number | null>(null)
 
   useEffect(() => {
     if (!canSeePayments || !eventId) return
@@ -49,6 +49,21 @@ export function CobrosView() {
     }
   }, [canSeePayments, eventId])
 
+  useEffect(() => {
+    if (!canSeeCommission || !eventId) return
+    let cancelled = false
+    void fetchEventCommission(eventId)
+      .then(res => {
+        if (!cancelled && res.ok) setTotalDue(res.data.total_due)
+      })
+      .catch(() => {
+        /* el total es opcional: si falla, la tarjeta queda sin monto */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [canSeeCommission, eventId])
+
   return (
     <div className="mx-auto w-full max-w-[720px]">
       <header className="mb-6">
@@ -59,19 +74,9 @@ export function CobrosView() {
       <div className="space-y-3">
         {access &&
           tabs.map(tab => {
-            if (tab.segment === 'comision' && serviceFeeMode === null) return null
-            const serviceFeeEnabled = serviceFeeMode === true
-            const label = tab.segment === 'comision' ? settlementToolLabel(serviceFeeEnabled) : tab.label
             const details = CARD_DETAILS[tab.segment]
-            const description = tab.segment === 'comision' && serviceFeeEnabled
-              ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
-              : details?.description
-            const showStats = tab.segment === 'payments' && summary
-            const approved = summary?.approved
-            const due = approved
-              ? settlementDue(approved.amount, approved.service_fee ?? 0, serviceFeeEnabled)
-              : 0
-            const showDue = tab.segment === 'comision' && summary && serviceFeeMode !== null
+            const showStats = tab.segment === 'pagos' && summary
+            const showDue = tab.segment === 'comision' && totalDue !== null
             return (
               <Link
                 key={tab.segment}
@@ -82,12 +87,12 @@ export function CobrosView() {
                   {details?.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-semibold text-gray-900">{label}</p>
-                  {description && <p className="mt-0.5 text-[13px] text-gray-500">{description}</p>}
+                  <p className="text-[15px] font-semibold text-gray-900">{tab.label}</p>
+                  {details?.description && <p className="mt-0.5 text-[13px] text-gray-500">{details.description}</p>}
                 </div>
                 {showDue && (
                   <div className="hidden shrink-0 text-right sm:block">
-                    <Money value={due} className="block text-[16px] font-semibold tabular-nums text-gray-900" />
+                    <Money value={totalDue} className="block text-[16px] font-semibold tabular-nums text-gray-900" />
                     <span className="text-[12px] text-gray-400">a pagar</span>
                   </div>
                 )}

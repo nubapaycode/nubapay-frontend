@@ -84,7 +84,7 @@ export default function FinalCta({ base = '' }: { base?: string }) {
           <div className="lv2-cta3-foot lv2-cta3-fade">
             <p>Te mostramos cómo funciona en tu evento, o probala por tu cuenta. Sin costos fijos: solo pagás cuando vendés.</p>
             <div className="lv2-cta3-side">
-              <Link href="/register" className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Probá una demo</Link>
+              <Link href="/registro" className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Probá una demo</Link>
               <ul className="lv2-cta3-notes">
                 {NOTES.map(n => <li key={n}><Check size={14} strokeWidth={2.4} aria-hidden="true" /> {n}</li>)}
               </ul>

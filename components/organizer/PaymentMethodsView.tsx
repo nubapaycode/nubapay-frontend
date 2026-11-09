@@ -54,9 +54,9 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
     }
   }, [load])
 
-  const mpHref = `/events/${eventId}/metodos-pago/mercadopago`
-  const sipagoHref = `/events/${eventId}/metodos-pago/sipago`
-  const mobbexHref = `/events/${eventId}/metodos-pago/mobbex`
+  const mpHref = `/eventos/${eventId}/metodos-pago/mercadopago`
+  const sipagoHref = `/eventos/${eventId}/metodos-pago/sipago`
+  const mobbexHref = `/eventos/${eventId}/metodos-pago/mobbex`
 
   const [cashSaving, setCashSaving] = useState(false)
   const [cardSaving, setCardSaving] = useState(false)

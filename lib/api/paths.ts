@@ -53,6 +53,11 @@ export const catalogPaths = {
   mobbexWalletSync: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/mobbex-wallet/sync`)
   },
+  /** Botón de arrepentimiento: POST multipart con los datos del comprador y el screenshot de la compra. */
+  createRegret: (slug: string) => {
+    const s = encodeURIComponent(slug)
+    return apiUrl(`/catalog/storefront/${s}/regrets`)
+  },
   /** Cobra una orden con el token del Card Payment Brick. No manda el PAN. */
   chargeOrderCard: (orderId: string) => {
     return apiUrl(`/catalog/orders/${encodeURIComponent(orderId)}/card-payment`)

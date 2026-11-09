@@ -3,6 +3,11 @@ export function ticketsPath(slug: string): string {
   return `/tickets/${encodeURIComponent(slug.trim())}`
 }
 
+/** Formulario del botón de arrepentimiento: `/catalogo/:slug/arrepentimiento`. */
+export function regretPath(slug: string): string {
+  return `/catalogo/${encodeURIComponent(slug.trim())}/arrepentimiento`
+}
+
 /** Checkout de entradas: `/tickets/:slug/comprar`. */
 export function ticketsCheckoutPath(slug: string): string {
   return `${ticketsPath(slug)}/comprar`

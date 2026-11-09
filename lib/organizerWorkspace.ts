@@ -25,7 +25,7 @@ export type WorkspaceProduct = {
   combo_lines: { product_id: string; quantity: number; name: string }[]
 }
 
-export type DashboardPaymentKey = 'mp' | 'cash' | 'transfer'
+export type DashboardPaymentKey = 'mp' | 'cash' | 'sipago' | 'mobbex' | 'transfer'
 
 export type DashboardSeriesPoint = {
   label: string
@@ -202,6 +202,29 @@ export async function fetchEventDashboard(
   return { ok: true, data: body as DashboardSummary }
 }
 
+/** Lo que el evento le debe a Nubapay (comisión 1% + costo de servicio). Pedidos cancelados no cuentan. */
+export type CommissionSummary = {
+  range: DashboardRange | null
+  total_due: number
+  /** Facturado por el organizador en el período (sin costo de servicio). */
+  revenue: number
+  paid_orders: number
+  /** Pedidos pagos que se cancelaron y quedaron fuera del total. */
+  cancelled_orders: number
+}
+
+export async function fetchEventCommission(
+  eventId: string,
+  range?: DashboardRange | null,
+): Promise<{ ok: true; data: CommissionSummary } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'commission', { from: range?.from, to: range?.to }), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as CommissionSummary & { error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error al cargar la comisión' }
+  return { ok: true, data: body }
+}
+
 export type WorkspaceOrdersFilters = {
   q?: string
   /** Estado de la UI; `unredeemed` agrupa los pagados que todavía no se retiraron. */
@@ -344,6 +367,228 @@ export async function patchOrderStatus(
   const body = (await res.json()) as { order?: Order; error?: string }
   if (!res.ok || !body.order) return { ok: false, error: body.error ?? 'No se pudo actualizar' }
   return { ok: true, order: body.order }
+}
+
+/** Aprueba a mano el pago de un pedido y envía el mail con el QR. Solo el organizador (dueño) del evento. */
+export async function markOrderPaid(
+  eventId: string,
+  orderId: string,
+  reason: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const res = await browserFetch(workspacePath(eventId, `orders/${orderId}/mark-paid`), {
+      method: 'POST',
+      headers: authHeadersJson(),
+      body: JSON.stringify({ reason }),
+    })
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo marcar como pagado' }
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'No se pudo conectar con el servidor' }
+  }
+}
+
+export type RegretStatus = 'pending' | 'resolved'
+
+export type WorkspaceRegret = {
+  id: string
+  eventId: string
+  fullName: string
+  email: string
+  bankAlias: string
+  whatsapp: string
+  purchaseDetail: string
+  screenshotUrl: string
+  status: RegretStatus
+  createdAt: string
+  /** Pedidos del evento hechos con el mismo e-mail. */
+  orderCount?: number
+}
+
+export async function fetchRegrets(
+  eventId: string,
+  opts?: { page?: number; pageSize?: number; status?: RegretStatus },
+): Promise<
+  | { ok: true; regrets: WorkspaceRegret[]; pagination: PaginationMeta; pendingCount: number }
+  | { ok: false; error: string }
+> {
+  const res = await browserFetch(
+    workspacePath(eventId, 'regrets', {
+      page: opts?.page ?? 1,
+      page_size: opts?.pageSize ?? 30,
+      status: opts?.status,
+    }),
+    { headers: authHeadersJson() },
+  )
+  const body = (await res.json()) as {
+    regrets?: WorkspaceRegret[]
+    pagination?: Partial<PaginationMeta>
+    pending_count?: number
+    error?: string
+  }
+  if (!res.ok) return { ok: false, error: body.error ?? 'Error al cargar los arrepentimientos' }
+  const regrets = body.regrets ?? []
+  return {
+    ok: true,
+    regrets,
+    pagination: readPagination(body, regrets.length),
+    pendingCount: body.pending_count ?? 0,
+  }
+}
+
+/** Detalle de un arrepentimiento junto con los pedidos asociados a su e-mail. */
+export async function fetchRegret(
+  eventId: string,
+  regretId: string,
+): Promise<{ ok: true; regret: WorkspaceRegret; orders: Order[] } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `regrets/${encodeURIComponent(regretId)}`), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { regret?: WorkspaceRegret; orders?: Order[]; error?: string }
+  if (!res.ok || !body.regret) return { ok: false, error: body.error ?? 'Solicitud no encontrada' }
+  return { ok: true, regret: body.regret, orders: body.orders ?? [] }
+}
+
+export async function patchRegretStatus(
+  eventId: string,
+  regretId: string,
+  status: RegretStatus,
+): Promise<{ ok: true; regret: WorkspaceRegret } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `regrets/${encodeURIComponent(regretId)}`), {
+    method: 'PATCH',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ status }),
+  })
+  const body = (await res.json()) as { regret?: WorkspaceRegret; error?: string }
+  if (!res.ok || !body.regret) return { ok: false, error: body.error ?? 'No se pudo actualizar' }
+  return { ok: true, regret: body.regret }
+}
+
+export type AnnouncementAudienceType = 'all' | 'products' | 'categories' | 'tickets'
+
+export type AnnouncementAudience = { type: AnnouncementAudienceType; ids: string[] }
+
+export type AnnouncementStatus = 'sending' | 'sent' | 'partial' | 'failed'
+
+/** Contenido editable del aviso (también lo usa la vista previa). */
+export type AnnouncementContent = {
+  subject: string
+  title: string
+  body: string
+  ctaLabel: string
+  ctaUrl: string
+  accentColor: string
+  showCover: boolean
+  greetByName: boolean
+}
+
+export type WorkspaceAnnouncement = Omit<AnnouncementContent, 'ctaLabel' | 'ctaUrl'> & {
+  id: string
+  ctaLabel: string | null
+  ctaUrl: string | null
+  audience: AnnouncementAudience
+  audienceLabel: string
+  recipientCount: number
+  sentCount: number
+  failedCount: number
+  status: AnnouncementStatus
+  error: string | null
+  createdAt: string
+  finishedAt: string | null
+}
+
+export type AnnouncementDefaults = {
+  accentColor: string
+  storefrontUrl: string
+  hasCover: boolean
+  ownerEmail: string
+}
+
+export async function fetchAnnouncements(
+  eventId: string,
+): Promise<
+  | { ok: true; announcements: WorkspaceAnnouncement[]; defaults: AnnouncementDefaults }
+  | { ok: false; error: string }
+> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements'), { headers: authHeadersJson() })
+  const body = (await res.json()) as {
+    announcements?: WorkspaceAnnouncement[]
+    defaults?: AnnouncementDefaults
+    error?: string
+  }
+  if (!res.ok || !body.defaults) return { ok: false, error: body.error ?? 'Error al cargar los avisos' }
+  return { ok: true, announcements: body.announcements ?? [], defaults: body.defaults }
+}
+
+export async function fetchAnnouncement(
+  eventId: string,
+  announcementId: string,
+): Promise<{ ok: true; announcement: WorkspaceAnnouncement } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, `announcements/${encodeURIComponent(announcementId)}`), {
+    headers: authHeadersJson(),
+  })
+  const body = (await res.json()) as { announcement?: WorkspaceAnnouncement; error?: string }
+  if (!res.ok || !body.announcement) return { ok: false, error: body.error ?? 'Aviso no encontrado' }
+  return { ok: true, announcement: body.announcement }
+}
+
+/** Cantidad de compradores (e-mails únicos) que recibirían el aviso. */
+export async function countAnnouncementAudience(
+  eventId: string,
+  audience: AnnouncementAudience,
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/audience'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify({ audience }),
+  })
+  const body = (await res.json()) as { count?: number; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo calcular la audiencia' }
+  return { ok: true, count: body.count ?? 0 }
+}
+
+/** HTML del mail renderizado por el backend (mismo diseño que el envío real). */
+export async function previewAnnouncement(
+  eventId: string,
+  content: AnnouncementContent,
+): Promise<{ ok: true; html: string } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/preview'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(content),
+  })
+  const body = (await res.json()) as { html?: string; error?: string }
+  if (!res.ok || body.html == null) return { ok: false, error: body.error ?? 'No se pudo generar la vista previa' }
+  return { ok: true, html: body.html }
+}
+
+export async function sendTestAnnouncement(
+  eventId: string,
+  content: AnnouncementContent,
+): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements/test'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(content),
+  })
+  const body = (await res.json()) as { email?: string; error?: string }
+  if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo enviar la prueba' }
+  return { ok: true, email: body.email ?? '' }
+}
+
+export async function createAnnouncement(
+  eventId: string,
+  payload: AnnouncementContent & { audience: AnnouncementAudience },
+): Promise<{ ok: true; announcement: WorkspaceAnnouncement } | { ok: false; error: string }> {
+  const res = await browserFetch(workspacePath(eventId, 'announcements'), {
+    method: 'POST',
+    headers: authHeadersJson(),
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json()) as { announcement?: WorkspaceAnnouncement; error?: string }
+  if (!res.ok || !body.announcement) return { ok: false, error: body.error ?? 'No se pudo enviar el aviso' }
+  return { ok: true, announcement: body.announcement }
 }
 
 export async function previewQr(

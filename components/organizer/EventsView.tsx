@@ -145,7 +145,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
     const membership = event.membership === 'staff' ? 'staff' : 'owner'
     const tools = workspaceToolsForEvent(membership, event.id, getAuthUser()?.staff_memberships)
     const segment = firstAllowedWorkspaceSegment(tools)
-    return `/events/${event.id}/${segment}`
+    return `/eventos/${event.id}/${segment}`
   }
 
   return (

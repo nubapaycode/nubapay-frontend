@@ -113,7 +113,7 @@ export function CommandPalette({
       if (url.split('?')[0] === pathname) window.location.assign(url)
       else router.push(url)
     }
-    const ordersPath = `${basePath}/orders`
+    const ordersPath = `${basePath}/pedidos`
 
     const orderCmds: Command[] = orderResults.map(o => ({
       id: `order-${o.id}`,
@@ -146,7 +146,7 @@ export function CommandPalette({
         hint: 'Cambiar de evento',
         icon: <CalendarDays size={15} strokeWidth={1.75} />,
         keywords: 'evento cambiar',
-        run: () => go(`${basePath}/all`),
+        run: () => go(`${basePath}/mis-eventos`),
       },
     ]
 
@@ -158,7 +158,7 @@ export function CommandPalette({
         label: 'Ver las ventas de hoy',
         icon: <CalendarDays size={15} strokeWidth={1.75} />,
         keywords: 'dashboard hoy recaudado metricas',
-        run: () => go(`${basePath}/dashboard?periodo=today`),
+        run: () => go(`${basePath}/resumen?periodo=today`),
       })
     }
     if (tools.orders) {

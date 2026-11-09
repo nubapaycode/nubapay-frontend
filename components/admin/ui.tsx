@@ -5,6 +5,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   CheckCircle2,
+  ChevronDown,
   CircleDot,
   Info,
   Minus,
@@ -21,6 +22,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 
 import { ORDER_STATUS_LABEL, PAYMENT_STATUS_LABEL } from './theme'
 
@@ -47,12 +49,12 @@ export function Card({
   flush?: boolean
 }) {
   return (
-    <section className={cx('rounded-2xl border border-white/[0.08] bg-[#12121A]', className)}>
+    <section className={cx('admin-panel', className)}>
       {(title || action) && (
         <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-5 pt-4 pb-3">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-semibold text-white">{title}</h2>}
-            {subtitle && <p className="mt-0.5 text-xs text-white/45">{subtitle}</p>}
+            {title && <h2 className="text-[13px] font-medium text-white">{title}</h2>}
+            {subtitle && <p className="mt-0.5 text-xs text-white/60">{subtitle}</p>}
           </div>
           {action && <div className="max-w-full">{action}</div>}
         </header>
@@ -62,28 +64,50 @@ export function Card({
   )
 }
 
+/** Número que sube hasta su valor: mismo dato, sin saltos entre períodos. */
+export function CountUp({ value, format }: { value: number; format: (n: number) => string }) {
+  const [shown, setShown] = useState(0)
+  const from = useRef(0)
+  useEffect(() => {
+    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const start = performance.now()
+    const origin = from.current
+    let raf = 0
+    const step = (t: number) => {
+      const p = instant ? 1 : Math.min(1, (t - start) / 600)
+      const next = p === 1 ? value : origin + (value - origin) * (1 - (1 - p) ** 3)
+      from.current = next
+      setShown(next)
+      if (p < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+  return <>{format(shown === value ? value : Math.round(shown))}</>
+}
+
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cx('animate-pulse rounded-lg bg-white/[0.06]', className)} />
+  return <div className={cx('animate-pulse rounded-md bg-white/[0.06]', className)} />
 }
 
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 px-6 py-12 text-center">
       <p className="text-sm font-medium text-white/70">{title}</p>
-      {hint && <p className="text-xs text-white/40">{hint}</p>}
+      {hint && <p className="text-xs text-white/55">{hint}</p>}
     </div>
   )
 }
 
 export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-red-400/20 bg-red-400/[0.07] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-red-400/20 bg-red-400/[0.07] px-4 py-3">
       <p className="text-sm text-red-200">{message}</p>
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
-          className="flex-shrink-0 rounded-lg border border-white/10 px-3 py-1 text-xs text-white/80 hover:bg-white/5"
+          className="flex-shrink-0 rounded-md border border-white/10 px-3 py-1 text-xs text-white/80 hover:bg-white/5"
         >
           Reintentar
         </button>
@@ -99,8 +123,8 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'subtle'
 
 const BTN: Record<BtnVariant, string> = {
-  primary: 'bg-[#C6FF00] text-black hover:bg-[#d4ff33] font-semibold',
-  ghost: 'border border-white/10 text-white/80 hover:bg-white/[0.06]',
+  primary: 'bg-admin-primary text-white hover:bg-admin-primary-hover font-medium',
+  ghost: 'border border-white/10 text-white/80 hover:border-white/20 hover:bg-white/[0.05]',
   subtle: 'bg-white/[0.06] text-white/85 hover:bg-white/10',
   danger: 'border border-red-400/30 bg-red-400/10 text-red-200 hover:bg-red-400/20',
 }
@@ -116,8 +140,8 @@ export function Btn({
       type="button"
       {...props}
       className={cx(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg text-sm transition-colors',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C6FF00]',
+        'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm transition-colors duration-150',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent',
         'disabled:cursor-not-allowed disabled:opacity-40',
         size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-2',
         BTN[variant],
@@ -128,8 +152,8 @@ export function Btn({
 }
 
 const inputBase =
-  'rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/30 ' +
-  'focus:border-[#C6FF00]/60 focus:outline-none focus:ring-2 focus:ring-[#C6FF00]/20'
+  'rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/40 transition-colors duration-150 hover:border-white/20 [color-scheme:dark] ' +
+  'focus:border-admin-accent/60 focus:outline-none focus:ring-2 focus:ring-admin-accent/20'
 
 /** Ancho completo por defecto; `inputAutoCls` para controles que se acomodan en una fila. */
 export const inputCls = `w-full ${inputBase}`
@@ -141,26 +165,32 @@ export function Select({
   options,
   label,
   className,
+  disabled,
 }: {
   value: string
   onChange: (v: string) => void
   options: { value: string; label: string }[]
   label: string
   className?: string
+  disabled?: boolean
 }) {
   return (
-    <select
-      aria-label={label}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cx(className ? inputAutoCls : inputCls, 'appearance-none pr-8', className)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#12121A]">
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <span className={cx('relative', className ? 'inline-flex' : 'flex w-full')}>
+      <select
+        aria-label={label}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className={cx(className ? inputAutoCls : inputCls, 'appearance-none pr-8 disabled:opacity-40', className)}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-admin-surface">
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown size={14} aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+    </span>
   )
 }
 
@@ -176,7 +206,7 @@ export function Segmented<T extends string>({
   label: string
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-md border border-white/10 bg-white/[0.03] p-0.5">
       {options.map((o) => {
         const on = o.value === value
         return (
@@ -187,8 +217,8 @@ export function Segmented<T extends string>({
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cx(
-              'flex-shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-              on ? 'bg-white/[0.12] text-white' : 'text-white/50 hover:text-white/80',
+              'flex-shrink-0 whitespace-nowrap rounded px-3 py-1 text-xs font-medium transition-colors duration-150',
+              on ? 'bg-white/[0.1] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-white/50 hover:text-white/80',
             )}
           >
             {o.label}
@@ -220,8 +250,8 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       className={cx(
         'relative inline-flex h-6 w-10 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C6FF00]',
-        checked ? 'bg-[#C6FF00]' : 'bg-white/15',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent',
+        checked ? 'bg-admin-primary' : 'bg-white/15',
       )}
     >
       <span
@@ -241,11 +271,11 @@ export function Toggle({
 export type Tone = 'neutral' | 'good' | 'warning' | 'critical' | 'info'
 
 const TONE: Record<Tone, string> = {
-  neutral: 'bg-white/[0.07] text-white/70',
-  good: 'bg-emerald-400/10 text-emerald-300',
-  warning: 'bg-amber-400/10 text-amber-300',
-  critical: 'bg-red-400/10 text-red-300',
-  info: 'bg-sky-400/10 text-sky-300',
+  neutral: 'border-white/10 bg-white/[0.04] text-white/70',
+  good: 'border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300',
+  warning: 'border-amber-400/20 bg-amber-400/[0.07] text-amber-300',
+  critical: 'border-red-400/25 bg-red-400/[0.08] text-red-300',
+  info: 'border-sky-400/20 bg-sky-400/[0.07] text-sky-300',
 }
 
 const TONE_ICON: Record<Tone, ReactNode> = {
@@ -258,7 +288,7 @@ const TONE_ICON: Record<Tone, ReactNode> = {
 
 export function Pill({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium', TONE[tone])}>
+    <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-medium', TONE[tone])}>
       {TONE_ICON[tone]}
       {children}
     </span>
@@ -295,7 +325,7 @@ export function PaymentStatusPill({ status }: { status: string }) {
 export function Delta({ value, suffix = '%', upIsGood = true }: { value: number | null; suffix?: string; upIsGood?: boolean }) {
   if (value === null) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-white/35">
+      <span className="inline-flex items-center gap-1 text-xs text-white/50">
         <Minus size={12} /> sin comparación
       </span>
     )
@@ -335,7 +365,7 @@ export function Th({ children, align }: { children?: ReactNode; align?: 'right' 
   return (
     <th
       className={cx(
-        'whitespace-nowrap px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-white/35',
+        'whitespace-nowrap px-4 py-2.5 font-admin-mono text-[10.5px] font-medium uppercase tracking-[0.06em] text-white/45',
         align === 'right' && 'text-right',
       )}
     >
@@ -348,9 +378,9 @@ export function Td({ children, align, muted, className }: { children?: ReactNode
   return (
     <td
       className={cx(
-        'px-4 py-3 text-sm',
-        muted ? 'text-white/45' : 'text-white/85',
-        align === 'right' && 'text-right tabular-nums',
+        'px-4 py-2.5 text-sm',
+        muted ? 'text-white/60' : 'text-white/85',
+        align === 'right' && 'text-right font-admin-mono text-[13px] tabular-nums',
         className,
       )}
     >
@@ -373,7 +403,7 @@ export function Pager({
   const pages = Math.max(1, Math.ceil(total / pageSize))
   return (
     <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3">
-      <p className="text-xs text-white/40">
+      <p className="text-xs text-white/55">
         {total.toLocaleString('es-AR')} resultado{total === 1 ? '' : 's'} · página {Math.min(page, pages)} de {pages}
       </p>
       <div className="flex gap-2">
@@ -427,25 +457,25 @@ export function Drawer({
   if (!open) return null
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div className="admin-fade absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : 'Detalle'}
-        className="relative flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-[#0E0E15] shadow-2xl outline-none"
+        className="admin-drawer relative flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-admin-surface shadow-2xl outline-none"
       >
         <header className="flex items-start justify-between gap-3 border-b border-white/[0.08] px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate text-base font-semibold text-white">{title}</h2>
-            {subtitle && <div className="mt-1 text-xs text-white/45">{subtitle}</div>}
+            {subtitle && <div className="mt-1 text-xs text-white/60">{subtitle}</div>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+            className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
           >
             <X size={18} />
           </button>
@@ -454,6 +484,49 @@ export function Drawer({
         {footer && <footer className="border-t border-white/[0.08] px-5 py-3">{footer}</footer>}
       </div>
     </div>
+  )
+}
+
+/** Los diálogos van al raíz del panel: ningún contenedor con transform puede atrapar su `fixed`. */
+export function AdminPortal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.getElementById('admin-root') ?? document.body)
+}
+
+export function ConfirmDialog({
+  open,
+  title,
+  children,
+  confirmLabel,
+  tone = 'primary',
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean
+  title: string
+  children: ReactNode
+  confirmLabel: string
+  tone?: 'danger' | 'primary'
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  useEscape(open, onCancel)
+  if (!open) return null
+  return (
+    <AdminPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="admin-fade absolute inset-0 bg-black/70" onClick={onCancel} aria-hidden />
+        <div role="alertdialog" aria-modal="true" aria-label={title} className="admin-pop relative w-full max-w-md rounded-lg border border-white/10 bg-admin-raised p-5 shadow-2xl">
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <div className="mt-2 text-sm text-white/60">{children}</div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Btn onClick={onCancel}>Volver</Btn>
+            <Btn variant={tone} onClick={onConfirm} autoFocus={tone === 'primary'}>
+              {confirmLabel}
+            </Btn>
+          </div>
+        </div>
+      </div>
+    </AdminPortal>
   )
 }
 
@@ -489,33 +562,35 @@ function ReasonDialogBody({
   useEscape(open, onCancel)
   const ok = reason.trim().length >= minLength
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/70" onClick={onCancel} aria-hidden />
-      <div role="alertdialog" aria-modal="true" aria-label={title} className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#14141D] p-5 shadow-2xl">
-        <h3 className="text-base font-semibold text-white">{title}</h3>
-        <div className="mt-2 text-sm text-white/60">{description}</div>
-        <label className="mt-4 block text-xs font-medium text-white/50" htmlFor="admin-reason">
-          Motivo (queda registrado en el historial)
-        </label>
-        <textarea
-          id="admin-reason"
-          autoFocus
-          rows={3}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className={cx(inputCls, 'mt-1.5 resize-none')}
-          placeholder={`Mínimo ${minLength} caracteres`}
-        />
-        <div className="mt-4 flex justify-end gap-2">
-          <Btn onClick={onCancel} disabled={busy}>
-            Volver
-          </Btn>
-          <Btn variant={tone === 'danger' ? 'danger' : 'primary'} disabled={!ok || busy} onClick={() => onConfirm(reason.trim())}>
-            {busy ? 'Procesando…' : confirmLabel}
-          </Btn>
+    <AdminPortal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="admin-fade absolute inset-0 bg-black/70" onClick={onCancel} aria-hidden />
+        <div role="alertdialog" aria-modal="true" aria-label={title} className="admin-pop relative w-full max-w-md rounded-lg border border-white/10 bg-admin-raised p-5 shadow-2xl">
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <div className="mt-2 text-sm text-white/60">{description}</div>
+          <label className="mt-4 block text-xs font-medium text-white/50" htmlFor="admin-reason">
+            Motivo (queda registrado en el historial)
+          </label>
+          <textarea
+            id="admin-reason"
+            autoFocus
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className={cx(inputCls, 'mt-1.5 resize-none')}
+            placeholder={`Mínimo ${minLength} caracteres`}
+          />
+          <div className="mt-4 flex justify-end gap-2">
+            <Btn onClick={onCancel} disabled={busy}>
+              Volver
+            </Btn>
+            <Btn variant={tone === 'danger' ? 'danger' : 'primary'} disabled={!ok || busy} onClick={() => onConfirm(reason.trim())}>
+              {busy ? 'Procesando…' : confirmLabel}
+            </Btn>
+          </div>
         </div>
       </div>
-    </div>
+    </AdminPortal>
   )
 }
 
@@ -542,12 +617,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed bottom-4 right-4 z-[60] flex flex-col gap-2" aria-live="polite">
+      <div className="pointer-events-none fixed bottom-20 right-4 z-[60] lg:bottom-4 flex flex-col gap-2" aria-live="polite">
         {items.map((t) => (
           <div
             key={t.id}
             className={cx(
-              'pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 text-sm shadow-xl',
+              'admin-rise pointer-events-auto flex max-w-sm items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-xl',
               t.kind === 'success'
                 ? 'border-emerald-400/25 bg-[#0f1f18] text-emerald-200'
                 : 'border-red-400/25 bg-[#241114] text-red-200',

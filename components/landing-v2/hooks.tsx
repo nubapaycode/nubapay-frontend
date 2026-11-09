@@ -162,6 +162,8 @@ export function useCtaHover(root: React.RefObject<HTMLElement | null>) {
     const shrink = (btn: HTMLElement, arrow: HTMLElement) => {
       const cs = getComputedStyle(btn)
       if (!btn.style.paddingRight) btn.dataset.pr = cs.paddingRight
+      /* Margen real de la flecha (en px aunque en el CSS sea `auto`, como en los botones de ancho fijo) para volver a él */
+      if (!arrow.style.marginLeft) arrow.dataset.ml = getComputedStyle(arrow).marginLeft
       areas.set(btn, btn.getBoundingClientRect())
       const gap = parseFloat(cs.columnGap) || 0
       gsap.killTweensOf(arrow, 'scale,opacity,visibility')
@@ -172,7 +174,7 @@ export function useCtaHover(root: React.RefObject<HTMLElement | null>) {
     const restore = (btn: HTMLElement, arrow: HTMLElement) => {
       stopWatching(btn)
       areas.delete(btn)
-      gsap.to(arrow, { marginLeft: 0, duration: duration(), ease: 'power3.inOut', overwrite: 'auto' })
+      gsap.to(arrow, { marginLeft: arrow.dataset.ml || 0, duration: duration(), ease: 'power3.inOut', overwrite: 'auto', clearProps: 'marginLeft' })
       gsap.killTweensOf(arrow, 'scale,opacity,visibility')
       gsap.to(arrow, {
         scale: 1, autoAlpha: 1, duration: duration() * 0.7, delay: duration() * 0.3, ease: 'back.out(2)',

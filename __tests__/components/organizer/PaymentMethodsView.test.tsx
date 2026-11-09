@@ -41,7 +41,7 @@ describe('PaymentMethodsView', () => {
     expect(within(row('Sipago')).queryByText('Conectada')).not.toBeInTheDocument()
     expect(within(row('Sipago')).getByText('Conectá tu cuenta para recibir pagos')).toBeInTheDocument()
     expect(within(row('Mobbex')).queryByText('Conectada')).not.toBeInTheDocument()
-    expect(row('Mobbex')).toHaveAttribute('href', '/events/e1/metodos-pago/mobbex')
+    expect(row('Mobbex')).toHaveAttribute('href', '/eventos/e1/metodos-pago/mobbex')
   })
 
   it('deja apagada la tarjeta en el sitio hasta que haya clave pública', async () => {

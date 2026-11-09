@@ -12,11 +12,11 @@ const staff = (tools: Partial<typeof ORGANIZER_ZERO_TOOLS> = {}): WorkspaceSecti
 
 describe('visibleSectionTabs', () => {
   it('el dueño ve todas las pestañas de cobros', () => {
-    expect(segments(visibleSectionTabs('cobros', owner))).toEqual(['payments', 'metodos-pago', 'comision'])
+    expect(segments(visibleSectionTabs('cobros', owner))).toEqual(['pagos', 'metodos-pago', 'comision'])
   })
 
   it('un staff con permiso de pagos solo ve Pagos', () => {
-    expect(segments(visibleSectionTabs('cobros', staff({ payments: true })))).toEqual(['payments'])
+    expect(segments(visibleSectionTabs('cobros', staff({ payments: true })))).toEqual(['pagos'])
   })
 
   it('un staff sin permiso de productos no ve el catálogo', () => {
@@ -24,6 +24,6 @@ describe('visibleSectionTabs', () => {
   })
 
   it('el permiso de productos habilita Productos y Bloques', () => {
-    expect(segments(visibleSectionTabs('catalogo', staff({ products: true })))).toEqual(['products', 'blocks'])
+    expect(segments(visibleSectionTabs('catalogo', staff({ products: true })))).toEqual(['productos', 'bloques'])
   })
 })

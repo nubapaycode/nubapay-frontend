@@ -1,66 +1,78 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
-import { settlementDue, settlementToolLabel, useServiceFeeMode } from '@/components/organizer/useServiceFeeMode'
+import {
+  PeriodPicker,
+  daysAgo,
+  formatDay,
+  rangeForPreset,
+  type Preset,
+} from '@/components/organizer/dashboard/PeriodPicker'
 import { Spinner } from '@/components/ui/Spinner'
-import { fetchAllApprovedPayments, type WorkspacePayment } from '@/lib/organizerWorkspace'
+import { fetchEventCommission, type CommissionSummary, type DashboardRange } from '@/lib/organizerWorkspace'
 import { formatPrice } from '@/lib/utils'
 
-const channelLabels: Record<string, string> = {
-  mp: 'Mercado Pago',
-  cash: 'Efectivo',
-  transfer: 'Transferencia',
-}
-
-const channelClass: Record<string, string> = {
-  mp: 'bg-sky-50 text-sky-700',
-  cash: 'bg-green-50 text-green-700',
-  transfer: 'bg-violet-50 text-violet-700',
-}
-
-function fmtDate(s: string | null | undefined) {
-  if (!s) return '—'
-  const d = new Date(s)
-  return (
-    d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
-    + ' '
-    + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  )
+function periodPhrase(preset: Preset, range: DashboardRange | null) {
+  if (preset === 'today') return 'hoy'
+  if (preset === '7') return 'en los últimos 7 días'
+  if (preset === '30') return 'en los últimos 30 días'
+  if (preset === 'custom' && range) {
+    return range.from === range.to ? `el ${formatDay(range.from)}` : `del ${formatDay(range.from)} al ${formatDay(range.to)}`
+  }
+  return 'en todo el evento'
 }
 
 export function CommissionView({ eventId }: { eventId: string }) {
-  const [payments, setPayments] = useState<WorkspacePayment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const serviceFeeMode = useServiceFeeMode(eventId)
-  const serviceFeeEnabled = serviceFeeMode === true
+  const [preset, setPreset] = useState<Preset>('all')
+  const [customFrom, setCustomFrom] = useState(() => daysAgo(6))
+  const [customTo, setCustomTo] = useState(() => daysAgo(0))
+  const [range, setRange] = useState<DashboardRange | null>(null)
+  // El resultado lleva la clave del pedido: si no coincide con el período actual, todavía está cargando.
+  const [result, setResult] = useState<{ key: string; data: CommissionSummary | null; error: string } | null>(null)
 
+  const rangeFrom = range?.from
+  const rangeTo = range?.to
+  const key = `${eventId}|${rangeFrom ?? ''}|${rangeTo ?? ''}`
   useEffect(() => {
-    setLoading(true)
-    fetchAllApprovedPayments(eventId).then(res => {
-      if (res.ok) setPayments(res.payments)
-      else setError(res.error)
-      setLoading(false)
-    })
-  }, [eventId])
+    let cancelled = false
+    fetchEventCommission(eventId, rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null)
+      .then(res => {
+        if (cancelled) return
+        setResult(res.ok ? { key, data: res.data, error: '' } : { key, data: null, error: res.error })
+      })
+      .catch(() => {
+        if (!cancelled) setResult({ key, data: null, error: 'Error al cargar la comisión' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [eventId, rangeFrom, rangeTo, key])
 
-  const rowDue = (p: WorkspacePayment) => settlementDue(p.amount, p.service_fee ?? 0, serviceFeeEnabled)
-  const totalRevenue = payments.reduce((acc, p) => acc + Math.max(0, p.amount - (p.service_fee ?? 0)), 0)
-  const totalDue = payments.reduce((acc, p) => acc + rowDue(p), 0)
-  const title = settlementToolLabel(serviceFeeEnabled)
-  const dueLabel = serviceFeeEnabled ? 'A pagar por costo de servicio' : 'Comisión a pagar (1%)'
-  const dueHint = serviceFeeEnabled ? '5% en entradas y 2% en productos' : '1% sobre lo facturado'
+  const loading = result?.key !== key
+  const data = loading ? null : result.data
+  const error = loading ? '' : result.error
+
+  const choosePreset = useCallback(
+    (p: Exclude<Preset, 'custom'>) => {
+      setPreset(p)
+      setRange(rangeForPreset(p, customFrom, customTo))
+    },
+    [customFrom, customTo],
+  )
+
+  const chooseCustom = (from: string, to: string) => {
+    setCustomFrom(from)
+    setCustomTo(to)
+    setPreset('custom')
+    setRange({ from, to })
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-5">
       <OrganizerToolHeading
-        title={title}
-        description={
-          serviceFeeEnabled
-            ? 'Lo que corresponde a Nubapay por el costo de servicio que pagaron los compradores.'
-            : '1% sobre cada transacción aprobada de tu evento.'
-        }
+        title="Comisión"
+        description="Total a pagar a Nubapay por las ventas de tu evento. Las órdenes canceladas no se cuentan."
         prefix={
           <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900" aria-hidden>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -69,72 +81,38 @@ export function CommissionView({ eventId }: { eventId: string }) {
             </svg>
           </span>
         }
+        actions={
+          <PeriodPicker
+            preset={preset}
+            range={range}
+            customFrom={customFrom}
+            customTo={customTo}
+            onPreset={choosePreset}
+            onCustom={chooseCustom}
+          />
+        }
       />
 
-      {(loading || serviceFeeMode === null) && !error && (
+      {loading && !error && (
         <div className="flex items-center justify-center py-16">
           <Spinner size="md" />
         </div>
       )}
 
       {!loading && error && (
-        <div className="rounded-2xl border border-red-100 bg-white p-6 text-center text-sm text-red-500">
-          {error}
-        </div>
+        <div className="rounded-2xl border border-red-100 bg-white p-6 text-center text-sm text-red-500">{error}</div>
       )}
 
-      {!loading && !error && serviceFeeMode !== null && (
-        <>
-          {/* Resumen */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-1">
-              <p className="text-xs text-gray-400 uppercase tracking-wider">Total facturado</p>
-              <p className="text-2xl font-bold text-gray-900 tracking-tight">{formatPrice(totalRevenue)}</p>
-              <p className="text-xs text-gray-400">{payments.length} transacciones aprobadas</p>
-            </div>
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 flex flex-col gap-1">
-              <p className="text-xs text-indigo-500 uppercase tracking-wider">{dueLabel}</p>
-              <p className="text-2xl font-bold text-indigo-700 tracking-tight">{formatPrice(totalDue)}</p>
-              <p className="text-xs text-indigo-400">{dueHint}</p>
-            </div>
-          </div>
-
-          {/* Tabla de transacciones */}
-          {payments.length === 0 ? (
-            <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-400">
-              No hay transacciones aprobadas todavía.
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Fecha</p>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Canal</p>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Monto</p>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
-                  {serviceFeeEnabled ? 'A pagar' : 'Comisión'}
-                </p>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {payments.map(p => (
-                  <div key={p.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-3 items-center">
-                    <p className="text-sm text-gray-600 tabular-nums">{fmtDate(p.paid_at ?? p.created_at)}</p>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${channelClass[p.channel ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {channelLabels[p.channel ?? ''] ?? p.channel ?? '—'}
-                    </span>
-                    <p className="text-sm font-medium text-gray-900 text-right tabular-nums">{formatPrice(Math.max(0, p.amount - (p.service_fee ?? 0)))}</p>
-                    <p className="text-sm font-semibold text-indigo-600 text-right tabular-nums">{formatPrice(rowDue(p))}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-4 py-3 border-t border-gray-100 bg-gray-50">
-                <p className="text-sm font-semibold text-gray-700">Total</p>
-                <span />
-                <p className="text-sm font-semibold text-gray-900 text-right tabular-nums">{formatPrice(totalRevenue)}</p>
-                <p className="text-sm font-bold text-indigo-700 text-right tabular-nums">{formatPrice(totalDue)}</p>
-              </div>
-            </div>
-          )}
-        </>
+      {!loading && !error && data && (
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-6 flex flex-col gap-1">
+          <p className="text-xs text-indigo-500 uppercase tracking-wider">Total a pagar</p>
+          <p className="text-4xl font-bold text-indigo-700 tracking-tight tabular-nums">{formatPrice(data.total_due)}</p>
+          <p className="text-xs text-indigo-400">
+            {data.paid_orders} {data.paid_orders === 1 ? 'orden paga' : 'órdenes pagas'} {periodPhrase(preset, range)}
+            {data.cancelled_orders > 0 &&
+              ` · ${data.cancelled_orders} ${data.cancelled_orders === 1 ? 'cancelada excluida' : 'canceladas excluidas'}`}
+          </p>
+        </div>
       )}
     </div>
   )

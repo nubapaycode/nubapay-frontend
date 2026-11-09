@@ -15,6 +15,7 @@ import {
   type PaymentsSummary,
   type WorkspacePayment,
 } from '@/lib/organizerWorkspace'
+import { formatArDateTime } from '@/lib/dateTime'
 import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
@@ -39,6 +40,7 @@ function providerLabel(provider: string | null | undefined) {
   if (!p) return ''
   if (p.includes('mercado') || p === 'mp') return 'Mercado Pago'
   if (p === 'sipago') return 'SiPago'
+  if (p === 'mobbex' || p === 'mobbex_wallet') return 'Mobbex'
   if (p === 'cash' || p === 'efectivo') return 'Efectivo'
   if (p === 'transfer') return 'Transferencia'
   return provider ?? ''
@@ -125,7 +127,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
   const setSortF = withPageReset(setSort)
 
   const hasFilters = Boolean(q || statusFilter.length || channelFilter.length)
-  const ordersHref = (orderId: string) => `/events/${eventId}/orders?pedido=${orderId}`
+  const ordersHref = (orderId: string) => `/eventos/${eventId}/pedidos?pedido=${orderId}`
 
   if (loading) return <PaymentsSkeleton />
 
@@ -308,7 +310,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
                     </span>
                     <span
                       className="col-span-2 whitespace-nowrap text-[12px] tabular-nums text-gray-400 md:col-span-1 md:text-right"
-                      title={when ? new Date(when).toLocaleString('es-AR', { hourCycle: 'h23' }) : undefined}
+                      title={when ? formatArDateTime(when, { second: '2-digit' }) : undefined}
                     >
                       {when ? relativeTime(when, now) : '—'}
                     </span>

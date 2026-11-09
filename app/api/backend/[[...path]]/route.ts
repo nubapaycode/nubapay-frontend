@@ -20,7 +20,7 @@ async function handleMock(req: NextRequest, segments: string[]): Promise<Respons
   // Añadir latencia artificial para simular red real
   await new Promise((r) => setTimeout(r, 120))
 
-  const result = resolveMock(segments, req.method, body)
+  const result = resolveMock(segments, req.method, body, req.nextUrl.searchParams)
   if (!result) {
     return new Response(JSON.stringify({ error: 'Mock: ruta no encontrada' }), {
       status: 404,

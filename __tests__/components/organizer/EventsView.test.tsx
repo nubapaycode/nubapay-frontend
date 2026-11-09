@@ -81,7 +81,7 @@ describe('EventsView', () => {
     await waitFor(() => expect(screen.getByText('Festival de Verano 2026')).toBeInTheDocument())
     expect(screen.getByRole('link', { name: /Abrir/i })).toHaveAttribute(
       'href',
-      '/events/11111111-1111-1111-1111-111111111111/dashboard',
+      '/eventos/11111111-1111-1111-1111-111111111111/resumen',
     )
   })
 

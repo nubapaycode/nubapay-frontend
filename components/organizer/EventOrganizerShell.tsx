@@ -14,6 +14,7 @@ import type { OrganizerEventDetail } from '@/lib/types/organizer'
 
 import { CommandPalette } from './CommandPalette'
 import { EventOrganizerSidebar } from './EventOrganizerSidebar'
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog'
 import { WorkspaceAccessProvider } from './WorkspaceAccessContext'
 
 export function EventOrganizerShell({
@@ -27,6 +28,7 @@ export function EventOrganizerShell({
   const pathname = usePathname()
   const [eventMeta, setEventMeta] = useState<{
     title: string
+    slug: string
     membership: 'owner' | 'staff'
     hasMpToken: boolean
     hasSipagoCredentials: boolean
@@ -53,6 +55,7 @@ export function EventOrganizerShell({
       if (body.event?.name) {
         setEventMeta({
           title: body.event.name,
+          slug: body.event.slug ?? '',
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
           hasMpToken: body.event.has_mp_token ?? false,
           hasSipagoCredentials: body.event.has_sipago_credentials ?? false,
@@ -145,7 +148,7 @@ export function EventOrganizerShell({
   /** Si el integrante abre una URL de herramienta que no le corresponde, mandarlo a la primera permitida. */
   useEffect(() => {
     if (loading || !eventMeta || notFound) return
-    const base = `/events/${eventId}`
+    const base = `/eventos/${eventId}`
     if (!pathname.startsWith(`${base}/`)) return
 
     const toolsNow = workspaceToolsForEvent(
@@ -154,10 +157,10 @@ export function EventOrganizerShell({
       getAuthUser()?.staff_memberships,
       eventMeta.tools,
     )
-    const segment = pathname.slice(base.length + 1).split('/')[0] ?? 'all'
-    if (segment === 'all') return
+    const segment = pathname.slice(base.length + 1).split('/')[0] ?? 'mis-eventos'
+    if (segment === 'mis-eventos') return
 
-    if (segment === 'brand') {
+    if (segment === 'marca') {
       if (eventMeta.membership !== 'owner' || !brandNavEligible) {
         router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
       }
@@ -165,19 +168,20 @@ export function EventOrganizerShell({
     }
 
     const segmentTool: Partial<Record<string, keyof OrganizerStaffTools>> = {
-      dashboard: 'dashboard',
-      storefront: 'storefront',
-      products: 'products',
-      blocks: 'products',
+      resumen: 'dashboard',
+      tienda: 'storefront',
+      productos: 'products',
+      bloques: 'products',
       tickets: 'products',
-      scanner: 'scanner',
-      orders: 'orders',
-      scans: 'orders',
-      'pickup-points': 'pickup_points',
-      payments: 'payments',
+      escaner: 'scanner',
+      pedidos: 'orders',
+      escaneos: 'orders',
+      arrepentimientos: 'orders',
+      'puntos-de-retiro': 'pickup_points',
+      pagos: 'payments',
     }
 
-    const ownerOnlySegments = ['staff', 'config', 'metodos-pago', 'comision']
+    const ownerOnlySegments = ['equipo', 'configuracion', 'metodos-pago', 'comision']
     if (ownerOnlySegments.includes(segment) && eventMeta.membership === 'staff') {
       router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
       return
@@ -208,7 +212,7 @@ export function EventOrganizerShell({
 
   useEffect(() => {
     if (!notFound) return
-    router.replace('/events')
+    router.replace('/eventos')
   }, [notFound, router])
 
   if (notFound) {
@@ -227,12 +231,13 @@ export function EventOrganizerShell({
     )
   }
 
-  const base = `/events/${eventId}`
+  const base = `/eventos/${eventId}`
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-row overflow-hidden bg-gray-100">
       <EventOrganizerSidebar
-        eventTitle={pathname === `${base}/all` ? null : eventMeta.title}
+        eventTitle={pathname === `${base}/mis-eventos` ? null : eventMeta.title}
+        eventSlug={eventMeta.slug}
         basePath={base}
         pathname={pathname}
         workspaceMembership={eventMeta.membership}
@@ -261,6 +266,7 @@ export function EventOrganizerShell({
         tools={tools}
         membership={eventMeta.membership}
       />
+      <KeyboardShortcutsDialog />
     </div>
   )
 }

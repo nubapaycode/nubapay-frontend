@@ -87,7 +87,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
 
   useEffect(() => { void load() }, [load])
 
-  const backHref = `/events/${eventId}/metodos-pago`
+  const backHref = `/eventos/${eventId}/metodos-pago`
 
   const handleSave = async () => {
     if (saving) return

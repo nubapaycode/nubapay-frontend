@@ -34,7 +34,7 @@ export function brandingAccentVars(theme: TenantThemePayload): Record<string, st
   }
 }
 
-/** Panel organizador (`/events/*`). Pure client/server — no importar `fetchTenantTheme.ts` desde Client Components. */
+/** Panel organizador (`/eventos/*`). Pure client/server — no importar `fetchTenantTheme.ts` desde Client Components. */
 export function organizerBrandingAccentVars(theme: TenantThemePayload): Record<string, string> | undefined {
   if (theme.inherit) return undefined
   const b = theme.branding

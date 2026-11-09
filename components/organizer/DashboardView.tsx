@@ -22,6 +22,7 @@ import {
   type Preset,
 } from '@/components/organizer/dashboard/PeriodPicker'
 import { SalesChart, pointValue, type ChartMetric } from '@/components/organizer/dashboard/SalesChart'
+import { AR_TIME_ZONE } from '@/lib/dateTime'
 import type { DashboardPaymentKey, DashboardRange, DashboardSummary } from '@/lib/organizerWorkspace'
 import { fetchEventDashboard } from '@/lib/organizerWorkspace'
 
@@ -231,8 +232,19 @@ export function DashboardView({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     if (!hydrated) return
-    const id = setInterval(() => void load(true), 30_000)
-    return () => clearInterval(id)
+    // Con la pestaña oculta no se refresca (cada carga recorre todos los pedidos del evento);
+    // al volver se trae lo último.
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') void load(true)
+    }, 30_000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void load(true)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [hydrated, load])
 
   if (loading) return <DashboardSkeleton />
@@ -294,7 +306,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="flex shrink-0 items-center gap-1.5">
           {lastUpdated && (
             <span className="mr-1 text-[12px] tabular-nums text-gray-400">
-              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
+              Actualizado {lastUpdated.toLocaleTimeString('es-AR', { timeZone: AR_TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
             </span>
           )}
           <button

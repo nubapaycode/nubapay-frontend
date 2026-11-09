@@ -104,10 +104,14 @@ async function parseJson<T>(res: Response): Promise<Result<T>> {
 }
 
 export async function fetchPlatformOverview(): Promise<Result<PlatformAdminOverview>> {
-  const res = await browserFetch(platformAdminPaths.overview(), {
-    headers: authHeadersJson(),
-  })
-  return parseJson<PlatformAdminOverview>(res)
+  try {
+    const res = await browserFetch(platformAdminPaths.overview(), {
+      headers: authHeadersJson(),
+    })
+    return parseJson<PlatformAdminOverview>(res)
+  } catch {
+    return { ok: false, error: 'No se pudo conectar con el servidor' }
+  }
 }
 
 export type PlatformSettings = {
@@ -118,21 +122,29 @@ export type PlatformSettings = {
 export type { Result as PlatformResult }
 
 export async function fetchPlatformSettings(): Promise<Result<PlatformSettings>> {
-  const res = await browserFetch(platformAdminPaths.settings(), {
-    headers: authHeadersJson(),
-  })
-  return parseJson<PlatformSettings>(res)
+  try {
+    const res = await browserFetch(platformAdminPaths.settings(), {
+      headers: authHeadersJson(),
+    })
+    return parseJson<PlatformSettings>(res)
+  } catch {
+    return { ok: false, error: 'No se pudo conectar con el servidor' }
+  }
 }
 
 export async function updatePlatformSettings(
   paymentsEnabled: boolean,
 ): Promise<Result<PlatformSettings>> {
-  const res = await browserFetch(platformAdminPaths.settings(), {
-    method: 'PATCH',
-    headers: authHeadersJson(),
-    body: JSON.stringify({ payments_enabled: paymentsEnabled }),
-  })
-  return parseJson<PlatformSettings>(res)
+  try {
+    const res = await browserFetch(platformAdminPaths.settings(), {
+      method: 'PATCH',
+      headers: authHeadersJson(),
+      body: JSON.stringify({ payments_enabled: paymentsEnabled }),
+    })
+    return parseJson<PlatformSettings>(res)
+  } catch {
+    return { ok: false, error: 'No se pudo conectar con el servidor' }
+  }
 }
 
 export async function fetchPlatformUsers(

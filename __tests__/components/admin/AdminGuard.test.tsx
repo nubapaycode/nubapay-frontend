@@ -37,7 +37,7 @@ beforeEach(() => {
 describe('AdminGuard', () => {
   it('redirige a /login con next si no hay token', async () => {
     renderGuard()
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login?next=%2Fadmin'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ingresar?next=%2Fadmin'))
   })
 
   it('muestra el panel y guarda el token renovado', async () => {
@@ -52,7 +52,7 @@ describe('AdminGuard', () => {
     localStorage.setItem('nubapay_token', 'expired')
     mockFetch.mockResolvedValue({ ok: false, status: 401 })
     renderGuard()
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login?next=%2Fadmin&expired=1'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ingresar?next=%2Fadmin&expired=1'))
     expect(localStorage.getItem('nubapay_token')).toBeNull()
   })
 

@@ -248,7 +248,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {loggedIn === null ? null : loggedIn ? (
               <Link
-                href="/dashboard"
+                href="/panel"
                 onClick={closeMenu}
                 style={{ display: 'block', textAlign: 'center', fontSize: '16px', fontWeight: 400, background: '#C6FF00', color: '#0A0F00', padding: '16px', borderRadius: '100px', textDecoration: 'none' }}
               >
@@ -257,14 +257,14 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
             ) : (
               <>
                 <Link
-                  href="/register"
+                  href="/registro"
                   onClick={closeMenu}
                   style={{ display: 'block', textAlign: 'center', fontSize: '16px', fontWeight: 400, background: '#C6FF00', color: '#0A0F00', padding: '16px', borderRadius: '100px', textDecoration: 'none' }}
                 >
                   Probá gratis
                 </Link>
                 <Link
-                  href="/login"
+                  href="/ingresar"
                   onClick={closeMenu}
                   style={{ display: 'block', textAlign: 'center', fontSize: '15px', fontWeight: 400, color: 'rgba(0,0,0,0.5)', padding: '14px', borderRadius: '100px', textDecoration: 'none', border: '1px solid rgba(0,0,0,0.1)' }}
                 >
@@ -317,14 +317,14 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
             {/* CTA — solo desktop */}
             <div className="snb-desktop-cta" style={{ alignItems: 'center', gap: '12px', flexShrink: 0, transform: scrolled ? 'scale(0.93)' : 'scale(1)', transformOrigin: 'right center', transition: reduceMotion ? 'none' : 'transform 0.55s cubic-bezier(0.16,1,0.3,1)' }}>
               {loggedIn === null ? null : loggedIn ? (
-                <Link href="/dashboard" className="snb-cta">
+                <Link href="/panel" className="snb-cta">
                   Ver Dashboard
                   <CtaArrow />
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="snb-login">Iniciar sesión</Link>
-                  <Link href="/register" className="snb-cta">
+                  <Link href="/ingresar" className="snb-login">Iniciar sesión</Link>
+                  <Link href="/registro" className="snb-cta">
                     Probá gratis
                     <CtaArrow />
                   </Link>

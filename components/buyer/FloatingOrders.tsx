@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatArDateTime } from '@/lib/dateTime'
 import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_FONT } from '@/lib/buyerUi'
 import { formatPrice } from '@/lib/utils'
@@ -76,12 +77,7 @@ export function FloatingOrders({ eventId, catalogSlug }: FloatingOrdersProps) {
                       {order.orderNumber ? `Pedido #${order.orderNumber}` : 'Pedido'}
                     </span>
                     <span className="text-[12px] text-gray-400">
-                      {new Date(order.createdAt).toLocaleString('es-AR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatArDateTime(order.createdAt, { year: undefined })}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
