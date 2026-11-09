@@ -35,7 +35,6 @@ export const PROVIDER_LABEL: Record<string, string> = {
   mobbex: 'Mobbex',
   cash: 'Efectivo',
   transfer: 'Transferencia',
-  stripe: 'Stripe',
 }
 
 export function providerColor(p: string): string {
