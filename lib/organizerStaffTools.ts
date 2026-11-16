@@ -7,6 +7,7 @@ export const ORGANIZER_FULL_TOOLS: OrganizerStaffTools = {
   scanner: true,
   orders: true,
   pickup_points: true,
+  regrets: true,
   payments: true,
 }
 
@@ -17,6 +18,7 @@ export const ORGANIZER_ZERO_TOOLS: OrganizerStaffTools = {
   scanner: false,
   orders: false,
   pickup_points: false,
+  regrets: false,
   payments: false,
 }
 
