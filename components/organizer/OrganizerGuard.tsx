@@ -14,6 +14,7 @@ import {
   type AuthUser,
 } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import { useLoggedIn } from '@/lib/useLoggedIn'
 
 /** Si la ruta es /eventos/{uuid}/productos, devuelve la URL del catálogo público. */
 function _publicFallback(pathname: string): string | null {
@@ -25,6 +26,9 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [state, setState] = useState<'loading' | 'ok'>('loading')
+  // Con sesión guardada el panel se muestra ya y el token se valida en segundo plano: no hace falta
+  // esperar un viaje al servidor para pintar. Si está vencido, el efecto lo limpia y vuelve al login.
+  const hasStoredSession = useLoggedIn()
 
   useEffect(() => {
     const token = getAuthToken()
@@ -74,7 +78,7 @@ export function OrganizerGuard({ children }: { children: React.ReactNode }) {
     // Refresh session on each organizer navigation so sidebar (Marca/partner flags) stays in sync after provision or tab switch.
   }, [router, pathname])
 
-  if (state === 'loading') {
+  if (state === 'loading' && !hasStoredSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <Spinner size="lg" className="text-gray-900" />

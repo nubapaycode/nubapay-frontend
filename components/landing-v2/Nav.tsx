@@ -8,6 +8,7 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { gsap, useGSAP } from './gsap'
 import { lockScroll, prefersReducedMotion, scrollToHash, useActiveSection } from './hooks'
 import MenuArt, { type MenuArtKind } from './MenuArt'
+import { useLoggedIn } from '@/lib/useLoggedIn'
 
 /* ───────── Datos ───────── */
 
@@ -118,6 +119,10 @@ type Hover = React.SyntheticEvent<HTMLElement>
  */
 export default function Nav({ scrolled, base = '', center }: { scrolled: boolean; base?: string; center?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
+  const loggedIn = useLoggedIn()
+  // Con sesión iniciada el acceso lleva directo al panel en vez de al login.
+  const accountHref = loggedIn ? '/panel' : '/ingresar'
+  const accountLabel = loggedIn ? 'Ver dashboard' : 'Iniciar sesión'
   const overDark = useOverDark()
   const active = useActiveSection(SECTION_IDS)
   const headerRef = useRef<HTMLElement>(null)
@@ -348,8 +353,8 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
         </Link>
         {center && <div className="lv2-nav-center">{center}</div>}
         <div className="lv2-nav-actions">
-          <Link href="/ingresar" className="lv2-nav-chip lv2-nav-login" onMouseEnter={fadeIn} onMouseLeave={fadeOut}>
-            <span>Iniciar sesión</span>
+          <Link href={accountHref} className="lv2-nav-chip lv2-nav-login" onMouseEnter={fadeIn} onMouseLeave={fadeOut}>
+            <span>{accountLabel}</span>
           </Link>
           <A
             href={`${base}#contacto`}
@@ -455,7 +460,7 @@ export default function Nav({ scrolled, base = '', center }: { scrolled: boolean
                 Agendá una demo
                 <span className="lv2-btn-arrow"><ArrowRight size={18} strokeWidth={1.6} /></span>
               </A>
-              <Link href="/ingresar" tabIndex={tab} className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">Iniciar sesión</Link>
+              <Link href={accountHref} tabIndex={tab} className="lv2-btn lv2-btn--ghost lv2-btn--ghost-dark">{accountLabel}</Link>
             </div>
             <div className="lv2-menu-meta">
               <a href={`mailto:${CONTACT_EMAIL}`} tabIndex={tab} onMouseEnter={metaIn} onMouseLeave={metaOut}>{CONTACT_EMAIL}</a>

@@ -7,9 +7,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthError, AuthField, AuthShell, AuthSubmit, Mark } from '@/components/auth/AuthShell'
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 
-import { authPaths, eventsPaths } from '@/lib/api'
-import { authHeadersJson, type AuthUser, clearAuthSession, getAuthToken, isSessionRejected, setAuthSession } from '@/lib/authSession'
+import { Spinner } from '@/components/ui/Spinner'
+import { authPaths } from '@/lib/api'
+import { type AuthUser, getAuthToken, getAuthUser, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import { useLoggedIn } from '@/lib/useLoggedIn'
 import { FetchError } from '@/lib/fetcher'
 
 type Mode = 'login' | 'register'
@@ -46,52 +48,24 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
 
   const [mode] = useState<Mode>(initialMode)
   // Llegamos con `expired=1` (o lo detectamos acá) cuando había token pero el servidor lo rechazó.
-  const [expired, setExpired] = useState(searchParams.get('expired') === '1')
+  const expired = searchParams.get('expired') === '1'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Con una sesión guardada se navega al toque, sin esperar a la red: `OrganizerGuard` valida el
+  // token en el destino y, si el servidor lo rechaza, vuelve acá con `?expired=1` y sin token.
+  const redirecting = useLoggedIn()
   useEffect(() => {
     if (!getAuthToken()) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const meRes = await browserFetch(authPaths.me(), { headers: authHeadersJson() })
-        if (isSessionRejected(meRes)) {
-          // Token vencido o usuario inexistente: se muestra el formulario sin rebotar por /events.
-          clearAuthSession()
-          if (!cancelled) setExpired(true)
-          return
-        }
-        if (meRes.ok) {
-          const meBody = (await meRes.json()) as { user?: AuthUser }
-          if (!cancelled && meBody.user?.is_platform_admin) {
-            router.replace(adminRedirectPath(next))
-            return
-          }
-          const target = safeNextPath(next)
-          if (!cancelled && target && !target.startsWith('/admin')) {
-            router.replace(target)
-            return
-          }
-        }
-        const res = await browserFetch(eventsPaths.list({ page: 1, page_size: 1 }), {
-          headers: authHeadersJson(),
-        })
-        const body = (await res.json()) as { events?: { id: string }[] }
-        const firstId = body.events?.[0]?.id
-        if (!cancelled && firstId) {
-          router.replace(`/eventos/${firstId}/mis-eventos`)
-          return
-        }
-      } catch {}
-      if (!cancelled) router.replace('/eventos')
-    })()
-    return () => {
-      cancelled = true
+    if (getAuthUser()?.is_platform_admin) {
+      router.replace(adminRedirectPath(next))
+      return
     }
+    const target = safeNextPath(next)
+    router.replace(target && !target.startsWith('/admin') ? target : '/panel')
   }, [router, next])
 
   const finishAuth = async (token: string, user: AuthUser) => {
@@ -105,18 +79,8 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
       router.push(target)
       return
     }
-    try {
-      const res = await browserFetch(eventsPaths.list({ page: 1, page_size: 1 }), {
-        headers: authHeadersJson(),
-      })
-      const body = (await res.json()) as { events?: { id: string }[] }
-      const firstId = body.events?.[0]?.id
-      if (firstId) {
-        router.push(`/eventos/${firstId}/mis-eventos`)
-        return
-      }
-    } catch {}
-    router.push('/eventos')
+    // /panel resuelve el primer evento y a qué sección puede entrar el usuario.
+    router.push('/panel')
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -181,6 +145,14 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
   const isLogin = mode === 'login'
   /** El subrayado lima solo se usa en la marca propia, no en whitelabel. */
   const ownBrand = !(whitelabel || resolvedSub)
+
+  if (redirecting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <Spinner size="lg" className="text-gray-900" />
+      </div>
+    )
+  }
 
   return (
     <AuthShell

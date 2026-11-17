@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { OrganizerGuard } from '@/components/organizer/OrganizerGuard'
 import { useRouter, usePathname } from 'next/navigation'
 import { browserFetch } from '@/lib/browserFetch'
+import { setAuthSession } from '@/lib/authSession'
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
@@ -42,6 +43,29 @@ describe('OrganizerGuard', () => {
     )
     // Mientras carga, no muestra el contenido
     expect(screen.queryByText('Contenido protegido')).not.toBeInTheDocument()
+  })
+
+  it('con sesión guardada muestra el panel sin esperar al servidor', async () => {
+    setAuthSession('stored-token', { id: '1', name: 'A', email: 'a@b.c', role: 'ORGANIZER' })
+    ;(browserFetch as jest.Mock).mockReturnValue(new Promise(() => {}))
+    render(
+      <OrganizerGuard>
+        <div>Contenido protegido</div>
+      </OrganizerGuard>,
+    )
+    await waitFor(() => expect(screen.getByText('Contenido protegido')).toBeInTheDocument())
+  })
+
+  it('con sesión guardada pero token vencido (401) igual limpia y vuelve al login', async () => {
+    setAuthSession('stored-token', { id: '1', name: 'A', email: 'a@b.c', role: 'ORGANIZER' })
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 })
+    render(
+      <OrganizerGuard>
+        <div>Contenido protegido</div>
+      </OrganizerGuard>,
+    )
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ingresar?expired=1'))
+    expect(localStorage.getItem('nubapay_token')).toBeNull()
   })
 
   it('muestra los children cuando el token es válido', async () => {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { LoginView } from '@/components/LoginView'
 import { useRouter } from 'next/navigation'
 import { browserFetch } from '@/lib/browserFetch'
-import { getAuthToken } from '@/lib/authSession'
+import { getAuthToken, setAuthSession } from '@/lib/authSession'
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
@@ -86,12 +86,12 @@ describe('LoginView', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('redirige a eventos tras login exitoso y guarda token', async () => {
+  it('va al panel tras login exitoso y guarda token', async () => {
     render(<LoginView />)
     await userEvent.type(screen.getByLabelText('Email'), 'demo@nubapay.app')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'demo123')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/eventos'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/panel'))
     expect(getAuthToken()).toBe('test-jwt')
   })
 
@@ -101,13 +101,13 @@ describe('LoginView', () => {
     expect(mockPush).toHaveBeenCalledWith('/registro')
   })
 
-  it('registro crea sesión y va a eventos', async () => {
+  it('registro crea sesión y va al panel', async () => {
     render(<LoginView initialMode="register" />)
     await userEvent.type(screen.getByLabelText('Nombre'), 'Nuevo Usuario')
     await userEvent.type(screen.getByLabelText('Email'), 'new@test.com')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'password12')
     await userEvent.click(screen.getByRole('button', { name: /Crear cuenta y entrar/i }))
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/eventos'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/panel'))
     expect(getAuthToken()).toBe('reg-jwt')
   })
 
@@ -123,46 +123,30 @@ describe('LoginView con sesión guardada', () => {
 
   beforeEach(() => {
     mockReplace.mockClear()
+    mockBrowserFetch.mockClear()
     ;(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: mockReplace })
   })
 
-  it('redirige sin mostrar el formulario si la sesión sigue vigente', async () => {
-    localStorage.setItem('nubapay_token', 'valid')
-    mockBrowserFetch.mockImplementation(async (input) => {
-      const u = String(input)
-      if (u.includes('auth/me')) {
-        return { ok: true, status: 200, json: async () => ({ user: { ...demoUser, is_platform_admin: true } }) } as Response
-      }
-      throw new Error(`Unhandled fetch: ${u}`)
-    })
+  it('va directo al panel sin esperar al servidor ni mostrar el formulario', async () => {
+    setAuthSession('valid', demoUser)
     render(<LoginView />)
-    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/panel'))
+    // El token lo valida OrganizerGuard en el destino: acá no hay ningún viaje a la red.
+    expect(mockBrowserFetch).not.toHaveBeenCalled()
     expect(getAuthToken()).toBe('valid')
+    expect(screen.queryByRole('button', { name: 'Ingresar' })).not.toBeInTheDocument()
   })
 
-  it('con token vencido (401) lo borra y deja el formulario, sin rebotar por /events', async () => {
-    localStorage.setItem('nubapay_token', 'expired')
-    mockBrowserFetch.mockImplementation(async (input) => {
-      const u = String(input)
-      if (u.includes('auth/me')) return { ok: false, status: 401, json: async () => ({}) } as Response
-      throw new Error(`Unhandled fetch: ${u}`)
-    })
+  it('un admin de plataforma va a /admin', async () => {
+    setAuthSession('valid', { ...demoUser, is_platform_admin: true })
     render(<LoginView />)
-    await waitFor(() => expect(getAuthToken()).toBeNull())
-    expect(mockReplace).not.toHaveBeenCalled()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/admin'))
+    expect(mockBrowserFetch).not.toHaveBeenCalled()
+  })
+
+  it('sin sesión guardada muestra el formulario y no redirige', async () => {
+    render(<LoginView />)
     expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
-    expect(screen.getByText(/Tu sesión venció/)).toBeInTheDocument()
-  })
-
-  it('con el servidor caído (500) NO borra el token', async () => {
-    localStorage.setItem('nubapay_token', 'valid')
-    mockBrowserFetch.mockImplementation(async (input) => {
-      const u = String(input)
-      if (u.includes('auth/me')) return { ok: false, status: 500, json: async () => ({}) } as Response
-      return { ok: false, status: 500, json: async () => ({}) } as Response
-    })
-    render(<LoginView />)
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/eventos'))
-    expect(getAuthToken()).toBe('valid')
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 })
