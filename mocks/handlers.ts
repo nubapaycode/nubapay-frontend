@@ -77,6 +77,7 @@ const routes: MockRoute[] = [
             scanner: true,
             orders: true,
             pickup_points: true,
+            regrets: true,
             payments: true,
           },
         },

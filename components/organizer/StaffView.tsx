@@ -106,6 +106,7 @@ const TOOL_OPTS: ToolOpt[] = [
   { key: 'scanner',       label: 'Escáner QR',            short: 'Escáner',    Icon: IcScanner       },
   { key: 'orders',        label: 'Pedidos',               short: 'Pedidos',    Icon: IcOrders        },
   { key: 'pickup_points', label: 'Puntos de retiro',      short: 'Retiro',     Icon: IcPickupPoints  },
+  { key: 'regrets',       label: 'Arrepentimientos',      short: 'Arrepent.',  Icon: IcOrders        },
   { key: 'payments',      label: 'Pagos',                 short: 'Pagos',      Icon: IcPayments      },
 ]
 
@@ -125,7 +126,7 @@ const ROLE_TEMPLATES: { role: string; hint: string; tools: Partial<OrganizerStaf
   { role: 'Acreditación', hint: 'Escanea QR en la entrada', tools: { scanner: true } },
   { role: 'Barra', hint: 'Despacha y escanea pedidos', tools: { orders: true, scanner: true } },
   { role: 'Producción', hint: 'Sigue ventas y pedidos', tools: { dashboard: true, orders: true, scanner: true } },
-  { role: 'Administración', hint: 'Acceso a todo', tools: { dashboard: true, products: true, scanner: true, orders: true, pickup_points: true, payments: true } },
+  { role: 'Administración', hint: 'Acceso a todo', tools: { dashboard: true, products: true, scanner: true, orders: true, pickup_points: true, regrets: true, payments: true } },
 ]
 
 function defaultTools(): OrganizerStaffTools {
