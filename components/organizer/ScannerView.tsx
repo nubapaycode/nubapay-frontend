@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import jsQR from 'jsqr'
-import { AlertTriangle, Banknote, Camera, Check, Keyboard, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
+import { AlertTriangle, Banknote, Camera, Check, Minus, PackageCheck, Plus, QrCode, ScanLine, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
@@ -404,7 +404,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 onClick={startReader}
                 className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 py-3 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90"
               >
-                <Keyboard size={16} strokeWidth={2} aria-hidden />
+                <ScanLine size={16} strokeWidth={2} aria-hidden />
                 Usar lector físico
               </button>
             </div>
@@ -415,7 +415,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
         {state === 'reader' && (
           <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-5 text-center">
             <div className="relative flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-900">
-              <Keyboard size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
+              <ScanLine size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
               <span
                 className="absolute -right-1 -top-1 size-3 animate-pulse rounded-full"
                 style={{ background: 'var(--organizer-accent, #C6FF00)' }}
