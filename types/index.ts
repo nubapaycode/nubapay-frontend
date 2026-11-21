@@ -119,6 +119,8 @@ export interface Event {
   showCategoryShortcuts: boolean
   /** Switch global de plataforma (panel de admin): si es false, no se permite agregar al carrito ni pagar. */
   paymentsEnabled: boolean
+  /** El organizador cerró la compra (X horas antes del inicio). Ya está incluido en `paymentsEnabled`; sirve para elegir el mensaje. */
+  purchaseClosed?: boolean
 }
 
 export interface QRToken {

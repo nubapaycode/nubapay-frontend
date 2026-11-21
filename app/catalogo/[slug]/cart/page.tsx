@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { CartView } from '@/components/buyer/CartView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
-import { fetchPublicStorefront } from '@/lib/publicCatalog'
+import { fetchPublicStorefront, storefrontCanBuy } from '@/lib/publicCatalog'
 import { BUYER_PRIVATE_ROBOTS, pageMeta } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
@@ -36,7 +36,8 @@ export default async function CatalogoCartPage({ params }: Props) {
         eventId={data.event.id}
         catalogSlug={slug}
         products={data.products}
-        paymentsEnabled={data.payments_enabled ?? true}
+        paymentsEnabled={storefrontCanBuy(data)}
+        purchaseClosed={data.purchase_closed ?? false}
         availablePaymentMethods={data.available_payment_methods ?? ['mp']}
         serviceFeePercent={data.service_fee_percent}
       />

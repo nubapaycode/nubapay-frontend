@@ -1,5 +1,6 @@
 'use client'
 
+import { buyBlockedMessage } from '@/lib/buyerAvailability'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -102,6 +103,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const methods = paymentMethods.filter(m => m.id !== 'cash' && availablePaymentMethods.includes(m.id))
   const [paymentMethod, setPaymentMethod] = useState(methods[0]?.id ?? '')
   const paymentsEnabled = event.paymentsEnabled
+  const purchaseClosed = event.purchaseClosed ?? false
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
   const leavingRef = useRef(false)
@@ -551,7 +553,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
         <div className="mx-auto max-w-3xl">
           {!paymentsEnabled ? (
             <p className="mb-2 text-center text-[13px] font-semibold" style={{ color: DANGER }}>
-              Compra inhabilitada temporalmente. No es posible pagar en este momento.
+              {buyBlockedMessage(purchaseClosed, 'pay')}
             </p>
           ) : submitError ? (
             <p className="mb-2 text-center text-[13px] font-semibold" style={{ color: DANGER }} role="alert">

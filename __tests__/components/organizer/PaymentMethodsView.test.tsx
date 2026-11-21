@@ -44,23 +44,12 @@ describe('PaymentMethodsView', () => {
     expect(row('Mobbex')).toHaveAttribute('href', '/eventos/e1/metodos-pago/mobbex')
   })
 
-  it('deja apagada la tarjeta en el sitio hasta que haya clave pública', async () => {
-    mockEvent({ has_mp_token: true })
-    render(<PaymentMethodsView eventId="e1" />)
-
-    const sw = await screen.findByRole('switch', { name: 'Tarjeta en el sitio' })
-    expect(sw).not.toBeChecked()
-    expect(sw).toBeDisabled()
-    expect(screen.getByText('Pegá la clave pública de Mercado Pago para poder activarla')).toBeInTheDocument()
-  })
-
-  it('permite activar la tarjeta en el sitio cuando la clave pública ya está', async () => {
+  it('no muestra el switch de la tarjeta en el sitio: se activa dentro de Mercado Pago', async () => {
     mockEvent({ has_mp_token: true, has_mp_public_key: true, mp_card_enabled: true })
     render(<PaymentMethodsView eventId="e1" />)
 
-    const sw = await screen.findByRole('switch', { name: 'Tarjeta en el sitio' })
-    expect(sw).toBeChecked()
-    expect(sw).toBeEnabled()
+    await waitFor(() => expect(screen.getByText('Mercado Pago')).toBeInTheDocument())
+    expect(screen.queryByRole('switch', { name: 'Tarjeta en el sitio' })).not.toBeInTheDocument()
   })
 
   it('no marca ninguna si el evento no tiene pasarelas conectadas', async () => {

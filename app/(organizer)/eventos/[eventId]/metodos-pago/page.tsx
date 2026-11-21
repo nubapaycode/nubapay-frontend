@@ -19,7 +19,7 @@ export default async function PaymentMethodsPage({
   const { eventId } = await params
   return (
     <main className="p-4 pt-10 md:p-6 md:pl-[35px] md:pt-[64px]">
-      <div className="mx-auto w-full max-w-[720px]">
+      <div className="w-full">
         <OrganizerBackLink href={`/eventos/${eventId}/cobros`} label="Volver a Cobros" className="mb-8" />
         <PaymentMethodsView eventId={eventId} />
       </div>

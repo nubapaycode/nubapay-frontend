@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { CheckoutView } from '@/components/buyer/CheckoutView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
-import { fetchPublicStorefront } from '@/lib/publicCatalog'
+import { fetchPublicStorefront, storefrontCanBuy } from '@/lib/publicCatalog'
 import { BUYER_PRIVATE_ROBOTS, pageMeta } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
 
@@ -35,7 +35,8 @@ export default async function CatalogoCheckoutPage({ params }: Props) {
       <CheckoutView
         eventId={data.event.id}
         catalogSlug={slug}
-        paymentsEnabled={data.payments_enabled ?? true}
+        paymentsEnabled={storefrontCanBuy(data)}
+        purchaseClosed={data.purchase_closed ?? false}
         availablePaymentMethods={data.available_payment_methods ?? ['mp']}
         serviceFeePercent={data.service_fee_percent}
       />

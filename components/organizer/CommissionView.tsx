@@ -69,7 +69,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-5">
+    <div className="w-full flex flex-col gap-5">
       <OrganizerToolHeading
         title="Comisión"
         description="Total a pagar a Nubapay por las ventas de tu evento. Las órdenes canceladas no se cuentan."

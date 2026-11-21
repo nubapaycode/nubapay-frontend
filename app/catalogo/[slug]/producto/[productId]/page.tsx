@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { fetchPublicStorefront } from '@/lib/publicCatalog'
+import { fetchPublicStorefront, storefrontCanBuy } from '@/lib/publicCatalog'
 import { ProductDetailView } from '@/components/buyer/ProductDetailView'
 
 type Props = { params: Promise<{ slug: string; productId: string }> }
@@ -14,5 +14,5 @@ export default async function ProductoPage({ params }: Props) {
   const item = product ?? combo
   if (!item) notFound()
 
-  return <ProductDetailView item={item} paymentsEnabled={data.payments_enabled ?? true} />
+  return <ProductDetailView item={item} paymentsEnabled={storefrontCanBuy(data)} purchaseClosed={data.purchase_closed ?? false} />
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import jsQR from 'jsqr'
-import { AlertTriangle, Banknote, Camera, Check, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
+import { AlertTriangle, Banknote, Camera, Check, Keyboard, Minus, PackageCheck, Plus, QrCode, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
@@ -54,6 +54,7 @@ function OrderIdentity({ order }: { order: Order }) {
 type ScanState =
   | 'idle'
   | 'scanning'
+  | 'reader'
   | 'loading'
   | 'cash_pending'
   | 'cash_confirming'
@@ -63,6 +64,44 @@ type ScanState =
   | 'partial'
   | 'already_scanned'
   | 'error'
+
+/** Cómo se lee el QR: cámara del dispositivo o lector físico (USB/Bluetooth que "tipea" el código). */
+type ScanMode = 'camera' | 'reader'
+
+const SCAN_MODE_KEY = 'nubapay_scanner_mode'
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+
+function loadScanMode(): ScanMode {
+  try {
+    return window.localStorage.getItem(SCAN_MODE_KEY) === 'reader' ? 'reader' : 'camera'
+  } catch {
+    return 'camera'
+  }
+}
+
+function saveScanMode(mode: ScanMode) {
+  try {
+    window.localStorage.setItem(SCAN_MODE_KEY, mode)
+  } catch {
+    // sin storage: el modo solo vale para esta sesión
+  }
+}
+
+/**
+ * El QR del comprador es una URL `.../order/<uuid>`, pero un lector físico con otra
+ * distribución de teclado puede deformar `:` o `/`. El uuid sobrevive, así que se busca primero.
+ */
+function extractOrderId(data: string): string | null {
+  const uuid = data.match(UUID_RE)?.[0]
+  if (uuid) return uuid.toLowerCase()
+  try {
+    const parts = new URL(data).pathname.split('/')
+    const idx = parts.indexOf('order')
+    return idx !== -1 ? parts[idx + 1] || null : null
+  } catch {
+    return data.trim() || null
+  }
+}
 
 type ScanKind = 'tickets' | 'products' | 'mixed'
 
@@ -124,6 +163,8 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const streamRef = useRef<MediaStream | null>(null)
+  const readerInputRef = useRef<HTMLInputElement>(null)
+  const modeRef = useRef<ScanMode>('camera')
 
   const [state, setState] = useState<ScanState>('idle')
   const [order, setOrder] = useState<Order | null>(null)
@@ -131,6 +172,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({})
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
+  const [readerValue, setReaderValue] = useState('')
   const copy = SCAN_COPY[scanKind(order)]
 
   const incQty = useCallback((id: string, max: number) => {
@@ -157,16 +199,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
     stopCamera()
     setState('loading')
 
-    let orderId: string | null = null
-    try {
-      const url = new URL(data)
-      const parts = url.pathname.split('/')
-      const idx = parts.indexOf('order')
-      orderId = idx !== -1 ? parts[idx + 1] : null
-    } catch {
-      // not a URL — treat raw data as order id
-      orderId = data.trim()
-    }
+    const orderId = extractOrderId(data)
 
     if (!orderId) {
       setErrorMsg('QR no reconocido')
@@ -255,6 +288,8 @@ export function ScannerView({ eventId }: { eventId: string }) {
   }, [handleQrData])
 
   const startCamera = useCallback(async () => {
+    modeRef.current = 'camera'
+    saveScanMode('camera')
     setCameraError('')
     setState('scanning')
     try {
@@ -273,6 +308,16 @@ export function ScannerView({ eventId }: { eventId: string }) {
     }
   }, [scan])
 
+  const startReader = useCallback(() => {
+    stopCamera()
+    modeRef.current = 'reader'
+    saveScanMode('reader')
+    setCameraError('')
+    setReaderValue('')
+    setState('reader')
+  }, [stopCamera])
+
+  /** Vuelve a la pantalla inicial (elegir cámara o lector). */
   const reset = useCallback(() => {
     stopCamera()
     setOrder(null)
@@ -280,17 +325,50 @@ export function ScannerView({ eventId }: { eventId: string }) {
     setSelectedQty({})
     setErrorMsg('')
     setCameraError('')
+    setReaderValue('')
     setState('idle')
   }, [stopCamera])
+
+  /** Deja todo listo para el próximo QR en el mismo modo (lector: de inmediato; cámara: pantalla inicial). */
+  const next = useCallback(() => {
+    if (modeRef.current === 'reader') {
+      setOrder(null)
+      setPendingOrderId(null)
+      setSelectedQty({})
+      setErrorMsg('')
+      setReaderValue('')
+      setState('reader')
+    } else {
+      reset()
+    }
+  }, [reset])
 
   const cancelScan = useCallback(() => {
     setOrder(null)
     setPendingOrderId(null)
     setSelectedQty({})
-    startCamera()
-  }, [startCamera])
+    if (modeRef.current === 'reader') startReader()
+    else startCamera()
+  }, [startCamera, startReader])
+
+  const submitReader = useCallback(() => {
+    const value = readerValue.trim()
+    setReaderValue('')
+    if (!value) return
+    void handleQrData(value)
+  }, [readerValue, handleQrData])
 
   useEffect(() => () => stopCamera(), [stopCamera])
+
+  // Recordar el modo elegido la última vez (el lector físico suele quedar fijo en una PC de acceso).
+  useEffect(() => {
+    modeRef.current = loadScanMode()
+  }, [])
+
+  // En modo lector el input debe tener el foco siempre: el lector "teclea" donde esté el cursor.
+  useEffect(() => {
+    if (state === 'reader') readerInputRef.current?.focus()
+  }, [state])
 
   const selectedCount = Object.values(selectedQty).reduce((sum, qty) => sum + qty, 0)
 
@@ -325,17 +403,80 @@ export function ScannerView({ eventId }: { eventId: string }) {
             </div>
             <div>
               <p className="text-base font-medium text-gray-900">Escanear QR de retiro</p>
-              <p className="text-sm text-gray-400 mt-1">Activá la cámara para validar un pedido</p>
+              <p className="text-sm text-gray-400 mt-1">Usá la cámara o un lector de QR físico para validar un pedido</p>
             </div>
             {cameraError && <p className="text-red-500 text-sm">{cameraError}</p>}
+            <div className="flex w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={startCamera}
+                style={organizerAccentFilledButtonStyle()}
+                className="flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-medium transition-opacity hover:opacity-90"
+              >
+                <Camera size={16} strokeWidth={2} aria-hidden />
+                Activar cámara
+              </button>
+              <button
+                type="button"
+                onClick={startReader}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 py-3 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90"
+              >
+                <Keyboard size={16} strokeWidth={2} aria-hidden />
+                Usar lector físico
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reader — lector físico (USB/Bluetooth): escribe el código y envía Enter */}
+        {state === 'reader' && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-5 text-center">
+            <div className="relative flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-900">
+              <Keyboard size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
+              <span
+                className="absolute -right-1 -top-1 size-3 animate-pulse rounded-full"
+                style={{ background: 'var(--organizer-accent, #C6FF00)' }}
+                aria-hidden
+              />
+            </div>
+            <div>
+              <p className="text-base font-medium text-gray-900">Listo para escanear</p>
+              <p className="text-sm text-gray-400 mt-1">Apuntá el lector al QR del comprador y disparalo</p>
+            </div>
+            <input
+              ref={readerInputRef}
+              type="text"
+              value={readerValue}
+              onChange={e => setReaderValue(e.target.value)}
+              onKeyDown={e => {
+                // La mayoría de los lectores cierran con Enter; algunos con Tab.
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault()
+                  submitReader()
+                }
+              }}
+              onBlur={e => {
+                // Si el foco se pierde sin ir a otro control, recuperarlo para no perder lecturas.
+                if (!e.relatedTarget) window.setTimeout(() => readerInputRef.current?.focus(), 0)
+              }}
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-label="Código leído por el lector de QR"
+              placeholder="El código aparece acá"
+              className="w-full rounded-xl border border-gray-200 px-3.5 py-3 text-center text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
+            />
+            <p className="text-xs text-gray-400">
+              Si el lector no funciona, hacé clic en el campo y probá de nuevo. El lector debe estar en modo teclado (HID).
+            </p>
             <button
               type="button"
-              onClick={startCamera}
-              style={organizerAccentFilledButtonStyle()}
-              className="flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-medium transition-opacity hover:opacity-90"
+              onClick={reset}
+              className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
             >
-              <Camera size={16} strokeWidth={2} aria-hidden />
-              Activar cámara
+              Cambiar a cámara
             </button>
           </div>
         )}
@@ -518,7 +659,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             </div>
             <button
               type="button"
-              onClick={reset}
+              onClick={next}
               style={organizerAccentFilledButtonStyle()}
               className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
             >
@@ -569,7 +710,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             </p>
             <button
               type="button"
-              onClick={reset}
+              onClick={next}
               style={organizerAccentFilledButtonStyle()}
               className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
             >
@@ -599,7 +740,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             </div>
             <button
               type="button"
-              onClick={reset}
+              onClick={next}
               style={organizerAccentFilledButtonStyle()}
               className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
             >
@@ -619,7 +760,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             </div>
             <button
               type="button"
-              onClick={reset}
+              onClick={next}
               className="w-full rounded-full bg-gray-900 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               Intentar de nuevo

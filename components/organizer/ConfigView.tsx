@@ -52,6 +52,8 @@ export function ConfigView({ eventId }: { eventId: string }) {
   const [descDraft, setDescDraft] = useState('')
   const [startsAtDraft, setStartsAtDraft] = useState('')
   const [endsAtDraft, setEndsAtDraft] = useState('')
+  const [cutoffEnabledDraft, setCutoffEnabledDraft] = useState(false)
+  const [cutoffHoursDraft, setCutoffHoursDraft] = useState('')
   const [isActiveDraft, setIsActiveDraft] = useState(false)
   const [notifyPickupPointDraft, setNotifyPickupPointDraft] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -65,6 +67,8 @@ export function ConfigView({ eventId }: { eventId: string }) {
       setDescDraft(ev.description ?? '')
       setStartsAtDraft(toDatetimeLocal(ev.starts_at))
       setEndsAtDraft(toDatetimeLocal(ev.ends_at))
+      setCutoffEnabledDraft(ev.purchase_cutoff_hours != null)
+      setCutoffHoursDraft(ev.purchase_cutoff_hours != null ? String(ev.purchase_cutoff_hours) : '')
       setIsActiveDraft(ev.is_active)
       setNotifyPickupPointDraft(ev.notify_pickup_point)
     } else {
@@ -75,15 +79,30 @@ export function ConfigView({ eventId }: { eventId: string }) {
 
   useEffect(() => { void load() }, [load])
 
+  /** null = sin cierre. NaN = valor inválido (se valida al guardar). */
+  const cutoffValue = (): number | null => {
+    if (!cutoffEnabledDraft) return null
+    const n = Number(cutoffHoursDraft)
+    return cutoffHoursDraft.trim() !== '' && Number.isInteger(n) && n >= 0 && n <= 8760 ? n : NaN
+  }
+
   const handleSave = async () => {
     const name = nameDraft.trim()
     if (!name) { showToast('El nombre del evento no puede estar vacío.', 'error'); return }
+    const cutoff = cutoffValue()
+    if (cutoff !== null && Number.isNaN(cutoff)) {
+      showToast('Ingresá las horas de cierre como un número entero (0 a 8760).', 'error'); return
+    }
+    if (cutoff !== null && !startsAtDraft) {
+      showToast('Para cerrar la compra antes del evento, definí la fecha de inicio.', 'error'); return
+    }
     setSaving(true)
     const res = await patchOrganizerEvent(eventId, {
       name,
       description: descDraft.trim() || null,
       starts_at: fromDatetimeLocal(startsAtDraft),
       ends_at: fromDatetimeLocal(endsAtDraft),
+      purchase_cutoff_hours: cutoff,
       is_active: isActiveDraft,
       notify_pickup_point: notifyPickupPointDraft,
     })
@@ -100,6 +119,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
       (descDraft.trim() || null) !== event.description ||
       !sameInstant(fromDatetimeLocal(startsAtDraft), event.starts_at) ||
       !sameInstant(fromDatetimeLocal(endsAtDraft), event.ends_at) ||
+      !Object.is(cutoffValue(), event.purchase_cutoff_hours ?? null) ||
       isActiveDraft !== event.is_active ||
       notifyPickupPointDraft !== event.notify_pickup_point
     )
@@ -198,6 +218,58 @@ export function ConfigView({ eventId }: { eventId: string }) {
                 onChange={e => setEndsAtDraft(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Cierre de compra X horas antes del inicio */}
+          <div className="rounded-xl border border-gray-100 px-4 py-3 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Cerrar la compra antes del evento</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  El catálogo deja de aceptar pedidos unas horas antes del inicio. Los pedidos ya creados no se afectan
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={cutoffEnabledDraft}
+                aria-label="Cerrar la compra antes del evento"
+                onClick={() => {
+                  setCutoffEnabledDraft(v => !v)
+                  if (!cutoffHoursDraft) setCutoffHoursDraft('2')
+                }}
+                className={`relative inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 ${
+                  cutoffEnabledDraft ? 'bg-gray-900' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                    cutoffEnabledDraft ? 'translate-x-4' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+            {cutoffEnabledDraft && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-500" htmlFor="cfg-cutoff">
+                  Horas antes del inicio
+                </label>
+                <input
+                  id="cfg-cutoff"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={8760}
+                  step={1}
+                  className={inputClass}
+                  value={cutoffHoursDraft}
+                  onChange={e => setCutoffHoursDraft(e.target.value)}
+                />
+                {!startsAtDraft && (
+                  <p className="text-xs text-amber-600">Definí la fecha de inicio para que el cierre funcione.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Toggle is_active */}

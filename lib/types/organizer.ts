@@ -9,6 +9,8 @@ export type OrganizerEventRow = {
   cover_image_url: string | null
   starts_at: string | null
   ends_at: string | null
+  /** Horas antes de `starts_at` en que se cierra la compra. null = sin cierre. */
+  purchase_cutoff_hours?: number | null
   status: string
   is_active: boolean
   notify_pickup_point: boolean

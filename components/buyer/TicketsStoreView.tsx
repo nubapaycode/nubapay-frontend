@@ -26,6 +26,7 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
   const router = useRouter()
   const { lines, quantityOf, setQuantity } = useTicketSelection(catalogSlug)
   const paymentsEnabled = event.paymentsEnabled
+  const purchaseClosed = event.purchaseClosed ?? false
   const hasCatalog = event.products.length + event.combos.length + event.blocks.length > 0
   const ticketFee = event.serviceFeePercent?.ticket ?? 0
   const date = eventDateParts(event.date)
@@ -93,7 +94,9 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
             className="mb-5 rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
           >
-            Compra inhabilitada temporalmente. No es posible agregar tickets ni pagar en este momento.
+            {purchaseClosed
+              ? 'La venta de entradas para este evento está cerrada.'
+              : 'Compra inhabilitada temporalmente. No es posible agregar tickets ni pagar en este momento.'}
           </div>
         )}
 

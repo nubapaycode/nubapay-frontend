@@ -1,5 +1,6 @@
 'use client'
 
+import { buyBlockedLabel, buyBlockedMessage } from '@/lib/buyerAvailability'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -21,6 +22,8 @@ interface CartViewProps {
   products?: Product[]
   /** Switch global de plataforma: si es false, no se puede agregar al carrito ni pagar. */
   paymentsEnabled?: boolean
+  /** La compra la cerró el organizador (solo cambia el mensaje). */
+  purchaseClosed?: boolean
   /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
   availablePaymentMethods?: string[]
   /** Costo de servicio (%) vigente según el backend; si falta se usan los valores por defecto. */
@@ -32,6 +35,7 @@ export function CartView({
   catalogSlug,
   products = [],
   paymentsEnabled = true,
+  purchaseClosed = false,
   availablePaymentMethods = ['mp'],
   serviceFeePercent,
 }: CartViewProps) {
@@ -176,7 +180,7 @@ export function CartView({
             className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
           >
-            Compra inhabilitada temporalmente. No es posible pagar en este momento.
+            {buyBlockedMessage(purchaseClosed, 'pay')}
           </div>
         )}
 
@@ -362,7 +366,7 @@ export function CartView({
               className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
-              {paymentsEnabled ? 'Ir a pagar' : 'Compra inhabilitada'}
+              {paymentsEnabled ? 'Ir a pagar' : buyBlockedLabel(purchaseClosed)}
             </button>
           </div>
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { buyBlockedMessage } from '@/lib/buyerAvailability'
 import type { ReactNode } from 'react'
 import { useLayoutEffect, useState } from 'react'
 import Image from 'next/image'
@@ -103,6 +104,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
   }, [event.id])
   const { items, addItem, updateQuantity, total, count } = useCart()
   const paymentsEnabled = event.paymentsEnabled
+  const purchaseClosed = event.purchaseClosed ?? false
   const handleAdd = paymentsEnabled ? addItem : () => {}
 
   const slug = catalogSlug ?? event.id
@@ -312,14 +314,14 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         </div>
       </div>
 
-      {/* Aviso: compra inhabilitada desde el panel de admin */}
+      {/* Aviso: compra inhabilitada desde el panel de admin o cerrada por el organizador */}
       {!paymentsEnabled && (
         <div className="mx-auto max-w-5xl px-4 pt-4 md:px-6">
           <div
             className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
           >
-            Compra inhabilitada temporalmente. No es posible agregar productos ni pagar en este momento.
+            {buyBlockedMessage(purchaseClosed, 'addOrPay')}
           </div>
         </div>
       )}

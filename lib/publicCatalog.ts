@@ -28,8 +28,16 @@ export type StorefrontApiResponse = {
   event_canonical_subdomain?: string | null
   /** Switch global de plataforma: si es false, el comprador no puede agregar al carrito ni pagar. */
   payments_enabled?: boolean
+  /** Cierre de compra del organizador (X horas antes del inicio). Distinto del switch global. */
+  purchase_closed?: boolean
+  purchase_closes_at?: string | null
   /** Métodos de pago online realmente configurados para este evento (ej. ['mp', 'sipago']). */
   available_payment_methods?: string[]
+}
+
+/** Se puede comprar si la plataforma lo permite y el organizador no cerró la compra. */
+export function storefrontCanBuy(data: Pick<StorefrontApiResponse, 'payments_enabled' | 'purchase_closed'>): boolean {
+  return (data.payments_enabled ?? true) && !data.purchase_closed
 }
 
 export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
@@ -48,7 +56,8 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     serviceFeePercent: data.service_fee_percent,
     categories: data.categories ?? [],
     showCategoryShortcuts: event.showCategoryShortcuts ?? false,
-    paymentsEnabled: data.payments_enabled ?? true,
+    paymentsEnabled: storefrontCanBuy(data),
+    purchaseClosed: data.purchase_closed ?? false,
   }
 }
 

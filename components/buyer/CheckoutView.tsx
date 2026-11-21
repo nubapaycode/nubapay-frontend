@@ -1,5 +1,6 @@
 'use client'
 
+import { buyBlockedLabel } from '@/lib/buyerAvailability'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -26,6 +27,8 @@ interface CheckoutViewProps {
   catalogSlug?: string
   /** Switch global de plataforma: si es false, no se puede completar el pago. */
   paymentsEnabled?: boolean
+  /** La compra la cerró el organizador (solo cambia el mensaje). */
+  purchaseClosed?: boolean
   /** Métodos de pago realmente configurados para este evento (ej. ['mp', 'sipago']). */
   availablePaymentMethods?: string[]
   /** Costo de servicio (%) vigente según el backend; si falta se usan los valores por defecto. */
@@ -36,6 +39,7 @@ export function CheckoutView({
   eventId,
   catalogSlug,
   paymentsEnabled = true,
+  purchaseClosed = false,
   availablePaymentMethods = ['mp'],
   serviceFeePercent,
 }: CheckoutViewProps) {
@@ -175,7 +179,7 @@ export function CheckoutView({
   const hasDiscount = listTotal > total
 
   const handleConfirm = async () => {
-    if (!paymentsEnabled) { setError('Compra inhabilitada. No es posible completar el pago en este momento.'); return }
+    if (!paymentsEnabled) { setError(purchaseClosed ? 'La compra para este evento está cerrada.' : 'Compra inhabilitada. No es posible completar el pago en este momento.'); return }
     const trimmedName = name.trim()
     const trimmedEmail = email.trim()
     const emailMalformed = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
@@ -349,7 +353,9 @@ export function CheckoutView({
             className="rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
           >
-            Compra inhabilitada temporalmente. No es posible completar el pago en este momento.
+            {purchaseClosed
+              ? 'La compra para este evento está cerrada. Ya no es posible completar el pago.'
+              : 'Compra inhabilitada temporalmente. No es posible completar el pago en este momento.'}
           </div>
         )}
 
@@ -578,7 +584,7 @@ export function CheckoutView({
             }}
           >
             {!paymentsEnabled
-              ? 'Compra inhabilitada'
+              ? buyBlockedLabel(purchaseClosed)
               : loading
               ? 'Procesando...'
               : displayItems.length > 0

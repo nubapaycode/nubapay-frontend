@@ -132,7 +132,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
 
   if (loading || !event) {
     return (
-      <div className="max-w-2xl flex flex-col items-center justify-center py-24 gap-3 mx-auto">
+      <div className="w-full flex flex-col items-center justify-center py-24 gap-3">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
       </div>
@@ -141,7 +141,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
 
   if (approved) {
     return (
-      <div className="max-w-2xl mx-auto p-4 md:p-6">
+      <div className="w-full">
         <ConnectionApprovedOverlay
           title="¡Cuenta conectada!"
           subtitle="Mobbex quedó listo para cobrar. Volviendo a Métodos de pago…"
@@ -152,7 +152,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="w-full space-y-6">
       <ToastPortal />
       <Modal
         isOpen={confirmDisconnect}

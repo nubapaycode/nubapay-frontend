@@ -523,6 +523,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
   const [showToken, setShowToken] = useState(false)
   const [replaceOpen, setReplaceOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [cardSaving, setCardSaving] = useState(false)
   const [justConnected, setJustConnected] = useState(false)
   /** Pantalla verde de aprobado; al terminar vuelve a Métodos de pago. */
   const [approved, setApproved] = useState(false)
@@ -575,6 +576,26 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
     showToast('Clave pública guardada. La tarjeta ya se puede cobrar en el sitio.', 'success')
   }
 
+  const handleToggleCard = async () => {
+    if (!event || cardSaving) return
+    if (!event.has_mp_public_key) {
+      showToast('Pegá y guardá la clave pública antes de activar la tarjeta.', 'error')
+      return
+    }
+    const next = !event.mp_card_enabled
+    setCardSaving(true)
+    setEvent(prev => (prev ? { ...prev, mp_card_enabled: next } : prev))
+    const res = await patchOrganizerEvent(eventId, { mp_card_enabled: next })
+    setCardSaving(false)
+    if (!res.ok) {
+      setEvent(prev => (prev ? { ...prev, mp_card_enabled: !next } : prev))
+      showToast(res.error, 'error')
+      return
+    }
+    setEvent(res.event)
+    showToast(next ? 'Tarjeta en el sitio activada.' : 'Tarjeta en el sitio desactivada.', 'success')
+  }
+
   const handleRemovePublicKey = async () => {
     setSaving(true)
     const res = await patchOrganizerEvent(eventId, { mp_public_key: null })
@@ -601,7 +622,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
 
   if (loading) {
     return (
-      <div className="max-w-2xl flex flex-col items-center justify-center py-24 gap-3 mx-auto px-4">
+      <div className="w-full flex flex-col items-center justify-center py-24 gap-3">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
       </div>
@@ -610,7 +631,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
 
   if (!event) {
     return (
-      <div className="max-w-2xl mx-auto p-4 md:p-6">
+      <div className="w-full">
         <ToastPortal />
         <p className="text-sm text-gray-400">No se pudo cargar el evento.</p>
       </div>
@@ -619,7 +640,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
 
   if (approved) {
     return (
-      <div className="max-w-2xl mx-auto p-4 md:p-6">
+      <div className="w-full">
         <ConnectionApprovedOverlay
           title="¡Cuenta conectada!"
           subtitle="Mercado Pago quedó listo para cobrar. Volviendo a Métodos de pago…"
@@ -630,7 +651,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="w-full space-y-6">
       <ToastPortal />
 
       {/* Botón volver */}
@@ -671,11 +692,30 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
           </div>
 
           <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3 shadow-sm">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Tarjeta en el sitio</p>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                Pegá la Public Key de la misma aplicación. Después activala con el switch de Métodos de pago: hasta entonces el comprador no la ve. Checkout Pro sigue disponible.
-              </p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Tarjeta en el sitio</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Débito o crédito en la página, sin cuenta de Mercado Pago. Pegá la Public Key de la misma aplicación y activala con el switch: hasta entonces el comprador no la ve. Checkout Pro sigue disponible.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-label="Tarjeta en el sitio"
+                aria-checked={Boolean(event.mp_card_enabled)}
+                disabled={!event.has_mp_public_key || cardSaving}
+                onClick={() => void handleToggleCard()}
+                className={`relative mt-0.5 inline-flex h-6 w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  event.mp_card_enabled ? 'bg-gray-900' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${
+                    event.mp_card_enabled ? 'translate-x-4' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
             </div>
             {event.has_mp_public_key && (
               <div className="flex items-center justify-between gap-3">

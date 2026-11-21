@@ -23,6 +23,7 @@ export async function patchOrganizerEvent(
     cover_image_url: string | null
     starts_at: string | null
     ends_at: string | null
+    purchase_cutoff_hours: number | null
     status: string
     is_active: boolean
     notify_pickup_point: boolean

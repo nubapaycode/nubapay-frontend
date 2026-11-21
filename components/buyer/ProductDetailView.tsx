@@ -1,5 +1,6 @@
 'use client'
 
+import { buyBlockedLabel } from '@/lib/buyerAvailability'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -14,13 +15,15 @@ interface ProductDetailViewProps {
   item: Item
   /** Switch global de plataforma: si es false, no se puede agregar al carrito. */
   paymentsEnabled?: boolean
+  /** La compra la cerró el organizador (solo cambia la etiqueta). */
+  purchaseClosed?: boolean
 }
 
 function isCombo(item: Item): item is Combo {
   return 'products' in item
 }
 
-export function ProductDetailView({ item, paymentsEnabled = true }: ProductDetailViewProps) {
+export function ProductDetailView({ item, paymentsEnabled = true, purchaseClosed = false }: ProductDetailViewProps) {
   const router = useRouter()
   const { items, addItem, updateQuantity } = useCart()
 
@@ -255,7 +258,7 @@ export function ProductDetailView({ item, paymentsEnabled = true }: ProductDetai
             className="flex h-[54px] flex-1 items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
             style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
           >
-            {paymentsEnabled ? 'Agregar' : 'Compra inhabilitada'}
+            {paymentsEnabled ? 'Agregar' : buyBlockedLabel(purchaseClosed)}
           </button>
         </div>
       </div>

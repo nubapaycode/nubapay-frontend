@@ -126,7 +126,7 @@ function navItems(basePath: string): NavItem[] {
       label: 'Escáner',
       group: 'operacion',
       icon: scannerIcon,
-      showDesktop: false,
+      showDesktop: true,
       mobileFab: true,
       tool: 'scanner',
       tourId: 'sidebar-scanner',
