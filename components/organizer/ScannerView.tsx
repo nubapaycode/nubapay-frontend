@@ -9,6 +9,7 @@ import type { LucideIcon } from 'lucide-react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import { confirmCashPayment, previewQr, scanQr } from '@/lib/organizerWorkspace'
+import { extractOrderId } from '@/lib/scanner/extractOrderId'
 import { cn, formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
 
@@ -69,8 +70,6 @@ type ScanState =
 type ScanMode = 'camera' | 'reader'
 
 const SCAN_MODE_KEY = 'nubapay_scanner_mode'
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
-
 function loadScanMode(): ScanMode {
   try {
     return window.localStorage.getItem(SCAN_MODE_KEY) === 'reader' ? 'reader' : 'camera'
@@ -84,22 +83,6 @@ function saveScanMode(mode: ScanMode) {
     window.localStorage.setItem(SCAN_MODE_KEY, mode)
   } catch {
     // sin storage: el modo solo vale para esta sesión
-  }
-}
-
-/**
- * El QR del comprador es una URL `.../order/<uuid>`, pero un lector físico con otra
- * distribución de teclado puede deformar `:` o `/`. El uuid sobrevive, así que se busca primero.
- */
-function extractOrderId(data: string): string | null {
-  const uuid = data.match(UUID_RE)?.[0]
-  if (uuid) return uuid.toLowerCase()
-  try {
-    const parts = new URL(data).pathname.split('/')
-    const idx = parts.indexOf('order')
-    return idx !== -1 ? parts[idx + 1] || null : null
-  } catch {
-    return data.trim() || null
   }
 }
 

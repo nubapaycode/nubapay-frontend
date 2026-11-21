@@ -17,8 +17,8 @@ export function QRDisplay({ orderId, eventId, catalogSlug }: QRDisplayProps) {
     catalogSlug,
     path: `order/${orderId}`,
   })
-  const orderUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}${orderRelativePath}` : orderRelativePath
+  // El QR lleva solo el id del pedido: el escáner (web y app) no necesita ni el dominio ni la ruta,
+  // y el código queda más corto, más rápido de leer y sin depender del subdominio donde se compró.
 
   return (
     <div className="flex flex-col items-center gap-6 text-center w-full max-w-sm">
@@ -35,7 +35,7 @@ export function QRDisplay({ orderId, eventId, catalogSlug }: QRDisplayProps) {
 
       <div className="border border-gray-100 rounded-3xl p-6 bg-white shadow-sm">
         <QRCodeSVG
-          value={orderUrl}
+          value={orderId}
           size={200}
           bgColor="#ffffff"
           fgColor="#111111"
