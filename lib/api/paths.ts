@@ -67,6 +67,8 @@ export const catalogPaths = {
 export const partnerTenantPaths = {
   tenant: () => apiUrl('/me/tenant'),
   provision: () => apiUrl('/me/tenant/provision'),
+  /** Vuelve a usar solo nubapay.app (inverso de `provision`). */
+  deprovision: () => apiUrl('/me/tenant/deprovision'),
   domains: () => apiUrl('/me/tenant/domains'),
   domain: (domainId: string) => apiUrl(`/me/tenant/domains/${encodeURIComponent(domainId)}`),
   domainVerify: (domainId: string) =>

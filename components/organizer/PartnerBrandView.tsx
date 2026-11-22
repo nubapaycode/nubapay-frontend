@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, ChevronDown, ChevronUp, Copy, Globe, Lock, Palette, Pencil, ShoppingCart } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -355,6 +355,7 @@ function FaqSection() {
 
 export function PartnerBrandView() {
   const router = useRouter()
+  const routeEventId = useParams<{ eventId?: string }>()?.eventId
   const { show: toast, ToastPortal } = useToast()
   const [loading, setLoading] = useState(true)
   const [needsProvision, setNeedsProvision] = useState(false)
@@ -383,6 +384,8 @@ export function PartnerBrandView() {
   const [challengeByHostname, setChallengeByHostname] = useState<Record<string, string>>({})
 
   const [deleteTarget, setDeleteTarget] = useState<TenantDomainRow | null>(null)
+  const [leaveOpen, setLeaveOpen] = useState(false)
+  const [leaving, setLeaving] = useState(false)
   const [showDnsGuide, setShowDnsGuide] = useState(false)
 
 
@@ -530,6 +533,34 @@ export function PartnerBrandView() {
       toast('No se pudo contactar al servidor', 'error')
     } finally {
       setProvisioning(false)
+    }
+  }
+
+  /** Deja de usar el subdominio propio y vuelve a nubapay.app (el servidor mueve la cuenta, sus eventos y su equipo). */
+  const handleLeaveSubdomain = async () => {
+    setLeaving(true)
+    try {
+      const res = await browserFetch(partnerTenantPaths.deprovision(), { method: 'POST', headers: authHeadersJson() })
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        // El servidor explica qué falta (dominios propios, enlaces repetidos…).
+        toast(body.error ?? 'No se pudo volver a nubapay.app', 'error')
+        return
+      }
+      setLeaveOpen(false)
+      await refreshAuthProfile()
+      toast('Listo: ahora usás solo nubapay.app.', 'success')
+      if (routeEventId) {
+        router.push(`/eventos/${routeEventId}/cuenta`)
+      } else {
+        setTenant(null)
+        setNeedsProvision(true)
+      }
+      router.refresh()
+    } catch {
+      toast('No se pudo contactar al servidor', 'error')
+    } finally {
+      setLeaving(false)
     }
   }
 
@@ -851,14 +882,23 @@ export function PartnerBrandView() {
             <span className="font-semibold text-gray-900">Tu dirección en Nubapay:</span>{' '}
             <code className="rounded-md bg-white px-1.5 py-0.5 border border-gray-200">{tenant.subdomain}.nubapay.app</code>
           </div>
-          <button
-            type="button"
-            aria-label="Cambiar nombre"
-            onClick={() => { setProvisionSubdomain(tenant.subdomain); setIsEditingSubdomain(true); setNeedsProvision(true) }}
-            className="ml-3 shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition"
-          >
-            <Pencil size={13} />
-          </button>
+          <div className="ml-3 flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { setLeaveOpen(true) }}
+              className="rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition"
+            >
+              Usar solo nubapay.app
+            </button>
+            <button
+              type="button"
+              aria-label="Cambiar nombre"
+              onClick={() => { setProvisionSubdomain(tenant.subdomain); setIsEditingSubdomain(true); setNeedsProvision(true) }}
+              className="rounded-lg p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition"
+            >
+              <Pencil size={13} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1249,6 +1289,42 @@ export function PartnerBrandView() {
             className="rounded-full px-5 py-2.5 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition"
           >
             Eliminar
+          </button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={leaveOpen} onClose={() => { if (!leaving) setLeaveOpen(false) }} title="Usar solo nubapay.app">
+        <p className="text-sm text-gray-600">
+          Vas a dejar de usar <strong>{tenant.subdomain}.nubapay.app</strong>. Tus eventos y tu equipo pasan a{' '}
+          <strong>nubapay.app</strong>, con links nuevos del estilo <code className="text-xs bg-gray-100 rounded px-1">nubapay.app/catalogo/tu-evento</code>.
+        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-600">
+          <li>Los links que ya compartiste con tu subdominio pueden dejar de funcionar: vas a tener que compartir los nuevos.</li>
+          <li>El logo y los colores de tu marca dejan de aplicarse a tus eventos.</li>
+          <li>Más adelante podés volver a crear un subdominio desde esta misma pantalla.</li>
+        </ul>
+        {tenant.domains.length > 0 && (
+          <p role="alert" className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Primero eliminá tus dominios propios ({tenant.domains.map(d => d.hostname).join(', ')}) en la sección
+            &ldquo;Tu propio dominio&rdquo;.
+          </p>
+        )}
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => { setLeaveOpen(false) }}
+            disabled={leaving}
+            className="rounded-full px-5 py-2.5 text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleLeaveSubdomain()}
+            disabled={leaving || tenant.domains.length > 0}
+            className="rounded-full px-5 py-2.5 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition disabled:opacity-40 disabled:pointer-events-none"
+          >
+            {leaving ? 'Cambiando…' : 'Usar solo nubapay.app'}
           </button>
         </div>
       </Modal>
