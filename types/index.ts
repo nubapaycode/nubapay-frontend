@@ -44,7 +44,10 @@ export interface Combo {
 /** Entrada, parking u otro acceso con categoría y precio propios (se vende aparte del catálogo). */
 export interface Ticket {
   id: string
-  kind: 'ticket'
+  /** `ticket` = entrada; `parking` = estacionamiento (`name` es el tipo de vehículo). */
+  kind: 'ticket' | 'parking'
+  /** Clave del ícono del vehículo (solo parking). */
+  icon?: string | null
   name: string
   description: string
   price: number
@@ -58,7 +61,7 @@ export interface CartItem {
   /** Id del producto, combo o ticket (según `kind`). */
   productId: string
   /** `'ticket'` para entradas; ausente para productos y combos. */
-  kind?: 'ticket'
+  kind?: 'ticket' | 'parking'
   /** Lo manda el backend en los pedidos del panel (escáner, listado): true si la línea es una entrada. */
   isTicket?: boolean
   name: string
@@ -111,6 +114,12 @@ export interface Event {
   combos: Combo[]
   blocks: CatalogBlock[]
   tickets: Ticket[]
+  /** Lugares de estacionamiento (cada uno es un tipo de vehículo). */
+  parking?: Ticket[]
+  /** Link de Google Maps del estacionamiento. */
+  parkingMapsUrl?: string | null
+  /** Módulos que ofrece el evento (catalogo, tickets, parking). */
+  modules?: string[]
   /** Costo de servicio al comprador, en % sobre tickets y sobre productos. */
   serviceFeePercent?: ServiceFeePercent
   /** Categorías activas con productos, en el orden configurado por el organizador. */

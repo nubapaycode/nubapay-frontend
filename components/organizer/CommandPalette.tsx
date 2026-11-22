@@ -35,12 +35,15 @@ export function CommandPalette({
   pathname,
   tools,
   membership,
+  modules,
 }: {
   eventId: string
   basePath: string
   pathname: string
   tools: OrganizerStaffTools
   membership: 'owner' | 'staff'
+  /** Módulos que ofrece el evento (catalogo, tickets, parking). */
+  modules?: string[]
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -131,7 +134,7 @@ export function CommandPalette({
     }))
 
     const navCmds: Command[] = [
-      ...visibleNavItems(basePath, tools, membership).map(item => ({
+      ...visibleNavItems(basePath, tools, membership, modules).map(item => ({
         id: `nav-${item.href}`,
         group: 'Ir a' as const,
         label: item.label,
@@ -188,7 +191,7 @@ export function CommandPalette({
     const q = normalize(query.trim())
     const match = (c: Command) => !q || normalize(`${c.label} ${c.hint ?? ''} ${c.keywords ?? ''}`).includes(q)
     return [...orderCmds, ...navCmds.filter(match), ...actionCmds.filter(match)]
-  }, [orderResults, basePath, tools, membership, pathname, query, router, eventId])
+  }, [orderResults, basePath, tools, membership, modules, pathname, query, router, eventId])
 
   const activeIndex = Math.min(active, Math.max(commands.length - 1, 0))
 

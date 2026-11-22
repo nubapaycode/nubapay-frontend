@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { TicketsStoreView } from '@/components/buyer/TicketsStoreView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
+import { hasModule } from '@/lib/modules'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
 import { BUYER_PRIVATE_ROBOTS, SITE_URL, pageMeta, withCoverImage } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
@@ -26,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TicketsSlugPage({ params }: Props) {
   const { slug } = await params
   const data = await fetchPublicStorefront(slug)
-  if (!data) notFound()
+  // El módulo lo habilita el admin de plataforma al dueño del evento.
+  if (!data || !hasModule(data.modules, 'tickets')) notFound()
 
   // Igual que el catálogo: si se entra por el dominio equivocado, ir al subdominio canónico.
   const canonicalSub = data.event_canonical_subdomain

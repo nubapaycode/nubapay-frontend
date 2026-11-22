@@ -29,6 +29,8 @@ export async function patchOrganizerEvent(
     notify_pickup_point: boolean
     show_category_shortcuts: boolean
     cash_enabled: boolean
+    /** Link de Google Maps; null o "" para quitarlo. */
+    parking_maps_url: string | null
     /** Activa el cobro con tarjeta en el sitio. Hace falta token y clave pública. */
     mp_card_enabled: boolean
     /** String para guardar el token; null o "" para eliminarlo. */

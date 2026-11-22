@@ -28,6 +28,7 @@ import {
   Undo2,
   User,
   Users,
+  ParkingSquare,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -36,7 +37,8 @@ import { isTypingTarget } from '@/components/organizer/KeyboardShortcutsDialog'
 import { useOrganizerPublicTheme } from '@/components/organizer/OrganizerThemeBridge'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
-import { ticketsPath } from '@/lib/buyerRoutes'
+import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
+import { hasModule, type ModuleKey } from '@/lib/modules'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
 import { organizerAccentColorsFromTheme } from '@/lib/organizerAccentCss'
 import { catalogPublicPath } from '@/lib/siteOrigin'
@@ -52,6 +54,8 @@ export type NavItem = {
   showDesktop: boolean
   mobileTabOrder?: number
   mobileFab?: boolean
+  /** Módulo que el admin de plataforma habilitó al dueño del evento. Sin él, el ítem no se muestra. */
+  module?: ModuleKey
   /** Permiso requerido. Sin `tool`, `ownerOnly` ni `section`, el ítem es visible para todos. */
   tool?: ToolKey
   /** Agrupa varias herramientas con pestañas; el href apunta a la primera permitida. */
@@ -109,6 +113,7 @@ function navItems(basePath: string): NavItem[] {
       showDesktop: true,
       mobileTabOrder: 1,
       section: 'catalogo',
+      module: 'catalogo',
       tourId: 'sidebar-catalog',
     },
     {
@@ -119,6 +124,24 @@ function navItems(basePath: string): NavItem[] {
       icon: ticketsIcon,
       showDesktop: true,
       tool: 'products',
+      module: 'tickets',
+    },
+    {
+      href: `${basePath}/parking`,
+      label: 'Parking',
+      group: 'catalogo',
+      icon: icon(ParkingSquare),
+      showDesktop: true,
+      tool: 'products',
+      module: 'parking',
+    },
+    {
+      href: `${basePath}/tienda`,
+      label: 'Tienda',
+      group: 'catalogo',
+      icon: icon(Store),
+      showDesktop: true,
+      tool: 'storefront',
     },
     {
       href: `${basePath}/escaner`,
@@ -213,8 +236,11 @@ export function visibleNavItems(
   basePath: string,
   tools: OrganizerStaffTools,
   workspaceMembership: 'owner' | 'staff',
+  /** Módulos del dueño del evento (catalogo, tickets, parking). Ausente = los de por defecto. */
+  modules?: readonly string[] | null,
 ): NavItem[] {
   return navItems(basePath).flatMap((it): NavItem[] => {
+    if (it.module && !hasModule(modules, it.module)) return []
     if (it.section) {
       const tabs = visibleSectionTabs(it.section, { membership: workspaceMembership, tools })
       if (tabs.length === 0) return []
@@ -251,6 +277,8 @@ type Props = {
   onLogout: () => void
   workspaceMembership: 'owner' | 'staff'
   tools: OrganizerStaffTools
+  /** Módulos que ofrece el evento (los habilitados a su dueño). */
+  modules?: string[]
   hasMpToken?: boolean
   hasSipagoCredentials?: boolean
   hasMobbexCredentials?: boolean
@@ -264,6 +292,7 @@ export function EventOrganizerSidebar({
   onLogout,
   workspaceMembership,
   tools,
+  modules,
   hasMpToken = false,
   hasSipagoCredentials = false,
   hasMobbexCredentials = false,
@@ -293,8 +322,8 @@ export function EventOrganizerSidebar({
   }, [hasAnyPaymentMethod])
 
   const items = useMemo(
-    () => visibleNavItems(basePath, tools, workspaceMembership),
-    [basePath, tools, workspaceMembership],
+    () => visibleNavItems(basePath, tools, workspaceMembership, modules),
+    [basePath, tools, workspaceMembership, modules],
   )
 
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
@@ -338,12 +367,16 @@ export function EventOrganizerSidebar({
   const docsUrl = `/documentacion?evento=${encodeURIComponent(basePath.split('/').filter(Boolean).pop() ?? '')}`
   const [sheetDragY, setSheetDragY] = useState(0)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [copiedKey, setCopiedKey] = useState<'catalog' | 'tickets' | 'error' | null>(null)
+  const [copiedKey, setCopiedKey] = useState<'catalog' | 'tickets' | 'parking' | 'error' | null>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const publicOrigin = usePublicOrigin()
   const slug = eventSlug.trim()
-  const catalogUrl = slug && publicOrigin ? `${publicOrigin}${catalogPublicPath(slug)}` : ''
-  const ticketsUrl = slug && publicOrigin ? `${publicOrigin}${ticketsPath(slug)}` : ''
+  // Cada link público solo se ofrece si el módulo está habilitado.
+  const catalogUrl = slug && publicOrigin && hasModule(modules, 'catalogo') ? `${publicOrigin}${catalogPublicPath(slug)}` : ''
+  const ticketsUrl = slug && publicOrigin && hasModule(modules, 'tickets') ? `${publicOrigin}${ticketsPath(slug)}` : ''
+  const parkingUrl = slug && publicOrigin && hasModule(modules, 'parking') ? `${publicOrigin}${parkingPath(slug)}` : ''
+  /** "Ver tienda" abre el primer módulo habilitado. */
+  const storeUrl = catalogUrl || ticketsUrl || parkingUrl
   const sheetDragStart = useRef(0)
   const sheetDragging = useRef(false)
   const navSwipeStart = useRef<{ x: number; y: number } | null>(null)
@@ -454,7 +487,7 @@ export function EventOrganizerSidebar({
     }
   }, [profileOpen])
 
-  const copyLink = async (key: 'catalog' | 'tickets', url: string) => {
+  const copyLink = async (key: 'catalog' | 'tickets' | 'parking', url: string) => {
     try {
       await navigator.clipboard.writeText(url)
       setCopiedKey(key)
@@ -692,13 +725,13 @@ export function EventOrganizerSidebar({
             </Link>
           </div>
 
-          {catalogUrl && (
+          {storeUrl && (
             <a
-              href={catalogUrl}
+              href={storeUrl}
               target="_blank"
               rel="noopener"
               aria-label={collapsed ? 'Ver la tienda pública (pestaña nueva)' : undefined}
-              title={collapsed ? 'Ver la tienda pública' : catalogUrl}
+              title={collapsed ? 'Ver la tienda pública' : storeUrl}
               className={`group flex h-9 items-center gap-2.5 rounded-[10px] text-[13px] text-gray-600 transition-colors hover:bg-white/60 hover:text-gray-900 ${
                 collapsed ? 'justify-center' : 'pl-[7px] pr-2'
               }`}
@@ -767,7 +800,7 @@ export function EventOrganizerSidebar({
                 Ayuda y soporte
               </ProfileMenuButton>
 
-              {(catalogUrl || ticketsUrl) && <div className="my-1 h-px bg-gray-100" aria-hidden />}
+              {(catalogUrl || ticketsUrl || parkingUrl) && <div className="my-1 h-px bg-gray-100" aria-hidden />}
               {catalogUrl && (
                 <ProfileMenuButton
                   icon={copiedKey === 'catalog' ? <Check size={15} strokeWidth={2} className="text-green-600" /> : <Link2 size={15} strokeWidth={1.75} />}
@@ -784,6 +817,15 @@ export function EventOrganizerSidebar({
                   title={ticketsUrl}
                 >
                   {copiedKey === 'tickets' ? 'Link copiado' : 'Copiar link de tickets'}
+                </ProfileMenuButton>
+              )}
+              {parkingUrl && (
+                <ProfileMenuButton
+                  icon={copiedKey === 'parking' ? <Check size={15} strokeWidth={2} className="text-green-600" /> : <ParkingSquare size={15} strokeWidth={1.75} />}
+                  onClick={() => void copyLink('parking', parkingUrl)}
+                  title={parkingUrl}
+                >
+                  {copiedKey === 'parking' ? 'Link copiado' : 'Copiar link de parking'}
                 </ProfileMenuButton>
               )}
               {copiedKey === 'error' && (

@@ -11,7 +11,7 @@ export async function generateMetadata({
   await params
   return organizerEventSectionMeta(
     'Tickets',
-    'Creá y administrá las entradas y el parking de tu evento.',
+    'Creá y administrá las entradas de tu evento.',
   )
 }
 

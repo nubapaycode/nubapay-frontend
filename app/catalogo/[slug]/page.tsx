@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 
 import { CatalogView } from '@/components/buyer/CatalogView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
+import { hasModule } from '@/lib/modules'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
 import { SITE_URL, pageMeta, withCoverImage } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
@@ -34,7 +35,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CatalogoSlugPage({ params }: Props) {
   const { slug } = await params
   const data = await fetchPublicStorefront(slug)
-  if (!data) notFound()
+  // El módulo lo habilita el admin de plataforma al dueño del evento. (El seguimiento del pedido, el QR
+  // y el carrito siguen disponibles: los usan también quienes compraron tickets o parking.)
+  if (!data || !hasModule(data.modules, 'catalogo')) notFound()
 
   // Si el evento pertenece a un tenant con subdominio propio y se accede desde
   // el dominio incorrecto, redirigir al subdominio canónico del evento.

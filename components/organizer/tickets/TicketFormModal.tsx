@@ -4,24 +4,34 @@ import { useState } from 'react'
 
 import { Modal } from '@/components/ui/Modal'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
-import type { WorkspaceTicket } from '@/lib/organizerWorkspace'
+import type { TicketKind, WorkspaceTicket } from '@/lib/organizerWorkspace'
+import { DEFAULT_PARKING_ICON, PARKING_ICONS } from '@/lib/parkingIcons'
+import { cn } from '@/lib/utils'
 
 import { TicketCard } from './TicketCard'
 
-export type TicketFormState = { name: string; description: string; price: string; stock: string }
+export type TicketFormState = { name: string; description: string; price: string; stock: string; icon: string }
 
-export const EMPTY_TICKET_FORM: TicketFormState = { name: '', description: '', price: '', stock: '' }
+export const EMPTY_TICKET_FORM: TicketFormState = { name: '', description: '', price: '', stock: '', icon: DEFAULT_PARKING_ICON }
 
-export type TicketPayload = { name: string; description: string; price: number; stock: number | null }
+export type TicketPayload = { name: string; description: string; price: number; stock: number | null; icon?: string }
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[14px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]'
 
 /** Valida el formulario; devuelve el payload o el mensaje de error. */
-export function parseTicketForm(form: TicketFormState): { ok: true; payload: TicketPayload } | { ok: false; error: string } {
+export function parseTicketForm(
+  form: TicketFormState,
+  kind: TicketKind = 'ticket',
+): { ok: true; payload: TicketPayload } | { ok: false; error: string } {
   const name = form.name.trim()
   const price = Number(form.price.replace(',', '.'))
-  if (name.length < 2) return { ok: false, error: 'Ingresá un nombre (ej. Entrada general, Parking VIP)' }
+  if (name.length < 2) {
+    return {
+      ok: false,
+      error: kind === 'parking' ? 'Ingresá el tipo de vehículo (ej. Auto, Moto)' : 'Ingresá un nombre (ej. Entrada general, Parking VIP)',
+    }
+  }
   if (form.price.trim() === '' || !Number.isFinite(price) || price < 0) return { ok: false, error: 'Ingresá un precio válido' }
   // Stock opcional: vacío = sin límite.
   const stockText = form.stock.trim()
@@ -29,17 +39,22 @@ export function parseTicketForm(form: TicketFormState): { ok: true; payload: Tic
   if (stock !== null && (!Number.isInteger(stock) || stock < 0)) {
     return { ok: false, error: 'El stock debe ser un número entero (o dejalo vacío para no limitarlo)' }
   }
-  return { ok: true, payload: { name, description: form.description.trim(), price, stock } }
+  const payload: TicketPayload = { name, description: form.description.trim(), price, stock }
+  if (kind === 'parking') payload.icon = form.icon || DEFAULT_PARKING_ICON
+  return { ok: true, payload }
 }
 
 export function TicketFormModal({
   open,
+  kind = 'ticket',
   editing,
   initial,
   onClose,
   onSubmit,
 }: {
   open: boolean
+  /** Entrada o parking: cambia los textos y muestra el selector de ícono del vehículo. */
+  kind?: TicketKind
   /** Ticket que se edita (para mostrar lo vendido en la vista previa); null al crear. */
   editing: WorkspaceTicket | null
   initial: TicketFormState
@@ -60,7 +75,7 @@ export function TicketFormModal({
 
   const submit = async () => {
     if (saving) return
-    const parsed = parseTicketForm(form)
+    const parsed = parseTicketForm(form, kind)
     if (!parsed.ok) {
       setError(parsed.error)
       return
@@ -74,7 +89,10 @@ export function TicketFormModal({
 
   const previewPrice = Number(form.price.replace(',', '.'))
   const previewStock = form.stock.trim() === '' ? null : Number(form.stock)
+  const isParking = kind === 'parking'
   const preview = {
+    kind,
+    icon: form.icon,
     name: form.name,
     description: form.description,
     price: Number.isFinite(previewPrice) ? previewPrice : 0,
@@ -92,23 +110,56 @@ export function TicketFormModal({
   }
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={editing ? 'Editar ticket' : 'Nuevo ticket'} className="max-w-lg">
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title={isParking ? (editing ? 'Editar vehículo' : 'Nuevo vehículo') : editing ? 'Editar ticket' : 'Nuevo ticket'}
+      className="max-w-lg"
+    >
       <div className="flex flex-col gap-4" onKeyDown={onEnter}>
         <div className="rounded-2xl bg-gray-50 p-3 [--nb-notch:#f9fafb]">
           <TicketCard ticket={preview} />
         </div>
 
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
-          Nombre / categoría
+          {isParking ? 'Tipo de vehículo' : 'Nombre / categoría'}
           <input
             className={inputClass}
             value={form.name}
             maxLength={150}
             autoFocus
-            placeholder="Entrada general, Parking VIP…"
+            placeholder={isParking ? 'Auto, Moto, Camioneta…' : 'Entrada general, Parking VIP…'}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           />
         </label>
+        {isParking && (
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-[13px] font-medium text-gray-700">Ícono</legend>
+            <div role="radiogroup" aria-label="Ícono del vehículo" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {PARKING_ICONS.map(({ key, label, Icon }) => {
+                const selected = form.icon === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setForm(f => ({ ...f, icon: key }))}
+                    className={cn(
+                      'flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-[11px] font-medium transition-colors',
+                      selected
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900',
+                    )}
+                  >
+                    <Icon size={20} strokeWidth={1.75} aria-hidden />
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+        )}
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
           <span>
             Descripción <span className="font-normal text-gray-400">(opcional)</span>
@@ -117,7 +168,7 @@ export function TicketFormModal({
             className={inputClass}
             rows={2}
             value={form.description}
-            placeholder="Qué incluye, horario de ingreso, edad mínima…"
+            placeholder={isParking ? 'Medidas máximas, techado, horario…' : 'Qué incluye, horario de ingreso, edad mínima…'}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
           />
         </label>
@@ -140,7 +191,7 @@ export function TicketFormModal({
           </label>
           <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
             <span>
-              Cupo <span className="font-normal text-gray-400">(opcional)</span>
+              {isParking ? 'Lugares' : 'Cupo'} <span className="font-normal text-gray-400">(opcional)</span>
             </span>
             <input
               className={`${inputClass} tabular-nums`}
@@ -155,7 +206,7 @@ export function TicketFormModal({
           </label>
         </div>
         {editing && (editing.reserved ?? editing.sold) > 0 && (
-          <p className="-mt-2 text-[12px] text-gray-400">Ya hay {editing.reserved ?? editing.sold} vendidas o reservadas: el cupo no puede ser menor.</p>
+          <p className="-mt-2 text-[12px] text-gray-400">Ya hay {editing.reserved ?? editing.sold} vendidas o reservadas: {isParking ? 'los lugares' : 'el cupo'} no pueden ser menos.</p>
         )}
 
         {error && (

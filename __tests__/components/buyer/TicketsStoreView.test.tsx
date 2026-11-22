@@ -75,3 +75,71 @@ describe('TicketsStoreView', () => {
     expect(sessionStorage.getItem('nubapay_cart')).toBeNull()
   })
 })
+
+describe('TicketsStoreView · parking', () => {
+  const parkingEvent: Event = {
+    ...baseEvent,
+    parking: [
+      { id: 'p1', kind: 'parking', icon: 'car', name: 'Auto', description: '', price: 3000, available: true },
+      { id: 'p2', kind: 'parking', icon: 'motorcycle', name: 'Moto', description: '', price: 1500, available: true },
+    ],
+    parkingMapsUrl: 'https://www.google.com/maps/place/X/@-34.6,-58.4,17z',
+    modules: ['catalogo', 'tickets', 'parking'],
+  }
+
+  it('lista los vehículos de parking y no las entradas', () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText('Auto')).toBeInTheDocument()
+    expect(screen.getByText('Moto')).toBeInTheDocument()
+    expect(screen.queryByText('Entrada general')).not.toBeInTheDocument()
+    expect(screen.getByText('Elegí tu lugar')).toBeInTheDocument()
+  })
+
+  it('muestra el mapa y el botón para abrir Google Maps', () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByTitle('Mapa del estacionamiento')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Cómo llegar' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/place/X/@-34.6,-58.4,17z',
+    )
+  })
+
+  it('no muestra el mapa si el organizador no cargó el link', () => {
+    render(<TicketsStoreView event={{ ...parkingEvent, parkingMapsUrl: null }} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.queryByTitle('Mapa del estacionamiento')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Cómo llegar' })).not.toBeInTheDocument()
+  })
+
+  it('no ofrece abrir un link que no es de Google Maps', () => {
+    render(<TicketsStoreView event={{ ...parkingEvent, parkingMapsUrl: 'https://evil.com/x' }} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.queryByRole('link', { name: 'Cómo llegar' })).not.toBeInTheDocument()
+  })
+
+  it('muestra el estado vacío sin parking', () => {
+    render(<TicketsStoreView event={{ ...parkingEvent, parking: [] }} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText('Sin parking disponible')).toBeInTheDocument()
+  })
+
+  it('"Comprar" lleva al checkout de parking', async () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
+    expect(screen.getByText('1 lugar')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
+    expect(push).toHaveBeenCalledWith('/parking/fiesta/comprar')
+  })
+
+  it('la selección de parking no se mezcla con la de entradas', async () => {
+    const { unmount } = render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
+    unmount()
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" />)
+    expect(screen.queryByRole('button', { name: 'Comprar' })).not.toBeInTheDocument()
+  })
+
+  it('desde entradas ofrece ir a parking, y desde parking volver a entradas', () => {
+    const { rerender } = render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" />)
+    expect(screen.getByRole('link', { name: /Reservá tu estacionamiento/ })).toHaveAttribute('href', '/parking/fiesta')
+    rerender(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByRole('link', { name: /Comprá tus entradas/ })).toHaveAttribute('href', '/tickets/fiesta')
+  })
+})

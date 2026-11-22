@@ -38,6 +38,10 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   has_mobbex_credentials: boolean
   /** true si el organizador acepta pagos en efectivo, confirmados por staff al escanear el QR. */
   cash_enabled: boolean
+  /** Link de Google Maps del estacionamiento (módulo Parking). */
+  parking_maps_url?: string | null
+  /** Módulos que ofrece el evento = los habilitados a su dueño. Ausente en respuestas viejas. */
+  modules?: string[]
   /** true = el comprador paga costo de servicio. false = el organizador paga comisión del 1%. */
   service_fee_enabled: boolean
   created_at: string | null

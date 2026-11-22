@@ -30,6 +30,8 @@ export type AuthUser = {
   staff_memberships?: StaffMembership[]
   onboarding_completed?: boolean
   is_platform_admin?: boolean
+  /** Módulos habilitados a la cuenta (catalogo, tickets, parking). */
+  modules?: string[]
 }
 const TOKEN_KEY = 'nubapay_token'
 const USER_KEY = 'nubapay_user'

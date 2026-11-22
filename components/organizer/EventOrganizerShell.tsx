@@ -1,5 +1,6 @@
 'use client'
 
+import { hasModule, type ModuleKey } from '@/lib/modules'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -34,6 +35,8 @@ export function EventOrganizerShell({
     hasSipagoCredentials: boolean
     hasMobbexCredentials: boolean
     tools?: OrganizerStaffTools
+    /** Módulos que ofrece el evento (los habilitados a su dueño). */
+    modules?: string[]
   } | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -61,6 +64,7 @@ export function EventOrganizerShell({
           hasSipagoCredentials: body.event.has_sipago_credentials ?? false,
           hasMobbexCredentials: body.event.has_mobbex_credentials ?? false,
           tools: body.event.tools,
+          modules: body.event.modules,
         })
       }
     } catch {
@@ -162,7 +166,7 @@ export function EventOrganizerShell({
 
     if (segment === 'marca') {
       if (eventMeta.membership !== 'owner' || !brandNavEligible) {
-        router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+        router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow, eventMeta.modules)}`)
       }
       return
     }
@@ -173,6 +177,7 @@ export function EventOrganizerShell({
       productos: 'products',
       bloques: 'products',
       tickets: 'products',
+      parking: 'products',
       escaner: 'scanner',
       pedidos: 'orders',
       escaneos: 'orders',
@@ -183,7 +188,7 @@ export function EventOrganizerShell({
 
     const ownerOnlySegments = ['equipo', 'configuracion', 'metodos-pago', 'comision']
     if (ownerOnlySegments.includes(segment) && eventMeta.membership === 'staff') {
-      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow, eventMeta.modules)}`)
       return
     }
 
@@ -191,13 +196,26 @@ export function EventOrganizerShell({
       segment === 'cobros' &&
       visibleSectionTabs('cobros', { membership: eventMeta.membership, tools: toolsNow }).length === 0
     ) {
-      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow, eventMeta.modules)}`)
+      return
+    }
+
+    // Módulo que el admin de plataforma no habilitó al dueño del evento.
+    const segmentModule: Partial<Record<string, ModuleKey>> = {
+      productos: 'catalogo',
+      bloques: 'catalogo',
+      tickets: 'tickets',
+      parking: 'parking',
+    }
+    const requiredModule = segmentModule[segment]
+    if (requiredModule && !hasModule(eventMeta.modules, requiredModule)) {
+      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow, eventMeta.modules)}`)
       return
     }
 
     const required = segmentTool[segment]
     if (required && !toolsNow[required]) {
-      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow)}`)
+      router.replace(`${base}/${firstAllowedWorkspaceSegment(toolsNow, eventMeta.modules)}`)
     }
   }, [
     loading,
@@ -242,6 +260,7 @@ export function EventOrganizerShell({
         pathname={pathname}
         workspaceMembership={eventMeta.membership}
         tools={tools}
+        modules={eventMeta.modules}
         onLogout={() => {
           clearAuthSession()
           router.replace('/')
@@ -265,6 +284,7 @@ export function EventOrganizerShell({
         pathname={pathname}
         tools={tools}
         membership={eventMeta.membership}
+        modules={eventMeta.modules}
       />
       <KeyboardShortcutsDialog />
     </div>

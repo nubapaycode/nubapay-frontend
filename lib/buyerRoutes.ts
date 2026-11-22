@@ -3,6 +3,16 @@ export function ticketsPath(slug: string): string {
   return `/tickets/${encodeURIComponent(slug.trim())}`
 }
 
+/** Página de parking de un evento: `/parking/:slug`. */
+export function parkingPath(slug: string): string {
+  return `/parking/${encodeURIComponent(slug.trim())}`
+}
+
+/** Checkout de parking: `/parking/:slug/comprar`. */
+export function parkingCheckoutPath(slug: string): string {
+  return `${parkingPath(slug)}/comprar`
+}
+
 /** Formulario del botón de arrepentimiento: `/catalogo/:slug/arrepentimiento`. */
 export function regretPath(slug: string): string {
   return `/catalogo/${encodeURIComponent(slug.trim())}/arrepentimiento`

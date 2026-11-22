@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { formatArDateTime } from '@/lib/dateTime'
 import { formatPrice } from '@/lib/utils'
 import { catalogPaths } from '@/lib/api/paths'
-import { ticketsPath } from '@/lib/buyerRoutes'
+import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { CardPaymentBrick } from '@/components/buyer/CardPaymentBrick'
 import { MobbexWalletPanel } from '@/components/buyer/MobbexWalletPanel'
@@ -40,7 +40,7 @@ interface OrderData {
   /** Presente cuando el pedido falló por un motivo que el comprador debe conocer. */
   failure_reason?: 'out_of_stock'
   failure_detail?: string
-  items: { product_id: string | null; ticket_id?: string | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
+  items: { product_id: string | null; ticket_id?: string | null; ticket_kind?: 'ticket' | 'parking' | null; product_name: string; unit_price: number; quantity: number; subtotal: number }[]
   created_at: string
 }
 
@@ -173,7 +173,15 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
   const isPaid = order?.payment_status === 'approved'
   // Un pedido de solo entradas viene de /tickets: "volver" lleva ahí y no al catálogo.
   const isTicketOrder = Boolean(order && order.items.length > 0 && order.items.every(i => i.ticket_id))
-  const backPath = catalogSlug ? (isTicketOrder ? ticketsPath(catalogSlug) : `/catalogo/${catalogSlug}`) : null
+  // Parking tiene su propia página de venta; entradas y parking juntos no se mezclan (cada uno tiene su checkout).
+  const isParkingOrder = isTicketOrder && Boolean(order?.items.every(i => i.ticket_kind === 'parking'))
+  const backPath = catalogSlug
+    ? isParkingOrder
+      ? parkingPath(catalogSlug)
+      : isTicketOrder
+        ? ticketsPath(catalogSlug)
+        : `/catalogo/${catalogSlug}`
+    : null
   const isDelivered = order?.status === 'delivered'
   const isPartiallyDelivered = order?.status === 'partially_delivered'
 

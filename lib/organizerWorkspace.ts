@@ -106,8 +106,13 @@ export type WorkspaceCatalogBlock = {
   }[]
 }
 
+export type TicketKind = 'ticket' | 'parking'
+
 export type WorkspaceTicket = {
   id: string
+  kind?: TicketKind
+  /** Clave del ícono del vehículo (solo parking). */
+  icon?: string | null
   name: string
   description: string
   price: number
@@ -1075,10 +1080,12 @@ export async function putCatalogBlockProducts(
   return { ok: true, block: body.block }
 }
 
+/** Entradas (`kind: 'ticket'`, por defecto) o lugares de parking (`kind: 'parking'`). */
 export async function fetchTickets(
   eventId: string,
+  kind: TicketKind = 'ticket',
 ): Promise<{ ok: true; tickets: WorkspaceTicket[] } | { ok: false; error: string }> {
-  const res = await browserFetch(workspacePath(eventId, 'tickets'), {
+  const res = await browserFetch(`${workspacePath(eventId, 'tickets')}?kind=${kind}`, {
     headers: authHeadersJson(),
   })
   const body = (await res.json()) as { tickets?: WorkspaceTicket[]; error?: string }
@@ -1088,7 +1095,15 @@ export async function fetchTickets(
 
 export async function createTicket(
   eventId: string,
-  payload: { name: string; price: number; description?: string; stock?: number | null; is_active?: boolean },
+  payload: {
+    name: string
+    price: number
+    description?: string
+    stock?: number | null
+    is_active?: boolean
+    kind?: TicketKind
+    icon?: string | null
+  },
 ): Promise<{ ok: true; ticket: WorkspaceTicket } | { ok: false; error: string }> {
   const res = await browserFetch(workspacePath(eventId, 'tickets'), {
     method: 'POST',
@@ -1103,7 +1118,14 @@ export async function createTicket(
 export async function patchTicket(
   eventId: string,
   ticketId: string,
-  payload: Partial<{ name: string; price: number; description: string; stock: number | null; is_active: boolean }>,
+  payload: Partial<{
+    name: string
+    price: number
+    description: string
+    stock: number | null
+    is_active: boolean
+    icon: string | null
+  }>,
 ): Promise<{ ok: true; ticket: WorkspaceTicket } | { ok: false; error: string }> {
   const res = await browserFetch(workspacePath(eventId, `tickets/${ticketId}`), {
     method: 'PATCH',
@@ -1119,11 +1141,12 @@ export async function patchTicket(
 export async function reorderTickets(
   eventId: string,
   ids: string[],
+  kind: TicketKind = 'ticket',
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const res = await browserFetch(workspacePath(eventId, 'tickets/reorder'), {
     method: 'POST',
     headers: authHeadersJson(),
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ ids, kind }),
   })
   const body = (await res.json()) as { error?: string }
   if (!res.ok) return { ok: false, error: body.error ?? 'No se pudo guardar el orden' }

@@ -7,11 +7,12 @@ import { useRouter } from 'next/navigation'
 
 import { catalogPaths } from '@/lib/api/paths'
 import { browserFetch } from '@/lib/browserFetch'
-import { buyerFlowPath, ticketsPath } from '@/lib/buyerRoutes'
+import { buyerFlowPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { formatEventDateLong } from '@/lib/eventDate'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
 import { cartItemsKey, clearPendingOrder, loadPendingOrder, pendingIdempotencyKey, savePendingOrder } from '@/lib/pendingOrder'
+import { PURCHASE_COPY, itemsOf, selectionScope, storePath, type PurchaseKind } from '@/lib/purchaseKind'
 import { computeCartTotals } from '@/lib/serviceFee'
 import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
 import { cn, formatPrice } from '@/lib/utils'
@@ -25,6 +26,8 @@ interface TicketCheckoutViewProps {
   catalogSlug: string
   /** Métodos de pago configurados para el evento (ej. ['mp', 'sipago']). */
   availablePaymentMethods: string[]
+  /** Entradas (por defecto) o parking: mismo checkout, otra lista y otros textos. */
+  kind?: PurchaseKind
 }
 
 const MUTED = '#6B6B78'
@@ -92,9 +95,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods }: TicketCheckoutViewProps) {
+export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods, kind = 'ticket' }: TicketCheckoutViewProps) {
   const router = useRouter()
-  const { ready, lines, expiresAt } = useTicketSelection(catalogSlug)
+  const copy = PURCHASE_COPY[kind]
+  const scope = selectionScope(catalogSlug, kind)
+  const { ready, lines, expiresAt } = useTicketSelection(scope)
   const now = useNow(expiresAt !== null)
 
   const [values, setValues] = useState<BuyerValues>(EMPTY_VALUES)
@@ -162,11 +167,11 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
 
   // Entrada directa a esta página (sin pasar por "Comprar"): arranca el tiempo acá.
   useEffect(() => {
-    if (ready && lines.length > 0 && expiresAt === null) startTicketHold(catalogSlug)
-  }, [ready, lines.length, expiresAt, catalogSlug])
+    if (ready && lines.length > 0 && expiresAt === null) startTicketHold(scope)
+  }, [ready, lines.length, expiresAt, scope])
 
   const selected = lines.flatMap(line => {
-    const ticket = event.tickets.find(t => t.id === line.ticketId)
+    const ticket = itemsOf(event, kind).find(t => t.id === line.ticketId)
     return ticket ? [{ ticket, quantity: line.quantity }] : []
   })
   const { ticketsSubtotal, serviceFee, total } = computeCartTotals(
@@ -178,7 +183,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const lowTime = remainingMs !== null && remainingMs < 2 * 60 * 1000
   const venue = event.venue.trim()
   const dateLabel = formatEventDateLong(event.date)
-  const backHref = ticketsPath(catalogSlug)
+  const backHref = storePath(catalogSlug, kind)
 
   const restart = () => {
     clearTicketSelection()
@@ -294,7 +299,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             href={backHref}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
             style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
-            aria-label="Volver a las entradas"
+            aria-label={copy.backLabel}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
               <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
@@ -328,12 +333,10 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">
           <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
-            {expired ? 'Se terminó el tiempo para comprar' : 'No elegiste entradas'}
+            {expired ? 'Se terminó el tiempo para comprar' : copy.noSelectionTitle}
           </p>
           <p className="mb-6 max-w-sm text-sm" style={{ color: MUTED }}>
-            {expired
-              ? 'Pasaron los 10 minutos para completar la compra. Volvé a elegir tus entradas para empezar de nuevo.'
-              : 'Elegí las entradas que querés comprar y volvé a esta página.'}
+            {expired ? copy.expiredBody : copy.noSelectionBody}
           </p>
           <button
             type="button"
@@ -341,7 +344,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             className="h-12 rounded-full px-8 text-[15px] font-bold"
             style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
           >
-            Elegir entradas
+            {copy.chooseAgain}
           </button>
         </div>
       </div>,
@@ -364,12 +367,12 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
 
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-44 pt-5 md:gap-5 md:px-6 md:pt-8">
         <Section title="Tu compra">
-          {/* Desktop: tabla con el evento a la izquierda de las entradas elegidas */}
+          {/* Desktop: tabla con el evento a la izquierda de lo elegido */}
           <table className="hidden w-full text-left text-sm md:table" style={{ color: BUYER_COLORS.text }}>
             <thead>
               <tr className="border-b text-[13px]" style={{ borderColor: BUYER_COLORS.border, color: MUTED }}>
                 <th className="pb-3 pr-4 font-medium">Evento</th>
-                <th className="pb-3 pr-4 font-medium">Entrada</th>
+                <th className="pb-3 pr-4 font-medium">{copy.tableHeader}</th>
                 <th className="pb-3 pr-4 text-right font-medium">Precio</th>
                 <th className="pb-3 pr-4 text-center font-medium">Cantidad</th>
                 <th className="pb-3 text-right font-medium">Subtotal</th>
@@ -489,14 +492,14 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             })}
           </div>
           <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
-            Te enviamos las entradas a este email.
+            {copy.emailNote}
           </p>
         </Section>
 
         <Section title="Datos de pago">
           {methods.length === 0 ? (
             <p className="text-sm" style={{ color: MUTED }}>
-              Este evento todavía no tiene medios de pago para entradas.
+              {copy.noPaymentMethods}
             </p>
           ) : (
             <div className="grid gap-2.5" role="radiogroup" aria-label="Medio de pago">

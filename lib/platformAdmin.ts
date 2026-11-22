@@ -18,6 +18,8 @@ export type PlatformAdminUser = {
   tenant_subdomain: string | null
   created_at: string | null
   onboarding_completed: boolean
+  /** Módulos habilitados (catalogo, tickets, parking). Ausente en respuestas viejas = los de por defecto. */
+  modules?: string[]
 }
 
 export type PlatformAdminEvent = {
@@ -607,6 +609,11 @@ export type OrderGroup = 'paid' | 'pending' | 'redeemed' | 'cancelled' | 'failed
 
 export function fetchPlatformEventDetail(eventId: string, range: DateRangeParams = {}) {
   return getJson<AdminEventDetail>(`/events/${encodeURIComponent(eventId)}/detail`, range)
+}
+
+/** Cambia qué módulos puede usar un usuario. Sus eventos ofrecen esos módulos (el staff trabaja con lo del dueño). */
+export function setUserModules(userId: string, modules: string[]) {
+  return sendJson<{ ok: true; modules: string[] }>(`/users/${encodeURIComponent(userId)}/modules`, 'PATCH', { modules })
 }
 
 export function setEventSalesActive(eventId: string, isActive: boolean) {

@@ -5,8 +5,10 @@ import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
+import { ALL_MODULES, hasModule, type ModuleKey } from '@/lib/modules'
 import { catalogPublicPath } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
@@ -17,6 +19,13 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
 
 const CATALOG_QR_SIZE = 240
+
+/** Ruta pública de cada módulo: catálogo, tickets y parking comparten portada y slug. */
+const MODULE_PATH: Record<ModuleKey, (slug: string) => string> = {
+  catalogo: catalogPublicPath,
+  tickets: ticketsPath,
+  parking: parkingPath,
+}
 
 function downloadSvgAsPng(svg: SVGSVGElement, filename: string, pixelSize = CATALOG_QR_SIZE) {
   const svgData = new XMLSerializer().serializeToString(svg)
@@ -49,8 +58,8 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [showShortcutsDraft, setShowShortcutsDraft] = useState(false)
   const [savingShortcuts, setSavingShortcuts] = useState(false)
-  const [copyMsg, setCopyMsg] = useState('')
-  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [copiedModule, setCopiedModule] = useState<ModuleKey | null>(null)
+  const [qrModule, setQrModule] = useState<ModuleKey | null>(null)
   const qrContainerRef = useRef<HTMLDivElement>(null)
   const { show: showToast, ToastPortal } = useToast()
 
@@ -76,8 +85,13 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const hasCover = Boolean(event?.cover_image_url)
   const publicOriginUi = usePublicOrigin()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
-  const publicUrl =
-    hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${catalogPublicPath(slugForUrl)}` : ''
+  /** Un link por módulo habilitado al dueño del evento. Sin portada no hay links. */
+  const moduleLinks = ALL_MODULES.filter(m => hasModule(event?.modules, m.key)).map(m => ({
+    ...m,
+    url: hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${MODULE_PATH[m.key](slugForUrl)}` : '',
+  }))
+  const qrLink = moduleLinks.find(l => l.key === qrModule) ?? null
+  const showCategoryShortcuts = hasModule(event?.modules, 'catalogo')
 
   const handleSaveSlug = async () => {
     if (!hasCover) return
@@ -140,12 +154,12 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     setEvent(res.event)
   }
 
-  const handleCopyLink = async () => {
-    if (!hasCover || !publicUrl) return
+  const handleCopyLink = async (key: ModuleKey, url: string) => {
+    if (!hasCover || !url) return
     try {
-      await navigator.clipboard.writeText(publicUrl)
-      setCopyMsg('Copiado')
-      setTimeout(() => setCopyMsg(''), 2000)
+      await navigator.clipboard.writeText(url)
+      setCopiedModule(key)
+      setTimeout(() => setCopiedModule(c => (c === key ? null : c)), 2000)
     } catch {
       showToast('No se pudo copiar. Copiá el enlace manualmente.', 'error')
     }
@@ -157,13 +171,13 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
       showToast('No se pudo generar la imagen del QR.', 'error')
       return
     }
-    const safeSlug = (slugForUrl || 'catalogo').replace(/[^a-z0-9-]/gi, '-')
-    downloadSvgAsPng(svg, `catalogo-${safeSlug}.png`)
+    const safeSlug = (slugForUrl || 'evento').replace(/[^a-z0-9-]/gi, '-')
+    downloadSvgAsPng(svg, `${qrModule ?? 'tienda'}-${safeSlug}.png`)
   }
 
   if (loading) {
     return (
-      <div className="max-w-2xl flex flex-col items-center justify-center py-24 gap-3 mx-auto px-4">
+      <div className="w-full flex flex-col items-center justify-center py-24 gap-3">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
       </div>
@@ -172,7 +186,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
 
   if (!event) {
     return (
-      <div className="max-w-2xl mx-auto p-4 md:p-6">
+      <div className="w-full">
         <ToastPortal />
         <p className="text-sm text-gray-400">No se pudo cargar el evento.</p>
       </div>
@@ -180,11 +194,11 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-8">
+    <div className="w-full space-y-8">
       <ToastPortal />
       <OrganizerToolHeading
-        title="Link del catálogo"
-        description="Empezá con una foto de portada: la usamos para el menú público. Cuando esté lista, podés definir el texto corto del enlace y compartirlo con tu gente."
+        title="Tienda"
+        description="Portada y enlaces de tu evento. Se usan en todo lo que vendés: catálogo, tickets y parking. Empezá con una foto de portada y después definí el texto corto del enlace."
       />
 
       <section style={{ borderRadius: '20px', border: '1px solid rgba(0,0,0,0.07)', background: '#FFFFFF', overflow: 'hidden' }}>
@@ -195,8 +209,8 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               <ImageUp className="h-4 w-4 text-gray-500" aria-hidden />
             </div>
             <div>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.01em' }}>Portada del catálogo</p>
-              <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0, marginTop: '1px' }}>La imagen que verán tus clientes al abrir el menú</p>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.01em' }}>Portada</p>
+              <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0, marginTop: '1px' }}>La imagen que verán tus clientes al abrir tu tienda</p>
             </div>
           </div>
           {event.cover_image_url && (
@@ -217,7 +231,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           <div style={{ position: 'relative', width: '100%', height: '200px', background: '#F5F5F7', overflow: 'hidden' }}>
             <Image
               src={event.cover_image_url}
-              alt="Portada del catálogo"
+              alt="Portada del evento"
               fill
               style={{ objectFit: 'cover' }}
               unoptimized
@@ -273,6 +287,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
         )}
       </section>
 
+      {showCategoryShortcuts && (
       <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-start gap-2">
@@ -303,6 +318,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           </button>
         </div>
       </section>
+      )}
 
       <section
         className={`space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ${
@@ -342,36 +358,47 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               </button>
             </div>
 
-            <div className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
+            <div className="space-y-3">
               <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-                Enlace para compartir · Generar QR
+                Enlaces para compartir · Generar QR
               </p>
-              {publicUrl ? (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-gray-800 break-all font-mono">{publicUrl}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleCopyLink()}
-                      className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
-                    >
-                      <Copy className="h-3.5 w-3.5" aria-hidden />
-                      {copyMsg || 'Copiar'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setQrModalOpen(true)}
-                      className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
-                    >
-                      <QrCode className="h-3.5 w-3.5" aria-hidden />
-                      Generar QR
-                    </button>
-                  </div>
-                </div>
-              ) : (
+              {moduleLinks.length === 0 ? (
                 <p className="text-sm text-gray-600">
-                  Acá vas a ver el link completo cuando tu sitio tenga una dirección configurada.
+                  Tu cuenta todavía no tiene herramientas de venta habilitadas. Escribinos para activarlas.
                 </p>
+              ) : (
+                moduleLinks.map(link => (
+                  <div key={link.key} className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
+                    <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                    {link.url ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-gray-800 break-all font-mono">{link.url}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleCopyLink(link.key, link.url)}
+                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                          >
+                            <Copy className="h-3.5 w-3.5" aria-hidden />
+                            {copiedModule === link.key ? 'Copiado' : 'Copiar'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQrModule(link.key)}
+                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                          >
+                            <QrCode className="h-3.5 w-3.5" aria-hidden />
+                            Generar QR
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Acá vas a ver el link completo cuando tu sitio tenga una dirección configurada.
+                      </p>
+                    )}
+                  </div>
+                ))
               )}
             </div>
           </>
@@ -379,21 +406,21 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
       </section>
 
       <Modal
-        isOpen={qrModalOpen && Boolean(publicUrl)}
-        onClose={() => setQrModalOpen(false)}
-        title="QR del catálogo"
+        isOpen={qrLink !== null && Boolean(qrLink.url)}
+        onClose={() => setQrModule(null)}
+        title={qrLink ? `QR de ${qrLink.label}` : 'QR'}
       >
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm text-gray-500 text-center">
-            Escaneá este código para abrir el menú público del evento.
+            Escaneá este código para abrir la página pública.
           </p>
           <div
             ref={qrContainerRef}
             className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
           >
-            {publicUrl ? (
+            {qrLink?.url ? (
               <QRCodeSVG
-                value={publicUrl}
+                value={qrLink.url}
                 size={240}
                 bgColor="#ffffff"
                 fgColor="#111111"
@@ -401,7 +428,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               />
             ) : null}
           </div>
-          <p className="text-xs text-gray-400 font-mono break-all text-center max-w-full">{publicUrl}</p>
+          <p className="text-xs text-gray-400 font-mono break-all text-center max-w-full">{qrLink?.url}</p>
           <div className="flex w-full flex-col gap-2 sm:flex-row">
             <button
               type="button"
@@ -413,7 +440,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             </button>
             <button
               type="button"
-              onClick={() => setQrModalOpen(false)}
+              onClick={() => setQrModule(null)}
               className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cerrar

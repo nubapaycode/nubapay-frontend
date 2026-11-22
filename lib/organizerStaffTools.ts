@@ -1,4 +1,5 @@
 import type { OrganizerStaffTools, StaffMembership } from '@/lib/authSession'
+import { hasModule, type ModuleKey } from '@/lib/modules'
 
 export const ORGANIZER_FULL_TOOLS: OrganizerStaffTools = {
   dashboard: true,
@@ -54,10 +55,12 @@ export function workspaceToolsForEvent(
 }
 
 /** Orden alineado con el panel: primera herramienta permitida para abrir el evento. */
-const FIRST_ROUTE_FOR_TOOL: { key: keyof OrganizerStaffTools; segment: string }[] = [
+const FIRST_ROUTE_FOR_TOOL: { key: keyof OrganizerStaffTools; segment: string; module?: ModuleKey }[] = [
   { key: 'dashboard', segment: 'resumen' },
   { key: 'storefront', segment: 'tienda' },
-  { key: 'products', segment: 'productos' },
+  { key: 'products', segment: 'productos', module: 'catalogo' },
+  { key: 'products', segment: 'tickets', module: 'tickets' },
+  { key: 'products', segment: 'parking', module: 'parking' },
   { key: 'scanner', segment: 'escaner' },
   { key: 'orders', segment: 'pedidos' },
   { key: 'pickup_points', segment: 'puntos-de-retiro' },
@@ -65,9 +68,15 @@ const FIRST_ROUTE_FOR_TOOL: { key: keyof OrganizerStaffTools; segment: string }[
 ]
 
 /** Segmento de ruta (`dashboard`, `orders`, …) o `all` si no hay ninguna herramienta activa. */
-export function firstAllowedWorkspaceSegment(tools: OrganizerStaffTools): string {
-  for (const { key, segment } of FIRST_ROUTE_FOR_TOOL) {
-    if (tools[key]) return segment
+export function firstAllowedWorkspaceSegment(
+  tools: OrganizerStaffTools,
+  /** Módulos del evento; las herramientas de un módulo no habilitado se saltean. */
+  modules?: readonly string[] | null,
+): string {
+  for (const { key, segment, module } of FIRST_ROUTE_FOR_TOOL) {
+    if (!tools[key]) continue
+    if (module && !hasModule(modules, module)) continue
+    return segment
   }
   return 'mis-eventos'
 }

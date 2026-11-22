@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
 import { ToggleSwitch } from '@/components/organizer/BlocksView'
+import { ParkingIcon } from '@/lib/parkingIcons'
 import { cn } from '@/lib/utils'
 import type { WorkspaceTicket } from '@/lib/organizerWorkspace'
 
@@ -12,7 +13,7 @@ import type { WorkspaceTicket } from '@/lib/organizerWorkspace'
 const LOW_STOCK_PCT = 85
 
 export type TicketLike = Pick<WorkspaceTicket, 'name' | 'description' | 'price' | 'stock' | 'sold' | 'is_active'> &
-  Partial<Pick<WorkspaceTicket, 'id' | 'currency' | 'revenue' | 'redeemed' | 'reserved'>>
+  Partial<Pick<WorkspaceTicket, 'id' | 'kind' | 'icon' | 'currency' | 'revenue' | 'redeemed' | 'reserved'>>
 
 export function ticketAvailability(t: TicketLike) {
   // El cupo lo ocupan también las reservas con pago en curso; "vendidos" cuenta solo lo pagado.
@@ -135,7 +136,8 @@ export function TicketCard({
   dragHandleProps?: React.HTMLAttributes<HTMLSpanElement>
 }) {
   const { soldOut, pct, low } = ticketAvailability(t)
-  const name = t.name.trim() || 'Nombre del ticket'
+  const isParking = t.kind === 'parking'
+  const name = t.name.trim() || (isParking ? 'Tipo de vehículo' : 'Nombre del ticket')
   const attendancePct = t.sold ? Math.round(((t.redeemed ?? 0) / t.sold) * 100) : 0
 
   return (
@@ -161,6 +163,11 @@ export function TicketCard({
           )}
           <div className={cn('min-w-0 flex-1', !dragHandleProps && 'pl-1')}>
             <div className="flex items-center gap-2">
+              {isParking && (
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700" aria-hidden>
+                  <ParkingIcon iconKey={t.icon} size={16} strokeWidth={1.75} />
+                </span>
+              )}
               <h3 className={cn('truncate text-[15px] font-semibold tracking-tight', t.name.trim() ? 'text-gray-900' : 'text-gray-300')}>
                 {name}
               </h3>
@@ -211,7 +218,7 @@ export function TicketCard({
               <span>
                 <Money value={t.revenue ?? 0} className="font-semibold tabular-nums text-gray-900" /> recaudado
               </span>
-              <span title="Entradas ya escaneadas en el ingreso">
+              <span title={isParking ? "Vehículos ya escaneados en el ingreso" : "Entradas ya escaneadas en el ingreso"}>
                 <span className="font-semibold tabular-nums text-gray-900">{formatCount(t.redeemed ?? 0)}</span> ingresaron
                 <span className="tabular-nums text-gray-400"> · {attendancePct}%</span>
               </span>

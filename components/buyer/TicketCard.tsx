@@ -2,6 +2,7 @@
 
 import type { Ticket } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
+import { ParkingIcon } from '@/lib/parkingIcons'
 import { cn, formatPrice } from '@/lib/utils'
 
 interface TicketCardProps {
@@ -67,9 +68,20 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
   return (
     <article className="relative flex flex-col rounded-[20px] bg-white md:flex-row">
       <div className={cn('min-w-0 flex-1 px-5 pb-3 pt-5 md:py-5', !available && 'opacity-55')}>
-        <h3 className="text-base font-bold leading-snug tracking-tight md:text-[17px]" style={{ color: BUYER_COLORS.text }}>
-          {ticket.name}
-        </h3>
+        <div className="flex items-center gap-3">
+          {ticket.kind === 'parking' && (
+            <span
+              className="flex size-10 flex-shrink-0 items-center justify-center rounded-[12px]"
+              style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
+              aria-hidden
+            >
+              <ParkingIcon iconKey={ticket.icon} size={22} strokeWidth={1.75} />
+            </span>
+          )}
+          <h3 className="text-base font-bold leading-snug tracking-tight md:text-[17px]" style={{ color: BUYER_COLORS.text }}>
+            {ticket.name}
+          </h3>
+        </div>
         {ticket.description.trim() ? (
           <p className="mt-1 line-clamp-2 max-w-[60ch] text-[13px] leading-relaxed md:text-sm" style={{ color: TICKET_MUTED }}>
             {ticket.description}

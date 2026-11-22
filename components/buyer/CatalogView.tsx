@@ -4,7 +4,7 @@ import { buyBlockedMessage } from '@/lib/buyerAvailability'
 import type { ReactNode } from 'react'
 import { useLayoutEffect, useState } from 'react'
 import Image from 'next/image'
-import { buyerFlowPath, regretPath, ticketsPath } from '@/lib/buyerRoutes'
+import { buyerFlowPath, parkingPath, regretPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { groupProductsByCategory } from '@/lib/catalogGrouping'
 import { useCart } from '@/lib/hooks/useCart'
@@ -338,6 +338,24 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
               <span className="block text-[15px] font-bold tracking-tight">Tickets</span>
               <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
                 Comprá tus entradas
+              </span>
+            </span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden className="flex-shrink-0">
+              <path d="M7.5 4.5 13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        )}
+
+        {(event.parking?.length ?? 0) > 0 && (
+          <a
+            href={parkingPath(slug)}
+            className="mb-6 flex items-center justify-between gap-4 rounded-[20px] border bg-white px-5 py-4 transition-opacity active:opacity-75"
+            style={{ borderColor: BUYER_COLORS.border, color: BUYER_COLORS.text }}
+          >
+            <span className="min-w-0">
+              <span className="block text-[15px] font-bold tracking-tight">Parking</span>
+              <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
+                Reservá tu lugar de estacionamiento
               </span>
             </span>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden className="flex-shrink-0">

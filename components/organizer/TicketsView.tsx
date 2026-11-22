@@ -1,9 +1,10 @@
 'use client'
 
-import { Car, Crown, Plus, Ticket, Timer } from 'lucide-react'
+import { Bike, Car, Crown, Motorbike, Plus, Ticket, Timer, Van } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
+import { ParkingMapsCard } from '@/components/organizer/tickets/ParkingMapsCard'
 import { ShareLinkCard } from '@/components/organizer/tickets/ShareLinkCard'
 import { TicketCard } from '@/components/organizer/tickets/TicketCard'
 import {
@@ -13,7 +14,7 @@ import {
   type TicketPayload,
 } from '@/components/organizer/tickets/TicketFormModal'
 import { Modal } from '@/components/ui/Modal'
-import { ticketsPath } from '@/lib/buyerRoutes'
+import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import {
@@ -22,23 +23,80 @@ import {
   fetchTickets,
   patchTicket,
   reorderTickets,
+  type TicketKind,
   type WorkspaceTicket,
 } from '@/lib/organizerWorkspace'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import { cn } from '@/lib/utils'
 
-/** Plantillas del estado vacío: abren el formulario con el nombre (y descripción) ya puestos. */
-const TEMPLATES: { label: string; icon: React.ReactNode; form: Partial<TicketFormState> }[] = [
-  { label: 'Entrada general', icon: <Ticket size={15} strokeWidth={1.75} />, form: { name: 'Entrada general' } },
-  { label: 'Anticipada', icon: <Timer size={15} strokeWidth={1.75} />, form: { name: 'Anticipada', description: 'Precio especial por tiempo limitado' } },
-  { label: 'VIP', icon: <Crown size={15} strokeWidth={1.75} />, form: { name: 'VIP', description: 'Acceso preferencial' } },
-  { label: 'Parking', icon: <Car size={15} strokeWidth={1.75} />, form: { name: 'Parking', description: 'Un vehículo por ticket' } },
-]
+type Template = { label: string; icon: React.ReactNode; form: Partial<TicketFormState> }
 
-function TicketsSkeleton() {
+/** Plantillas del estado vacío: abren el formulario con el nombre (y descripción) ya puestos. */
+const TEMPLATES: Record<TicketKind, Template[]> = {
+  ticket: [
+    { label: 'Entrada general', icon: <Ticket size={15} strokeWidth={1.75} />, form: { name: 'Entrada general' } },
+    { label: 'Anticipada', icon: <Timer size={15} strokeWidth={1.75} />, form: { name: 'Anticipada', description: 'Precio especial por tiempo limitado' } },
+    { label: 'VIP', icon: <Crown size={15} strokeWidth={1.75} />, form: { name: 'VIP', description: 'Acceso preferencial' } },
+  ],
+  parking: [
+    { label: 'Auto', icon: <Car size={15} strokeWidth={1.75} />, form: { name: 'Auto', icon: 'car' } },
+    { label: 'Moto', icon: <Motorbike size={15} strokeWidth={1.75} />, form: { name: 'Moto', icon: 'motorcycle' } },
+    { label: 'Camioneta', icon: <Van size={15} strokeWidth={1.75} />, form: { name: 'Camioneta', icon: 'van' } },
+    { label: 'Bicicleta', icon: <Bike size={15} strokeWidth={1.75} />, form: { name: 'Bicicleta', icon: 'bicycle' } },
+  ],
+}
+
+/** Textos de cada herramienta: Tickets y Parking comparten la pantalla. */
+const COPY: Record<
+  TicketKind,
+  {
+    title: string
+    intro: string
+    newButton: string
+    loading: string
+    emptyTitle: string
+    emptyHint: string
+    createLink: string
+    deleteTitle: string
+    shareLabel: string
+    sold: string
+    unit: string
+  }
+> = {
+  ticket: {
+    title: 'Tickets',
+    intro:
+      'Entradas con cupo y precio propios. Se venden en su propio link y aparecen en el catálogo como una sección aparte.',
+    newButton: 'Nuevo ticket',
+    loading: 'Cargando tickets…',
+    emptyTitle: 'Todavía no hay tickets',
+    emptyHint: 'Empezá con una plantilla y ajustá el precio y el cupo.',
+    createLink: 'Crear ticket',
+    deleteTitle: 'Eliminar ticket',
+    shareLabel: 'Link para vender tickets',
+    sold: 'vendidos',
+    unit: 'ticket',
+  },
+  parking: {
+    title: 'Parking',
+    intro:
+      'Tipos de vehículo con su precio y lugares. Se venden en su propio link, con un mapa de dónde queda el estacionamiento.',
+    newButton: 'Nuevo vehículo',
+    loading: 'Cargando parking…',
+    emptyTitle: 'Todavía no hay vehículos',
+    emptyHint: 'Empezá con un tipo de vehículo y ajustá el precio y los lugares.',
+    createLink: 'Crear vehículo',
+    deleteTitle: 'Eliminar vehículo',
+    shareLabel: 'Link para vender parking',
+    sold: 'vendidos',
+    unit: 'vehículo',
+  },
+}
+
+function TicketsSkeleton({ label }: { label: string }) {
   return (
     <div aria-busy="true">
-      <p className="sr-only">Cargando tickets…</p>
+      <p className="sr-only">{label}</p>
       <div className="mb-6 h-[72px] animate-pulse rounded-2xl bg-gray-100" />
       <div className="grid gap-3 xl:grid-cols-2">
         {[0, 1, 2, 3].map(i => (
@@ -49,10 +107,13 @@ function TicketsSkeleton() {
   )
 }
 
-export function TicketsView({ eventId }: { eventId: string }) {
+export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kind?: TicketKind }) {
+  const copy = COPY[kind]
+  const isParking = kind === 'parking'
   const [tickets, setTickets] = useState<WorkspaceTicket[]>([])
   const [eventSlug, setEventSlug] = useState('')
   const [hasCover, setHasCover] = useState(true)
+  const [mapsUrl, setMapsUrl] = useState<string | null>(null)
   const origin = usePublicOrigin()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -74,8 +135,9 @@ export function TicketsView({ eventId }: { eventId: string }) {
       if (cancelled || !res.ok) return
       setEventSlug(res.event.slug)
       setHasCover(Boolean(res.event.cover_image_url))
+      setMapsUrl(res.event.parking_maps_url ?? null)
     })
-    void fetchTickets(eventId).then(res => {
+    void fetchTickets(eventId, kind).then(res => {
       if (cancelled) return
       if (!res.ok) setError(res.error)
       else setTickets(res.tickets)
@@ -84,7 +146,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
     return () => {
       cancelled = true
     }
-  }, [eventId])
+  }, [eventId, kind])
 
   const openCreate = (preset: Partial<TicketFormState> = {}) => {
     setEditing(null)
@@ -94,7 +156,13 @@ export function TicketsView({ eventId }: { eventId: string }) {
 
   const openEdit = (t: WorkspaceTicket) => {
     setEditing(t)
-    setFormInitial({ name: t.name, description: t.description, price: String(t.price), stock: t.stock == null ? '' : String(t.stock) })
+    setFormInitial({
+      name: t.name,
+      description: t.description,
+      price: String(t.price),
+      stock: t.stock == null ? '' : String(t.stock),
+      icon: t.icon ?? EMPTY_TICKET_FORM.icon,
+    })
     setFormOpen(true)
   }
 
@@ -104,7 +172,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
   }
 
   const saveTicket = async (payload: TicketPayload): Promise<string | null> => {
-    const res = editing ? await patchTicket(eventId, editing.id, payload) : await createTicket(eventId, payload)
+    const res = editing ? await patchTicket(eventId, editing.id, payload) : await createTicket(eventId, { ...payload, kind })
     if (!res.ok) return res.error
     setTickets(list => (editing ? list.map(x => (x.id === res.ticket.id ? res.ticket : x)) : [...list, res.ticket]))
     closeForm()
@@ -118,6 +186,8 @@ export function TicketsView({ eventId }: { eventId: string }) {
       price: t.price,
       stock: t.stock,
       is_active: false,
+      kind,
+      ...(isParking ? { icon: t.icon ?? EMPTY_TICKET_FORM.icon } : {}),
     })
     if (!res.ok) setError(res.error)
     else setTickets(list => [...list, res.ticket])
@@ -155,7 +225,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
   /** Guarda un orden nuevo; si falla, vuelve al anterior. */
   const persistOrder = async (next: WorkspaceTicket[], previous: WorkspaceTicket[]) => {
     setTickets(next)
-    const res = await reorderTickets(eventId, next.map(t => t.id))
+    const res = await reorderTickets(eventId, next.map(t => t.id), kind)
     if (!res.ok) {
       setTickets(previous)
       setError(res.error)
@@ -179,7 +249,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
     return { sold, revenue, redeemed, capacity }
   }, [tickets])
 
-  const publicUrl = eventSlug && origin ? `${origin}${ticketsPath(eventSlug)}` : ''
+  const publicUrl = eventSlug && origin ? `${origin}${(isParking ? parkingPath : ticketsPath)(eventSlug)}` : ''
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1180px]">
@@ -195,10 +265,8 @@ export function TicketsView({ eventId }: { eventId: string }) {
 
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-[620px]">
-          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">Tickets</h1>
-          <p className="mt-1 text-[13px] text-gray-500">
-            Entradas, parking o lo que quieras, con cupo y precio propios. Se venden en su propio link y aparecen en el catálogo como una sección aparte.
-          </p>
+          <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">{copy.title}</h1>
+          <p className="mt-1 text-[13px] text-gray-500">{copy.intro}</p>
         </div>
         <button
           type="button"
@@ -207,15 +275,25 @@ export function TicketsView({ eventId }: { eventId: string }) {
           className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
         >
           <Plus size={16} strokeWidth={2.25} aria-hidden />
-          Nuevo ticket
+          {copy.newButton}
         </button>
       </header>
 
       {loading ? (
-        <TicketsSkeleton />
+        <TicketsSkeleton label={copy.loading} />
       ) : (
         <>
-          {publicUrl && <ShareLinkCard url={publicUrl} hasCover={hasCover} fileName={`tickets-${eventSlug}`} onError={setError} />}
+          {publicUrl && (
+            <ShareLinkCard
+              url={publicUrl}
+              hasCover={hasCover}
+              label={copy.shareLabel}
+              fileName={`${isParking ? 'parking' : 'tickets'}-${eventSlug}`}
+              onError={setError}
+            />
+          )}
+
+          {isParking && <ParkingMapsCard eventId={eventId} initialUrl={mapsUrl} onSaved={setMapsUrl} onError={setError} />}
 
           {error && (
             <div role="alert" className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">
@@ -226,14 +304,16 @@ export function TicketsView({ eventId }: { eventId: string }) {
           {tickets.length === 0 ? (
             <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
               <div className="mx-auto mb-5 flex h-14 w-24 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 [mask:radial-gradient(circle_at_50%_0,transparent_7px,#000_7.5px)_top/100%_51%_no-repeat,radial-gradient(circle_at_50%_100%,transparent_7px,#000_7.5px)_bottom/100%_51%_no-repeat]">
-                <Ticket size={22} strokeWidth={1.5} className="text-gray-400" aria-hidden />
+                {isParking ? (
+                  <Car size={22} strokeWidth={1.5} className="text-gray-400" aria-hidden />
+                ) : (
+                  <Ticket size={22} strokeWidth={1.5} className="text-gray-400" aria-hidden />
+                )}
               </div>
-              <p className="text-[16px] font-semibold text-gray-900">Todavía no hay tickets</p>
-              <p className="mx-auto mt-1 max-w-sm text-[13px] text-gray-500">
-                Empezá con una plantilla y ajustá el precio y el cupo.
-              </p>
+              <p className="text-[16px] font-semibold text-gray-900">{copy.emptyTitle}</p>
+              <p className="mx-auto mt-1 max-w-sm text-[13px] text-gray-500">{copy.emptyHint}</p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {TEMPLATES.map(t => (
+                {TEMPLATES[kind].map(t => (
                   <button
                     key={t.label}
                     type="button"
@@ -250,7 +330,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
                 onClick={() => openCreate()}
                 className="mt-4 text-[13px] font-medium text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
               >
-                Crear ticket
+                {copy.createLink}
               </button>
             </div>
           ) : (
@@ -259,7 +339,7 @@ export function TicketsView({ eventId }: { eventId: string }) {
               <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-1 px-1 text-[13px] text-gray-500">
                 <span>
                   <span className="font-semibold tabular-nums text-gray-900">{formatCount(totals.sold)}</span>
-                  {totals.capacity != null && <span className="tabular-nums"> de {formatCount(totals.capacity)}</span>} vendidos
+                  {totals.capacity != null && <span className="tabular-nums"> de {formatCount(totals.capacity)}</span>} {copy.sold}
                 </span>
                 <span>
                   <Money value={totals.revenue} className="font-semibold tabular-nums text-gray-900" /> recaudado
@@ -335,9 +415,9 @@ export function TicketsView({ eventId }: { eventId: string }) {
         </>
       )}
 
-      <TicketFormModal open={formOpen} editing={editing} initial={formInitial} onClose={closeForm} onSubmit={saveTicket} />
+      <TicketFormModal open={formOpen} kind={kind} editing={editing} initial={formInitial} onClose={closeForm} onSubmit={saveTicket} />
 
-      <Modal isOpen={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title="Eliminar ticket">
+      <Modal isOpen={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title={copy.deleteTitle}>
         <p className="text-[14px] text-gray-600">
           ¿Eliminar “{deleteTarget?.name}”? Los pedidos que ya lo compraron no se modifican.
         </p>

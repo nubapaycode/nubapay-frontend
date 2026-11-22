@@ -1,10 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { BadgePercent, Boxes, Link2, ListTree, Package, Search, X } from 'lucide-react'
+import { BadgePercent, Boxes, ListTree, Package, Search, X } from 'lucide-react'
 
 import { CatalogItemRow, NewItemMenu } from '@/components/organizer/catalog/CatalogParts'
-import { StorefrontSettingsView } from '@/components/organizer/StorefrontSettingsView'
 import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
@@ -569,7 +568,6 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
   const [productTogglePending, setProductTogglePending] = useState<Set<string>>(() => new Set())
 
-  const [linkModalOpen, setLinkModalOpen] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -1261,15 +1259,6 @@ export function ProductsView({ eventId }: { eventId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLinkModalOpen(true)}
-            title="Link del catálogo"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900"
-          >
-            <Link2 size={15} strokeWidth={1.75} aria-hidden />
-            Link
-          </button>
           <button
             type="button"
             onClick={() => setDrawerMode('categories')}
@@ -2370,27 +2359,6 @@ export function ProductsView({ eventId }: { eventId: string }) {
               {bulkSubmitting ? 'Eliminando…' : 'Eliminar'}
             </button>
           </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={linkModalOpen}
-        onClose={() => setLinkModalOpen(false)}
-        containerClassName="z-[70]"
-        className="max-w-[728px] w-full !p-0 overflow-y-auto h-[calc(95vh-80px)]"
-      >
-        <button
-          type="button"
-          onClick={() => setLinkModalOpen(false)}
-          aria-label="Cerrar"
-          style={{ position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6B7280', zIndex: 10 }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#E5E7EB'; e.currentTarget.style.color = '#0A0A0F' }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#6B7280' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-        </button>
-        <div style={{ paddingTop: '40px' }}>
-          <StorefrontSettingsView eventId={eventId} />
         </div>
       </Modal>
 

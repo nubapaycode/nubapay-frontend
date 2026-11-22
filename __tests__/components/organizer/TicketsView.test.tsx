@@ -27,7 +27,11 @@ const general = {
 }
 
 jest.mock('@/lib/organizerEvents', () => ({
-  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({ ok: true, event: { slug: 'mi-fiesta', cover_image_url: 'https://x/y.jpg' } }),
+  fetchOrganizerEventDetail: jest.fn().mockResolvedValue({
+    ok: true,
+    event: { slug: 'mi-fiesta', cover_image_url: 'https://x/y.jpg', parking_maps_url: 'https://maps.app.goo.gl/abc' },
+  }),
+  patchOrganizerEvent: jest.fn(),
 }))
 jest.mock('@/lib/hooks/usePublicOrigin', () => ({ usePublicOrigin: () => 'https://org.nubapay.app' }))
 
@@ -67,7 +71,7 @@ describe('TicketsView', () => {
     await userEvent.type(screen.getByPlaceholderText('0'), '12000')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     await waitFor(() =>
-      expect(createTicket).toHaveBeenCalledWith(eventId, { name: 'Parking VIP', description: '', price: 12000, stock: null }),
+      expect(createTicket).toHaveBeenCalledWith(eventId, { name: 'Parking VIP', description: '', price: 12000, stock: null, kind: 'ticket' }),
     )
     expect(await screen.findByText('Parking VIP')).toBeInTheDocument()
   })
@@ -171,7 +175,7 @@ describe('TicketsView', () => {
     render(<TicketsView eventId={eventId} />)
     await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Entrada general' }))
     await userEvent.click(screen.getByRole('menuitem', { name: 'Bajar' }))
-    await waitFor(() => expect(reorderTickets).toHaveBeenCalledWith(eventId, ['tk-2', 'tk-1']))
+    await waitFor(() => expect(reorderTickets).toHaveBeenCalledWith(eventId, ['tk-2', 'tk-1'], 'ticket'))
   })
 
   it('pausa la venta con el interruptor', async () => {
@@ -181,5 +185,78 @@ describe('TicketsView', () => {
     await userEvent.click(await screen.findByRole('checkbox', { name: /Pausar Entrada general/ }))
     await waitFor(() => expect(patchTicket).toHaveBeenCalledWith(eventId, 'tk-1', { is_active: false }))
     expect(await screen.findByText('Pausado', { selector: 'span.rounded-full' })).toBeInTheDocument()
+  })
+
+  it('pide las entradas (kind=ticket) y no ofrece la plantilla de parking', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} />)
+    await screen.findByRole('button', { name: 'Crear ticket' })
+    expect(fetchTickets).toHaveBeenCalledWith(eventId, 'ticket')
+    expect(screen.queryByRole('button', { name: 'Auto' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Ubicación del estacionamiento')).not.toBeInTheDocument()
+  })
+})
+
+describe('TicketsView · parking', () => {
+  const auto = { ...general, id: 'pk-1', kind: 'parking', icon: 'car', name: 'Auto', price: 3000 }
+
+  it('lista los vehículos pidiendo kind=parking', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByText('Auto')).toBeInTheDocument()
+    expect(fetchTickets).toHaveBeenCalledWith(eventId, 'parking')
+    expect(screen.getByRole('heading', { name: 'Parking' })).toBeInTheDocument()
+  })
+
+  it('muestra el link de venta /parking y el mapa del estacionamiento', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByText('org.nubapay.app/parking/mi-fiesta')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Abrir$/ })).toHaveAttribute('href', 'https://org.nubapay.app/parking/mi-fiesta')
+    expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+  })
+
+  it('crea un vehículo con tipo, ícono elegido y precio', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    ;(createTicket as jest.Mock).mockResolvedValue({
+      ok: true,
+      ticket: { ...auto, id: 'pk-2', name: 'Moto', icon: 'motorcycle', price: 1500 },
+    })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Crear vehículo' }))
+    await userEvent.type(screen.getByPlaceholderText(/Auto, Moto, Camioneta/), 'Moto')
+    await userEvent.click(screen.getByRole('radio', { name: 'Moto' }))
+    await userEvent.type(screen.getByPlaceholderText('0'), '1500')
+    // El mapa del estacionamiento también tiene su "Guardar"; el del formulario es el último de la página.
+    await userEvent.click(screen.getAllByRole('button', { name: 'Guardar' }).at(-1)!)
+    await waitFor(() =>
+      expect(createTicket).toHaveBeenCalledWith(eventId, {
+        name: 'Moto',
+        description: '',
+        price: 1500,
+        stock: null,
+        icon: 'motorcycle',
+        kind: 'parking',
+      }),
+    )
+    expect(await screen.findByText('Moto')).toBeInTheDocument()
+  })
+
+  it('arranca la plantilla con el ícono del vehículo', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Camioneta' }))
+    expect(screen.getByPlaceholderText(/Auto, Moto, Camioneta/)).toHaveValue('Camioneta')
+    expect(screen.getByRole('radio', { name: 'Camioneta' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('guarda el orden con el kind de parking', async () => {
+    const moto = { ...auto, id: 'pk-2', name: 'Moto' }
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto, moto] })
+    ;(reorderTickets as jest.Mock).mockResolvedValue({ ok: true })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Auto' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Bajar' }))
+    await waitFor(() => expect(reorderTickets).toHaveBeenCalledWith(eventId, ['pk-2', 'pk-1'], 'parking'))
   })
 })

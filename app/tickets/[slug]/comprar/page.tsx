@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { TicketCheckoutView } from '@/components/buyer/TicketCheckoutView'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
+import { hasModule } from '@/lib/modules'
 import { fetchPublicStorefront, mapStorefrontToEvent } from '@/lib/publicCatalog'
 import { BUYER_PRIVATE_ROBOTS, pageMeta } from '@/lib/seo'
 import { augmentMetadataWithTenant } from '@/lib/tenantMeta'
@@ -28,7 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TicketsCheckoutPage({ params }: Props) {
   const { slug } = await params
   const data = await fetchPublicStorefront(slug)
-  if (!data) notFound()
+  // El módulo lo habilita el admin de plataforma al dueño del evento.
+  if (!data || !hasModule(data.modules, 'tickets')) notFound()
 
   return (
     <main className="min-h-screen bg-[#F4F4F6]">

@@ -4,27 +4,54 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { buyerFlowPath, ticketsCheckoutPath } from '@/lib/buyerRoutes'
+import { buyerFlowPath, parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { eventDateParts } from '@/lib/eventDate'
+import { hasModule } from '@/lib/modules'
+import { PURCHASE_COPY, checkoutPath, itemsOf, selectionScope, type PurchaseKind } from '@/lib/purchaseKind'
 import { startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
 import { formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
+import { ParkingMap } from './ParkingMap'
 import { TICKET_PAGE_BG, TicketCard } from './TicketCard'
 
 interface TicketsStoreViewProps {
   event: Event
   catalogSlug: string
+  /** Entradas (por defecto) o parking: misma página de venta, otra lista y otros textos. */
+  kind?: PurchaseKind
 }
 
 /**
  * Página de tickets del evento. Las entradas no usan el carrito del catálogo: se eligen acá
- * y "Comprar" lleva a su propio checkout (`/tickets/:slug/comprar`).
+ * y "Comprar" lleva a su propio checkout (`/tickets/:slug/comprar` o `/parking/:slug/comprar`).
  */
-export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) {
+function CrossLink({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
+  return (
+    <Link
+      href={href}
+      className="mt-8 flex items-center justify-between gap-4 rounded-[20px] bg-white px-5 py-4 transition-opacity active:opacity-75"
+      style={{ color: BUYER_COLORS.text }}
+    >
+      <span className="min-w-0">
+        <span className="block text-[15px] font-bold tracking-tight">{title}</span>
+        <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
+          {subtitle}
+        </span>
+      </span>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden className="flex-shrink-0">
+        <path d="M7.5 4.5 13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </Link>
+  )
+}
+
+export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: TicketsStoreViewProps) {
   const router = useRouter()
-  const { lines, quantityOf, setQuantity } = useTicketSelection(catalogSlug)
+  const copy = PURCHASE_COPY[kind]
+  const items = itemsOf(event, kind)
+  const { lines, quantityOf, setQuantity } = useTicketSelection(selectionScope(catalogSlug, kind))
   const paymentsEnabled = event.paymentsEnabled
   const purchaseClosed = event.purchaseClosed ?? false
   const hasCatalog = event.products.length + event.combos.length + event.blocks.length > 0
@@ -35,15 +62,15 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
   const heroSrc = event.coverImageUrl && event.coverImageUrl.trim() !== '' ? event.coverImageUrl : '/images/Frame.jpg'
 
   const selected = lines.flatMap(line => {
-    const ticket = event.tickets.find(t => t.id === line.ticketId)
+    const ticket = items.find(t => t.id === line.ticketId)
     return ticket ? [{ ticket, quantity: line.quantity }] : []
   })
   const count = selected.reduce((sum, s) => sum + s.quantity, 0)
   const subtotal = selected.reduce((sum, s) => sum + s.ticket.price * s.quantity, 0)
 
   const goToCheckout = () => {
-    startTicketHold(catalogSlug)
-    router.push(ticketsCheckoutPath(catalogSlug))
+    startTicketHold(selectionScope(catalogSlug, kind))
+    router.push(checkoutPath(catalogSlug, kind))
   }
 
   return (
@@ -94,30 +121,30 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
             className="mb-5 rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#DC2626' }}
           >
-            {purchaseClosed
-              ? 'La venta de entradas para este evento está cerrada.'
-              : 'Compra inhabilitada temporalmente. No es posible agregar tickets ni pagar en este momento.'}
+            {purchaseClosed ? copy.closed : copy.disabled}
           </div>
         )}
 
-        {event.tickets.length === 0 ? (
+        {kind === 'parking' && <ParkingMap url={event.parkingMapsUrl} />}
+
+        {items.length === 0 ? (
           <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">
             <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
-              Sin tickets disponibles
+              {copy.noneTitle}
             </p>
             <p className="text-sm" style={{ color: '#6B6B78' }}>
-              Este evento todavía no tiene entradas a la venta. Volvé a entrar más cerca de la fecha.
+              {copy.noneBody}
             </p>
           </div>
         ) : (
           <>
             <div className="mb-4 md:mb-5">
               <h2 className="text-xl font-bold tracking-tight md:text-2xl" style={{ color: BUYER_COLORS.text }}>
-                Elegí tus entradas
+                {copy.heading}
               </h2>
             </div>
             <div className="flex flex-col gap-3 md:gap-4">
-              {event.tickets.map(ticket => (
+              {items.map(ticket => (
                 <TicketCard
                   key={ticket.id}
                   ticket={ticket}
@@ -129,6 +156,13 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
               ))}
             </div>
           </>
+        )}
+
+        {kind === 'ticket' && hasModule(event.modules, 'parking') && (event.parking?.length ?? 0) > 0 && (
+          <CrossLink href={parkingPath(catalogSlug)} title="Reservá tu estacionamiento" subtitle="Elegí tu tipo de vehículo y mirá dónde queda." />
+        )}
+        {kind === 'parking' && hasModule(event.modules, 'tickets') && event.tickets.length > 0 && (
+          <CrossLink href={ticketsPath(catalogSlug)} title="Comprá tus entradas" subtitle="Elegí tu entrada para el evento." />
         )}
 
         {hasCatalog && (
@@ -161,7 +195,7 @@ export function TicketsStoreView({ event, catalogSlug }: TicketsStoreViewProps) 
                 {formatPrice(subtotal)}
               </p>
               <p className="text-[13px]" style={{ color: '#6B6B78' }}>
-                {count} {count === 1 ? 'entrada' : 'entradas'}
+                {copy.countLabel(count)}
                 {ticketFee > 0 ? ' más costo de servicio' : ''}
               </p>
             </div>
