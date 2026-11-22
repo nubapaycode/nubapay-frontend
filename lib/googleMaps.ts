@@ -37,6 +37,11 @@ export function mapsEmbedUrl(raw: string | null | undefined): string | null {
 
   const embed = (q: string) => `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`
 
+  // El pin exacto del lugar va en `!3d<lat>!4d<lng>`; el `@lat,lng` es solo el centro de la vista y puede
+  // quedar corrido respecto del pin, así que se prefiere el primero.
+  const pin = url.pathname.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)
+  if (pin) return embed(`${pin[1]},${pin[2]}`)
+
   const coords = url.pathname.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/)
   if (coords) return embed(`${coords[1]},${coords[2]}`)
 

@@ -14,16 +14,20 @@ const inputClass =
 export function ParkingMapsCard({
   eventId,
   initialUrl,
+  initialResolvedUrl = null,
   onSaved,
   onError,
 }: {
   eventId: string
   initialUrl: string | null
-  onSaved: (url: string | null) => void
+  /** URL larga de un link corto de Google Maps: sin ella no se puede armar la vista previa. */
+  initialResolvedUrl?: string | null
+  onSaved: (url: string | null, resolvedUrl: string | null) => void
   onError: (msg: string) => void
 }) {
   const [draft, setDraft] = useState(initialUrl ?? '')
   const [saved, setSaved] = useState(initialUrl ?? '')
+  const [resolved, setResolved] = useState(initialResolvedUrl)
   const [saving, setSaving] = useState(false)
   const [fieldError, setFieldError] = useState('')
 
@@ -34,10 +38,15 @@ export function ParkingMapsCard({
     if (draft === saved) setDraft(initialUrl ?? '')
     setSaved(initialUrl ?? '')
   }
+  const [seededResolved, setSeededResolved] = useState(initialResolvedUrl)
+  if (seededResolved !== initialResolvedUrl) {
+    setSeededResolved(initialResolvedUrl)
+    setResolved(initialResolvedUrl)
+  }
 
   const trimmed = draft.trim()
   const dirty = trimmed !== saved
-  const embed = mapsEmbedUrl(saved || null)
+  const embed = mapsEmbedUrl(resolved) ?? mapsEmbedUrl(saved || null)
 
   const save = async () => {
     if (saving || !dirty) return
@@ -55,9 +64,11 @@ export function ParkingMapsCard({
       return
     }
     const next = res.event.parking_maps_url ?? ''
+    const nextResolved = res.event.parking_maps_resolved_url ?? null
     setSaved(next)
     setDraft(next)
-    onSaved(next || null)
+    setResolved(nextResolved)
+    onSaved(next || null, nextResolved)
   }
 
   return (

@@ -40,6 +40,8 @@ export type OrganizerEventDetail = OrganizerEventRow & {
   cash_enabled: boolean
   /** Link de Google Maps del estacionamiento (módulo Parking). */
   parking_maps_url?: string | null
+  /** URL larga de un link corto de Google Maps, para la vista previa. */
+  parking_maps_resolved_url?: string | null
   /** Módulos que ofrece el evento = los habilitados a su dueño. Ausente en respuestas viejas. */
   modules?: string[]
   /** true = el comprador paga costo de servicio. false = el organizador paga comisión del 1%. */

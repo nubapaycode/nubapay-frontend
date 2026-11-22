@@ -22,6 +22,7 @@ export type StorefrontApiResponse = {
   tickets?: Ticket[]
   parking?: Ticket[]
   parking_maps_url?: string | null
+  parking_maps_resolved_url?: string | null
   /** Módulos que ofrece el evento. */
   modules?: string[]
   /** Costo de servicio (%) que el backend suma al total: 5% tickets, 2% productos. */
@@ -59,6 +60,7 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     tickets: data.tickets ?? [],
     parking: data.parking ?? [],
     parkingMapsUrl: data.parking_maps_url ?? null,
+    parkingMapsResolvedUrl: data.parking_maps_resolved_url ?? null,
     modules: data.modules,
     serviceFeePercent: data.service_fee_percent,
     categories: data.categories ?? [],

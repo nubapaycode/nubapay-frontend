@@ -114,6 +114,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
   const [eventSlug, setEventSlug] = useState('')
   const [hasCover, setHasCover] = useState(true)
   const [mapsUrl, setMapsUrl] = useState<string | null>(null)
+  const [mapsResolved, setMapsResolved] = useState<string | null>(null)
   const origin = usePublicOrigin()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -136,6 +137,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
       setEventSlug(res.event.slug)
       setHasCover(Boolean(res.event.cover_image_url))
       setMapsUrl(res.event.parking_maps_url ?? null)
+      setMapsResolved(res.event.parking_maps_resolved_url ?? null)
     })
     void fetchTickets(eventId, kind).then(res => {
       if (cancelled) return
@@ -293,7 +295,18 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
             />
           )}
 
-          {isParking && <ParkingMapsCard eventId={eventId} initialUrl={mapsUrl} onSaved={setMapsUrl} onError={setError} />}
+          {isParking && (
+            <ParkingMapsCard
+              eventId={eventId}
+              initialUrl={mapsUrl}
+              initialResolvedUrl={mapsResolved}
+              onSaved={(url, resolved) => {
+                setMapsUrl(url)
+                setMapsResolved(resolved)
+              }}
+              onError={setError}
+            />
+          )}
 
           {error && (
             <div role="alert" className="mb-4 rounded-xl border border-red-100 bg-red-50/70 px-4 py-2.5 text-[13px] text-red-700">

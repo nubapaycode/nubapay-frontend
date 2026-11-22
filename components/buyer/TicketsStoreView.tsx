@@ -125,8 +125,6 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           </div>
         )}
 
-        {kind === 'parking' && <ParkingMap url={event.parkingMapsUrl} />}
-
         {items.length === 0 ? (
           <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">
             <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
@@ -182,6 +180,8 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
             </svg>
           </Link>
         )}
+
+        {kind === 'parking' && <ParkingMap url={event.parkingMapsUrl} resolvedUrl={event.parkingMapsResolvedUrl} />}
       </section>
 
       {paymentsEnabled && count > 0 && (

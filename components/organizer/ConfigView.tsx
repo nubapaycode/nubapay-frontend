@@ -268,6 +268,10 @@ export function ConfigView({ eventId }: { eventId: string }) {
                 {!startsAtDraft && (
                   <p className="text-xs text-amber-600">Definí la fecha de inicio para que el cierre funcione.</p>
                 )}
+                <p className="text-xs text-gray-400">
+                  Cuando cierre, te mandamos por email un resumen con las compras y las estadísticas del evento, con un
+                  CSV adjunto de todos los pedidos.
+                </p>
               </div>
             )}
           </div>

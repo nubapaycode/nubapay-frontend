@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { TicketsView } from '@/components/organizer/TicketsView'
+import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import { createTicket, deleteTicket, fetchTickets, patchTicket, reorderTickets } from '@/lib/organizerWorkspace'
 
 jest.mock('@/lib/organizerWorkspace', () => ({
@@ -214,6 +215,29 @@ describe('TicketsView · parking', () => {
     expect(await screen.findByText('org.nubapay.app/parking/mi-fiesta')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Abrir$/ })).toHaveAttribute('href', 'https://org.nubapay.app/parking/mi-fiesta')
     expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+  })
+
+  it('con un link corto muestra la vista previa usando la URL resuelta por el servidor', async () => {
+    ;(fetchOrganizerEventDetail as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      event: {
+        slug: 'mi-fiesta',
+        cover_image_url: 'https://x/y.jpg',
+        parking_maps_url: 'https://maps.app.goo.gl/abc',
+        parking_maps_resolved_url: 'https://www.google.com/maps/place/X/@-31.3,-64.2,17z/data=!3d-31.377768!4d-64.245147',
+      },
+    })
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    const preview = await screen.findByTitle('Mapa del estacionamiento')
+    expect(preview).toHaveAttribute('src', 'https://www.google.com/maps?q=-31.377768%2C-64.245147&output=embed')
+  })
+
+  it('con un link corto sin resolver no hay vista previa, pero el link queda guardado', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+    expect(screen.queryByTitle('Mapa del estacionamiento')).not.toBeInTheDocument()
   })
 
   it('crea un vehículo con tipo, ícono elegido y precio', async () => {

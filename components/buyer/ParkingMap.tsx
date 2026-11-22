@@ -1,34 +1,59 @@
 'use client'
 
+import { MapPin } from 'lucide-react'
+
 import { BUYER_COLORS } from '@/lib/buyerUi'
 import { isGoogleMapsUrl, mapsEmbedUrl } from '@/lib/googleMaps'
 
 /**
- * Dónde queda el estacionamiento. Siempre ofrece abrir Google Maps; si el link permite armar un mapa
- * (coordenadas, búsqueda o embed) también lo muestra dentro de la página.
+ * Dónde queda el estacionamiento, como un mapa chico al final de la página. Toda la imagen es un link a
+ * Google Maps (el mapa no captura el scroll del celular). Si no se puede armar el mapa, queda una tarjeta
+ * con el pin y el mismo link.
+ *
+ * `resolvedUrl` es la URL larga a la que lleva un link corto (`maps.app.goo.gl`): solo con ella se sabe
+ * qué lugar mostrar.
  */
-export function ParkingMap({ url }: { url: string | null | undefined }) {
+export function ParkingMap({ url, resolvedUrl }: { url: string | null | undefined; resolvedUrl?: string | null }) {
   if (!url || !isGoogleMapsUrl(url)) return null
-  const embed = mapsEmbedUrl(url)
+  const embed = mapsEmbedUrl(resolvedUrl) ?? mapsEmbedUrl(url)
 
   return (
-    <section className="mb-5 overflow-hidden rounded-[20px] bg-white md:mb-6">
-      {embed && (
-        <iframe
-          src={embed}
-          title="Mapa del estacionamiento"
-          className="h-56 w-full border-0 md:h-72"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+    <section aria-labelledby="parking-map-title" className="mt-8 overflow-hidden rounded-[20px] bg-white">
+      <div className="relative h-44 w-full overflow-hidden md:h-52" style={{ background: BUYER_COLORS.subtleFill }}>
+        {embed ? (
+          <iframe
+            src={embed}
+            title="Mapa del estacionamiento"
+            className="pointer-events-none h-full w-full border-0"
+            loading="lazy"
+            tabIndex={-1}
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center" aria-hidden>
+            <span
+              className="flex size-14 items-center justify-center rounded-full"
+              style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+            >
+              <MapPin size={26} strokeWidth={2} />
+            </span>
+          </div>
+        )}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Abrir el estacionamiento en Google Maps"
+          className="absolute inset-0"
         />
-      )}
+      </div>
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          <p id="parking-map-title" className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
             Dónde queda el estacionamiento
           </p>
           <p className="text-[13px]" style={{ color: '#6B6B78' }}>
-            Abrilo en Google Maps para ver cómo llegar.
+            Tocá el mapa para ver cómo llegar.
           </p>
         </div>
         <a

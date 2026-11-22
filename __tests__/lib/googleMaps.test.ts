@@ -31,6 +31,13 @@ describe('mapsEmbedUrl', () => {
     )
   })
 
+  it('prefiere el pin exacto (!3d/!4d) al centro de la vista (@)', () => {
+    // Link real de Coco una vez resuelto: el `@` queda corrido respecto del pin.
+    const resolved =
+      "https://www.google.com/maps/place/31%C2%B022'40.0%22S+64%C2%B014'42.5%22W/@-31.377768,-64.2477219,17z/data=!3m1!4b1!4m4!3m3!8m2!3d-31.377768!4d-64.245147?entry=tts"
+    expect(mapsEmbedUrl(resolved)).toBe('https://www.google.com/maps?q=-31.377768%2C-64.245147&output=embed')
+  })
+
   it('usa la búsqueda q= o query=', () => {
     expect(mapsEmbedUrl('https://maps.google.com/?q=Parking%20Norte')).toBe(
       'https://www.google.com/maps?q=Parking%20Norte&output=embed',

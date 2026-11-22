@@ -104,6 +104,59 @@ describe('TicketsStoreView · parking', () => {
     )
   })
 
+  it('el mapa va al final de la página, después de los vehículos', () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    const lastVehicle = screen.getByText('Moto')
+    const map = screen.getByTitle('Mapa del estacionamiento')
+    const title = screen.getByText('Dónde queda el estacionamiento')
+    expect(lastVehicle.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(lastVehicle.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('el mapa es un link a Google Maps y no captura el scroll', () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByTitle('Mapa del estacionamiento')).toHaveClass('pointer-events-none')
+    expect(screen.getByRole('link', { name: 'Abrir el estacionamiento en Google Maps' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/place/X/@-34.6,-58.4,17z',
+    )
+  })
+
+  it('con un link corto, arma el mapa con la URL resuelta por el servidor', () => {
+    render(
+      <TicketsStoreView
+        event={{
+          ...parkingEvent,
+          parkingMapsUrl: 'https://maps.app.goo.gl/A1m6jDLCSDZWH4du7',
+          parkingMapsResolvedUrl:
+            'https://www.google.com/maps/place/X/@-31.377768,-64.2477219,17z/data=!3m1!4b1!4m4!3m3!8m2!3d-31.377768!4d-64.245147',
+        }}
+        catalogSlug="fiesta"
+        kind="parking"
+      />,
+    )
+    expect(screen.getByTitle('Mapa del estacionamiento')).toHaveAttribute(
+      'src',
+      'https://www.google.com/maps?q=-31.377768%2C-64.245147&output=embed',
+    )
+    // El link que se abre sigue siendo el que cargó el organizador.
+    expect(screen.getByRole('link', { name: 'Cómo llegar' })).toHaveAttribute('href', 'https://maps.app.goo.gl/A1m6jDLCSDZWH4du7')
+  })
+
+  it('con un link corto que no se pudo resolver, muestra el pin y el botón', () => {
+    render(
+      <TicketsStoreView
+        event={{ ...parkingEvent, parkingMapsUrl: 'https://maps.app.goo.gl/A1m6jDLCSDZWH4du7', parkingMapsResolvedUrl: null }}
+        catalogSlug="fiesta"
+        kind="parking"
+      />,
+    )
+    expect(screen.queryByTitle('Mapa del estacionamiento')).not.toBeInTheDocument()
+    expect(screen.getByText('Dónde queda el estacionamiento')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Cómo llegar' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Abrir el estacionamiento en Google Maps' })).toBeInTheDocument()
+  })
+
   it('no muestra el mapa si el organizador no cargó el link', () => {
     render(<TicketsStoreView event={{ ...parkingEvent, parkingMapsUrl: null }} catalogSlug="fiesta" kind="parking" />)
     expect(screen.queryByTitle('Mapa del estacionamiento')).not.toBeInTheDocument()

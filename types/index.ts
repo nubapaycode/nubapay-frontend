@@ -118,6 +118,8 @@ export interface Event {
   parking?: Ticket[]
   /** Link de Google Maps del estacionamiento. */
   parkingMapsUrl?: string | null
+  /** URL larga a la que lleva el link (si era un link corto de Google): con ella se arma el mapa en la página. */
+  parkingMapsResolvedUrl?: string | null
   /** Módulos que ofrece el evento (catalogo, tickets, parking). */
   modules?: string[]
   /** Costo de servicio al comprador, en % sobre tickets y sobre productos. */
