@@ -107,7 +107,7 @@ function ResetPasswordForm() {
             color: '#C6FF00',
             padding: '13px 32px',
             fontSize: '15px',
-            fontWeight: 700,
+            fontWeight: 600,
             textDecoration: 'none',
             letterSpacing: '-0.01em',
           }}
@@ -161,7 +161,7 @@ function ResetPasswordForm() {
           color: '#C6FF00',
           padding: '14px',
           fontSize: '15px',
-          fontWeight: 700,
+          fontWeight: 600,
           border: 'none',
           cursor: loading ? 'not-allowed' : 'pointer',
           opacity: loading ? 0.6 : 1,
@@ -185,7 +185,7 @@ export default function ResetPasswordPage() {
         justifyContent: 'center',
         padding: '56px 20px',
         background: '#FFFFFF',
-        fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+        fontFamily: "var(--font-geist-sans), sans-serif",
       }}
     >
       <div style={{ width: '100%', maxWidth: '380px' }}>

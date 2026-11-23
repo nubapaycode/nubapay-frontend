@@ -106,7 +106,7 @@ export function CommissionView({ eventId }: { eventId: string }) {
       {!loading && !error && data && (
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-6 flex flex-col gap-1">
           <p className="text-xs text-indigo-500 uppercase tracking-wider">Total a pagar</p>
-          <p className="text-4xl font-bold text-indigo-700 tracking-tight tabular-nums">{formatPrice(data.total_due)}</p>
+          <p className="text-4xl font-semibold text-indigo-700 tracking-tight tabular-nums">{formatPrice(data.total_due)}</p>
           <p className="text-xs text-indigo-400">
             {data.paid_orders} {data.paid_orders === 1 ? 'orden paga' : 'órdenes pagas'} {periodPhrase(preset, range)}
             {data.cancelled_orders > 0 &&

@@ -195,7 +195,7 @@ export function ParkingReservations({
                     </span>
                   </td>
                   <td className="col-span-2 min-w-0 md:px-4 md:py-3">
-                    <p className="truncate font-medium text-gray-900">{r.customerName || 'Sin nombre'}</p>
+                    <p className="truncate font-semibold text-gray-900">{r.customerName || 'Sin nombre'}</p>
                     <p className="truncate text-[12px] text-gray-500">
                       {r.customerDni ? `DNI ${r.customerDni}` : 'Sin DNI'}
                       {r.customerEmail ? ` · ${r.customerEmail}` : ''}

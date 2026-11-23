@@ -23,8 +23,8 @@ export function OrganizerHubBar({ compact }: { compact?: boolean }) {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático del símbolo */}
         <img src="/simbolo-nubapay.svg" alt="" aria-hidden width={16} height={13} style={{ height: '13px', width: 'auto' }} />
-        <span style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.03em' }}>nubapay</span>
-        <span style={{ fontSize: '10px', fontWeight: 700, color: '#C8C8D0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>organizer</span>
+        <span className="font-logo" style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.03em' }}>nubapay</span>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: '#C8C8D0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>organizer</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {emailLabel && (
@@ -35,7 +35,7 @@ export function OrganizerHubBar({ compact }: { compact?: boolean }) {
         <button
           type="button"
           onClick={logout}
-          style={{ background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '6px 14px', fontSize: '13px', fontWeight: 500, color: '#6A6A78', cursor: 'pointer' }}
+          style={{ background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '100px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, color: '#6A6A78', cursor: 'pointer' }}
         >
           Salir
         </button>

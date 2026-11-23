@@ -65,7 +65,7 @@ function ThreeDsFrame({ challenge, onComplete }: { challenge: ThreeDsChallenge; 
   const frameName = 'mp-3ds-challenge'
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[13px] font-medium" style={{ color: BUYER_COLORS.text }}>
+      <p className="text-[13px] font-semibold" style={{ color: BUYER_COLORS.text }}>
         Tu banco necesita confirmar el pago. Completá la verificación para terminar.
       </p>
       <form ref={formRef} action={challenge.external_resource_url} method="POST" target={frameName} className="hidden">
@@ -237,7 +237,7 @@ export function CardPaymentBrick({
       )}
       <div id={containerId} className={challenge ? 'hidden' : undefined} />
       {error && (
-        <p className="text-[13px] font-medium" style={{ color: '#DC2626' }}>{error}</p>
+        <p className="text-[13px] font-semibold" style={{ color: '#DC2626' }}>{error}</p>
       )}
       <p className="text-[11px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
         El formulario es de Mercado Pago. El número de tarjeta no pasa por Nubapay. Puede pedirte el documento del titular porque el cobro con tarjeta lo exige.

@@ -101,7 +101,7 @@ function ToastList({ toasts, onDismiss }: ToastProps) {
             }}
           >
             <ToastIcon type={t.type} />
-            <span style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.45, flex: 1 }}>{t.message}</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.45, flex: 1 }}>{t.message}</span>
             <button
               type="button"
               onClick={() => onDismiss(t.id)}

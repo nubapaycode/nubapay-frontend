@@ -28,7 +28,7 @@ import { formatPrice } from '@/lib/utils'
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h3 className="mb-2 text-xs font-medium text-white/50">{title}</h3>
+      <h3 className="mb-2 text-xs font-semibold text-white/50">{title}</h3>
       {children}
     </section>
   )
@@ -177,7 +177,7 @@ export function OrderDrawer({
                   {order.payments.map((p, i) => (
                     <li key={i} className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-white/90">{providerLabel(p.provider)}</span>
+                        <span className="text-sm font-semibold text-white/90">{providerLabel(p.provider)}</span>
                         <PaymentStatusPill status={p.status} />
                       </div>
                       <p className="mt-1 text-xs text-white/60">

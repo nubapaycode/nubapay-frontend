@@ -35,7 +35,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+        fontFamily: "var(--font-geist-sans), sans-serif",
         transition: 'box-shadow 0.15s',
       }}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)' }}
@@ -43,7 +43,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#9A9AA8', letterSpacing: '0.04em' }}>
+        <span style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: '11px', color: '#9A9AA8', letterSpacing: '0.04em' }}>
           #{order.id.slice(0, 8).toUpperCase()}
         </span>
         {pm && (
@@ -68,7 +68,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             <span style={{ fontSize: '12px', color: '#0A0A0F', lineHeight: '1.4', flex: 1 }}>{item.name}</span>
             <span style={{
               fontSize: '10px',
-              fontWeight: 700,
+              fontWeight: 600,
               color: '#9A9AA8',
               background: '#F4F4F6',
               borderRadius: '6px',
@@ -81,7 +81,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
 
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #F4F4F6' }}>
-        <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em' }}>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.02em' }}>
           {formatPrice(order.total)}
         </span>
 
@@ -90,7 +90,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             onClick={onMarkReady}
             style={{
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 600,
               ...organizerAccentFilledButtonStyle(),
               border: 'none',
               borderRadius: '100px',
@@ -111,7 +111,7 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
             onClick={onMarkDelivered}
             style={{
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 600,
               ...organizerAccentFilledButtonStyle(),
               border: 'none',
               borderRadius: '100px',
@@ -128,13 +128,13 @@ export function OrderCard({ order, onMarkReady, onMarkDelivered }: OrderCardProp
           </button>
         )}
         {order.status === 'delivered' && (
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#16A34A" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Entregado
           </span>
         )}
         {order.status === 'partially_delivered' && (
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#A855F7' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#A855F7' }}>
             Entrega parcial
           </span>
         )}

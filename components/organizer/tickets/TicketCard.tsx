@@ -238,7 +238,7 @@ export function TicketCard({
         <span className="text-[11px] text-gray-400">Precio</span>
         <Money value={t.price || 0} className="text-[22px] font-semibold leading-none tracking-tight tabular-nums text-gray-900" />
         {actions ? (
-          <label className="mt-1 flex items-center gap-2 text-[11px] font-medium text-gray-500">
+          <label className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-gray-500">
             <ToggleSwitch checked={t.is_active} disabled={actions.toggling} onChange={actions.onToggle} />
             <span className="sr-only">{t.is_active ? `Pausar ${t.name}` : `Poner en venta ${t.name}`}</span>
             <span aria-hidden>{t.is_active ? 'En venta' : 'Pausado'}</span>

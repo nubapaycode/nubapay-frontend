@@ -83,7 +83,7 @@ export function EventsTab({ onOpenEvent, refreshKey }: { onOpenEvent: (eventId: 
                     className="cursor-pointer transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                   >
                     <Td className="max-w-[240px]">
-                      <p className="truncate font-medium text-white">{e.name}</p>
+                      <p className="truncate font-semibold text-white">{e.name}</p>
                       <p className="truncate text-xs text-white/55">
                         {e.tenant_subdomain ?? 'sin tenant'} · /{e.slug}
                       </p>

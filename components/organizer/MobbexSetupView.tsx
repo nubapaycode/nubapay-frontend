@@ -198,7 +198,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
           href="https://www.mobbex.com/desarrolladores/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
+          className="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold"
         >
           Mobbex para desarrolladores
           <ExternalLink size={11} aria-hidden />
@@ -212,7 +212,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
             <div className="flex items-center gap-2.5">
               <CheckCircle2 size={16} className="text-green-600 shrink-0" aria-hidden />
               <div>
-                <p className="text-sm font-medium text-green-800">Cuenta conectada</p>
+                <p className="text-sm font-semibold text-green-800">Cuenta conectada</p>
                 <p className="text-xs text-green-600 mt-0.5">Los pagos van a tu cuenta de Mobbex</p>
               </div>
             </div>
@@ -220,7 +220,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
               type="button"
               onClick={() => setConfirmDisconnect(true)}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-600 disabled:opacity-40 shrink-0 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-600 disabled:opacity-40 shrink-0 transition-colors"
             >
               <Trash2 size={13} aria-hidden />Desconectar
             </button>
@@ -230,7 +230,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
             <button
               type="button"
               onClick={() => setReplaceOpen(v => !v)}
-              className="w-full flex items-center justify-between gap-2 px-5 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-5 py-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <span>Reemplazar credenciales</span>
               <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${replaceOpen ? 'rotate-180' : ''}`} aria-hidden />

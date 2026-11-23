@@ -102,7 +102,7 @@ export function DateRangeCalendar({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 text-center text-[11px] font-medium text-gray-400">
+      <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-gray-400">
         {WEEKDAYS.map(d => (
           <span key={d} className="py-1">
             {d}

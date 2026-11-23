@@ -129,7 +129,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
         .snb-section-link:hover { color: rgba(0,0,0,1); }
         .snb-section-link:hover::after,
         .snb-section-link-active::after { transform: scaleX(1); }
-        .snb-section-link-active { color: rgba(0,0,0,0.9) !important; font-weight: 500 !important; }
+        .snb-section-link-active { color: rgba(0,0,0,0.9) !important; font-weight: 600 !important; }
         .snb-login {
           font-size: 13px; font-weight: 400; color: rgba(0,0,0,0.5);
           text-decoration: none; padding: 6px 12px; border-radius: 8px;
@@ -228,7 +228,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
                   aria-current={isActive ? 'page' : undefined}
                   style={{
                     fontSize: '28px',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     letterSpacing: '-0.02em',
                     color: isActive ? '#0A0A0F' : 'rgba(0,0,0,0.35)',
                     textDecoration: 'none',
@@ -299,7 +299,7 @@ export default function SiteNavbar({ activePath }: { activePath?: string }) {
 
             {/* Logo */}
             <Link href="/" onClick={closeMenu} className="snb-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: '8px', flexShrink: 0, transform: scrolled ? 'scale(0.93)' : 'scale(1)' }}>
-              <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.03em', color: '#0A0A0F' }}>nubapay</span>
+              <span className="font-logo" style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.03em', color: '#0A0A0F' }}>nubapay</span>
             </Link>
 
             {/* Links — solo desktop */}

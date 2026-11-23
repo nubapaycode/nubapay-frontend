@@ -117,7 +117,7 @@ export function ParkingMapsCard({
               href={saved}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-gray-500 transition-colors hover:text-gray-900"
+              className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-semibold text-gray-500 transition-colors hover:text-gray-900"
             >
               <ExternalLink size={12} strokeWidth={1.75} aria-hidden />
               Abrir en Google Maps
@@ -126,7 +126,7 @@ export function ParkingMapsCard({
           <button
             type="button"
             onClick={() => setEditOpen(true)}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             <Pencil size={13} strokeWidth={1.75} aria-hidden />
             Cambiar
@@ -183,7 +183,7 @@ export function ParkingMapsCard({
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="h-[42px] shrink-0 rounded-xl px-3 text-[14px] font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                className="h-[42px] shrink-0 rounded-xl px-3 text-[14px] font-semibold text-gray-600 transition-colors hover:bg-gray-100"
               >
                 Cancelar
               </button>

@@ -75,7 +75,7 @@ export default function SiteFooter() {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '40px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.03em', color: '#FFFFFF' }}>nubapay</span>
+                <span className="font-logo" style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.03em', color: '#FFFFFF' }}>nubapay</span>
               </div>
               <p style={{ fontSize: '15px', color: '#FFFFFF', lineHeight: '1.7', margin: '0 0 32px 0', maxWidth: '340px' }}>
                 Más ventas, menos filas. Para los que organizan eventos que la gente recuerda.
@@ -94,7 +94,7 @@ export default function SiteFooter() {
           <div className="nb-footer-links-grid">
             {NAV.map(({ title, links }) => (
               <div key={title}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 20px 0' }}>{title}</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: '#FFFFFF', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 20px 0' }}>{title}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {links.map(({ label, href }) => (
                     <a
@@ -118,10 +118,10 @@ export default function SiteFooter() {
         <div style={{ maxWidth: '1280px', margin: '0 auto', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px' }}>
             <div
-              className="nb-footer-wordmark"
+              className="nb-footer-wordmark font-logo"
               style={{
                 fontSize: 'clamp(80px, 13.5vw, 196px)',
-                fontWeight: 900,
+                fontWeight: 800,
                 letterSpacing: '-0.055em',
                 lineHeight: '0.85',
                 color: 'transparent',
@@ -156,7 +156,7 @@ export default function SiteFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram de Nubapay (@nubapay.app)"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontSize: '13px', fontWeight: 500, transition: 'color 0.15s' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#FFFFFF')}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
             >

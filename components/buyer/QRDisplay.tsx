@@ -29,7 +29,7 @@ export function QRDisplay({ orderId, eventId, catalogSlug }: QRDisplayProps) {
       </div>
 
       <div>
-        <p className="text-xl font-bold text-gray-900">Tu código de retiro</p>
+        <p className="text-xl font-semibold text-gray-900">Tu código de retiro</p>
         <p className="text-sm text-gray-400 mt-1">Mostrá este QR al retirar tu pedido</p>
       </div>
 

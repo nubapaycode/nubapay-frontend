@@ -53,7 +53,7 @@ export function Card({
       {(title || action) && (
         <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-5 pt-4 pb-3">
           <div className="min-w-0">
-            {title && <h2 className="text-[13px] font-medium text-white">{title}</h2>}
+            {title && <h2 className="text-[13px] font-semibold text-white">{title}</h2>}
             {subtitle && <p className="mt-0.5 text-xs text-white/60">{subtitle}</p>}
           </div>
           {action && <div className="max-w-full">{action}</div>}
@@ -93,7 +93,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 px-6 py-12 text-center">
-      <p className="text-sm font-medium text-white/70">{title}</p>
+      <p className="text-sm font-semibold text-white/70">{title}</p>
       {hint && <p className="text-xs text-white/55">{hint}</p>}
     </div>
   )
@@ -123,7 +123,7 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'subtle'
 
 const BTN: Record<BtnVariant, string> = {
-  primary: 'bg-admin-primary text-white hover:bg-admin-primary-hover font-medium',
+  primary: 'bg-admin-primary text-white hover:bg-admin-primary-hover font-semibold',
   ghost: 'border border-white/10 text-white/80 hover:border-white/20 hover:bg-white/[0.05]',
   subtle: 'bg-white/[0.06] text-white/85 hover:bg-white/10',
   danger: 'border border-red-400/30 bg-red-400/10 text-red-200 hover:bg-red-400/20',
@@ -217,7 +217,7 @@ export function Segmented<T extends string>({
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cx(
-              'flex-shrink-0 whitespace-nowrap rounded px-3 py-1 text-xs font-medium transition-colors duration-150',
+              'flex-shrink-0 whitespace-nowrap rounded px-3 py-1 text-xs font-semibold transition-colors duration-150',
               on ? 'bg-white/[0.1] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-white/50 hover:text-white/80',
             )}
           >
@@ -288,7 +288,7 @@ const TONE_ICON: Record<Tone, ReactNode> = {
 
 export function Pill({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-medium', TONE[tone])}>
+    <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-semibold', TONE[tone])}>
       {TONE_ICON[tone]}
       {children}
     </span>
@@ -340,7 +340,7 @@ export function Delta({ value, suffix = '%', upIsGood = true }: { value: number 
   const up = value > 0
   const good = up === upIsGood
   return (
-    <span className={cx('inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-medium', good ? 'text-emerald-300' : 'text-red-300')}>
+    <span className={cx('inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-semibold', good ? 'text-emerald-300' : 'text-red-300')}>
       {up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
       {Math.abs(value) >= 1000 ? `${up ? '+' : '-'}999${suffix.trim()}+` : `${up ? '+' : ''}${value.toLocaleString('es-AR')}${suffix}`}
     </span>
@@ -365,7 +365,7 @@ export function Th({ children, align }: { children?: ReactNode; align?: 'right' 
   return (
     <th
       className={cx(
-        'whitespace-nowrap px-4 py-2.5 font-admin-mono text-[10.5px] font-medium uppercase tracking-[0.06em] text-white/45',
+        'whitespace-nowrap px-4 py-2.5 font-admin-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] text-white/45',
         align === 'right' && 'text-right',
       )}
     >
@@ -568,7 +568,7 @@ function ReasonDialogBody({
         <div role="alertdialog" aria-modal="true" aria-label={title} className="admin-pop relative w-full max-w-md rounded-lg border border-white/10 bg-admin-raised p-5 shadow-2xl">
           <h3 className="text-base font-semibold text-white">{title}</h3>
           <div className="mt-2 text-sm text-white/60">{description}</div>
-          <label className="mt-4 block text-xs font-medium text-white/50" htmlFor="admin-reason">
+          <label className="mt-4 block text-xs font-semibold text-white/50" htmlFor="admin-reason">
             Motivo (queda registrado en el historial)
           </label>
           <textarea

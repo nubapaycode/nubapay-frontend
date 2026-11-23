@@ -56,7 +56,7 @@ export function PaymentsStrip({ onChanged, onState }: { onChanged?: () => void; 
     <>
       <div className="rounded-md border border-white/[0.07] bg-white/[0.02] p-2.5">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium text-white/85">Pagos y compras</p>
+          <p className="text-xs font-semibold text-white/85">Pagos y compras</p>
           <Toggle
             label="Pagos y compras"
             checked={!!enabled}

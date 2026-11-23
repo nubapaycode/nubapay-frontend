@@ -16,8 +16,8 @@ import { useState } from 'react'
 export const ACCENT = 'var(--organizer-accent, #C6FF00)'
 export const ACCENT_INK = 'var(--organizer-accent-ink, #0A0F00)'
 
-const DISPLAY_FONT = "var(--font-bricolage, 'Bricolage Grotesque', 'DM Sans', sans-serif)"
-const BODY_FONT = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+const DISPLAY_FONT = "var(--font-geist-sans), sans-serif"
+const BODY_FONT = "var(--font-geist-sans), sans-serif"
 
 export const AUTH_CSS = `
   .nba-page {
@@ -61,9 +61,9 @@ export const AUTH_CSS = `
     gap: 8px;
     text-decoration: none;
   }
-  .nba-brand-word { font-size: 18px; font-weight: 700; letter-spacing: -0.03em; color: #0A0A0F; }
+  .nba-brand-word { font-size: 18px; font-weight: 600; letter-spacing: -0.03em; color: #0A0A0F; }
   .nba-brand-tag {
-    font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: rgba(10,10,15,0.32);
   }
 
@@ -108,13 +108,13 @@ export const AUTH_CSS = `
     box-sizing: border-box;
   }
   .nba-eyebrow {
-    font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
     text-transform: uppercase; color: rgba(10,10,15,0.42);
   }
   .nba-stub-logo { max-height: 29px; max-width: 169px; width: auto; object-fit: contain; display: block; }
-  .nba-stub-note { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(10,10,15,0.3); white-space: nowrap; }
+  .nba-stub-note { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(10,10,15,0.3); white-space: nowrap; }
   .nba-stub-chip {
-    font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
     background: ${ACCENT}; color: ${ACCENT_INK};
     padding: 5px 11px; border-radius: 100px; white-space: nowrap;
   }
@@ -167,7 +167,7 @@ export const AUTH_CSS = `
   .nba-row > * { flex: 1; min-width: 0; }
   .nba-field { display: flex; flex-direction: column; gap: 6px; }
   .nba-label {
-    font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: rgba(10,10,15,0.5);
   }
   .nba-input {

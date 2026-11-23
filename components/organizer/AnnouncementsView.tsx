@@ -60,7 +60,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <label className="block">
       <span className="mb-1.5 flex items-baseline justify-between gap-2">
-        <span className="text-[12px] font-medium text-gray-700">{label}</span>
+        <span className="text-[12px] font-semibold text-gray-700">{label}</span>
         {hint ? <span className="text-[11px] text-gray-400">{hint}</span> : null}
       </span>
       {children}
@@ -100,7 +100,7 @@ function StatusBadge({ status }: { status: AnnouncementStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold',
         ui.className,
       )}
     >
@@ -378,7 +378,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
                     setOptionQuery('')
                   }}
                   className={cn(
-                    'rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
+                    'rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors',
                     audienceType === a.key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
                   )}
                 >
@@ -402,7 +402,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
                     <button
                       type="button"
                       onClick={() => setSelectedIds([])}
-                      className="shrink-0 text-[12px] font-medium text-gray-500 hover:text-gray-900"
+                      className="shrink-0 text-[12px] font-semibold text-gray-500 hover:text-gray-900"
                     >
                       Limpiar ({selectedIds.length})
                     </button>
@@ -491,7 +491,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
 
           <Section title="Diseño">
             <div>
-              <p className="mb-2 text-[12px] font-medium text-gray-700">Color</p>
+              <p className="mb-2 text-[12px] font-semibold text-gray-700">Color</p>
               <div className="flex flex-wrap items-center gap-2">
                 {Array.from(new Set([defaults?.accentColor ?? '#111111', ...ACCENT_PRESETS])).map(c => (
                   <button
@@ -559,7 +559,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
               type="button"
               onClick={() => void onSendTest()}
               disabled={sendingTest}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-[13px] font-medium text-gray-800 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-[13px] font-semibold text-gray-800 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               <Mail size={14} strokeWidth={1.75} aria-hidden />
               {sendingTest ? 'Enviando prueba…' : 'Enviarme una prueba'}
@@ -569,7 +569,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
               onClick={() => setConfirmOpen(true)}
               disabled={!canSend}
               title={sendingNow ? 'Hay un aviso enviándose' : formError || undefined}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
             >
               <Send size={14} strokeWidth={1.75} aria-hidden />
               {audienceCount ? `Enviar a ${compradores(audienceCount)}` : 'Enviar aviso'}
@@ -581,7 +581,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
         <div className="min-w-0">
           <div className="lg:sticky lg:top-6">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[12px] font-medium text-gray-500">Vista previa</p>
+              <p className="text-[12px] font-semibold text-gray-500">Vista previa</p>
               <div className="flex rounded-full bg-gray-100 p-0.5" role="tablist" aria-label="Dispositivo">
                 {(
                   [
@@ -698,7 +698,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => setConfirmOpen(false)}
             disabled={submitting}
-            className="rounded-full px-4 py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-100"
+            className="rounded-full px-4 py-2.5 text-[13px] font-semibold text-gray-600 hover:bg-gray-100"
           >
             Cancelar
           </button>
@@ -706,7 +706,7 @@ export function AnnouncementsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => void onConfirmSend()}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-[13px] font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
           >
             <Send size={14} strokeWidth={1.75} aria-hidden />
             {submitting ? 'Enviando…' : 'Enviar ahora'}

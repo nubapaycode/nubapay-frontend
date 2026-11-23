@@ -147,7 +147,7 @@ export function ProductDetailView({ item, paymentsEnabled = true, purchaseClosed
               </span>
               {hasDiscount && (
                 <span
-                  className="text-[14px] font-medium line-through"
+                  className="text-[14px] font-semibold line-through"
                   style={{ color: BUYER_COLORS.muted }}
                 >
                   Antes {formatPrice(item.listPrice!)}
@@ -175,7 +175,7 @@ export function ProductDetailView({ item, paymentsEnabled = true, purchaseClosed
           {comboLines && (
             <div className="mt-6 rounded-[16px] p-4" style={{ background: BUYER_COLORS.subtleFill }}>
               <p
-                className="mb-3 text-[11px] font-bold uppercase tracking-widest"
+                className="mb-3 text-[11px] font-semibold uppercase tracking-widest"
                 style={{ color: BUYER_COLORS.muted }}
               >
                 Incluye
@@ -189,7 +189,7 @@ export function ProductDetailView({ item, paymentsEnabled = true, purchaseClosed
                     >
                       {line.qty}
                     </span>
-                    <span className="text-[14px] font-medium" style={{ color: BUYER_COLORS.text }}>
+                    <span className="text-[14px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                       {line.name}
                     </span>
                   </li>

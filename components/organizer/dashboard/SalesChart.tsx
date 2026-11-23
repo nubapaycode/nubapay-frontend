@@ -104,16 +104,16 @@ export function SalesChart({
         <table className="w-full text-[13px]">
           <thead className="sticky top-0 bg-white text-left text-[11px] text-gray-400">
             <tr>
-              <th className="py-2 font-medium">Período</th>
-              <th className="py-2 text-right font-medium">Actual</th>
-              {showComparison && <th className="py-2 text-right font-medium">Anterior</th>}
+              <th className="py-2 font-semibold">Período</th>
+              <th className="py-2 text-right font-semibold">Actual</th>
+              {showComparison && <th className="py-2 text-right font-semibold">Anterior</th>}
             </tr>
           </thead>
           <tbody className="tabular-nums">
             {safePoints.map((p, i) => (
               <tr key={`${p.label}-${i}`} className="border-t border-gray-100">
                 <td className="py-2 text-gray-500">{p.label}</td>
-                <td className="py-2 text-right font-medium text-gray-900">{formatValue(values[i], metric, hiddenAmounts)}</td>
+                <td className="py-2 text-right font-semibold text-gray-900">{formatValue(values[i], metric, hiddenAmounts)}</td>
                 {showComparison && (
                   <td className="py-2 text-right text-gray-400">{formatValue(prevValues[i], metric, hiddenAmounts)}</td>
                 )}
@@ -236,7 +236,7 @@ export function SalesChart({
           className="pointer-events-none absolute top-0 z-10 w-40 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 text-[12px] shadow-[0_8px_24px_-6px_rgba(16,24,40,0.16)] backdrop-blur"
           style={{ left: tooltipLeft }}
         >
-          <p className="mb-1 font-medium text-gray-500">{hp.label}</p>
+          <p className="mb-1 font-semibold text-gray-500">{hp.label}</p>
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-gray-500">
               <span className="h-0.5 w-3 rounded-full bg-gray-900" aria-hidden />

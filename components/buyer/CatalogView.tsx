@@ -55,7 +55,7 @@ function EmptyState({ title, subtitle, icon }: { title: string; subtitle: string
       >
         {icon}
       </div>
-      <p className="mb-1 text-[17px] font-bold tracking-tight text-[#0A0A0F]" style={{ letterSpacing: '-0.02em' }}>
+      <p className="mb-1 text-[17px] font-semibold tracking-tight text-[#0A0A0F]" style={{ letterSpacing: '-0.02em' }}>
         {title}
       </p>
       <p className="text-sm" style={{ color: BUYER_COLORS.muted }}>
@@ -179,7 +179,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-end px-4 pb-6 pt-4 md:px-8 md:pb-8">
           <h1
-            className="text-2xl font-bold leading-tight text-white md:text-4xl"
+            className="text-2xl font-semibold leading-tight text-white md:text-4xl"
             style={{ letterSpacing: '-0.03em' }}
           >
             {event.name}
@@ -276,7 +276,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             {count > 0 && (
               <a
                 href={buyerFlowPath(event.id, { catalogSlug, path: 'cart' })}
-                className="ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold transition-opacity active:opacity-80"
+                className="ml-auto flex flex-shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-opacity active:opacity-80"
                 style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -335,7 +335,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             style={{ borderColor: BUYER_COLORS.border, color: BUYER_COLORS.text }}
           >
             <span className="min-w-0">
-              <span className="block text-[15px] font-bold tracking-tight">Tickets</span>
+              <span className="block text-[15px] font-semibold tracking-tight">Tickets</span>
               <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
                 Comprá tus entradas
               </span>
@@ -353,7 +353,7 @@ export function CatalogView({ event, catalogSlug }: CatalogViewProps) {
             style={{ borderColor: BUYER_COLORS.border, color: BUYER_COLORS.text }}
           >
             <span className="min-w-0">
-              <span className="block text-[15px] font-bold tracking-tight">Parking</span>
+              <span className="block text-[15px] font-semibold tracking-tight">Parking</span>
               <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
                 Reservá tu lugar de estacionamiento
               </span>

@@ -260,7 +260,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
             setLoading(true)
             void load()
           }}
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50"
         >
           Reintentar
         </button>
@@ -298,7 +298,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
       {/* Encabezado */}
       <header className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <p className="mb-1.5 text-[12px] font-medium text-gray-400">Dashboard</p>
+          <p className="mb-1.5 text-[12px] font-semibold text-gray-400">Dashboard</p>
           <h1 className="max-w-[680px] text-[22px] font-semibold leading-snug tracking-tight text-gray-900 md:text-[26px]">
             <Headline summary={summary} preset={preset} range={range} hidden={hidden} />
           </h1>
@@ -373,7 +373,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
                   active ? 'bg-white' : 'bg-gray-50/60 hover:bg-gray-50'
                 }`}
               >
-                <span className={`mb-1.5 flex items-center gap-2 text-[12px] ${active ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                <span className={`mb-1.5 flex items-center gap-2 text-[12px] ${active ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
                   {tab.label}
                   {!showScrub && <DeltaBadge pct={deltaPct(t.value, t.prev)} />}
                 </span>
@@ -417,7 +417,7 @@ export function DashboardView({ eventId }: { eventId: string }) {
         <div className="px-5 pb-4 pt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-4 text-[12px]">
-              <span className="font-medium text-gray-900">{chartIsDaily ? 'Ventas por día' : 'Ventas por hora'}</span>
+              <span className="font-semibold text-gray-900">{chartIsDaily ? 'Ventas por día' : 'Ventas por hora'}</span>
               <span className="flex items-center gap-1.5 text-gray-500">
                 <span className="h-0.5 w-3 rounded-full bg-gray-900" aria-hidden />
                 {chartIsDaily ? 'Período elegido' : 'Últimas 8 h'}

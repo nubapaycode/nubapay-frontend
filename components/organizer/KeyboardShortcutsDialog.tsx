@@ -78,7 +78,7 @@ export function KeyboardShortcutsDialog() {
       <div className="flex flex-col gap-5">
         {shortcutGroups(mod).map(group => (
           <section key={group.title}>
-            <p className="mb-1.5 text-[11px] font-medium text-gray-400">{group.title}</p>
+            <p className="mb-1.5 text-[11px] font-semibold text-gray-400">{group.title}</p>
             <ul className="divide-y divide-gray-100">
               {group.items.map(item => (
                 <li key={item.label} className="flex items-center justify-between gap-4 py-2 text-[13px] text-gray-700">

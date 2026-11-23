@@ -12,8 +12,8 @@ import { formatPrice } from '@/lib/utils'
 function Total({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="admin-panel p-5">
-      <p className="text-xs font-medium text-white/60">{label}</p>
-      <p className={cx('mt-2 font-medium tracking-tight tabular-nums', strong ? 'text-[28px] text-admin-accent' : 'text-[22px] text-white')}>{value}</p>
+      <p className="text-xs font-semibold text-white/60">{label}</p>
+      <p className={cx('mt-2 font-semibold tracking-tight tabular-nums', strong ? 'text-[28px] text-admin-accent' : 'text-[22px] text-white')}>{value}</p>
     </div>
   )
 }
@@ -60,7 +60,7 @@ function SettlementSectionView({
               {section.organizers.map((o) => (
                 <tr key={o.organizer_email} className="hover:bg-white/[0.02]">
                   <Td>
-                    <p className="font-medium text-white">{o.organizer_name}</p>
+                    <p className="font-semibold text-white">{o.organizer_name}</p>
                     <p className="text-xs text-white/55">{o.organizer_email}</p>
                   </Td>
                   <Td align="right">{fmtInt(o.events)}</Td>
@@ -93,7 +93,7 @@ function SettlementSectionView({
             <tbody className="divide-y divide-white/[0.05]">
               {section.events.map((e) => (
                 <tr key={e.event_id} className="hover:bg-white/[0.02]">
-                  <Td className="font-medium text-white">{e.event_name}</Td>
+                  <Td className="font-semibold text-white">{e.event_name}</Td>
                   <Td muted>{e.organizer_email}</Td>
                   <Td align="right">{fmtInt(e.paid_orders)}</Td>
                   <Td align="right">{formatPrice(e.revenue)}</Td>

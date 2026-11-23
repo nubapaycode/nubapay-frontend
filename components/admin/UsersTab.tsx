@@ -77,7 +77,7 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
               <tbody className="divide-y divide-white/[0.05]">
                 {users.map((u) => (
                   <tr key={u.id} className="hover:bg-white/[0.02]">
-                    <Td className="font-medium text-white">{u.name}</Td>
+                    <Td className="font-semibold text-white">{u.name}</Td>
                     <Td>{u.email}</Td>
                     <Td>
                       {u.role}

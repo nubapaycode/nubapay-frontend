@@ -17,7 +17,7 @@ export function CatalogBlockSection({ block, catalogSlug, getQuantity, onAdd, on
   return (
     <section className="mb-10">
       <h2
-        className="mb-3 text-[15px] font-bold tracking-tight text-[#0A0A0F]"
+        className="mb-3 text-[15px] font-semibold tracking-tight text-[#0A0A0F]"
         style={{ letterSpacing: '-0.02em' }}
       >
         {block.title}

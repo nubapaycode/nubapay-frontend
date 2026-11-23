@@ -127,13 +127,13 @@ function ParkingOccupancy({
       aria-label="Ocupación del estacionamiento"
       className="nb-rise mb-4 rounded-2xl border border-gray-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
     >
-      <p className="text-[12px] font-medium text-gray-500">Lugares vendidos</p>
+      <p className="text-[12px] font-semibold text-gray-500">Lugares vendidos</p>
       <p className="mt-1 text-[28px] font-semibold leading-none tracking-tight tabular-nums text-gray-900">
         {formatCount(sold)}
         {capacity != null ? (
-          <span className="text-[16px] font-medium text-gray-400"> de {formatCount(capacity)}</span>
+          <span className="text-[16px] font-semibold text-gray-400"> de {formatCount(capacity)}</span>
         ) : (
-          <span className="text-[14px] font-medium text-gray-400"> · sin límite de lugares</span>
+          <span className="text-[14px] font-semibold text-gray-400"> · sin límite de lugares</span>
         )}
       </p>
       {capacity != null && (
@@ -152,7 +152,7 @@ function ParkingOccupancy({
         <div>
           <span className="block text-[16px] font-semibold tabular-nums text-gray-900">
             {formatCount(redeemed)}
-            <span className="text-[13px] font-medium text-gray-400"> de {formatCount(sold)}</span>
+            <span className="text-[13px] font-semibold text-gray-400"> de {formatCount(sold)}</span>
           </span>
           ingresaron
         </div>
@@ -341,7 +341,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
               key={t.label}
               type="button"
               onClick={() => openCreate(t.form)}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,color,transform] hover:-translate-y-px hover:border-gray-300 hover:text-gray-900"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[border-color,color,transform] hover:-translate-y-px hover:border-gray-300 hover:text-gray-900"
             >
               <span className="text-gray-400">{t.icon}</span>
               {t.label}
@@ -351,7 +351,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
         <button
           type="button"
           onClick={() => openCreate()}
-          className="mt-4 text-[13px] font-medium text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
+          className="mt-4 text-[13px] font-semibold text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
         >
           {copy.createLink}
         </button>
@@ -550,7 +550,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
                         key={t.id}
                         type="button"
                         onClick={() => openEdit(t, true)}
-                        className="rounded-lg border border-amber-200 bg-white px-2.5 py-1 text-[12px] font-medium text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-50"
+                        className="rounded-lg border border-amber-200 bg-white px-2.5 py-1 text-[12px] font-semibold text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-50"
                       >
                         Definir lugares de {t.name}
                       </button>
@@ -564,7 +564,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
 
             <p className="mt-4 flex items-start gap-2 px-1 text-[12px] text-gray-500">
               <Info size={14} strokeWidth={1.75} className="mt-px shrink-0 text-gray-400" aria-hidden />
-              Cada vehículo puede reservar un solo lugar. Al comprar se pide la patente y no se puede repetir.
+              Cada vehículo puede reservar un solo lugar. Al comprar se pide la patente, que no se puede repetir, y opcionalmente el DNI.
             </p>
           </div>
 
@@ -637,7 +637,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
           <button
             type="button"
             onClick={() => setDeleteTarget(null)}
-            className="rounded-xl px-4 py-2 text-[14px] font-medium text-gray-600 transition-colors hover:bg-gray-100"
+            className="rounded-xl px-4 py-2 text-[14px] font-semibold text-gray-600 transition-colors hover:bg-gray-100"
           >
             Cancelar
           </button>

@@ -54,7 +54,7 @@ export function OrderList({ orders, onMarkReady, onMarkDelivered }: OrderListPro
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-      <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] md:gap-3 md:px-4 md:py-2 md:bg-gray-50 md:text-[11px] md:font-medium md:uppercase md:tracking-wide md:text-gray-400">
+      <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] md:gap-3 md:px-4 md:py-2 md:bg-gray-50 md:text-[11px] md:font-semibold md:uppercase md:tracking-wide md:text-gray-400">
         <span>Pedido</span>
         <span className="text-right">Estado</span>
         <span className="text-right whitespace-nowrap">Total</span>
@@ -78,11 +78,11 @@ export function OrderList({ orders, onMarkReady, onMarkDelivered }: OrderListPro
               </div>
               <div className="flex md:contents flex-wrap items-center justify-between gap-2">
                 <span
-                  className={`inline-flex md:justify-end items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[order.status]}`}
+                  className={`inline-flex md:justify-end items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[order.status]}`}
                 >
                   {STATUS_LABEL[order.status]}
                 </span>
-                <p className="text-sm font-medium text-gray-900 md:text-right tabular-nums whitespace-nowrap">
+                <p className="text-sm font-semibold text-gray-900 md:text-right tabular-nums whitespace-nowrap">
                   {formatPrice(order.total)}
                 </p>
                 {order.paymentMethod ? (
@@ -97,7 +97,7 @@ export function OrderList({ orders, onMarkReady, onMarkDelivered }: OrderListPro
                     <button
                       type="button"
                       onClick={() => onMarkReady(order.id)}
-                      className="text-xs font-medium bg-gray-900 text-white rounded-full px-3 py-1.5 hover:bg-gray-700 transition-colors"
+                      className="text-xs font-semibold bg-gray-900 text-white rounded-full px-3 py-1.5 hover:bg-gray-700 transition-colors"
                     >
                       Marcar listo
                     </button>
@@ -106,16 +106,16 @@ export function OrderList({ orders, onMarkReady, onMarkDelivered }: OrderListPro
                     <button
                       type="button"
                       onClick={() => onMarkDelivered(order.id)}
-                      className="text-xs font-medium bg-green-600 text-white rounded-full px-3 py-1.5 hover:bg-green-700 transition-colors"
+                      className="text-xs font-semibold bg-green-600 text-white rounded-full px-3 py-1.5 hover:bg-green-700 transition-colors"
                     >
                       Confirmar entrega
                     </button>
                   )}
                   {order.status === 'delivered' && (
-                    <span className="text-xs font-medium text-green-600 self-center">Entregado ✓</span>
+                    <span className="text-xs font-semibold text-green-600 self-center">Entregado ✓</span>
                   )}
                   {order.status === 'partially_delivered' && (
-                    <span className="text-xs font-medium text-purple-600 self-center">Entrega parcial</span>
+                    <span className="text-xs font-semibold text-purple-600 self-center">Entrega parcial</span>
                   )}
                   {order.status === 'cancelled' && (
                     <span className="text-xs text-gray-400 self-center">—</span>

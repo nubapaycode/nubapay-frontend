@@ -61,7 +61,7 @@ export function FilterMenu({
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
         className={cn(
-          'inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed px-3 text-[13px] font-medium transition-colors',
+          'inline-flex h-9 items-center gap-1.5 rounded-xl border border-dashed px-3 text-[13px] font-semibold transition-colors',
           selected.length
             ? 'border-gray-300 bg-gray-50 text-gray-900'
             : 'border-gray-300 bg-white text-gray-500 hover:border-gray-400 hover:text-gray-900',
@@ -92,7 +92,7 @@ export function FilterMenu({
                 onClick={() => toggle(opt.value)}
                 className={cn(
                   'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors',
-                  active ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  active ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                 )}
               >
                 <span

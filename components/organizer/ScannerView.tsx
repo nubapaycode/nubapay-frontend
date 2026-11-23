@@ -46,7 +46,7 @@ function StatusChip({
       <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full', CHIP_ICON_TONE[tone])}>
         <Icon size={15} strokeWidth={2} aria-hidden />
       </span>
-      <p className={cn('font-medium', normalCase ? 'text-sm' : 'text-xs uppercase tracking-wider', CHIP_LABEL_TONE[tone])}>{children}</p>
+      <p className={cn('font-semibold', normalCase ? 'text-sm' : 'text-xs uppercase tracking-wider', CHIP_LABEL_TONE[tone])}>{children}</p>
     </div>
   )
 }
@@ -65,18 +65,25 @@ function OrderIdentity({ order }: { order: Order }) {
           {name && <span className="min-w-0 truncate text-sm text-gray-400">{name}</span>}
         </div>
       )}
-      {/* Parking: el guardia compara la patente con el vehículo y el DNI con el conductor. */}
+      {/* Parking: el guardia compara la patente con el vehículo. El DNI solo aparece en compras viejas. */}
       {(plate || dni) && (
-        <dl className={cn('grid grid-cols-2 gap-2', (number || name) && 'mt-3')}>
+        <dl className={cn('grid gap-2', plate && dni && 'grid-cols-2', (number || name) && 'mt-3')}>
           {plate && (
-            <div className="rounded-xl bg-gray-50 px-3 py-2">
-              <dt className="text-xs font-medium text-gray-400">Patente</dt>
-              <dd className="font-mono text-lg font-semibold tracking-widest text-gray-900">{plate}</dd>
+            <div className={cn('rounded-xl bg-gray-50 px-3 py-2', !dni && 'flex items-center justify-between gap-3 py-3')}>
+              <dt className="text-xs font-semibold text-gray-400">Patente</dt>
+              <dd
+                className={cn(
+                  'font-mono font-semibold tracking-widest text-gray-900',
+                  dni ? 'text-lg' : 'text-2xl',
+                )}
+              >
+                {plate}
+              </dd>
             </div>
           )}
           {dni && (
             <div className="rounded-xl bg-gray-50 px-3 py-2">
-              <dt className="text-xs font-medium text-gray-400">DNI</dt>
+              <dt className="text-xs font-semibold text-gray-400">DNI</dt>
               <dd className="text-lg font-semibold tabular-nums text-gray-900">{dni}</dd>
             </div>
           )}
@@ -205,7 +212,7 @@ function AutoNextButton({ onNext }: { onNext: () => void }) {
       type="button"
       onClick={onNext}
       style={organizerAccentFilledButtonStyle()}
-      className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
+      className="w-full rounded-full py-3.5 text-sm font-semibold transition-opacity hover:opacity-90"
     >
       Escanear otro{left > 0 ? ` (${left})` : ''}
     </button>
@@ -464,7 +471,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <QrCode size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
             </div>
             <div>
-              <p className="text-base font-medium text-gray-900">Escanear QR de retiro</p>
+              <p className="text-base font-semibold text-gray-900">Escanear QR de retiro</p>
               <p className="text-sm text-gray-400 mt-1">Usá la cámara o un lector de QR físico para validar un pedido</p>
             </div>
             {cameraError && <p className="text-red-500 text-sm">{cameraError}</p>}
@@ -473,7 +480,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={startCamera}
                 style={organizerAccentFilledButtonStyle()}
-                className="flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-medium transition-opacity hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition-opacity hover:opacity-90"
               >
                 <Camera size={16} strokeWidth={2} aria-hidden />
                 Activar cámara
@@ -481,7 +488,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={startReader}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 py-3 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition-opacity hover:opacity-90"
               >
                 <ScanLine size={16} strokeWidth={2} aria-hidden />
                 Usar lector físico
@@ -502,7 +509,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
               />
             </div>
             <div>
-              <p className="text-base font-medium text-gray-900">Listo para escanear</p>
+              <p className="text-base font-semibold text-gray-900">Listo para escanear</p>
               <p className="text-sm text-gray-400 mt-1">Apuntá el lector al QR del comprador y disparalo</p>
             </div>
             <input
@@ -597,7 +604,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 onClick={() => void confirmCashReceived()}
                 disabled={state === 'cash_confirming'}
                 style={organizerAccentFilledButtonStyle()}
-                className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="w-full rounded-full py-3.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {state === 'cash_confirming' ? 'Confirmando…' : 'Ya lo recibí'}
               </button>
@@ -605,7 +612,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={cancelScan}
                 disabled={state === 'cash_confirming'}
-                className="w-full rounded-full border border-gray-200 py-3.5 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="w-full rounded-full border border-gray-200 py-3.5 text-sm font-semibold text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 Escanear otro
               </button>
@@ -641,13 +648,13 @@ export function ScannerView({ eventId }: { eventId: string }) {
                           {item.name}
                         </span>
                         {redeemedQty > 0 && !fullyRedeemed && (
-                          <span className="block text-[10px] font-medium text-amber-600 uppercase tracking-wide">
+                          <span className="block text-[10px] font-semibold text-amber-600 uppercase tracking-wide">
                             {redeemedQty}/{item.quantity} {itemWording(item).alreadyDone}
                           </span>
                         )}
                       </span>
                       {fullyRedeemed ? (
-                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">{itemWording(item).done}</span>
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{itemWording(item).done}</span>
                       ) : isParking ? null : (
                         <div className="flex items-center gap-1.5">
                           <button
@@ -682,7 +689,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 onClick={confirmScan}
                 disabled={state === 'confirm_loading' || (!isParking && selectedCount === 0)}
                 style={organizerAccentFilledButtonStyle()}
-                className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="w-full rounded-full py-3.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {state === 'confirm_loading'
                   ? 'Confirmando…'
@@ -696,7 +703,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={cancelScan}
                 disabled={state === 'confirm_loading'}
-                className="w-full rounded-full border border-gray-200 py-3.5 text-sm font-medium text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="w-full rounded-full border border-gray-200 py-3.5 text-sm font-semibold text-gray-700 transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -715,7 +722,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <div className="flex flex-col gap-2">
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
+                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500">{item.quantity}</span>
                     <span className="text-sm text-gray-800">{item.name}</span>
                   </div>
                 ))}
@@ -742,7 +749,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                     <div key={item.id ?? i} className="flex items-center gap-2">
                       <span
                         className={cn(
-                          'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
+                          'w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold shrink-0',
                           fullyRedeemed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
                         )}
                       >
@@ -750,12 +757,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
                       </span>
                       <span className={cn('text-sm', fullyRedeemed ? 'text-gray-800' : 'text-gray-400')}>{item.name}</span>
                       {partiallyRedeemed && (
-                        <span className="text-[10px] font-medium text-gray-400">
+                        <span className="text-[10px] font-semibold text-gray-400">
                           ({redeemedQty}/{item.quantity} {itemWording(item).doneLower})
                         </span>
                       )}
                       {!fullyRedeemed && (
-                        <span className="text-[10px] font-medium text-amber-600 uppercase tracking-wide">Pendiente</span>
+                        <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide">Pendiente</span>
                       )}
                     </div>
                   )
@@ -781,7 +788,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 <div className="flex flex-col gap-2">
                   {order.items.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-500">{item.quantity}</span>
+                      <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500">{item.quantity}</span>
                       <span className="text-sm text-gray-800">{item.name}</span>
                     </div>
                   ))}
@@ -799,12 +806,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <X size={22} strokeWidth={2.25} aria-hidden />
             </div>
             <div>
-              <p className="text-base font-medium text-gray-900">{errorMsg || 'QR no válido'}</p>
+              <p className="text-base font-semibold text-gray-900">{errorMsg || 'QR no válido'}</p>
             </div>
             <button
               type="button"
               onClick={next}
-              className="w-full rounded-full bg-gray-900 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              className="w-full rounded-full bg-gray-900 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               Intentar de nuevo
             </button>

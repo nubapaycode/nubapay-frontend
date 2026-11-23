@@ -51,7 +51,7 @@ export function PaginationBar({ page, pageSize, total, onPageChange, className }
               border: p === safePage ? 'none' : '1px solid rgba(0,0,0,0.08)',
               background: p === safePage ? '#0A0A0F' : '#FFFFFF',
               color: p === safePage ? '#FFFFFF' : '#6B7280',
-              fontSize: '13px', fontWeight: p === safePage ? 700 : 500,
+              fontSize: '13px', fontWeight: p === safePage ? 600 : 400,
               cursor: 'pointer',
               transition: 'background 0.15s, color 0.15s',
             }}

@@ -80,7 +80,7 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
               <ParkingIcon iconKey={ticket.icon} size={22} strokeWidth={1.75} />
             </span>
           )}
-          <h3 className="text-base font-bold leading-snug tracking-tight md:text-[17px]" style={{ color: BUYER_COLORS.text }}>
+          <h3 className="text-base font-semibold leading-snug tracking-tight md:text-[17px]" style={{ color: BUYER_COLORS.text }}>
             {ticket.name}
           </h3>
         </div>
@@ -109,7 +109,7 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
         }}
       >
         <div className={cn('min-w-0', !available && 'opacity-55')}>
-          <p className={cn('text-lg font-bold tabular-nums tracking-tight', !available && 'line-through')}>
+          <p className={cn('text-lg font-semibold tabular-nums tracking-tight', !available && 'line-through')}>
             {formatPrice(ticket.price)}
           </p>
         </div>
@@ -132,7 +132,7 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
                 <path d="M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
-            <span className="min-w-[28px] text-center text-base font-bold tabular-nums" aria-live="polite">
+            <span className="min-w-[28px] text-center text-base font-semibold tabular-nums" aria-live="polite">
               {quantity}
             </span>
             <button

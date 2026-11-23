@@ -71,7 +71,7 @@ export function ParkingOption({
       </span>
 
       <span className={cn('min-w-0 flex-1', soldOut && 'opacity-55')}>
-        <span className="block truncate text-[15px] font-bold tracking-tight md:text-base" style={{ color: BUYER_COLORS.text }}>
+        <span className="block truncate text-[15px] font-semibold tracking-tight md:text-base" style={{ color: BUYER_COLORS.text }}>
           {ticket.name}
         </span>
         {ticket.description.trim() && (
@@ -90,7 +90,7 @@ export function ParkingOption({
       </span>
 
       <span
-        className={cn('flex-shrink-0 text-base font-bold tabular-nums tracking-tight md:text-lg', soldOut && 'line-through opacity-55')}
+        className={cn('flex-shrink-0 text-base font-semibold tabular-nums tracking-tight md:text-lg', soldOut && 'line-through opacity-55')}
         style={{ color: BUYER_COLORS.text }}
       >
         {formatPrice(ticket.price)}

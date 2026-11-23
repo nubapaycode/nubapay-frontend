@@ -35,8 +35,8 @@ const DANGER = '#DC2626'
 
 export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone'
 export type BuyerValues = Record<BuyerField, string>
-/** Datos de estacionamiento: solo se piden al comprar parking. El lugar queda atado a la patente. */
-export type VehicleField = 'plate'
+/** Datos de estacionamiento: solo se piden al comprar parking. El lugar queda atado a la patente; el DNI es opcional. */
+export type VehicleField = 'plate' | 'dni'
 export type VehicleValues = Record<VehicleField, string>
 type FormField = BuyerField | VehicleField
 
@@ -60,15 +60,21 @@ const FIELDS: FieldDef<BuyerField>[] = [
 ]
 
 const VEHICLE_FIELDS: FieldDef<VehicleField>[] = [
-  { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true, full: true },
+  { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true },
+  { id: 'dni', label: 'DNI (opcional)', placeholder: 'Sin puntos, ej. 30123456', autoComplete: 'off', inputMode: 'numeric' },
 ]
 
 const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '' }
-const EMPTY_VEHICLE: VehicleValues = { plate: '' }
+const EMPTY_VEHICLE: VehicleValues = { plate: '', dni: '' }
 
 /** Patente en mayúsculas, sin espacios, puntos ni guiones: "ab 123 cd" → "AB123CD". */
 export function normalizePlate(raw: string): string {
   return raw.replace(/[\s.-]/g, '').toUpperCase()
+}
+
+/** DNI solo con números (acepta puntos, espacios y guiones al escribir). */
+export function normalizeDni(raw: string): string {
+  return raw.replace(/[.\s-]/g, '')
 }
 
 /** Errores de los datos del estacionamiento; objeto vacío si todo es válido. Mismas reglas que el backend. */
@@ -77,6 +83,9 @@ export function validateVehicle(values: VehicleValues): Partial<Record<VehicleFi
   const plate = normalizePlate(values.plate)
   if (!plate) errors.plate = 'Ingresá la patente del vehículo'
   else if (!/^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{5,8}$/.test(plate)) errors.plate = 'Ingresá una patente válida, ej. AB123CD o ABC123'
+  // DNI opcional: solo se valida si se completó.
+  const dni = normalizeDni(values.dni)
+  if (dni && !/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI tiene que tener 7 u 8 números'
   return errors
 }
 
@@ -116,7 +125,7 @@ function ErrorAlert({ message, onClose }: { message: string; onClose: () => void
         </svg>
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-bold leading-snug" style={{ color: '#991B1B' }}>
+        <p className="text-[14px] font-semibold leading-snug" style={{ color: '#991B1B' }}>
           No pudimos completar la compra
         </p>
         <p className="mt-0.5 text-[13px] leading-snug" style={{ color: '#B91C1C' }}>
@@ -157,7 +166,7 @@ function useNow(active: boolean): number {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-[20px] bg-white p-5 md:p-7">
-      <h2 className="mb-4 text-lg font-bold tracking-tight md:text-xl" style={{ color: BUYER_COLORS.text }}>
+      <h2 className="mb-4 text-lg font-semibold tracking-tight md:text-xl" style={{ color: BUYER_COLORS.text }}>
         {title}
       </h2>
       {children}
@@ -264,7 +273,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   }
 
   const handleChange = (field: FormField, value: string) => {
-    if (field === 'plate') setVehicle(v => ({ ...v, [field]: value }))
+    if (field === 'plate' || field === 'dni') setVehicle(v => ({ ...v, [field]: value }))
     else setValues(v => ({ ...v, [field]: value }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: undefined }))
     if (submitError) setSubmitError('')
@@ -305,7 +314,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     try {
       const items = selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity }))
       const vehicleData = isParking
-        ? { vehicle_plate: normalizePlate(vehicle.plate) }
+        ? { vehicle_plate: normalizePlate(vehicle.plate), ...(vehicle.dni.trim() ? { customer_dni: normalizeDni(vehicle.dni) } : {}) }
         : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
@@ -399,12 +408,12 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-          <h1 className="flex-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          <h1 className="flex-1 text-[17px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
             Comprando
           </h1>
           {remainingMs !== null && !expired && (
             <span
-              className="rounded-full px-3 py-1 text-sm font-bold tabular-nums"
+              className="rounded-full px-3 py-1 text-sm font-semibold tabular-nums"
               style={{
                 background: lowTime ? 'rgba(220,38,38,0.1)' : BUYER_COLORS.subtleFill,
                 color: lowTime ? DANGER : BUYER_COLORS.text,
@@ -426,7 +435,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     return shell(
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">
-          <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          <p className="mb-1 text-[17px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
             {expired ? 'Se terminó el tiempo para comprar' : copy.noSelectionTitle}
           </p>
           <p className="mb-6 max-w-sm text-sm" style={{ color: MUTED }}>
@@ -435,7 +444,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
           <button
             type="button"
             onClick={restart}
-            className="h-12 rounded-full px-8 text-[15px] font-bold"
+            className="h-12 rounded-full px-8 text-[15px] font-semibold"
             style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
           >
             {copy.chooseAgain}
@@ -495,11 +504,11 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
           <table className="hidden w-full text-left text-sm md:table" style={{ color: BUYER_COLORS.text }}>
             <thead>
               <tr className="border-b text-[13px]" style={{ borderColor: BUYER_COLORS.border, color: MUTED }}>
-                <th className="pb-3 pr-4 font-medium">Evento</th>
-                <th className="pb-3 pr-4 font-medium">{copy.tableHeader}</th>
-                <th className="pb-3 pr-4 text-right font-medium">Precio</th>
-                <th className="pb-3 pr-4 text-center font-medium">Cantidad</th>
-                <th className="pb-3 text-right font-medium">Subtotal</th>
+                <th className="pb-3 pr-4 font-semibold">Evento</th>
+                <th className="pb-3 pr-4 font-semibold">{copy.tableHeader}</th>
+                <th className="pb-3 pr-4 text-right font-semibold">Precio</th>
+                <th className="pb-3 pr-4 text-center font-semibold">Cantidad</th>
+                <th className="pb-3 text-right font-semibold">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -507,7 +516,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                 <tr key={ticket.id} className="border-b align-top" style={{ borderColor: BUYER_COLORS.border }}>
                   {i === 0 && (
                     <td rowSpan={selected.length} className="py-4 pr-6">
-                      <p className="font-bold">{event.name}</p>
+                      <p className="font-semibold">{event.name}</p>
                       {venue && <p className="mt-0.5" style={{ color: MUTED }}>{venue}</p>}
                       {dateLabel && <p className="mt-0.5" style={{ color: MUTED }}>{dateLabel}</p>}
                     </td>
@@ -524,7 +533,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
           {/* Mobile: evento arriba y una fila por entrada */}
           <div className="md:hidden" style={{ color: BUYER_COLORS.text }}>
             <div className="border-b pb-4" style={{ borderColor: BUYER_COLORS.border }}>
-              <p className="text-[15px] font-bold">{event.name}</p>
+              <p className="text-[15px] font-semibold">{event.name}</p>
               {venue && <p className="mt-0.5 text-[13px]" style={{ color: MUTED }}>{venue}</p>}
               {dateLabel && <p className="mt-0.5 text-[13px]" style={{ color: MUTED }}>{dateLabel}</p>}
             </div>
@@ -558,7 +567,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                 <dd className="tabular-nums">{formatPrice(serviceFee)}</dd>
               </div>
             )}
-            <div className="mt-1 flex justify-between gap-6 text-base font-bold">
+            <div className="mt-1 flex justify-between gap-6 text-base font-semibold">
               <dt>Total</dt>
               <dd className="tabular-nums">{formatPrice(total)}</dd>
             </div>
@@ -571,7 +580,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             style={{ background: lowTime ? 'rgba(220,38,38,0.08)' : BUYER_COLORS.text, color: lowTime ? DANGER : '#fff' }}
             role="timer"
           >
-            <span className="text-[28px] font-bold leading-none tabular-nums md:text-[32px]">
+            <span className="text-[28px] font-semibold leading-none tabular-nums md:text-[32px]">
               {formatCountdown(remainingMs)}
             </span>
             <span className="text-sm leading-snug md:text-[15px]">
@@ -630,7 +639,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                       {method.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+                      <span className="block text-[15px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
                         {method.label}
                       </span>
                       {method.sub && (
@@ -668,7 +677,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[13px]" style={{ color: MUTED }}>Total</p>
-              <p className="text-xl font-bold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
+              <p className="text-xl font-semibold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
                 {formatPrice(total)}
               </p>
             </div>
@@ -676,7 +685,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               type="button"
               onClick={handlePay}
               disabled={loading || !paymentsEnabled || methods.length === 0}
-              className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-bold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40 md:px-14"
+              className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40 md:px-14"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
               Pagar

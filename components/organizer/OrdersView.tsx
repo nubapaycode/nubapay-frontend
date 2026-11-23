@@ -522,7 +522,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
               onClick={() => setUnpaidF(!unpaid)}
               title="Mostrar también los pedidos que todavía no tienen el pago aprobado"
               className={cn(
-                'inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors',
+                'inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors',
                 unpaid
                   ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900',
@@ -544,7 +544,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
               onClick={() => void exportCsv()}
               disabled={exporting || pagination.total === 0}
               title="Descargar los pedidos de este filtro en CSV (Excel / Sheets)"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-semibold text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
             >
               <Download size={14} strokeWidth={1.75} className={exporting ? 'animate-bounce' : ''} aria-hidden />
               {exporting ? 'Exportando…' : 'Exportar'}
@@ -567,7 +567,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
               setUnpaidF(false)
               setCatsF([])
             }}
-            className="px-1 text-[12px] font-medium text-gray-400 transition-colors hover:text-gray-900"
+            className="px-1 text-[12px] font-semibold text-gray-400 transition-colors hover:text-gray-900"
           >
             Limpiar filtros
           </button>
@@ -624,7 +624,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
           ) : (
             <div className={cn('relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-opacity', refreshing && 'opacity-80')}>
               {/* Encabezado de la tabla (escritorio) */}
-              <div className={cn('hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid', ORDERS_GRID)}>
+              <div className={cn('hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-semibold text-gray-400 md:grid', ORDERS_GRID)}>
                 <span className="flex items-center gap-3">
                   <Checkbox
                     label="Seleccionar todos los pedidos de la página"
@@ -700,7 +700,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
                             {initials(order.customerName)}
                           </span>
                           <div className="min-w-0">
-                            <p className={cn('truncate text-[13px] font-medium', order.customerName ? 'text-gray-900' : 'text-gray-300')}>
+                            <p className={cn('truncate text-[13px] font-semibold', order.customerName ? 'text-gray-900' : 'text-gray-300')}>
                               {order.customerName || 'Sin nombre'}
                             </p>
                             {order.customerEmail && <p className="truncate text-[11px] text-gray-400">{order.customerEmail}</p>}

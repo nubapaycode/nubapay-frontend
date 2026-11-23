@@ -121,7 +121,7 @@ function Lightbox({
       <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white sm:px-6" onClick={e => e.stopPropagation()}>
         <p className="min-w-0 truncate text-[13px]">
           <span className="text-white/50">Paso {index + 1} de {total} · </span>
-          <span className="font-medium">{step.title}</span>
+          <span className="font-semibold">{step.title}</span>
         </p>
         <button
           type="button"
@@ -202,7 +202,7 @@ export function DocWalkthrough({ steps }: { steps: DocImageStep[] }) {
           <div key={step.image.src + active} className="doc-fade-in">
             <Shot image={step.image} spot={step.spot} priority={active === 0} />
           </div>
-          <span className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-gray-900/80 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          <span className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-gray-900/80 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
             <Maximize2 size={12} aria-hidden />
             Ampliar
           </span>
@@ -267,7 +267,7 @@ export function DocWalkthrough({ steps }: { steps: DocImageStep[] }) {
                   aria-current={isActive ? 'step' : undefined}
                   className={cn(
                     'flex w-full items-center gap-2.5 px-4 py-1.5 text-left text-[12.5px] transition-colors sm:px-5',
-                    isActive ? 'font-medium text-gray-900' : 'text-gray-500 hover:text-gray-800',
+                    isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-800',
                   )}
                 >
                   <span

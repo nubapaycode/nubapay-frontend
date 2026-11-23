@@ -16,7 +16,7 @@ const OUTLINE_STYLE: CSSProperties = {
 
 export function AccentButton({ variant = 'solid', style, className, ...props }: Props) {
   const base =
-    'rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none'
+    'rounded-full text-sm font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none'
 
   const hasPadding =
     typeof className === 'string' && (/\bp-/.test(className) || /\bpy-/.test(className) || /\bpx-/.test(className))

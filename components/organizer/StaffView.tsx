@@ -148,7 +148,7 @@ function avatarInitials(name: string): string {
 // ---------------------------------------------------------------------------
 function ToolChip({ tool }: { tool: ToolOpt }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[12px] font-medium text-gray-600">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[12px] font-semibold text-gray-600">
       <tool.Icon size={11} />
       {tool.short}
     </span>
@@ -175,7 +175,7 @@ function ToolToggle({
   return (
     <label
       className={cn(
-        'flex items-center gap-2.5 rounded-xl cursor-pointer select-none transition-all text-sm font-medium',
+        'flex items-center gap-2.5 rounded-xl cursor-pointer select-none transition-all text-sm font-semibold',
         compact ? 'px-2.5 py-2' : 'px-3 py-2.5',
         checked
           ? 'shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
@@ -231,7 +231,7 @@ function ConfirmModal({
       <div className="flex gap-2 justify-end">
         <button
           type="button" onClick={onClose} disabled={busy}
-          className="text-[13px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="text-[13px] font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
         >
           Cancelar
         </button>
@@ -296,7 +296,7 @@ function EditStaffModal({
       {/* Header con avatar + reenviar email discreto */}
       <div className="flex items-center gap-3 mb-5 pb-4 border-b border-black/[0.06]">
         <div
-          className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ring-2 ring-white shadow-sm"
+          className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ring-2 ring-white shadow-sm"
           style={{ background: palette.bg, color: palette.fg }}
         >
           {avatarInitials(row.name)}
@@ -310,7 +310,7 @@ function EditStaffModal({
             type="button"
             onClick={resend}
             disabled={resendState === 'busy' || busy}
-            className="flex-shrink-0 flex items-center gap-1.5 text-[12px] font-medium text-gray-500 border border-black/10 rounded-full px-3.5 py-1.5 hover:border-black/20 hover:text-gray-800 transition-colors disabled:opacity-40"
+            className="flex-shrink-0 flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 border border-black/10 rounded-full px-3.5 py-1.5 hover:border-black/20 hover:text-gray-800 transition-colors disabled:opacity-40"
           >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M7 5.5a2.8 2.8 0 00-4 0L1.5 7a2.8 2.8 0 004 4L6.5 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -351,7 +351,7 @@ function EditStaffModal({
       {/* Botones principales */}
       <div className="flex gap-2 mb-4">
         <button type="button" onClick={onClose} disabled={busy}
-          className="flex-1 text-[13px] font-medium text-gray-600 rounded-xl border border-black/10 py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50">
+          className="flex-1 text-[13px] font-semibold text-gray-600 rounded-xl border border-black/10 py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50">
           Cancelar
         </button>
         <button type="button" onClick={save} disabled={busy}
@@ -365,7 +365,7 @@ function EditStaffModal({
         type="button"
         onClick={() => { onClose(); onRemoveRequest() }}
         disabled={busy}
-        className="w-full text-[12.5px] font-medium text-red-500 border border-red-200 rounded-xl py-2.5 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors disabled:opacity-40"
+        className="w-full text-[12.5px] font-semibold text-red-500 border border-red-200 rounded-xl py-2.5 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors disabled:opacity-40"
       >
         Quitar del equipo
       </button>
@@ -385,7 +385,7 @@ function StaffRow({ row, onEdit }: { row: EventStaffRow; onEdit: () => void }) {
       <td className="px-4 py-3 align-middle">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
             style={{ background: palette.bg, color: palette.fg }}
           >
             {avatarInitials(row.name)}
@@ -398,7 +398,7 @@ function StaffRow({ row, onEdit }: { row: EventStaffRow; onEdit: () => void }) {
       </td>
       <td className="px-4 py-3 align-middle">
         {row.role ? (
-          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600 whitespace-nowrap">
+          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600 whitespace-nowrap">
             {row.role}
           </span>
         ) : (
@@ -418,7 +418,7 @@ function StaffRow({ row, onEdit }: { row: EventStaffRow; onEdit: () => void }) {
         <button
           type="button"
           onClick={onEdit}
-          className="text-[11.5px] font-medium text-gray-400 border border-black/[0.09] rounded-full px-3 py-1.5 hover:bg-[#0A0A0F] hover:text-white hover:border-[#0A0A0F] transition-all whitespace-nowrap"
+          className="text-[11.5px] font-semibold text-gray-400 border border-black/[0.09] rounded-full px-3 py-1.5 hover:bg-[#0A0A0F] hover:text-white hover:border-[#0A0A0F] transition-all whitespace-nowrap"
         >
           Editar
         </button>
@@ -517,7 +517,7 @@ function InviteModal({
 
         {/* Plantillas */}
         <div>
-          <p className="mb-2 text-[12px] font-medium text-gray-500">Empezá con una plantilla</p>
+          <p className="mb-2 text-[12px] font-semibold text-gray-500">Empezá con una plantilla</p>
           <div className="grid grid-cols-2 gap-1.5">
             {ROLE_TEMPLATES.map(tpl => {
               const active = normalizeRole(role) === normalizeRole(tpl.role)
@@ -552,7 +552,7 @@ function InviteModal({
             <button
               type="button"
               onClick={() => setTools(typical)}
-              className="mt-1.5 text-[12px] font-medium text-gray-700 underline-offset-4 hover:underline"
+              className="mt-1.5 text-[12px] font-semibold text-gray-700 underline-offset-4 hover:underline"
             >
               Usar las herramientas que ya tiene este rol ({TOOL_OPTS.filter(o => typical[o.key]).map(o => o.short).join(', ')})
             </button>
@@ -586,7 +586,7 @@ function InviteModal({
         {/* Botones */}
         <div className="flex gap-2 mt-1">
           <button type="button" onClick={onClose} disabled={saving}
-            className="flex-1 rounded-xl border border-black/10 text-[13px] font-medium text-gray-600 py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50">
+            className="flex-1 rounded-xl border border-black/10 text-[13px] font-semibold text-gray-600 py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50">
             Cancelar
           </button>
           <button type="button" onClick={invite} disabled={saving}
@@ -720,7 +720,7 @@ function ToolFilterDropdown({
                   borderRadius: '10px',
                   padding: '9px 12px',
                   fontSize: '13px',
-                  fontWeight: isSelected ? 600 : 500,
+                  fontWeight: isSelected ? 600 : 400,
                   color: isSelected ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -752,7 +752,7 @@ function EmptyState() {
           <path d="M14 2.5a3.5 3.5 0 010 7M18.5 17c0-3-2-4.7-4.5-5" />
         </svg>
       </div>
-      <p className="text-[13px] font-medium text-gray-500">Todavía no hay integrantes</p>
+      <p className="text-[13px] font-semibold text-gray-500">Todavía no hay integrantes</p>
       <p className="text-[12px] text-gray-400">Usá el botón “Invitar integrante” para agregar el primero.</p>
     </div>
   )
@@ -937,7 +937,7 @@ export function StaffView({ eventId }: { eventId: string }) {
         <EmptyState />
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-black/[0.10] py-10 flex flex-col items-center text-center gap-1.5">
-          <p className="text-[13px] font-medium text-gray-500">Sin resultados</p>
+          <p className="text-[13px] font-semibold text-gray-500">Sin resultados</p>
           <p className="text-[12px] text-gray-400">Ningún integrante coincide con los filtros aplicados.</p>
         </div>
       ) : (

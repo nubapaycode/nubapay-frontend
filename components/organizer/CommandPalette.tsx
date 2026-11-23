@@ -271,7 +271,7 @@ export function CommandPalette({
               const isActive = i === activeIndex
               return (
                 <div key={c.id}>
-                  {header && <p className="px-3 pb-1 pt-2.5 text-[11px] font-medium text-gray-400">{header}</p>}
+                  {header && <p className="px-3 pb-1 pt-2.5 text-[11px] font-semibold text-gray-400">{header}</p>}
                   <button
                     type="button"
                     id={`nb-cmd-${c.id}`}
@@ -289,7 +289,7 @@ export function CommandPalette({
                       {c.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium text-gray-900">{c.label}</span>
+                      <span className="block truncate text-[13px] font-semibold text-gray-900">{c.label}</span>
                       {c.hint && <span className="block truncate text-[12px] text-gray-400">{c.hint}</span>}
                     </span>
                     {c.right}

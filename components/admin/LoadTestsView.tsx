@@ -279,7 +279,7 @@ export function LoadTestsView() {
                     {fmtDateTime(r.started_at)}
                   </Td>
                   <Td className="max-w-[190px]">
-                    <p className="truncate font-medium text-white" title={r.event_name ?? undefined}>
+                    <p className="truncate font-semibold text-white" title={r.event_name ?? undefined}>
                       {r.event_name ?? '—'}
                     </p>
                     <p className="truncate text-xs text-white/55">{r.product_name ?? 'Sin producto'}</p>

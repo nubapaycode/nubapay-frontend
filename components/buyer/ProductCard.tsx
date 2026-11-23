@@ -47,7 +47,7 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
         {product.promoLabel?.trim() && available ? (
           <div className="absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)]">
             <span
-              className="inline-block truncate rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-tight shadow-sm"
+              className="inline-block truncate rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight shadow-sm"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
               {product.promoLabel.trim()}
@@ -57,7 +57,7 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
 
         {!available && (
           <div className="absolute left-2 top-2 z-[2]">
-            <span className="inline-block rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white">
+            <span className="inline-block rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white">
               Agotado
             </span>
           </div>
@@ -104,19 +104,19 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                  className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                  className={`${btnBase} h-7 w-7 text-sm font-semibold`}
                   style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                   aria-label="Quitar uno"
                 >
                   −
                 </button>
-                <span className="min-w-[18px] text-center text-sm font-extrabold" style={{ color: BUYER_COLORS.text }}>
+                <span className="min-w-[18px] text-center text-sm font-semibold" style={{ color: BUYER_COLORS.text }}>
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                  className={`${btnBase} h-7 w-7 text-sm font-bold`}
+                  className={`${btnBase} h-7 w-7 text-sm font-semibold`}
                   style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                   aria-label="Agregar uno"
                 >
@@ -130,7 +130,7 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
 
       <div className="p-3">
         <h3
-          className="line-clamp-1 text-sm font-bold leading-tight"
+          className="line-clamp-1 text-sm font-semibold leading-tight"
           style={{ color: available ? BUYER_COLORS.text : BUYER_COLORS.muted }}
         >
           {product.name}
@@ -147,7 +147,7 @@ export function ProductCard({ product, quantity, catalogSlug = '', onAdd, onUpda
             </span>
           ) : null}
           <span
-            className="text-sm font-extrabold tracking-tight"
+            className="text-sm font-semibold tracking-tight"
             style={{ color: available ? BUYER_COLORS.text : BUYER_COLORS.muted }}
           >
             {formatPrice(product.price)}

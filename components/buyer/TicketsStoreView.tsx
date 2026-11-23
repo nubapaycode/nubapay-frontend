@@ -38,7 +38,7 @@ function CrossLink({ href, title, subtitle }: { href: string; title: string; sub
       style={{ color: BUYER_COLORS.text }}
     >
       <span className="min-w-0">
-        <span className="block text-[15px] font-bold tracking-tight">{title}</span>
+        <span className="block text-[15px] font-semibold tracking-tight">{title}</span>
         <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
           {subtitle}
         </span>
@@ -105,13 +105,13 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
               style={{ color: BUYER_COLORS.text }}
             >
               <span
-                className="w-full py-1 text-[11px] font-bold md:text-xs"
+                className="w-full py-1 text-[11px] font-semibold md:text-xs"
                 style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
               >
                 {date.month}
               </span>
-              <span className="pt-1 text-[26px] font-bold leading-none tabular-nums md:text-[32px]">{date.day}</span>
-              <span className="pb-1.5 pt-0.5 text-[11px] font-medium md:text-xs" style={{ color: '#6B6B78' }}>
+              <span className="pt-1 text-[26px] font-semibold leading-none tabular-nums md:text-[32px]">{date.day}</span>
+              <span className="pb-1.5 pt-0.5 text-[11px] font-semibold md:text-xs" style={{ color: '#6B6B78' }}>
                 {date.weekday}
               </span>
             </div>
@@ -119,14 +119,14 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           <div className="min-w-0">
             {isParking && (
               <span
-                className="mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold md:text-[13px]"
+                className="mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold md:text-[13px]"
                 style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
               >
                 <SquareParking size={14} strokeWidth={2.25} aria-hidden />
                 Estacionamiento
               </span>
             )}
-            <h1 className="text-[26px] font-bold leading-[1.1] text-white md:text-[40px]" style={{ letterSpacing: '-0.03em' }}>
+            <h1 className="text-[26px] font-semibold leading-[1.1] text-white md:text-[40px]" style={{ letterSpacing: '-0.03em' }}>
               {event.name}
             </h1>
             {venue && (
@@ -155,7 +155,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
 
         {items.length === 0 ? (
           <div className="flex flex-col items-center rounded-[20px] bg-white px-6 py-14 text-center">
-            <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+            <p className="mb-1 text-[17px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
               {copy.noneTitle}
             </p>
             <p className="text-sm" style={{ color: '#6B6B78' }}>
@@ -167,7 +167,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
             <div className="mb-4 flex items-end justify-between gap-4 md:mb-5">
               <h2
                 id="store-heading"
-                className="text-xl font-bold tracking-tight md:text-2xl"
+                className="text-xl font-semibold tracking-tight md:text-2xl"
                 style={{ color: BUYER_COLORS.text }}
               >
                 {copy.heading}
@@ -227,7 +227,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
             style={{ color: BUYER_COLORS.text }}
           >
             <span className="min-w-0">
-              <span className="block text-[15px] font-bold tracking-tight">Ver catálogo de productos</span>
+              <span className="block text-[15px] font-semibold tracking-tight">Ver catálogo de productos</span>
               <span className="block text-[13px]" style={{ color: '#6B6B78' }}>
                 Pedí comida y bebida y retirala sin hacer fila.
               </span>
@@ -257,7 +257,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
         >
           <div className={cn('mx-auto flex items-center justify-between gap-4', container)}>
             <div className="min-w-0" aria-live="polite">
-              <p className="text-lg font-bold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
+              <p className="text-lg font-semibold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
                 {formatPrice(subtotal)}
               </p>
               <p className="text-[13px]" style={{ color: '#6B6B78' }}>
@@ -268,7 +268,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
             <button
               type="button"
               onClick={goToCheckout}
-              className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-bold tracking-tight transition-opacity active:opacity-85 md:px-14"
+              className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-semibold tracking-tight transition-opacity active:opacity-85 md:px-14"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
               Comprar

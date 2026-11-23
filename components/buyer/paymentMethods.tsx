@@ -48,7 +48,7 @@ export function CardLogos({ methodId }: { methodId: string }) {
       )}
       {!onSite && (
         <span
-          className="hidden h-5 items-center text-[12px] font-medium md:flex"
+          className="hidden h-5 items-center text-[12px] font-semibold md:flex"
           style={{ color: BUYER_COLORS.muted }}
         >
           y más

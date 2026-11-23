@@ -36,7 +36,7 @@ function RelatedCard({ eventId, slug }: { eventId?: string; slug: string }) {
         </span>
       ) : null}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium text-gray-900">{a.title}</span>
+        <span className="block truncate text-[13px] font-semibold text-gray-900">{a.title}</span>
         <span className="block truncate text-[12px] text-gray-500">{a.summary}</span>
       </span>
       <ArrowRight size={14} className="shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-gray-500" aria-hidden />
@@ -81,7 +81,7 @@ export function DocArticleView({ eventId, slug }: { eventId?: string; slug: stri
               {article.toolPath && eventId ? (
                 <Link
                   href={`/eventos/${eventId}/${article.toolPath}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-gray-800"
+                  className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-gray-800"
                 >
                   Abrir {article.title.toLowerCase()}
                   <ArrowUpRight size={13} aria-hidden />
@@ -149,7 +149,7 @@ export function DocArticleView({ eventId, slug }: { eventId?: string; slug: stri
                 <span className="flex items-center gap-1 text-[12px] text-gray-400">
                   <ArrowLeft size={12} aria-hidden /> Anterior
                 </span>
-                <span className="mt-0.5 block truncate text-[14px] font-medium text-gray-900">{prev.title}</span>
+                <span className="mt-0.5 block truncate text-[14px] font-semibold text-gray-900">{prev.title}</span>
               </Link>
             ) : <span className="hidden sm:block" />}
             {next ? (
@@ -157,7 +157,7 @@ export function DocArticleView({ eventId, slug }: { eventId?: string; slug: stri
                 <span className="flex items-center justify-end gap-1 text-[12px] text-gray-400">
                   Siguiente <ArrowRight size={12} aria-hidden />
                 </span>
-                <span className="mt-0.5 block truncate text-[14px] font-medium text-gray-900">{next.title}</span>
+                <span className="mt-0.5 block truncate text-[14px] font-semibold text-gray-900">{next.title}</span>
               </Link>
             ) : null}
           </nav>

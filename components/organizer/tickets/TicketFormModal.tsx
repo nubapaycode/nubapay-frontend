@@ -124,7 +124,7 @@ export function TicketFormModal({
           <TicketCard ticket={preview} />
         </div>
 
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
           {isParking ? 'Tipo de vehículo' : 'Nombre / categoría'}
           <input
             className={inputClass}
@@ -137,7 +137,7 @@ export function TicketFormModal({
         </label>
         {isParking && (
           <fieldset className="flex flex-col gap-1.5">
-            <legend className="mb-1.5 text-[13px] font-medium text-gray-700">Ícono</legend>
+            <legend className="mb-1.5 text-[13px] font-semibold text-gray-700">Ícono</legend>
             <div role="radiogroup" aria-label="Ícono del vehículo" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {PARKING_ICONS.map(({ key, label, Icon }) => {
                 const selected = form.icon === key
@@ -149,7 +149,7 @@ export function TicketFormModal({
                     aria-checked={selected}
                     onClick={() => setForm(f => ({ ...f, icon: key }))}
                     className={cn(
-                      'flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-[11px] font-medium transition-colors',
+                      'flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-[11px] font-semibold transition-colors',
                       selected
                         ? 'border-gray-900 bg-gray-900 text-white'
                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900',
@@ -163,7 +163,7 @@ export function TicketFormModal({
             </div>
           </fieldset>
         )}
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
           <span>
             Descripción <span className="font-normal text-gray-400">(opcional)</span>
           </span>
@@ -176,7 +176,7 @@ export function TicketFormModal({
           />
         </label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
             Precio
             <span className="relative">
               <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-gray-400">$</span>
@@ -192,7 +192,7 @@ export function TicketFormModal({
               />
             </span>
           </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-gray-700">
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
             <span>
               {isParking ? 'Lugares' : 'Cupo'} <span className="font-normal text-gray-400">(opcional)</span>
             </span>
@@ -222,7 +222,7 @@ export function TicketFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl px-4 py-2 text-[14px] font-medium text-gray-600 transition-colors hover:bg-gray-100"
+            className="rounded-xl px-4 py-2 text-[14px] font-semibold text-gray-600 transition-colors hover:bg-gray-100"
           >
             Cancelar
           </button>

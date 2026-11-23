@@ -106,7 +106,7 @@ export function PeriodPicker({
         aria-expanded={open}
         aria-label={`Período: ${label}`}
         onClick={() => setOpen(o => !o)}
-        className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-gray-300 hover:bg-gray-50"
+        className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-semibold text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-gray-300 hover:bg-gray-50"
       >
         <Calendar size={15} strokeWidth={1.75} className="text-gray-400" aria-hidden />
         <span className="tabular-nums">{label}</span>
@@ -153,7 +153,7 @@ export function PeriodPicker({
             })}
           </ul>
           <div className="border-t border-gray-100 p-3 sm:border-t-0">
-            <p className="mb-2 text-[11px] font-medium text-gray-400">Rango personalizado</p>
+            <p className="mb-2 text-[11px] font-semibold text-gray-400">Rango personalizado</p>
             {/* Solo se marca el rango cuando es el período en uso. */}
             <DateRangeCalendar
               from={preset === 'custom' ? customFrom : ''}

@@ -19,7 +19,7 @@ type BeatLog = { checkedAt: string; db: Beat[]; redis: Beat[] }
 
 function StatusDot({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium', ok ? 'text-emerald-300' : 'text-red-300')}>
+    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold', ok ? 'text-emerald-300' : 'text-red-300')}>
       {ok ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
       {label}
     </span>
@@ -44,13 +44,13 @@ function ServiceCell({
   return (
     <div className="admin-rise min-w-0 border-b border-r border-white/[0.07] p-4" style={{ '--i': index } as CSSProperties}>
       <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-white/85">
+        <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-white/85">
           <span className="text-white/45">{icon}</span>
           <span className="truncate">{title}</span>
         </span>
         {status}
       </div>
-      {metric && <p className="mt-3 text-[26px] font-medium tracking-tight text-white tabular-nums">{metric}</p>}
+      {metric && <p className="mt-3 text-[26px] font-semibold tracking-tight text-white tabular-nums">{metric}</p>}
       <div className="mt-3 text-xs text-white/50">{children}</div>
     </div>
   )
@@ -215,8 +215,8 @@ export function HealthTab({ onOpenOrder }: { onOpenOrder: (orderId: string) => v
                   />
                 }
               >
-                Guardado: <b className="font-medium text-white/80">{health.payments.saved ? 'sí' : 'no'}</b> · Efectivo:{' '}
-                <b className="font-medium text-white/80">{health.payments.effective ? 'sí' : 'no'}</b>
+                Guardado: <b className="font-semibold text-white/80">{health.payments.saved ? 'sí' : 'no'}</b> · Efectivo:{' '}
+                <b className="font-semibold text-white/80">{health.payments.effective ? 'sí' : 'no'}</b>
                 <br />
                 Último cambio {timeAgo(health.payments.updated_at)}
                 {health.payments.updated_by ? ` por ${health.payments.updated_by}` : ''}
@@ -324,7 +324,7 @@ export function HealthTab({ onOpenOrder }: { onOpenOrder: (orderId: string) => v
               <li key={i} className="flex items-start justify-between gap-4 px-5 py-3">
                 <div className="min-w-0">
                   <p className="text-sm text-white/85">
-                    <button type="button" onClick={() => onOpenOrder(a.order_id)} className="font-medium text-admin-accent hover:underline">
+                    <button type="button" onClick={() => onOpenOrder(a.order_id)} className="font-semibold text-admin-accent hover:underline">
                       Orden #{a.order_number ?? '—'}
                     </button>{' '}
                     <span className="text-white/60">· {a.event_name}</span>

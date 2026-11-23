@@ -111,7 +111,7 @@ export function CartView({
           </svg>
         </div>
         <div>
-          <p className="mb-1 text-[17px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+          <p className="mb-1 text-[17px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
             Tu carrito está vacío
           </p>
           <p className="text-[14px]" style={{ color: BUYER_COLORS.muted }}>
@@ -165,7 +165,7 @@ export function CartView({
           </svg>
         </button>
         <span
-          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold tracking-tight"
+          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-semibold tracking-tight"
           style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}
         >
           Tu carrito
@@ -201,7 +201,7 @@ export function CartView({
         {carouselProducts.length > 0 && (
           <>
           <div className="mt-2">
-            <p className="mb-3 text-[18px] font-bold" style={{ color: '#000000' }}>
+            <p className="mb-3 text-[18px] font-semibold" style={{ color: '#000000' }}>
               Aprovechá y lleváte
             </p>
             <div className="-mx-4 overflow-x-auto px-4" style={{ scrollbarWidth: 'none' }}>
@@ -222,7 +222,7 @@ export function CartView({
                         {product.promoLabel?.trim() && (
                           <div className="absolute left-1.5 top-1.5 z-[1]">
                             <span
-                              className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold"
+                              className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold"
                               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
                             >
                               {product.promoLabel}
@@ -270,7 +270,7 @@ export function CartView({
                         <p className="line-clamp-2 text-[12px] font-semibold leading-tight" style={{ color: BUYER_COLORS.text }}>
                           {product.name}
                         </p>
-                        <p className="mt-0.5 text-[12px] font-bold" style={{ color: BUYER_COLORS.text }}>
+                        <p className="mt-0.5 text-[12px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                           {formatPrice(product.price)}
                         </p>
                       </div>
@@ -298,9 +298,9 @@ export function CartView({
 
         {/* Resumen */}
         <div className="flex flex-col gap-3 pb-2">
-          <p className="text-[18px] font-bold" style={{ color: '#000000' }}>Resumen</p>
+          <p className="text-[18px] font-semibold" style={{ color: '#000000' }}>Resumen</p>
           <div className="flex items-center justify-between">
-            <span className="text-[15px] font-medium" style={{ color: '#000000' }}>Productos</span>
+            <span className="text-[15px] font-semibold" style={{ color: '#000000' }}>Productos</span>
             <div className="flex items-center gap-2">
               {hasDiscount && (
                 <span className="text-[14px] line-through" style={{ color: BUYER_COLORS.muted }}>
@@ -314,7 +314,7 @@ export function CartView({
           </div>
           {serviceFee > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-[15px] font-medium" style={{ color: '#000000' }}>Costo de servicio</span>
+              <span className="text-[15px] font-semibold" style={{ color: '#000000' }}>Costo de servicio</span>
               <span className="text-[15px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                 {formatPrice(serviceFee)}
               </span>
@@ -344,7 +344,7 @@ export function CartView({
                 <>
                   <span className="text-[14px]" style={{ color: BUYER_COLORS.muted }}>Sin descuento</span>
                   <span
-                    className="text-right text-[14px] font-medium line-through"
+                    className="text-right text-[14px] font-semibold line-through"
                     style={{ color: BUYER_COLORS.muted }}
                   >
                     {formatPrice(listTotal)}

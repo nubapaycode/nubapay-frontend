@@ -1,5 +1,5 @@
 /** Tokens compartidos del flujo comprador (catálogo, carrito, checkout). */
-export const BUYER_FONT = "var(--font-dm-sans, 'DM Sans', sans-serif)"
+export const BUYER_FONT = "var(--font-geist-sans), sans-serif"
 
 export const BUYER_COLORS = {
   bg: '#FFFFFF',

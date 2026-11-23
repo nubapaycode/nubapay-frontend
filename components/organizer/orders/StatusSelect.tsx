@@ -68,7 +68,7 @@ export function StatusSelect({
         aria-label={`Estado: ${picked.length ? picked.map(t => t.label).join(', ') : 'Todos'}`}
         onClick={() => setOpen(o => !o)}
         className={cn(
-          'inline-flex h-9 items-center gap-2 rounded-xl border bg-white px-3 text-[13px] font-medium text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors',
+          'inline-flex h-9 items-center gap-2 rounded-xl border bg-white px-3 text-[13px] font-semibold text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors',
           open ? 'border-gray-400' : 'border-gray-200 hover:border-gray-300',
         )}
       >
@@ -131,7 +131,7 @@ function Option({
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors',
-        active ? 'font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+        active ? 'font-semibold text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
       )}
     >
       <span

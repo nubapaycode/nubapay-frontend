@@ -76,7 +76,7 @@ function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: st
   return (
     <div className="admin-panel px-5 py-4">
       <p className="text-xs text-white/60">{label}</p>
-      <p className="mt-1.5 text-2xl font-medium tabular-nums tracking-tight text-white">{value}</p>
+      <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-white">{value}</p>
       {sub && <p className="mt-0.5 text-[11px] text-white/50">{sub}</p>}
     </div>
   )
@@ -224,7 +224,7 @@ export function EventPanel({
       {d && (
         <div className="flex flex-wrap items-center justify-between gap-4 admin-panel px-5 py-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white">Costo de servicio al comprador</p>
+            <p className="text-sm font-semibold text-white">Costo de servicio al comprador</p>
             <p className="mt-0.5 text-xs text-white/60">
               {d.event.service_fee_enabled
                 ? 'Activado: el comprador paga 5% en tickets y 2% en productos, para Nubapay. No se cobra la comisión del 1% al organizador.'
@@ -266,10 +266,10 @@ export function EventPanel({
           {/* Comisión + KPIs */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="rounded-lg border border-admin-accent/25 bg-admin-accent/[0.05] p-5 lg:row-span-1">
-              <p className="text-xs font-medium text-admin-accent/80">
+              <p className="text-xs font-semibold text-admin-accent/80">
                 {d.commission.mode === 'service_fee' ? 'Tu costo de servicio a cobrar' : 'Tu comisión a cobrar'}
               </p>
-              <p className="mt-2 text-4xl font-medium tracking-tight tabular-nums text-admin-accent">{formatPrice(d.commission.platform_income_in_range)}</p>
+              <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums text-admin-accent">{formatPrice(d.commission.platform_income_in_range)}</p>
               <p className="mt-1 text-xs text-white/50">
                 {d.commission.mode === 'service_fee'
                   ? `Costo de servicio pagado por los compradores en ${rangeLabel(d)}`
@@ -278,15 +278,15 @@ export function EventPanel({
               <dl className="mt-4 space-y-1.5 border-t border-white/10 pt-3 text-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Comisión {(d.commission.rate * 100).toLocaleString('es-AR')}%</dt>
-                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.in_range)}</dd>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.in_range)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Costo de servicio</dt>
-                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.service_fee_in_range)}</dd>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.service_fee_in_range)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-white/50">Histórico del evento</dt>
-                  <dd className="font-medium tabular-nums text-white">{formatPrice(d.commission.platform_income_all_time)}</dd>
+                  <dd className="font-semibold tabular-nums text-white">{formatPrice(d.commission.platform_income_all_time)}</dd>
                 </div>
               </dl>
               <p className="mt-3 text-[11px] leading-snug text-white/45">
@@ -363,7 +363,7 @@ export function EventPanel({
                     )}
                   >
                     <span className={cx('block text-xs', on ? 'text-admin-accent' : 'text-white/50')}>{g.label}</span>
-                    <span className="block text-lg font-medium tabular-nums leading-tight text-white">{fmtInt(stat.count)}</span>
+                    <span className="block text-lg font-semibold tabular-nums leading-tight text-white">{fmtInt(stat.count)}</span>
                     <span className="block text-[11px] tabular-nums text-white/50">{fmtMoneyCompact(stat.amount)}</span>
                   </button>
                 )
@@ -418,7 +418,7 @@ export function EventPanel({
                         className="cursor-pointer transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                       >
                         <Td>
-                          <span className="font-medium text-white">{o.order_number ?? '—'}</span>
+                          <span className="font-semibold text-white">{o.order_number ?? '—'}</span>
                         </Td>
                         <Td className="max-w-[260px]">
                           <p className="truncate">{o.customer_name ?? '—'}</p>

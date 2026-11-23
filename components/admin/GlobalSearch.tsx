@@ -139,7 +139,7 @@ function SearchDialog({ onClose, onSelect }: { open: boolean; onClose: () => voi
           {items.map((it, i) => (
             <li key={it.key}>
               {(i === 0 || items[i - 1].group !== it.group) && (
-                <p className="px-3 pb-1 pt-3 text-xs font-medium text-white/45">{it.group}</p>
+                <p className="px-3 pb-1 pt-3 text-xs font-semibold text-white/45">{it.group}</p>
               )}
               <button
                 type="button"

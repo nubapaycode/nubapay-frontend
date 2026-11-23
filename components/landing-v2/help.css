@@ -54,7 +54,7 @@
 .lv2-help-index { display: grid; gap: 4px; margin-top: 32px; }
 .lv2-root .lv2-help-index a {
   display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px;
-  font-size: 15px; font-weight: 500; color: var(--lv-muted); text-decoration: none; transition: background 0.25s, color 0.25s;
+  font-size: 15px; font-weight: 600; color: var(--lv-muted); text-decoration: none; transition: background 0.25s, color 0.25s;
 }
 .lv2-root .lv2-help-index a:hover { background: #F4F4F6; color: var(--lv-ink); }
 .lv2-help-index a > span { display: inline-flex; color: var(--lv-faint); }
@@ -70,7 +70,7 @@
 .lv2-help-topic-head h3 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.035em; }
 .lv2-help-topic-head p { margin: 2px 0 0; font-size: 14.5px; color: var(--lv-muted); }
 .lv2-help-q-topic {
-  display: block; margin-bottom: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lv-faint);
+  display: block; margin-bottom: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lv-faint);
 }
 .lv2-help-count { margin: 0 0 18px; font-size: 14px; color: var(--lv-muted); }
 .lv2-help-empty { padding: 36px; border-radius: 28px; background: var(--lv-surface); border: 1px solid rgba(0, 0, 0, 0.07); }
@@ -100,7 +100,7 @@
 .lv2-help-roles > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .lv2-help-roles label {
   position: relative; display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 100px;
-  background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); font-size: 14px; font-weight: 500; cursor: pointer;
+  background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); font-size: 14px; font-weight: 600; cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 .lv2-help-roles label:hover { border-color: rgba(0, 0, 0, 0.25); }
@@ -108,7 +108,7 @@
 .lv2-help-roles input { position: absolute; opacity: 0; pointer-events: none; }
 .lv2-help-roles label:has(input:focus-visible) { outline: 2px solid var(--lv-ink); outline-offset: 3px; }
 .lv2-help-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
-.lv2-field label small { font-weight: 500; color: var(--lv-faint); }
+.lv2-field label small { font-weight: 600; color: var(--lv-faint); }
 .lv2-help-select {
   appearance: none; cursor: pointer; padding-right: 48px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%230A0A0F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");

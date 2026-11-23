@@ -100,7 +100,7 @@ export function ProductDetailSheet({
             {item.promoLabel?.trim() && available && (
               <div className="absolute left-3 top-3 z-[1]">
                 <span
-                  className="inline-block rounded-full px-3 py-1 text-[12px] font-extrabold tracking-tight shadow-sm"
+                  className="inline-block rounded-full px-3 py-1 text-[12px] font-semibold tracking-tight shadow-sm"
                   style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
                 >
                   {item.promoLabel}
@@ -109,7 +109,7 @@ export function ProductDetailSheet({
             )}
             {!available && (
               <div className="absolute left-3 top-3 z-[2]">
-                <span className="inline-block rounded-full bg-black/70 px-3 py-1 text-[12px] font-bold text-white">
+                <span className="inline-block rounded-full bg-black/70 px-3 py-1 text-[12px] font-semibold text-white">
                   Agotado
                 </span>
               </div>
@@ -146,7 +146,7 @@ export function ProductDetailSheet({
             )}
 
             {/* Nombre */}
-            <h2 className="text-[22px] font-extrabold leading-tight tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
+            <h2 className="text-[22px] font-semibold leading-tight tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
               {item.name}
             </h2>
 
@@ -160,10 +160,10 @@ export function ProductDetailSheet({
             {/* Contenido combo */}
             {includedNames && (
               <div className="rounded-[12px] px-4 py-3" style={{ background: BUYER_COLORS.subtleFill }}>
-                <p className="mb-1 text-[11px] font-bold uppercase tracking-widest" style={{ color: BUYER_COLORS.muted }}>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest" style={{ color: BUYER_COLORS.muted }}>
                   Incluye
                 </p>
-                <p className="text-[13px] font-medium leading-snug" style={{ color: BUYER_COLORS.text }}>
+                <p className="text-[13px] font-semibold leading-snug" style={{ color: BUYER_COLORS.text }}>
                   {includedNames}
                 </p>
               </div>
@@ -176,11 +176,11 @@ export function ProductDetailSheet({
                   {formatPrice(item.listPrice!)}
                 </span>
               )}
-              <span className="text-[26px] font-extrabold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
+              <span className="text-[26px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
                 {formatPrice(item.price)}
               </span>
               {hasDiscount && (
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-extrabold" style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}>
                   {Math.round((1 - item.price / item.listPrice!) * 100)}% OFF
                 </span>
               )}
@@ -199,7 +199,7 @@ export function ProductDetailSheet({
           {!available ? (
             <div className="flex w-full flex-col items-center gap-2">
               <div
-                className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-extrabold tracking-tight"
+                className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-semibold tracking-tight"
                 style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.muted }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
@@ -216,7 +216,7 @@ export function ProductDetailSheet({
             <button
               type="button"
               onClick={() => onAdd(item)}
-              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-extrabold tracking-tight transition-opacity active:opacity-85"
+              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-semibold tracking-tight transition-opacity active:opacity-85"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
@@ -233,19 +233,19 @@ export function ProductDetailSheet({
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(item.id, quantity - 1)}
-                  className={`${btnBase} h-9 w-9 text-lg font-bold`}
+                  className={`${btnBase} h-9 w-9 text-lg font-semibold`}
                   style={{ background: BUYER_COLORS.surface, color: BUYER_COLORS.text }}
                   aria-label="Quitar uno"
                 >
                   −
                 </button>
-                <span className="min-w-[24px] text-center text-[17px] font-extrabold" style={{ color: BUYER_COLORS.text }}>
+                <span className="min-w-[24px] text-center text-[17px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(item.id, quantity + 1)}
-                  className={`${btnBase} h-9 w-9 text-lg font-bold`}
+                  className={`${btnBase} h-9 w-9 text-lg font-semibold`}
                   style={{ background: BUYER_COLORS.surface, color: BUYER_COLORS.text }}
                   aria-label="Agregar uno"
                 >
@@ -255,7 +255,7 @@ export function ProductDetailSheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-[52px] flex-1 items-center justify-center rounded-full text-[15px] font-extrabold tracking-tight transition-opacity active:opacity-85"
+                className="flex h-[52px] flex-1 items-center justify-center rounded-full text-[15px] font-semibold tracking-tight transition-opacity active:opacity-85"
                 style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
               >
                 Listo · {formatPrice(item.price * quantity)}

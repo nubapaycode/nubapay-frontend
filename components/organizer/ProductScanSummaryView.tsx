@@ -119,7 +119,7 @@ export function ProductScanSummaryView({ eventId, query = '' }: { eventId: strin
                 aria-pressed={filter === key}
                 onClick={() => setFilter(key)}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors',
+                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors',
                   filter === key ? 'bg-white text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.08)]' : 'text-gray-500 hover:text-gray-900',
                 )}
               >
@@ -137,7 +137,7 @@ export function ProductScanSummaryView({ eventId, query = '' }: { eventId: strin
           <button type="button" onClick={() => {
               setLoading(true)
               setAttempt(n => n + 1)
-            }} className="shrink-0 font-medium underline-offset-2 hover:underline">
+            }} className="shrink-0 font-semibold underline-offset-2 hover:underline">
             Reintentar
           </button>
         </div>
@@ -165,7 +165,7 @@ export function ProductScanSummaryView({ eventId, query = '' }: { eventId: strin
         <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div
             className={cn(
-              'hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid',
+              'hidden gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-semibold text-gray-400 md:grid',
               SCANS_GRID,
             )}
           >
@@ -191,7 +191,7 @@ export function ProductScanSummaryView({ eventId, query = '' }: { eventId: strin
                     {/* En celular: los números en una línea debajo del nombre. */}
                     <p className="mt-0.5 text-[12px] tabular-nums text-gray-400 md:hidden">
                       {formatCount(p.scanned)} de {formatCount(p.purchased)} retirados
-                      {left > 0 && <> · faltan <span className="font-medium text-gray-700">{formatCount(left)}</span></>}
+                      {left > 0 && <> · faltan <span className="font-semibold text-gray-700">{formatCount(left)}</span></>}
                     </p>
                   </div>
                   <span className="hidden text-right text-[13px] tabular-nums text-gray-900 md:block">{formatCount(p.purchased)}</span>

@@ -7,7 +7,7 @@
 .lv2-nf-code {
   display: flex; align-items: center; justify-content: center; gap: 0.03em;
   /* Limitado también por el alto: todo el bloque (número, texto y botones) entra en la primera pantalla */
-  font-size: clamp(110px, min(20vw, 30svh), 300px); font-weight: 800; letter-spacing: -0.06em; line-height: 0.8; color: var(--lv-ink);
+  font-size: clamp(110px, min(20vw, 30svh), 300px); font-weight: 600; letter-spacing: -0.06em; line-height: 0.8; color: var(--lv-ink);
 }
 /* Recorta arriba y abajo para la subida; a los costados no (el letter-spacing negativo se sale de la caja) */
 .lv2-nf-mask { display: inline-block; clip-path: inset(0 -0.3em); padding: 0.06em 0 0.08em; }
@@ -46,14 +46,14 @@
 .lv2-nf-qr.is-ok .lv2-nf-ok { transform: translate(-50%, -50%) scale(1); }
 .lv2-nf-qr.is-ok .lv2-nf-scan { opacity: 0; animation: none; }
 
-.lv2-nf-hint { margin: 16px 0 0; font-size: 13px; font-weight: 500; color: var(--lv-faint); transition: opacity 0.4s ease, visibility 0.4s; }
+.lv2-nf-hint { margin: 16px 0 0; font-size: 13px; font-weight: 600; color: var(--lv-faint); transition: opacity 0.4s ease, visibility 0.4s; }
 .lv2-nf-hint.is-hidden { opacity: 0 !important; visibility: hidden; }
 
 /* ── Texto ── */
 .lv2-nf-fade { opacity: 0; transform: translateY(20px); }
 .lv2-nf-status {
   display: inline-flex; align-items: center; gap: 9px; height: 38px; margin: 24px 0 20px; padding: 0 16px 0 7px; border-radius: 100px;
-  background: var(--lv-ink); color: #fff; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums;
+  background: var(--lv-ink); color: #fff; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
   transition: background 0.4s ease, color 0.4s ease;
 }
 .lv2-nf-status i {
@@ -63,7 +63,7 @@
 .lv2-nf-status.is-scanning i { background: rgba(255, 255, 255, 0.2); }
 .lv2-nf-status.is-ok { background: var(--lv-lime); color: var(--lv-lime-fg); }
 .lv2-nf-status.is-ok i { background: var(--lv-lime-fg); color: var(--lv-lime); }
-.lv2-nf-title { margin: 0 0 16px; font-size: clamp(40px, min(5vw, 8svh), 76px); font-weight: 500; letter-spacing: -0.045em; line-height: 0.95; }
+.lv2-nf-title { margin: 0 0 16px; font-size: clamp(40px, min(5vw, 8svh), 76px); font-weight: 600; letter-spacing: -0.045em; line-height: 0.95; }
 .lv2-nf-text { margin: 0 0 30px; max-width: 500px; font-size: 18px; line-height: 1.65; color: var(--lv-muted); }
 .lv2-nf-cta { justify-content: center; }
 .lv2-nf-back { padding-left: 24px; }

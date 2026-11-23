@@ -168,7 +168,7 @@ function AssignMenu({
               setOpen(false)
               onNew()
             }}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-gray-900 hover:bg-gray-50"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-semibold text-gray-900 hover:bg-gray-50"
           >
             <Plus size={14} strokeWidth={2} className="shrink-0" />
             Nuevo punto con estos productos
@@ -618,7 +618,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                     <button
                       type="button"
                       onClick={() => openEdit(p)}
-                      className="text-[12px] font-medium text-gray-900 underline-offset-4 hover:underline"
+                      className="text-[12px] font-semibold text-gray-900 underline-offset-4 hover:underline"
                     >
                       Asignar productos
                     </button>
@@ -641,7 +641,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                   <button
                     type="button"
                     onClick={() => openEdit(p)}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
                   >
                     <Pencil size={13} strokeWidth={1.75} aria-hidden />
                     Editar
@@ -663,7 +663,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
 
       <div
         className={`fixed top-0 right-0 h-full z-50 w-[min(100vw,28rem)] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${drawerMode ? 'translate-x-0' : 'translate-x-full'}`}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)', borderTopLeftRadius: '24px', borderBottomLeftRadius: '24px', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)', borderTopLeftRadius: '24px', borderBottomLeftRadius: '24px', fontFamily: "var(--font-geist-sans), sans-serif" }}
       >
         {drawerVisible && (
           <>
@@ -705,7 +705,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#9A9AA8', marginBottom: '6px' }}>
-                  Descripción <span style={{ fontWeight: 500, color: '#C8C8D0' }}>· opcional</span>
+                  Descripción <span style={{ fontWeight: 600, color: '#C8C8D0' }}>· opcional</span>
                 </label>
                 <textarea
                   value={formDesc}
@@ -853,7 +853,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={saving}
                 onClick={handleSave}
-                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving
                   ? 'Guardando…'
@@ -875,7 +875,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
         {deleteTarget && (
           <>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              ¿Eliminar «<span className="font-medium text-gray-900">{deleteTarget.name}</span>»? Los pedidos que lo tengan
+              ¿Eliminar «<span className="font-semibold text-gray-900">{deleteTarget.name}</span>»? Los pedidos que lo tengan
               asociado conservarán historial; este punto dejará de estar disponible para nuevos pedidos.
             </p>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -883,7 +883,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={deleteSubmitting}
                 onClick={() => setDeleteTarget(null)}
-                className="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -891,7 +891,7 @@ export function PickupPointsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={deleteSubmitting}
                 onClick={confirmDelete}
-                className="rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                className="rounded-full bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
                 {deleteSubmitting ? 'Eliminando…' : 'Eliminar'}
               </button>

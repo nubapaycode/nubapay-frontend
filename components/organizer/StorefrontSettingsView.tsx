@@ -218,7 +218,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               type="button"
               onClick={() => void handleRemoveCover()}
               disabled={uploadingCover}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: uploadingCover ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 500, color: '#EF4444', opacity: uploadingCover ? 0.4 : 1, padding: '4px 0', flexShrink: 0 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: uploadingCover ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 600, color: '#EF4444', opacity: uploadingCover ? 0.4 : 1, padding: '4px 0', flexShrink: 0 }}
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden />
               Quitar
@@ -238,7 +238,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             />
             {uploadingCover && (
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
+                <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>Subiendo…</span>
               </div>
             )}
           </div>
@@ -278,7 +278,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
                 disabled={uploadingCover}
                 onChange={e => void handleCoverFile(e.target.files?.[0] ?? null)}
               />
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: '#6B7280', opacity: uploadingCover ? 0.5 : 1 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#6B7280', opacity: uploadingCover ? 0.5 : 1 }}>
                 <ImageUp className="h-3.5 w-3.5" aria-hidden />
                 {uploadingCover ? 'Subiendo…' : 'Cambiar imagen'}
               </span>
@@ -293,7 +293,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           <div className="flex items-start gap-2">
             <LayoutGrid className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" aria-hidden />
             <div>
-              <p className="text-sm font-medium text-gray-900">Presentación de categorías</p>
+              <p className="text-sm font-semibold text-gray-900">Presentación de categorías</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 Al activarlo, el catálogo público muestra primero botones de categoría; el
                 comprador elige una (o "Ver todos") antes de ver los productos.
@@ -325,7 +325,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
           !hasCover ? 'opacity-70' : ''
         }`}
       >
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
           <Link2 className="h-4 w-4 text-gray-500" aria-hidden />
           Tu enlace público
         </div>
@@ -352,14 +352,14 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={() => void handleSaveSlug()}
                 disabled={savingSlug || slugDraft.trim() === event.slug}
-                className="shrink-0 rounded-full bg-gray-900 text-white text-sm font-medium px-5 py-3 hover:bg-gray-800 disabled:opacity-40 disabled:pointer-events-none"
+                className="shrink-0 rounded-full bg-gray-900 text-white text-sm font-semibold px-5 py-3 hover:bg-gray-800 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {savingSlug ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
 
             <div className="space-y-3">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                 Enlaces para compartir · Generar QR
               </p>
               {moduleLinks.length === 0 ? (
@@ -369,7 +369,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
               ) : (
                 moduleLinks.map(link => (
                   <div key={link.key} className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
-                    <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                    <p className="text-sm font-semibold text-gray-900">{link.label}</p>
                     {link.url ? (
                       <div className="flex flex-col gap-2">
                         <p className="text-sm text-gray-800 break-all font-mono">{link.url}</p>
@@ -377,7 +377,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
                           <button
                             type="button"
                             onClick={() => void handleCopyLink(link.key, link.url)}
-                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-100"
                           >
                             <Copy className="h-3.5 w-3.5" aria-hidden />
                             {copiedModule === link.key ? 'Copiado' : 'Copiar'}
@@ -385,7 +385,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
                           <button
                             type="button"
                             onClick={() => setQrModule(link.key)}
-                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100"
+                            className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-100"
                           >
                             <QrCode className="h-3.5 w-3.5" aria-hidden />
                             Generar QR
@@ -433,7 +433,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             <button
               type="button"
               onClick={handleDownloadQr}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-medium text-white hover:bg-gray-800"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800"
             >
               <Download className="h-4 w-4" aria-hidden />
               Descargar QR
@@ -441,7 +441,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
             <button
               type="button"
               onClick={() => setQrModule(null)}
-              className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
               Cerrar
             </button>

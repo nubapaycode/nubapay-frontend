@@ -136,14 +136,18 @@ describe('TicketCheckoutView', () => {
 })
 
 describe('validateVehicle', () => {
-  it('acepta patentes viejas, nuevas y en minúscula', () => {
-    expect(validateVehicle({ plate: 'ab 123 cd' })).toEqual({})
-    expect(validateVehicle({ plate: 'ABC-123' })).toEqual({})
+  it('acepta patentes viejas, nuevas y en minúscula, con o sin DNI', () => {
+    expect(validateVehicle({ plate: 'ab 123 cd', dni: '' })).toEqual({})
+    expect(validateVehicle({ plate: 'ABC-123', dni: '30.123.456' })).toEqual({})
   })
 
   it('pide la patente y marca las inválidas', () => {
-    expect(validateVehicle({ plate: '' })).toEqual({ plate: 'Ingresá la patente del vehículo' })
-    expect(validateVehicle({ plate: 'ABCDEF' })).toEqual({ plate: 'Ingresá una patente válida, ej. AB123CD o ABC123' })
+    expect(validateVehicle({ plate: '', dni: '' })).toEqual({ plate: 'Ingresá la patente del vehículo' })
+    expect(validateVehicle({ plate: 'ABCDEF', dni: '' })).toEqual({ plate: 'Ingresá una patente válida, ej. AB123CD o ABC123' })
+  })
+
+  it('el DNI es opcional, pero si se completa tiene que ser válido', () => {
+    expect(validateVehicle({ plate: 'AB123CD', dni: '12345' })).toEqual({ dni: 'El DNI tiene que tener 7 u 8 números' })
   })
 })
 
@@ -166,7 +170,7 @@ describe('TicketCheckoutView · parking', () => {
     const buyer = screen.getByRole('heading', { name: 'Datos del comprador' })
     const parking = screen.getByRole('heading', { name: 'Datos de estacionamiento' })
     expect(buyer.compareDocumentPosition(parking) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.queryByLabelText('DNI')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('DNI (opcional)')).toBeInTheDocument()
     expect(screen.getByLabelText('Patente')).toBeInTheDocument()
   })
 
@@ -187,7 +191,7 @@ describe('TicketCheckoutView · parking', () => {
     expect(methods).not.toContain('PATCH')
   })
 
-  it('manda la patente normalizada al confirmar', async () => {
+  it('manda la patente y el DNI normalizados al confirmar', async () => {
     storeParking()
     ;(browserFetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -197,6 +201,7 @@ describe('TicketCheckoutView · parking', () => {
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
     await userEvent.type(screen.getByLabelText('Patente'), 'ab 123 cd')
+    await userEvent.type(screen.getByLabelText('DNI (opcional)'), '30.123.456')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
 
     const patchCall = (browserFetch as jest.Mock).mock.calls.find(call => call[1]?.method === 'PATCH')
@@ -205,6 +210,7 @@ describe('TicketCheckoutView · parking', () => {
       customer_email: 'ana@mail.com',
       customer_phone: '11 5555-1234',
       vehicle_plate: 'AB123CD',
+      customer_dni: '30123456',
     })
   })
 

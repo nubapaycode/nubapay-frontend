@@ -149,7 +149,7 @@ export function OnboardingModal({ onDone }: { onDone: () => void }) {
           {current.icon}
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-gray-900 tracking-tight">{current.title}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{current.title}</h2>
             <div className="text-sm text-gray-500 leading-relaxed">
               {current.description}
             </div>

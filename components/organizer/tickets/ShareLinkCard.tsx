@@ -59,8 +59,8 @@ export function ShareLinkCard({
     >
       <div className={cn('flex flex-col gap-3 p-4', !stacked && 'sm:flex-row sm:items-center')}>
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-medium text-gray-500">{label}</p>
-          <p className="mt-0.5 truncate text-[14px] font-medium text-gray-900" title={url}>
+          <p className="text-[12px] font-semibold text-gray-500">{label}</p>
+          <p className="mt-0.5 truncate text-[14px] font-semibold text-gray-900" title={url}>
             {display}
           </p>
         </div>
@@ -68,7 +68,7 @@ export function ShareLinkCard({
           <button
             type="button"
             onClick={() => void copy()}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             {copied ? <Check size={14} strokeWidth={2} className="text-emerald-600" aria-hidden /> : <Copy size={14} strokeWidth={1.75} aria-hidden />}
             {copied ? 'Copiado' : 'Copiar'}
@@ -77,7 +77,7 @@ export function ShareLinkCard({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             <ExternalLink size={14} strokeWidth={1.75} aria-hidden />
             Abrir
@@ -87,7 +87,7 @@ export function ShareLinkCard({
             aria-expanded={qrOpen}
             onClick={() => setQrOpen(o => !o)}
             className={cn(
-              'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors',
+              'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition-colors',
               qrOpen ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900',
             )}
           >
@@ -103,7 +103,7 @@ export function ShareLinkCard({
             <QRCodeCanvas ref={qrRef} value={url} size={132} marginSize={1} aria-label={`Código QR: ${label}`} />
           </div>
           <div className={cn('flex-1 text-center', !stacked && 'sm:text-left')}>
-            <p className="text-[13px] font-medium text-gray-900">Escaneá para comprar</p>
+            <p className="text-[13px] font-semibold text-gray-900">Escaneá para comprar</p>
             <p className="mt-0.5 text-[12px] text-gray-500">Usalo en flyers, historias o en la puerta del evento.</p>
             <button
               type="button"

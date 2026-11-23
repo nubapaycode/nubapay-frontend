@@ -338,7 +338,7 @@ export function CheckoutView({
           </svg>
         </button>
         <span
-          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold tracking-tight"
+          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-semibold tracking-tight"
           style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}
         >
           Confirmar pedido
@@ -360,7 +360,7 @@ export function CheckoutView({
         )}
 
         {/* Tu pedido */}
-        <p className="text-[18px] font-bold" style={{ color: BUYER_COLORS.text }}>Tu pedido</p>
+        <p className="text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>Tu pedido</p>
 
         {displayItems.length === 0 ? (
           <p className="text-[14px]" style={{ color: BUYER_COLORS.muted }}>No tenés items en el carrito</p>
@@ -375,12 +375,12 @@ export function CheckoutView({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span
-                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[8px] text-[13px] font-bold"
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[8px] text-[13px] font-semibold"
                       style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                     >
                       {item.quantity}
                     </span>
-                    <span className="truncate text-[14px] font-medium" style={{ color: BUYER_COLORS.text }}>
+                    <span className="truncate text-[14px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                       {item.name}
                     </span>
                   </div>
@@ -413,7 +413,7 @@ export function CheckoutView({
         <div>
           <label
             htmlFor="checkout-name"
-            className="mb-3 block text-[18px] font-bold"
+            className="mb-3 block text-[18px] font-semibold"
             style={{ color: BUYER_COLORS.text }}
           >
             Tu nombre
@@ -442,7 +442,7 @@ export function CheckoutView({
         <div>
           <label
             htmlFor="checkout-email"
-            className="mb-3 block text-[18px] font-bold"
+            className="mb-3 block text-[18px] font-semibold"
             style={{ color: BUYER_COLORS.text }}
           >
             Tu email
@@ -469,7 +469,7 @@ export function CheckoutView({
 
         {/* Método de pago */}
         <div>
-          <p className="mb-3 text-[18px] font-bold" style={{ color: BUYER_COLORS.text }}>
+          <p className="mb-3 text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>
             Método de pago
           </p>
           <div className="grid gap-2" style={{ gridAutoRows: '1fr' }}>
@@ -498,7 +498,7 @@ export function CheckoutView({
                     {method.icon}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+                    <p className="text-[15px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
                       {method.label}
                     </p>
                     {method.sub && (
@@ -562,7 +562,7 @@ export function CheckoutView({
                     </svg>
                     Ahorrás {formatPrice(listTotal - total)}
                   </span>
-                  <span className="text-[14px] font-medium line-through" style={{ color: BUYER_COLORS.muted }}>
+                  <span className="text-[14px] font-semibold line-through" style={{ color: BUYER_COLORS.muted }}>
                     {formatPrice(listTotal)}
                   </span>
                 </div>

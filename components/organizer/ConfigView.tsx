@@ -167,7 +167,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
 
         <div className="px-5 py-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500" htmlFor="cfg-name">Nombre del evento</label>
+            <label className="text-xs font-semibold text-gray-500" htmlFor="cfg-name">Nombre del evento</label>
             <input
               id="cfg-name"
               className={inputClass}
@@ -179,7 +179,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500" htmlFor="cfg-desc">
+            <label className="text-xs font-semibold text-gray-500" htmlFor="cfg-desc">
               Descripción <span className="text-gray-300">(opcional)</span>
             </label>
             <textarea
@@ -195,7 +195,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-500" htmlFor="cfg-starts">
+              <label className="text-xs font-semibold text-gray-500" htmlFor="cfg-starts">
                 Inicio <span className="text-gray-300">(opcional)</span>
               </label>
               <input
@@ -207,7 +207,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-500" htmlFor="cfg-ends">
+              <label className="text-xs font-semibold text-gray-500" htmlFor="cfg-ends">
                 Fin <span className="text-gray-300">(opcional)</span>
               </label>
               <input
@@ -224,7 +224,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
           <div className="rounded-xl border border-gray-100 px-4 py-3 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">Cerrar la compra antes del evento</p>
+                <p className="text-sm font-semibold text-gray-900">Cerrar la compra antes del evento</p>
                 <p className="text-xs text-gray-400 mt-0.5">
                   El catálogo deja de aceptar pedidos unas horas antes del inicio. Los pedidos ya creados no se afectan
                 </p>
@@ -251,7 +251,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
             </div>
             {cutoffEnabledDraft && (
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-500" htmlFor="cfg-cutoff">
+                <label className="text-xs font-semibold text-gray-500" htmlFor="cfg-cutoff">
                   Horas antes del inicio
                 </label>
                 <input
@@ -279,7 +279,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
           {/* Toggle is_active */}
           <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-gray-900">Evento activo</p>
+              <p className="text-sm font-semibold text-gray-900">Evento activo</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 Cuando está inactivo, el catálogo público no acepta nuevos pedidos
               </p>
@@ -304,7 +304,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
           {/* Toggle notify_pickup_point */}
           <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-gray-900">Avisar punto de retiro en email</p>
+              <p className="text-sm font-semibold text-gray-900">Avisar punto de retiro en email</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 Cuando está activo, el email de confirmación del pedido incluye el nombre del punto de retiro asignado
               </p>

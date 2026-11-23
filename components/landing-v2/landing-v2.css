@@ -10,8 +10,10 @@
   --lv-line: rgba(0, 0, 0, 0.08);
   --lv-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --lv-gutter: 40px;
+  /* Grotesca del logo: solo para los wordmarks de nubapay */
+  --lv-logo-font: var(--font-bricolage), var(--font-geist-sans), sans-serif;
 
-  font-family: var(--font-bricolage, "Bricolage Grotesque", "DM Sans", sans-serif);
+  font-family: var(--font-geist-sans), sans-serif;
   background: #fff;
   color: var(--lv-ink);
   overflow-x: clip;
@@ -31,7 +33,7 @@
 
 /* ── Tipografía de sección ── */
 .lv2-h2 {
-  font-size: clamp(44px, 5vw, 72px); font-weight: 500; letter-spacing: -0.045em;
+  font-size: clamp(44px, 5vw, 72px); font-weight: 600; letter-spacing: -0.045em;
   line-height: 0.95; margin: 0; color: var(--lv-ink);
 }
 .lv2-lead { font-size: 17px; line-height: 1.7; color: var(--lv-muted); margin: 0; }
@@ -41,7 +43,9 @@
 .lv2-head .lv2-lead { max-width: 400px; text-align: right; }
 
 /* Marcador lima */
-.lv2-mark { position: relative; display: inline-block; padding: 0.02em 0.16em 0.08em; z-index: 0; color: var(--lv-lime-fg); }
+/* El margen negativo compensa el padding: el texto queda alineado con el resto de las líneas
+   y es el trazo lima el que sobresale hacia los costados */
+.lv2-mark { position: relative; display: inline-block; padding: 0.02em 0.16em 0.08em; margin-inline: -0.16em; z-index: 0; color: var(--lv-lime-fg); }
 .lv2-mark::before {
   content: ""; position: absolute; inset: -0.03em -0.06em;
   transform: rotate(-0.8deg) scaleX(0); transform-origin: left center; z-index: -1;
@@ -79,7 +83,7 @@
 .lv2-btn {
   display: inline-flex; align-items: center; gap: 10px; height: 58px; padding: 0 8px 0 30px;
   border-radius: 100px; border: 0; cursor: pointer; text-decoration: none; font: inherit;
-  font-size: 17px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap;
+  font-size: 17px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap;
   background: var(--lv-lime); color: var(--lv-lime-fg);
   transition: transform 0.35s var(--lv-ease), box-shadow 0.35s var(--lv-ease), background 0.35s ease;
   overflow: hidden; /* la flecha sale por la derecha mientras se achica */
@@ -94,6 +98,7 @@
   background: transparent; color: var(--lv-ink); padding: 0 30px; border: 1px solid rgba(0, 0, 0, 0.14);
 }
 .lv2-btn--ghost:hover { background: rgba(0, 0, 0, 0.04); box-shadow: none; }
+.lv2-btn--regular { font-weight: 400; }
 .lv2-btn--ghost-dark { color: #fff; border-color: rgba(255, 255, 255, 0.16); }
 .lv2-btn--ghost-dark:hover { background: rgba(255, 255, 255, 0.07); }
 /* El botón lima siempre con texto negro (le gana a `.lv2-root a { color: inherit }` en secciones oscuras) */
@@ -122,7 +127,7 @@
     0 0 3px -1px var(--nv-shadow), 0 0 28px -8px var(--nv-shadow);
   text-decoration: none;
 }
-.lv2-root .lv2-logo { font-size: 21px; font-weight: 700; letter-spacing: -0.04em; color: var(--nv-fg); padding: 0 22px; }
+.lv2-root .lv2-logo { font-family: var(--lv-logo-font); font-size: 21px; font-weight: 700; letter-spacing: -0.04em; color: var(--nv-fg); padding: 0 22px; }
 .lv2-logo-word { display: inline-flex; }
 .lv2-logo-char { display: inline-block; height: 1.3em; line-height: 1.3em; overflow: hidden; }
 .lv2-logo-roll, .lv2-logo-roll > span { display: block; }
@@ -131,7 +136,7 @@
 /* Contenido centrado opcional (selector de las páginas legales): se oculta mientras el menú está abierto */
 .lv2-nav-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transition: opacity 0.3s ease; }
 .lv2-nav.is-open .lv2-nav-center { opacity: 0; pointer-events: none; }
-.lv2-root .lv2-nav-login { font-size: 14px; font-weight: 500; color: var(--nv-fg); }
+.lv2-root .lv2-nav-login { font-size: 14px; font-weight: 600; color: var(--nv-fg); }
 .lv2-nav-login span { opacity: 0.66; }
 .lv2-root .lv2-nav-cta {
   display: inline-flex; align-items: center; gap: 8px; height: 50px; padding: 0 7px 0 20px; border-radius: 100px;
@@ -208,7 +213,7 @@
 /* Cada link es una máscara: la línea entra desde abajo al abrir y el "roll" sube al hover */
 .lv2-root .lv2-menu-link {
   display: block; width: fit-content; height: 1.3em; line-height: 1.3em; overflow: hidden;
-  font-size: 26px; font-weight: 500; letter-spacing: -0.02em; color: rgba(255, 255, 255, 0.86); text-decoration: none;
+  font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: rgba(255, 255, 255, 0.86); text-decoration: none;
 }
 .lv2-menu-line, .lv2-menu-roll { display: block; }
 .lv2-menu-roll > span { display: block; white-space: nowrap; }
@@ -240,12 +245,12 @@
   font-size: clamp(40px, 5.15vw, 80px); font-weight: 600; letter-spacing: -0.045em; line-height: 1;
   margin: 0 0 28px;
 }
-.lv2-h1 .lv2-line { display: block; white-space: nowrap; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.lv2-h1 .lv2-line { display: block; white-space: nowrap; overflow: hidden; padding: 0 0.25em 0.08em; margin: 0 -0.25em -0.08em; }
 .lv2-h1 .lv2-line > span {
   display: inline-block; transform: translateY(110%);
 }
 .lv2-hero-sub { font-size: 19px; line-height: 1.65; color: var(--lv-muted); max-width: 520px; margin: 0 0 36px; }
-.lv2-hero-sub strong { color: var(--lv-ink); font-weight: 500; }
+.lv2-hero-sub strong { color: var(--lv-ink); font-weight: 600; }
 .lv2-hero-cta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 /* Estados iniciales de la intro del hero (los anima GSAP) */
 .lv2-fade-up { opacity: 0; }
@@ -345,9 +350,24 @@
 .lv2-ticker-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
 .lv2-ticker-track { display: flex; width: max-content; animation: lv2-marquee 32s linear infinite; }
 .lv2-ticker:hover .lv2-ticker-track { animation-play-state: paused; }
-.lv2-ticker-item { display: flex; align-items: center; gap: 18px; padding: 0 22px; white-space: nowrap; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.lv2-ticker-item { display: flex; align-items: center; gap: 18px; padding: 0 22px; white-space: nowrap; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 .lv2-ticker-item i { width: 5px; height: 5px; border-radius: 50%; background: #8CC800; }
 @keyframes lv2-marquee { to { transform: translateX(-33.3333%); } }
+
+/* ── Medios de pago (debajo del hero) ── */
+.lv2-pay { border-top: 1px solid var(--lv-line); border-bottom: 1px solid var(--lv-line); padding: 22px 0; margin-bottom: 140px; }
+.lv2-pay-in { display: flex; align-items: center; gap: 20px 40px; flex-wrap: wrap; }
+.lv2-pay-label { margin: 0; font-size: 14px; font-weight: 400; letter-spacing: 0.02em; text-transform: uppercase; color: var(--lv-muted); }
+.lv2-pay-gw, .lv2-pay-cards { display: flex; align-items: center; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.lv2-pay-gw { gap: 14px 32px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.lv2-pay-gw li { display: flex; align-items: center; gap: 10px; }
+.lv2-pay-ico { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.lv2-pay-ico img { width: 100%; height: 100%; object-fit: cover; }
+.lv2-pay-ico svg { width: 30px; height: auto; }
+.lv2-pay-gw .lv2-pay-add { color: var(--lv-muted); font-weight: 500; }
+.lv2-pay-ico--add { background: rgba(0, 0, 0, 0.06); color: var(--lv-ink); font-size: 13px; font-weight: 600; letter-spacing: -0.02em; }
+.lv2-pay-cards { gap: 12px 22px; margin-left: auto; }
+.lv2-pay-cards img { display: block; height: 22px; width: auto; max-width: 56px; object-fit: contain; }
 
 /* ── Recorrido (sticky) ── */
 .lv2-journey { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
@@ -359,14 +379,14 @@
 .lv2-step.is-on { opacity: 1; }
 .lv2-step-num {
   display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
-  font-size: 15px; font-weight: 700; background: #F4F4F6; margin-bottom: 26px;
+  font-size: 15px; font-weight: 600; background: #F4F4F6; margin-bottom: 26px;
   transition: background 0.4s ease, transform 0.5s var(--lv-ease);
 }
 .lv2-step.is-on .lv2-step-num { background: var(--lv-lime); transform: scale(1.1) rotate(-6deg); }
-.lv2-step h3 { font-size: clamp(34px, 3.6vw, 52px); font-weight: 500; letter-spacing: -0.04em; line-height: 1; margin: 0 0 18px; }
+.lv2-step h3 { font-size: clamp(34px, 3.6vw, 52px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin: 0 0 18px; }
 .lv2-step p { font-size: 18px; line-height: 1.65; color: var(--lv-muted); margin: 0; max-width: 430px; }
 .lv2-step-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.lv2-step-tags span { padding: 7px 14px; border-radius: 100px; font-size: 13px; font-weight: 500; border: 1px solid var(--lv-line); background: #fff; }
+.lv2-step-tags span { padding: 7px 14px; border-radius: 100px; font-size: 13px; font-weight: 600; border: 1px solid var(--lv-line); background: #fff; }
 .lv2-journey-stick { position: sticky; top: 13vh; height: 74vh; display: flex; align-items: center; justify-content: center; }
 .lv2-journey-stick .lv2-bg { transform: none; }
 /* El teléfono va centrado en el sticky (sin el desfase del hero) y nunca más alto que el contenedor */
@@ -390,9 +410,9 @@
 .lv2-stat { padding: 0 36px; position: relative; z-index: 1; }
 .lv2-stat + .lv2-stat { border-left: 1px solid rgba(10, 15, 0, 0.14); }
 .lv2-stat-ico { width: 42px; height: 42px; border-radius: 13px; background: rgba(10, 15, 0, 0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--lv-lime-fg); }
-.lv2-stat-num { font-size: clamp(46px, 3.8vw, 64px); white-space: nowrap; font-weight: 800; letter-spacing: -0.055em; line-height: 1; color: var(--lv-lime-fg); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
-.lv2-stat p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; font-weight: 500; color: rgba(10, 15, 0, 0.75); }
-.lv2-stat small { font-size: 12px; color: rgba(10, 15, 0, 0.5); font-weight: 500; }
+.lv2-stat-num { font-size: clamp(46px, 3.8vw, 64px); white-space: nowrap; font-weight: 600; letter-spacing: -0.055em; line-height: 1; color: var(--lv-lime-fg); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.lv2-stat p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; font-weight: 600; color: rgba(10, 15, 0, 0.75); }
+.lv2-stat small { font-size: 12px; color: rgba(10, 15, 0, 0.5); font-weight: 600; }
 
 /* ── Panel (bento) ── */
 .lv2-bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
@@ -410,7 +430,7 @@
 .lv2-card:hover .lv2-card-ico { background: var(--lv-lime); border-color: var(--lv-lime); transform: rotate(-8deg) scale(1.08); }
 .lv2-card h3 { font-size: 21px; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 8px; }
 .lv2-card p { font-size: 14.5px; line-height: 1.65; color: var(--lv-muted); margin: 0; }
-.lv2-card-stat { margin-top: auto; padding-top: 22px; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.lv2-card-stat { margin-top: auto; padding-top: 22px; font-size: 12px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
 .lv2-bento-main { grid-column: span 4; grid-row: span 2; padding: 0; background: #F4F6EE; }
 .lv2-bento-main-top { padding: 34px 34px 0; }
 .lv2-bento-main h3 { font-size: 30px; letter-spacing: -0.04em; }
@@ -452,7 +472,7 @@
 .lv2-gal-stage img.is-on { opacity: 1; z-index: 1; transform: none; transition: opacity 0.6s ease, transform 1.1s var(--lv-ease); }
 .lv2-gal-zoom {
   position: absolute; right: 16px; bottom: 16px; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px;
-  border-radius: 100px; background: rgba(10, 10, 15, 0.82); color: #fff; font-size: 13px; font-weight: 500; backdrop-filter: blur(8px);
+  border-radius: 100px; background: rgba(10, 10, 15, 0.82); color: #fff; font-size: 13px; font-weight: 600; backdrop-filter: blur(8px);
   opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.4s var(--lv-ease);
 }
 .lv2-gal-stage:hover .lv2-gal-zoom, .lv2-gal-stage:focus-visible .lv2-gal-zoom { opacity: 1; transform: none; }
@@ -544,12 +564,12 @@
 .lv2-reels-btn:disabled { opacity: 0; pointer-events: none; }
 .lv2-reels-btn:focus-visible { outline: 2px solid var(--lv-lime); outline-offset: 3px; }
 .lv2-quote { background: var(--lv-lime); border-radius: 28px; padding: 36px; display: flex; flex-direction: column; justify-content: space-between; gap: 30px; flex-direction: row; align-items: center; }
-.lv2-quote q { font-size: clamp(24px, 2.6vw, 38px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; quotes: none; max-width: 620px; color: var(--lv-lime-fg); }
+.lv2-quote q { font-size: clamp(24px, 2.6vw, 38px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.1; quotes: none; max-width: 620px; color: var(--lv-lime-fg); }
 .lv2-quote-stats { display: flex; gap: 34px; }
 .lv2-quote-stats div { font-size: 13px; color: rgba(10, 15, 0, 0.65); line-height: 1.4; }
-.lv2-quote-stats b { display: block; font-size: 44px; letter-spacing: -0.05em; color: var(--lv-lime-fg); font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.lv2-quote-stats b { display: block; font-size: 44px; letter-spacing: -0.05em; color: var(--lv-lime-fg); font-weight: 600; line-height: 1; margin-bottom: 6px; }
 .lv2-case-credit { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 36px; font-size: 13px; color: var(--lv-faint); }
-.lv2-case-credit a { color: var(--lv-muted); text-decoration: none; font-weight: 500; }
+.lv2-case-credit a { color: var(--lv-muted); text-decoration: none; font-weight: 600; }
 .lv2-case-credit a:hover { color: var(--lv-ink); }
 
 /* ── Venta de entradas: entrada digital que se valida en loop + lo que incluye ── */
@@ -574,10 +594,10 @@
   -webkit-mask: var(--notch); mask: var(--notch);
 }
 .lv2-tix-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.lv2-tix-brand { font-size: 17px; font-weight: 700; letter-spacing: -0.04em; }
+.lv2-tix-brand { font-family: var(--lv-logo-font); font-size: 17px; font-weight: 700; letter-spacing: -0.04em; }
 .lv2-tix-tag {
   display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 100px;
-  background: var(--lv-lime); color: var(--lv-lime-fg); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--lv-lime); color: var(--lv-lime-fg); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
 }
 .lv2-tix-event { display: block; margin: 24px 0 18px; font-size: 34px; font-weight: 600; letter-spacing: -0.045em; line-height: 1; }
 .lv2-tix-meta { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 10px; margin: 0; }
@@ -646,14 +666,14 @@
 .lv2-pass-slot > .lv2-pass { flex: 1; }
 .lv2-passes:hover .lv2-pass { transform: rotate(0deg); }
 .lv2-pass:hover { transform: translateY(-12px) rotate(0deg) !important; z-index: 2; }
-.lv2-pass-kind { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; }
+.lv2-pass-kind { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; }
 .lv2-pass h3 { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin: 12px 0 10px; }
 .lv2-pass p { font-size: 13.5px; line-height: 1.55; margin: 0; opacity: 0.65; }
 .lv2-pass-ico { margin-bottom: 20px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(10, 15, 0, 0.07); }
 .lv2-pass--lime .lv2-pass-ico { background: rgba(10, 15, 0, 0.1); }
 .lv2-pass--ink .lv2-pass-ico { background: rgba(198, 255, 0, 0.14); color: var(--lv-lime); }
 .lv2-pass-foot { margin-top: auto; padding-top: 22px; border-top: 2px dashed rgba(127, 127, 127, 0.3); display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
-.lv2-pass-foot b { font-size: 17px; letter-spacing: -0.03em; }
+.lv2-pass-foot b { font-size: 17px; font-weight: 400; letter-spacing: -0.03em; }
 .lv2-pass-foot span { display: inline-flex; align-items: center; gap: 6px; opacity: 0.7; }
 .lv2-pass--lime { --pc: var(--lv-lime); --pf: var(--lv-lime-fg); }
 .lv2-pass--ink { --pc: #0A0A0F; --pf: #fff; }
@@ -686,7 +706,7 @@
 .lv2-faq-item:last-child { border-bottom: 1px solid var(--lv-line); }
 .lv2-faq-q {
   width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 26px 0; background: none; border: 0; cursor: pointer;
-  text-align: left; font: inherit; font-size: 19px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.25; color: var(--lv-ink); transition: padding 0.4s var(--lv-ease);
+  text-align: left; font: inherit; font-size: 19px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; color: var(--lv-ink); transition: padding 0.4s var(--lv-ease);
 }
 .lv2-faq-q:hover { padding-left: 8px; }
 .lv2-faq-plus { width: 34px; height: 34px; border-radius: 50%; background: #F4F4F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.3s ease, transform 0.5s var(--lv-ease); }
@@ -730,8 +750,8 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 .lv2-cta { background: #0A0A0F; border-radius: 44px; padding: 130px 40px; text-align: center; position: relative; overflow: hidden; color: #fff; margin-bottom: 140px; }
 .lv2-cta-glow { position: absolute; top: -35%; left: 50%; width: 70%; height: 90%; transform: translateX(-50%); background: radial-gradient(ellipse, rgba(198, 255, 0, 0.22), transparent 65%); pointer-events: none; animation: lv2-glow 6s ease-in-out infinite alternate; }
 @keyframes lv2-glow { to { opacity: 0.55; transform: translateX(-50%) scale(1.15); } }
-.lv2-cta-bg { position: absolute; inset: 0; font-size: clamp(120px, 22vw, 340px); font-weight: 800; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.06); display: flex; align-items: flex-end; justify-content: center; line-height: 0.72; pointer-events: none; user-select: none; overflow: hidden; white-space: nowrap; }
-.lv2-cta h2 { position: relative; font-size: clamp(56px, 8vw, 120px); font-weight: 500; letter-spacing: -0.055em; line-height: 0.9; margin: 0 0 30px; }
+.lv2-cta-bg { position: absolute; inset: 0; font-size: clamp(120px, 22vw, 340px); font-weight: 600; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.06); display: flex; align-items: flex-end; justify-content: center; line-height: 0.72; pointer-events: none; user-select: none; overflow: hidden; white-space: nowrap; }
+.lv2-cta h2 { position: relative; font-size: clamp(56px, 8vw, 120px); font-weight: 600; letter-spacing: -0.055em; line-height: 0.9; margin: 0 0 30px; }
 .lv2-cta p { position: relative; margin: 0 auto 50px; max-width: 460px; font-size: 18px; line-height: 1.7; color: rgba(255, 255, 255, 0.5); }
 .lv2-cta-btns { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .lv2-cta-note { position: relative; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 30px; font-size: 13px; color: rgba(255, 255, 255, 0.4); }
@@ -741,7 +761,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 .lv2-cta3 { position: relative; text-align: left; padding: 100px 64px 64px; }
 .lv2-cta3-title { position: relative; margin: 0; font-weight: 600; }
 .lv2-cta.lv2-cta3 h2 { margin: 0; font-size: inherit; line-height: inherit; letter-spacing: inherit; }
-.lv2-cta3-eyebrow { display: block; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em; color: rgba(255, 255, 255, 0.6); }
+.lv2-cta3-eyebrow { display: block; font-size: clamp(24px, 3vw, 44px); font-weight: 600; letter-spacing: -0.035em; color: rgba(255, 255, 255, 0.6); }
 .lv2-cta3-big {
   display: flex; flex-wrap: nowrap; font-size: clamp(76px, 16.5vw, 250px); line-height: 0.86;
   letter-spacing: -0.065em; margin: 0.06em 0 0 -0.05em; white-space: nowrap;
@@ -751,7 +771,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 .lv2-cta3-char { display: inline-block; transform-origin: 0% 100%; }
 .lv2-cta3-dot { color: #fff; }
 .lv2-cta3-sub {
-  display: block; margin-top: 0.5em; font-size: clamp(24px, 3vw, 44px); font-weight: 500; letter-spacing: -0.035em;
+  display: block; margin-top: 0.5em; font-size: clamp(24px, 3vw, 44px); font-weight: 600; letter-spacing: -0.035em;
   line-height: 1.1; color: rgba(255, 255, 255, 0.6);
 }
 .lv2-cta3-sub em { font-style: normal; color: var(--lv-lime); }
@@ -781,7 +801,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 .lv2-f-kicker { margin: 0 0 18px; font-size: 15px; color: rgba(255, 255, 255, 0.45); }
 .lv2-f-mail {
   display: inline-flex; align-items: center; gap: 14px; color: #fff; text-decoration: none;
-  font-size: clamp(30px, 3.6vw, 54px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.15;
+  font-size: clamp(30px, 3.6vw, 54px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15;
 }
 /* Mismo hover "roll" que los links: el texto sube y entra su copia en lima */
 .lv2-f-mail-text { display: inline-block; height: 1.15em; overflow: hidden; }
@@ -823,7 +843,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
 /* Wordmark gigante: sólido, cortado abajo, con el verificado lima como superíndice */
 .lv2-f-mark {
   position: relative; display: flex; justify-content: center; align-items: flex-start; margin: -1.2vw 0 0.6vw;
-  font-size: 21vw; font-weight: 800; letter-spacing: -0.065em; line-height: 0.8; color: #F2F2EE; user-select: none;
+  font-family: var(--lv-logo-font); font-size: 21vw; font-weight: 800; letter-spacing: -0.065em; line-height: 0.8; color: #F2F2EE; user-select: none;
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, rgba(0, 0, 0, 0.6) 100%); mask-image: linear-gradient(to bottom, #000 72%, rgba(0, 0, 0, 0.6) 100%);
 }
 .lv2-f::after {
@@ -945,6 +965,8 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
   .lv2-hero-arrow--next { left: auto; right: 0; }
   .lv2-iphone { --pw: 252px; }
   .lv2-ticker { margin-bottom: 90px; }
+  .lv2-pay { margin-bottom: 90px; }
+  .lv2-pay-cards { margin-left: 0; }
   .lv2-bento-s { grid-column: span 6; }
   .lv2-card { padding: 24px; }
   .lv2-passes { grid-template-columns: 1fr; }

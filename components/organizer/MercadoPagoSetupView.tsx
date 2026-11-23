@@ -39,7 +39,7 @@ const MP_STEPS: Step[] = [
           href="https://www.mercadopago.com.ar/developers/panel/app"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
+          className="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold"
         >
           mercadopago.com/developers
           <ExternalLink size={11} aria-hidden />
@@ -71,13 +71,13 @@ const MP_STEPS: Step[] = [
           <div className="flex items-center justify-between px-3 py-1.5 gap-2" style={{ background: '#FFE600' }}>
             <div className="flex items-center gap-1.5">
               <MpLogoMock />
-              <span style={{ fontSize: '7px', fontWeight: 700, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
+              <span style={{ fontSize: '7px', fontWeight: 600, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
               <span style={{ fontSize: '6px', color: '#666', lineHeight: 1, marginLeft: '2px' }}>| Developers</span>
             </div>
-            <div className="rounded px-2 py-0.5" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 700, color: '#fff', lineHeight: '14px' }}>Crear aplicación</div>
+            <div className="rounded px-2 py-0.5" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 600, color: '#fff', lineHeight: '14px' }}>Crear aplicación</div>
           </div>
           <div className="px-4 py-3" style={{ background: '#EBEBEB' }}>
-            <p style={{ fontSize: '10px', fontWeight: 700, color: '#1a1a1a', marginBottom: '2px' }}>Integraciones</p>
+            <p style={{ fontSize: '10px', fontWeight: 600, color: '#1a1a1a', marginBottom: '2px' }}>Integraciones</p>
             <p style={{ fontSize: '7px', color: '#666', marginBottom: '8px' }}>Gestioná tus aplicaciones y credenciales de acceso.</p>
             <div className="flex gap-3 mb-2" style={{ borderBottom: '1px solid #ccc', paddingBottom: '4px' }}>
               <span style={{ fontSize: '7px', color: '#3483FA', fontWeight: 600, borderBottom: '1.5px solid #3483FA', paddingBottom: '3px' }}>Tus aplicaciones</span>
@@ -87,7 +87,7 @@ const MP_STEPS: Step[] = [
               <svg width="28" height="22" viewBox="0 0 28 22" fill="none"><ellipse cx="12" cy="16" rx="8" ry="4" fill="#eee"/><circle cx="16" cy="8" r="6" fill="#e8e8e8" stroke="#ccc" strokeWidth="1"/><path d="M13 8c0-1.5 1-2.5 2.5-2.5" stroke="#aaa" strokeWidth="1" strokeLinecap="round"/><path d="M10 14c1-2 3-3 5-3" stroke="#bbb" strokeWidth="0.8" strokeLinecap="round"/></svg>
               <p style={{ fontSize: '8px', fontWeight: 600, color: '#1a1a1a' }}>Creá tu primera aplicación</p>
               <p style={{ fontSize: '6.5px', color: '#888', marginBottom: '2px' }}>Empezá a integrar con Mercado Pago.</p>
-              <div className="mp-spring-btn rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7.5px', fontWeight: 700, color: '#fff' }}>Crear aplicación</div>
+              <div className="mp-spring-btn rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7.5px', fontWeight: 600, color: '#fff' }}>Crear aplicación</div>
             </div>
           </div>
         </div>
@@ -111,7 +111,7 @@ const MP_STEPS: Step[] = [
           <div className="flex items-center justify-between px-3 py-1.5 gap-2" style={{ background: '#FFE600' }}>
             <div className="flex items-center gap-1.5">
               <MpLogoMock />
-              <span style={{ fontSize: '7px', fontWeight: 700, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
+              <span style={{ fontSize: '7px', fontWeight: 600, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
               <span style={{ fontSize: '6px', color: '#666', lineHeight: 1, marginLeft: '2px' }}>| Developers</span>
             </div>
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ const MP_STEPS: Step[] = [
                   <span key={item} style={{ fontSize: '5.5px', color: '#444' }}>{item}</span>
                 ))}
               </div>
-              <div className="rounded px-1.5 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 700, color: '#fff', lineHeight: '13px' }}>Crear aplicación</div>
+              <div className="rounded px-1.5 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 600, color: '#fff', lineHeight: '13px' }}>Crear aplicación</div>
               <span style={{ fontSize: '5.5px', color: '#444' }}>Tu cuenta ▾</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ const MP_STEPS: Step[] = [
           <div className="px-5 py-3 space-y-2.5" style={{ background: '#F0F0F0' }}>
             {/* Title row */}
             <div className="flex items-center justify-between">
-              <p style={{ fontSize: '9px', fontWeight: 700, color: '#1a1a1a' }}>Elegí el tipo de pago que querés integrar</p>
+              <p style={{ fontSize: '9px', fontWeight: 600, color: '#1a1a1a' }}>Elegí el tipo de pago que querés integrar</p>
               <span style={{ fontSize: '6.5px', color: '#888' }}>2 de 4</span>
             </div>
 
@@ -141,7 +141,7 @@ const MP_STEPS: Step[] = [
                   <rect x="1" y="1" width="20" height="12" rx="2" stroke="#333" strokeWidth="1.5"/>
                   <path d="M1 15h20" stroke="#333" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <p style={{ fontSize: '7px', fontWeight: 700, color: '#1a1a1a', marginBottom: '1px' }}>Pagos online</p>
+                <p style={{ fontSize: '7px', fontWeight: 600, color: '#1a1a1a', marginBottom: '1px' }}>Pagos online</p>
                 <p style={{ fontSize: '5.5px', color: '#666', marginBottom: '3px', lineHeight: 1.4 }}>Recibí pagos en una tienda en línea.</p>
                 <div className="flex gap-1 flex-wrap">
                   {['Checkout', 'Bricks', 'Suscripciones'].map(tag => (
@@ -161,7 +161,7 @@ const MP_STEPS: Step[] = [
                   <rect x="3" y="14" width="3" height="3" fill="#555"/>
                   <path d="M12 12h3M12 15h2M12 18h3M15 15h3M18 12v3M18 18h-3v-3" stroke="#555" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
-                <p style={{ fontSize: '7px', fontWeight: 700, color: '#1a1a1a', marginBottom: '1px' }}>Pagos presenciales</p>
+                <p style={{ fontSize: '7px', fontWeight: 600, color: '#1a1a1a', marginBottom: '1px' }}>Pagos presenciales</p>
                 <p style={{ fontSize: '5.5px', color: '#666', marginBottom: '3px', lineHeight: 1.4 }}>Recibí pagos en una tienda física.</p>
                 <div className="flex gap-1">
                   {['Código QR', 'Point'].map(tag => (
@@ -194,8 +194,8 @@ const MP_STEPS: Step[] = [
 
             {/* Botones */}
             <div className="flex items-center justify-end gap-2 pt-0.5">
-              <span style={{ fontSize: '7px', color: '#3483FA', fontWeight: 500 }}>Volver</span>
-              <div className="rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 700, color: '#fff' }}>Continuar</div>
+              <span style={{ fontSize: '7px', color: '#3483FA', fontWeight: 600 }}>Volver</span>
+              <div className="rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 600, color: '#fff' }}>Continuar</div>
             </div>
           </div>
         </div>
@@ -219,7 +219,7 @@ const MP_STEPS: Step[] = [
           <div className="flex items-center justify-between px-3 py-1.5 gap-2" style={{ background: '#FFE600' }}>
             <div className="flex items-center gap-1.5">
               <MpLogoMock />
-              <span style={{ fontSize: '7px', fontWeight: 700, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
+              <span style={{ fontSize: '7px', fontWeight: 600, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
               <span style={{ fontSize: '6px', color: '#666', lineHeight: 1, marginLeft: '2px' }}>| Developers</span>
             </div>
             <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ const MP_STEPS: Step[] = [
                   <span key={item} style={{ fontSize: '5.5px', color: '#444' }}>{item}</span>
                 ))}
               </div>
-              <div className="rounded px-1.5 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 700, color: '#fff', lineHeight: '13px' }}>Crear aplicación</div>
+              <div className="rounded px-1.5 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 600, color: '#fff', lineHeight: '13px' }}>Crear aplicación</div>
               <span style={{ fontSize: '5.5px', color: '#444' }}>Tu cuenta ▾</span>
             </div>
           </div>
@@ -237,7 +237,7 @@ const MP_STEPS: Step[] = [
           <div className="px-5 py-3 space-y-2.5" style={{ background: '#F0F0F0' }}>
             {/* Title row */}
             <div className="flex items-center justify-between">
-              <p style={{ fontSize: '9px', fontWeight: 700, color: '#1a1a1a' }}>Seleccioná la plataforma donde harás la integración</p>
+              <p style={{ fontSize: '9px', fontWeight: 600, color: '#1a1a1a' }}>Seleccioná la plataforma donde harás la integración</p>
               <span style={{ fontSize: '6.5px', color: '#888' }}>3 de 4</span>
             </div>
 
@@ -261,7 +261,7 @@ const MP_STEPS: Step[] = [
                   {row.map(({ label, color, letter }) => (
                     <div key={label} className="rounded-md bg-white flex flex-col items-center justify-center py-1.5 gap-0.5" style={{ border: '1px solid #eee' }}>
                       <div className="flex items-center justify-center rounded" style={{ width: 14, height: 14, background: color }}>
-                        <span style={{ fontSize: '7px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{letter}</span>
+                        <span style={{ fontSize: '7px', fontWeight: 600, color: '#fff', lineHeight: 1 }}>{letter}</span>
                       </div>
                       <span style={{ fontSize: '5px', color: '#555', textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
                     </div>
@@ -281,8 +281,8 @@ const MP_STEPS: Step[] = [
 
             {/* Botones */}
             <div className="flex items-center justify-end gap-2 pt-0.5">
-              <span style={{ fontSize: '7px', color: '#3483FA', fontWeight: 500 }}>Volver</span>
-              <div className="rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 700, color: '#fff' }}>Continuar</div>
+              <span style={{ fontSize: '7px', color: '#3483FA', fontWeight: 600 }}>Volver</span>
+              <div className="rounded px-3 py-1" style={{ background: '#3483FA', fontSize: '7px', fontWeight: 600, color: '#fff' }}>Continuar</div>
             </div>
           </div>
         </div>
@@ -304,7 +304,7 @@ const MP_STEPS: Step[] = [
           <div className="flex items-center justify-between px-3 py-1.5" style={{ background: '#FFE600' }}>
             <div className="flex items-center gap-1.5">
               <MpLogoMock />
-              <span style={{ fontSize: '7px', fontWeight: 700, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
+              <span style={{ fontSize: '7px', fontWeight: 600, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
               <span style={{ fontSize: '6px', color: '#666', lineHeight: 1, marginLeft: '2px' }}>| Developers</span>
             </div>
             <span style={{ fontSize: '6px', color: '#444' }}>Tu cuenta ▾</span>
@@ -312,25 +312,25 @@ const MP_STEPS: Step[] = [
           <div className="flex" style={{ background: '#F5F5F5', minHeight: '110px' }}>
             <div className="shrink-0 py-2 px-2.5 space-y-2.5" style={{ width: '110px', background: '#fff', borderRight: '1px solid #eee' }}>
               <div>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRUEBAS</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRUEBAS</p>
                 {['Credenciales de prueba', 'Cuentas de prueba', 'Tarjetas de prueba'].map(item => (
                   <p key={item} style={{ fontSize: '6.5px', color: '#555', padding: '1.5px 0' }}>{item}</p>
                 ))}
               </div>
               <div>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>NOTIFICACIONES</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>NOTIFICACIONES</p>
                 {['Webhooks', 'IPN'].map(item => (
                   <p key={item} style={{ fontSize: '6.5px', color: '#555', padding: '1.5px 0' }}>{item}</p>
                 ))}
               </div>
               <div>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRODUCCIÓN</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRODUCCIÓN</p>
                 <div className="mp-sidebar-highlight flex items-center gap-1 rounded" style={{ background: '#EBF3FF', padding: '2.5px 4px' }}>
-                  <p style={{ fontSize: '6.5px', color: '#3483FA', fontWeight: 700 }}>Credenciales de producción</p>
+                  <p style={{ fontSize: '6.5px', color: '#3483FA', fontWeight: 600 }}>Credenciales de producción</p>
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>EVALUACIÓN</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>EVALUACIÓN</p>
                 {['Información de integración', 'Calidad de integración'].map(item => (
                   <p key={item} style={{ fontSize: '6.5px', color: '#555', padding: '1.5px 0' }}>{item}</p>
                 ))}
@@ -339,8 +339,8 @@ const MP_STEPS: Step[] = [
             <div className="flex-1 p-3 space-y-1.5">
               <p style={{ fontSize: '7px', color: '#aaa' }}>4 tareas pendientes</p>
               <div className="flex items-center justify-between">
-                <p style={{ fontSize: '8.5px', fontWeight: 700, color: '#1a1a1a' }}>Realizar integración</p>
-                <div className="rounded px-2 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 700, color: '#fff' }}>Comenzar ›</div>
+                <p style={{ fontSize: '8.5px', fontWeight: 600, color: '#1a1a1a' }}>Realizar integración</p>
+                <div className="rounded px-2 py-0.5" style={{ background: '#3483FA', fontSize: '6px', fontWeight: 600, color: '#fff' }}>Comenzar ›</div>
               </div>
               {['Probar la integración', 'Salir a producción'].map(item => (
                 <div key={item} className="flex items-center justify-between rounded" style={{ background: '#fff', padding: '4px 6px' }}>
@@ -378,7 +378,7 @@ const MP_STEPS: Step[] = [
           <div className="flex items-center justify-between px-3 py-1.5" style={{ background: '#FFE600' }}>
             <div className="flex items-center gap-1.5">
               <MpLogoMock />
-              <span style={{ fontSize: '7px', fontWeight: 700, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
+              <span style={{ fontSize: '7px', fontWeight: 600, color: '#333', letterSpacing: '-0.02em', lineHeight: 1 }}>mercado pago</span>
               <span style={{ fontSize: '6px', color: '#666', lineHeight: 1, marginLeft: '2px' }}>| Developers</span>
             </div>
             <span style={{ fontSize: '6px', color: '#444' }}>Tu cuenta ▾</span>
@@ -386,44 +386,44 @@ const MP_STEPS: Step[] = [
           <div className="flex" style={{ background: '#F5F5F5' }}>
             <div className="shrink-0 py-2 px-2.5 space-y-2" style={{ width: '90px', background: '#fff', borderRight: '1px solid #eee' }}>
               <div>
-                <p style={{ fontSize: '7px', fontWeight: 700, color: '#1a1a1a' }}>testeo4 ›</p>
+                <p style={{ fontSize: '7px', fontWeight: 600, color: '#1a1a1a' }}>testeo4 ›</p>
                 <p style={{ fontSize: '5.5px', color: '#999', marginTop: '1px' }}>Integración con CódigoQR</p>
               </div>
               <p style={{ fontSize: '6px', color: '#555' }}>Configuración de la aplicación</p>
               <div style={{ borderTop: '1px solid #eee', paddingTop: '6px' }}>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRUEBAS</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRUEBAS</p>
                 {['Credenciales de prueba', 'Cuentas de prueba'].map(item => (
                   <p key={item} style={{ fontSize: '6px', color: '#555', padding: '1px 0' }}>{item}</p>
                 ))}
               </div>
               <div>
-                <p style={{ fontSize: '5.5px', fontWeight: 700, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRODUCCIÓN</p>
+                <p style={{ fontSize: '5.5px', fontWeight: 600, color: '#999', letterSpacing: '0.04em', marginBottom: '3px' }}>PRODUCCIÓN</p>
                 <p style={{ fontSize: '6px', color: '#3483FA', fontWeight: 600 }}>Credenciales de producción</p>
               </div>
             </div>
             <div className="flex-1 px-3 py-2.5 space-y-1.5">
-              <p style={{ fontSize: '9px', fontWeight: 700, color: '#1a1a1a' }}>Credenciales de producción</p>
+              <p style={{ fontSize: '9px', fontWeight: 600, color: '#1a1a1a' }}>Credenciales de producción</p>
               <p style={{ fontSize: '5.5px', color: '#666', marginBottom: '6px', lineHeight: 1.4 }}>Las credenciales <strong>sirven para recibir pagos reales</strong>.</p>
               <div className="rounded-lg px-2.5 py-1.5" style={{ background: '#fff', border: '1px solid #eee' }}>
                 <p style={{ fontSize: '6px', color: '#888', marginBottom: '2px' }}>Public Key</p>
-                <p style={{ fontSize: '5.5px', color: '#333', fontFamily: 'monospace' }}>APP_USR-635dba9b···</p>
+                <p style={{ fontSize: '5.5px', color: '#333', fontFamily: 'var(--font-geist-mono), monospace' }}>APP_USR-635dba9b···</p>
               </div>
               <div className="rounded-lg px-2.5 py-1.5" style={{ background: '#EBF3FF', border: '1.5px solid #3483FA' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <p style={{ fontSize: '6px', fontWeight: 700, color: '#3483FA' }}>Access Token</p>
+                    <p style={{ fontSize: '6px', fontWeight: 600, color: '#3483FA' }}>Access Token</p>
                     <svg width="8" height="8" viewBox="0 0 14 10" fill="none"><path d="M1 5C2.5 2 4.5 1 7 1s4.5 1 6 4c-1.5 3-3.5 4-6 4S2.5 8 1 5z" stroke="#3483FA" strokeWidth="1.3"/><circle cx="7" cy="5" r="1.8" stroke="#3483FA" strokeWidth="1.3"/></svg>
                   </div>
                   <div className="mp-copy-btn rounded" style={{ background: '#3483FA', padding: '2px 5px', display: 'flex', alignItems: 'center', gap: '2px' }}>
                     <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="#fff" strokeWidth="1.2"/><path d="M1 7V2a1 1 0 011-1h5" stroke="#fff" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                    <span style={{ fontSize: '5.5px', color: '#fff', fontWeight: 700 }}>Copiar</span>
+                    <span style={{ fontSize: '5.5px', color: '#fff', fontWeight: 600 }}>Copiar</span>
                   </div>
                 </div>
-                <p style={{ fontSize: '5.5px', color: '#999', fontFamily: 'monospace', marginTop: '2px', letterSpacing: '0.5px' }}>••••••••••••••••••••••••••••••••</p>
+                <p style={{ fontSize: '5.5px', color: '#999', fontFamily: 'var(--font-geist-mono), monospace', marginTop: '2px', letterSpacing: '0.5px' }}>••••••••••••••••••••••••••••••••</p>
               </div>
               <div className="rounded-lg px-2.5 py-1.5" style={{ background: '#fff', border: '1px solid #eee' }}>
                 <p style={{ fontSize: '6px', color: '#888', marginBottom: '2px' }}>Client ID</p>
-                <p style={{ fontSize: '5.5px', color: '#333', fontFamily: 'monospace' }}>750377788699931</p>
+                <p style={{ fontSize: '5.5px', color: '#333', fontFamily: 'var(--font-geist-mono), monospace' }}>750377788699931</p>
               </div>
             </div>
           </div>
@@ -466,7 +466,7 @@ function MpStepper({
 
       <div className="rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-5 pt-5 pb-4 min-h-[140px] flex flex-col gap-3">
-          <p className="text-xs font-medium text-gray-400">Paso {current + 1} de {total}</p>
+          <p className="text-xs font-semibold text-gray-400">Paso {current + 1} de {total}</p>
 
           {isLast ? (
             <div className="space-y-1">
@@ -487,7 +487,7 @@ function MpStepper({
         <div className="px-5 pb-5 flex items-center gap-2">
           {current > 0 && (
             <button type="button" onClick={() => setCurrent(v => v - 1)}
-              className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
               <ChevronLeft size={13} aria-hidden />Anterior
             </button>
           )}
@@ -681,12 +681,12 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
             <div className="flex items-center gap-2.5">
               <CheckCircle2 size={16} className="text-green-600 shrink-0" aria-hidden />
               <div>
-                <p className="text-sm font-medium text-green-800">Cuenta conectada</p>
+                <p className="text-sm font-semibold text-green-800">Cuenta conectada</p>
                 <p className="text-xs text-green-600 mt-0.5">Los pagos van a tu cuenta de Mercado Pago</p>
               </div>
             </div>
             <button type="button" onClick={() => setConfirmDisconnect(true)} disabled={saving}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-600 disabled:opacity-40 shrink-0 transition-colors">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-600 disabled:opacity-40 shrink-0 transition-colors">
               <Trash2 size={13} aria-hidden />Desconectar
             </button>
           </div>
@@ -694,7 +694,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
           <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">Tarjeta en el sitio</p>
+                <p className="text-sm font-semibold text-gray-900">Tarjeta en el sitio</p>
                 <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                   Débito o crédito en la página, sin cuenta de Mercado Pago. Pegá la Public Key de la misma aplicación y activala con el switch: hasta entonces el comprador no la ve. Checkout Pro sigue disponible.
                 </p>
@@ -719,9 +719,9 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
             </div>
             {event.has_mp_public_key && (
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-medium text-green-700">Clave pública guardada</p>
+                <p className="text-xs font-semibold text-green-700">Clave pública guardada</p>
                 <button type="button" onClick={() => void handleRemovePublicKey()} disabled={saving}
-                  className="text-xs font-medium text-red-400 hover:text-red-600 disabled:opacity-40">
+                  className="text-xs font-semibold text-red-400 hover:text-red-600 disabled:opacity-40">
                   Quitar
                 </button>
               </div>
@@ -744,7 +744,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
           {/* Acordeón reemplazar */}
           <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
             <button type="button" onClick={() => setReplaceOpen(v => !v)}
-              className="w-full flex items-center justify-between gap-2 px-5 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              className="w-full flex items-center justify-between gap-2 px-5 py-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
               <span>Reemplazar token</span>
               <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${replaceOpen ? 'rotate-180' : ''}`} aria-hidden />
             </button>
@@ -777,7 +777,7 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
         </p>
         <div className="flex flex-col-reverse sm:flex-row gap-3">
           <button type="button" onClick={() => setConfirmDisconnect(false)}
-            className="flex-1 rounded-full border border-gray-200 text-sm font-medium py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+            className="flex-1 rounded-full border border-gray-200 text-sm font-semibold py-3 text-gray-700 hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
           <button type="button" onClick={() => void handleRemoveToken()}

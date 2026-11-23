@@ -21,7 +21,7 @@ import type { Order } from '@/types'
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] font-medium uppercase tracking-wider text-gray-400">{label}</dt>
+      <dt className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{label}</dt>
       <dd className="mt-0.5 break-words text-[14px] text-gray-900">{value}</dd>
     </div>
   )
@@ -126,7 +126,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
               type="button"
               onClick={() => void toggleResolved()}
               disabled={updatingStatus}
-              className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+              className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
             >
               {regret.status === 'pending' ? 'Marcar como gestionado' : 'Volver a pendiente'}
             </button>
@@ -150,7 +150,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- URL remota de Storage */}
               <img src={regret.screenshotUrl} alt="Screenshot de confirmación de compra" className="max-h-[260px] w-full object-cover object-top" />
-              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-gray-700 shadow-sm">
+              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm">
                 <ExternalLink size={11} aria-hidden /> Ampliar
               </span>
             </a>
@@ -159,7 +159,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
           <section>
             <h2 className="mb-1 text-[15px] font-semibold text-gray-900">Pedidos asociados</h2>
             <p className="mb-3 text-[13px] text-gray-500">
-              Pedidos de este evento hechos con <span className="font-medium text-gray-700">{regret.email}</span>.
+              Pedidos de este evento hechos con <span className="font-semibold text-gray-700">{regret.email}</span>.
             </p>
 
             {orders.length === 0 ? (
@@ -181,7 +181,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
                           <span className="text-[14px] font-semibold text-gray-900">
                             Pedido #{o.orderNumber ?? '—'}
                           </span>
-                          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium', st.badge)}>
+                          <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold', st.badge)}>
                             <span className={cn('size-1.5 rounded-full', st.dot)} aria-hidden />
                             {st.label}
                           </span>
@@ -202,7 +202,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
                             setCancelError('')
                             setToCancel(o)
                           }}
-                          className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50"
+                          className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50"
                         >
                           Cancelar QR
                         </button>
@@ -243,7 +243,7 @@ export function RegretDetailView({ eventId, regretId }: { eventId: string; regre
                 type="button"
                 onClick={() => setToCancel(null)}
                 disabled={cancelling}
-                className="rounded-xl px-4 py-2 text-[14px] font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60"
+                className="rounded-xl px-4 py-2 text-[14px] font-semibold text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60"
               >
                 Volver
               </button>

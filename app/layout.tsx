@@ -1,20 +1,16 @@
 import type { Metadata, Viewport } from 'next'
-import { Bricolage_Grotesque, DM_Sans, Inter } from 'next/font/google'
+import { Bricolage_Grotesque, Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL, resolveMetadataBase } from '@/lib/seo'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-dm-sans',
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-})
+// Geist es la tipografía de toda la app; Bricolage Grotesque queda solo para el wordmark del logo.
+const geist = Geist({ subsets: ['latin'], display: 'swap', variable: '--font-geist-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-geist-mono' })
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-bricolage',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['700', '800'], // solo el wordmark del logo
 })
 
 export const metadata: Metadata = {
@@ -119,8 +115,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // ORG_JSONLD is a static string built from a hardcoded object — safe for script injection
   const jsonLdHtml = { __html: ORG_JSONLD }
   return (
-    <html lang="es" className={`${dmSans.variable} ${bricolage.variable}`}>
-      <body className={`${inter.className} font-system bg-gray-50 text-gray-900`}>
+    <html lang="es" className={`${geist.variable} ${geistMono.variable} ${bricolage.variable}`}>
+      <body className="font-sans antialiased bg-gray-50 text-gray-900">
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdHtml} />
         {children}
       </body>

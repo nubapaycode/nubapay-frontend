@@ -137,6 +137,12 @@ function paintSheen() {
 }
 
 /** Vidrio trasero esmerilado (grano fino) con el logo donde el original lleva el suyo. */
+/** Familia del wordmark (Bricolage Grotesque, la grotesca del logo); si no está, la del contenedor */
+function logoFont(host: HTMLElement) {
+  const style = getComputedStyle(host)
+  return style.getPropertyValue('--font-bricolage').trim() || style.fontFamily
+}
+
 function paintBack(font: string) {
   const c = document.createElement('canvas')
   c.width = 512
@@ -371,7 +377,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
 
       /* ── Espalda, tomada de las fotos de Apple: vidrio esmerilado, meseta de vidrio pulido con
          canto suave, tres lentes con aro de titanio alto y biselado, flash, LiDAR y micrófono ── */
-      const backTex = keep(new T.CanvasTexture(paintBack(getComputedStyle(host).fontFamily)))
+      const backTex = keep(new T.CanvasTexture(paintBack(logoFont(host))))
       backTex.colorSpace = T.SRGBColorSpace
       const backGlass = new T.Mesh(glassGeo, keep(new T.MeshPhysicalMaterial({ map: backTex, roughness: 0.62, clearcoat: 0.25, clearcoatRoughness: 0.7 })))
       backGlass.rotation.y = Math.PI

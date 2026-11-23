@@ -7,7 +7,7 @@
 .lv2-ab-hero-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 56px; }
 .lv2-ab-hero-row.lv2-fade-up { transform: translateY(24px); }
 .lv2-ab-hero-row p { margin: 0; max-width: 540px; font-size: 19px; line-height: 1.65; color: var(--lv-muted); }
-.lv2-ab-hero-row strong { color: var(--lv-ink); font-weight: 500; }
+.lv2-ab-hero-row strong { color: var(--lv-ink); font-weight: 600; }
 
 .lv2-ab-band {
   position: relative; margin: 0; height: clamp(340px, 50vw, 640px); border-radius: 36px; overflow: hidden;
@@ -22,7 +22,7 @@
 .lv2-ab-band-cap { position: absolute; left: 24px; right: 24px; bottom: 24px; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
 .lv2-ab-chip {
   display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 100px;
-  font-size: 13px; font-weight: 500; color: #fff; background: rgba(10, 10, 15, 0.42);
+  font-size: 13px; font-weight: 600; color: #fff; background: rgba(10, 10, 15, 0.42);
   backdrop-filter: blur(16px) saturate(1.6);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
@@ -35,7 +35,7 @@
   font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--lv-muted);
 }
 .lv2-ab-statement {
-  margin: 0; font-size: clamp(30px, 3.7vw, 56px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.12; color: var(--lv-ink);
+  margin: 0; font-size: clamp(30px, 3.7vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.12; color: var(--lv-ink);
 }
 /* "las filas." tachado con un trazo lima que se dibuja al llegar */
 .lv2-ab-strike { position: relative; display: inline-block; }
@@ -62,7 +62,7 @@
 .lv2-ab-founder:hover .lv2-ab-photo img { filter: none; transform: scale(1.05); }
 .lv2-ab-role {
   position: absolute; top: 14px; left: 14px; z-index: 1; display: inline-flex; align-items: center; height: 32px; padding: 0 14px;
-  border-radius: 100px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--lv-ink);
+  border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--lv-ink);
   background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 24px -8px rgba(10, 10, 15, 0.25);
   transition: background 0.4s ease;
@@ -70,12 +70,12 @@
 .lv2-ab-founder:hover .lv2-ab-role { background: var(--lv-lime); color: var(--lv-lime-fg); }
 .lv2-ab-founder-body { display: flex; flex-direction: column; flex: 1; padding: 22px 16px 14px; }
 .lv2-ab-founder h3 { margin: 0 0 4px; font-size: 26px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.1; }
-.lv2-ab-title { margin: 0 0 14px; font-size: 13px; font-weight: 500; color: var(--lv-faint); }
+.lv2-ab-title { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--lv-faint); }
 .lv2-ab-bio { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--lv-muted); }
 .lv2-ab-links { display: flex; gap: 8px; margin-top: auto; padding-top: 22px; }
 .lv2-root .lv2-ab-link {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 100px;
-  border: 1px solid rgba(0, 0, 0, 0.12); background: #fff; font-size: 13px; font-weight: 500; color: var(--lv-ink); text-decoration: none;
+  border: 1px solid rgba(0, 0, 0, 0.12); background: #fff; font-size: 13px; font-weight: 600; color: var(--lv-ink); text-decoration: none;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .lv2-root .lv2-ab-link:hover { background: var(--lv-ink); border-color: var(--lv-ink); color: #fff; }
@@ -95,11 +95,11 @@
 .lv2-ab-pr:hover { padding-left: 8px; }
 .lv2-ab-pr-num {
   grid-row: span 2; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
-  background: #F4F4F6; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: #F4F4F6; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
   transition: background 0.4s ease, transform 0.5s var(--lv-ease);
 }
 .lv2-ab-pr:hover .lv2-ab-pr-num { background: var(--lv-lime); transform: scale(1.08) rotate(-6deg); }
-.lv2-ab-pr h3 { margin: 0; padding-top: 10px; font-size: clamp(24px, 2.2vw, 32px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; }
+.lv2-ab-pr h3 { margin: 0; padding-top: 10px; font-size: clamp(24px, 2.2vw, 32px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.1; }
 .lv2-ab-pr p { margin: 0; max-width: 540px; font-size: 16px; line-height: 1.7; color: var(--lv-muted); }
 
 /* ── Responsive ── */

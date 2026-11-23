@@ -374,7 +374,7 @@ const CSS = `
   /* Etiqueta que se ve en la franja de los pases de atrás */
   .nb-pass-peek {
     position: absolute; top: 5px; left: 22px;
-    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; line-height: 12px;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; line-height: 12px;
     opacity: 0;
   }
   .nb-pass--back .nb-pass-peek { opacity: 1; }
@@ -492,7 +492,7 @@ const CSS = `
   .nb-contact-copy-done .nb-contact-check-icon { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .nb-contact-toast {
     position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translate(-50%, 6px) scale(0.96);
-    background: #FFFFFF; color: #0A0A0F; font-size: 12px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+    background: #FFFFFF; color: #0A0A0F; font-size: 12px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
     padding: 6px 12px; border-radius: 100px; border: 1px solid rgba(0,0,0,0.06);
     box-shadow: 0 6px 20px rgba(10,10,15,0.08), 0 1px 3px rgba(10,10,15,0.06);
     pointer-events: none; opacity: 0; filter: blur(2px);
@@ -511,7 +511,7 @@ const CSS = `
 
 const S = {
   root: {
-    fontFamily: 'var(--font-bricolage, "Bricolage Grotesque", "DM Sans", sans-serif)',
+    fontFamily: 'var(--font-geist-sans), sans-serif',
     background: '#FFFFFF',
     color: '#0A0A0F',
     minHeight: '100vh',
@@ -654,7 +654,7 @@ export function LandingPage() {
           <div className="nb-hero-grid" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
             <div style={{ maxWidth: '1120px', margin: '0 auto', textAlign: 'center' }}>
               <h1 className="nb-hero-h1 nb-h1-in" style={{ fontSize: 'clamp(52px, 6.5vw, 82px)', lineHeight: '1.1', letterSpacing: '-0.035em', margin: '0 auto 26px', textAlign: 'center', maxWidth: 'none' }}>
-                <span style={{ fontWeight: 700, color: '#000000' }}>
+                <span style={{ fontWeight: 600, color: '#000000' }}>
                   <span style={{ whiteSpace: 'nowrap' }}>Más ventas</span>,{' '}
                   <span style={{ whiteSpace: 'nowrap' }}>menos filas</span>,{' '}
                   <span style={{ whiteSpace: 'nowrap' }}><span className="nb-marker-line nb-marker-draw">mejores eventos.</span></span>
@@ -704,7 +704,7 @@ export function LandingPage() {
             <div className="nb-ticker-track">
               {[...TICKER, ...TICKER, ...TICKER].map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '0 20px', whiteSpace: 'nowrap' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#000000', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{item}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#000000', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{item}</span>
                   <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#8CC800' }} />
                 </div>
               ))}
@@ -715,7 +715,7 @@ export function LandingPage() {
         {/* ─── HOW IT WORKS ─── */}
         <section id="como-funciona" className="nb-howit-section" style={{ padding: '120px 40px', maxWidth: '1280px', margin: '0 auto' }}>
           <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '72px' }}>
-            <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+            <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
               Del escaneo<br />al retiro.
             </h2>
             <p className="nb-steps-sub" style={{ maxWidth: '360px', color: '#000000', fontSize: '20px', lineHeight: '1.7', textAlign: 'right', marginBottom: '4px' }}>
@@ -728,7 +728,7 @@ export function LandingPage() {
             {/* 01 — Escaneá (chica, arriba izq) */}
             <div className="nb-reveal nb-step-card nb-bento-a" style={{ gridArea: 'a', background: '#FAFAFA', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '26px 24px', display: 'flex', flexDirection: 'column' }}>
               <StepNum n="01" />
-              <h3 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', margin: '16px 0 8px 0', color: '#0A0A0F' }}>Escaneá el QR</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '-0.02em', margin: '16px 0 8px 0', color: '#0A0A0F' }}>Escaneá el QR</h3>
               <p style={{ fontSize: '13px', lineHeight: '1.65', margin: 0, color: '#9A9AA8' }}>Entrás al menú digital del evento desde tu celular. Sin app, sin cuenta.</p>
               <div aria-hidden="true" style={{ flex: 1, paddingTop: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div className="nb-pop nb-scanbox nb-prev" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', padding: '14px', animationDelay: '0.2s' }}>
@@ -741,19 +741,19 @@ export function LandingPage() {
             {/* 02 — Pedí (chica, arriba der) */}
             <div className="nb-reveal nb-step-card nb-bento-b" style={{ gridArea: 'b', background: '#FAFAFA', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '26px 24px', display: 'flex', flexDirection: 'column', transitionDelay: '0.12s' }}>
               <StepNum n="02" />
-              <h3 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', margin: '16px 0 8px 0', color: '#0A0A0F' }}>Elegí y pedí</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '-0.02em', margin: '16px 0 8px 0', color: '#0A0A0F' }}>Elegí y pedí</h3>
               <p style={{ fontSize: '13px', lineHeight: '1.65', margin: 0, color: '#9A9AA8' }}>Navegás el catálogo, agregás al carrito y confirmás en segundos.</p>
               <div aria-hidden="true" style={{ marginTop: 'auto', paddingTop: '22px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {[['Birra artesanal', '$3.500'], ['Hamburguesa', '$8.000']].map(([name, price], idx) => (
                   <div key={name} className="nb-pop nb-prev" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', padding: '9px 11px', animationDelay: `${0.2 + idx * 0.1}s` }}>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#0A0A0F' }}>{name}</span>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#0A0A0F' }}>{price}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#0A0A0F' }}>{price}</span>
                   </div>
                 ))}
                 <div className="nb-pop" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#0A0A0F', borderRadius: '10px', padding: '9px', marginTop: '2px', animationDelay: '0.4s' }}>
                   <svg width="13" height="13" viewBox="0 0 22 22" fill="none"><path d="M3 3h2l2.5 10h9l2-7H7" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/><circle cx="10" cy="19" r="1.4" fill="#FFFFFF"/><circle cx="17" cy="19" r="1.4" fill="#FFFFFF"/></svg>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF' }}>Agregar al carrito</span>
-                  <span className="nb-pop" style={{ position: 'absolute', top: '-7px', right: '-7px', width: '19px', height: '19px', borderRadius: '50%', background: '#C6FF00', color: '#0A0F00', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FAFAFA', animationDelay: '0.6s' }}>2</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#FFFFFF' }}>Agregar al carrito</span>
+                  <span className="nb-pop" style={{ position: 'absolute', top: '-7px', right: '-7px', width: '19px', height: '19px', borderRadius: '50%', background: '#C6FF00', color: '#0A0F00', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FAFAFA', animationDelay: '0.6s' }}>2</span>
                 </div>
               </div>
             </div>
@@ -762,7 +762,7 @@ export function LandingPage() {
             <div className="nb-reveal nb-step-card nb-bento-c" style={{ gridArea: 'c', background: '#FAFAFA', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '20px', padding: '28px 26px', display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap', transitionDelay: '0.24s' }}>
               <div style={{ maxWidth: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <StepNum n="03" />
-                <h3 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', margin: '14px 0 8px 0', color: '#0A0A0F' }}>Pagá online</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '-0.02em', margin: '14px 0 8px 0', color: '#0A0A0F' }}>Pagá online</h3>
                 <p style={{ fontSize: '13px', lineHeight: '1.65', margin: 0, color: '#9A9AA8' }}>MercadoPago, transferencia o efectivo. 100% desde el celular, sin billetera.</p>
               </div>
               <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', flex: '1', minWidth: '220px' }}>
@@ -771,13 +771,13 @@ export function LandingPage() {
                     <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path className="nb-check-draw" d="M1 5l3 3 7-7" stroke="#16A34A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A0A0F' }}>Pago confirmado</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#0A0A0F' }}>Pago confirmado</div>
                     <div style={{ fontSize: '10px', color: '#9A9AA8' }}>$38.000 · MercadoPago</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {['MercadoPago', 'Transferencia', 'Efectivo'].map((m, idx) => (
-                    <span key={m} className="nb-pop" style={{ flex: 1, textAlign: 'center', fontSize: '10px', fontWeight: 700, color: '#0A0A0F', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', padding: '9px 0', animationDelay: `${0.35 + idx * 0.07}s` }}>{m}</span>
+                    <span key={m} className="nb-pop" style={{ flex: 1, textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#0A0A0F', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', padding: '9px 0', animationDelay: `${0.35 + idx * 0.07}s` }}>{m}</span>
                   ))}
                 </div>
               </div>
@@ -786,20 +786,20 @@ export function LandingPage() {
             {/* 04 — Retirá (grande, lime, derecha) */}
             <div className="nb-reveal nb-step-card nb-step-card-hl nb-bento-d" style={{ gridArea: 'd', background: '#C6FF00', borderRadius: '20px', padding: '32px 30px', display: 'flex', flexDirection: 'column', transitionDelay: '0.36s' }}>
               <StepNum n="04" lime />
-              <h3 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.025em', margin: '16px 0 8px 0', color: '#0A0F00' }}>Retirá sin fila</h3>
+              <h3 style={{ fontSize: '24px', fontWeight: 600, letterSpacing: '-0.025em', margin: '16px 0 8px 0', color: '#0A0F00' }}>Retirá sin fila</h3>
               <p style={{ fontSize: '14px', lineHeight: '1.6', margin: 0, color: 'rgba(10,15,0,0.62)' }}>Mostrás el QR en el punto de retiro y te entregan el pedido al instante.</p>
               <div aria-hidden="true" style={{ marginTop: 'auto', paddingTop: '28px' }}>
                 <div className="nb-pop nb-prev" style={{ background: '#FFFFFF', borderRadius: '18px', padding: '22px', boxShadow: '0 12px 32px rgba(10,15,0,0.12)', animationDelay: '0.3s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>Retiro QR</span>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#5A8A00', background: 'rgba(198,255,0,0.25)', border: '1px solid rgba(198,255,0,0.5)', padding: '3px 9px', borderRadius: '100px' }}>Listo</span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.01em' }}>Retiro QR</span>
+                    <span style={{ fontSize: '9px', fontWeight: 600, color: '#5A8A00', background: 'rgba(198,255,0,0.25)', border: '1px solid rgba(198,255,0,0.5)', padding: '3px 9px', borderRadius: '100px' }}>Listo</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
                     <QRPattern value="https://nubapay.com/r/NB-0049" size={118} />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                    <span style={{ color: '#9A9AA8', fontFamily: 'monospace' }}>#NB-0049</span>
-                    <span style={{ color: '#5A8A00', fontWeight: 700 }}><CountdownPill /></span>
+                    <span style={{ color: '#9A9AA8', fontFamily: 'var(--font-geist-mono), monospace' }}>#NB-0049</span>
+                    <span style={{ color: '#5A8A00', fontWeight: 600 }}><CountdownPill /></span>
                   </div>
                 </div>
               </div>
@@ -821,11 +821,11 @@ export function LandingPage() {
             ].map(({ icon, prefix, to, suffix, label, sub }) => (
               <div key={label} className="nb-stats-item" style={{ padding: '0 40px', position: 'relative' }}>
                 <div aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(10,15,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '22px' }}>{icon}</div>
-                <div className="nb-stat-num" style={{ fontSize: 'clamp(40px, 3.5vw, 62px)', fontWeight: 900, color: '#0A0F00', letterSpacing: '-0.055em', lineHeight: '1', marginBottom: '12px' }}>
+                <div className="nb-stat-num" style={{ fontSize: 'clamp(40px, 3.5vw, 62px)', fontWeight: 600, color: '#0A0F00', letterSpacing: '-0.055em', lineHeight: '1', marginBottom: '12px' }}>
                   <CountUp to={to} prefix={prefix} suffix={suffix} duration={1800} />
                 </div>
-                <div style={{ fontSize: '13px', color: 'rgba(10,15,0,0.7)', lineHeight: '1.5', fontWeight: 500, marginBottom: '6px' }}>{label}</div>
-                <div style={{ fontSize: '11px', color: 'rgba(10,15,0,0.5)', fontWeight: 500, letterSpacing: '0.02em' }}>{sub}</div>
+                <div style={{ fontSize: '13px', color: 'rgba(10,15,0,0.7)', lineHeight: '1.5', fontWeight: 600, marginBottom: '6px' }}>{label}</div>
+                <div style={{ fontSize: '11px', color: 'rgba(10,15,0,0.5)', fontWeight: 600, letterSpacing: '0.02em' }}>{sub}</div>
               </div>
             ))}
           </div>
@@ -836,8 +836,8 @@ export function LandingPage() {
 
           <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '64px' }}>
             <div>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 16px 0' }}>Caso real</p>
-              <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 16px 0' }}>Caso real</p>
+              <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
                 Menos filas,<br /><span className="nb-marker-line">más ventas.</span>
               </h2>
             </div>
@@ -860,14 +860,14 @@ export function LandingPage() {
                   ? <LandiaVideo src={src} label={alt} />
                   : <img className="nb-landia-media" src={src} alt={alt} loading="lazy" />}
                 <div aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 1, padding: '44px 16px 16px', background: 'linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0))' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.01em', marginBottom: '3px' }}>{title}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', letterSpacing: '-0.01em', marginBottom: '3px' }}>{title}</div>
                   <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.4' }}>{sub}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="nb-reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '48px', fontSize: '13px', color: S.faint, fontWeight: 500 }}>
+          <div className="nb-reveal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '48px', fontSize: '13px', color: S.faint, fontWeight: 600 }}>
             <svg aria-hidden="true" width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1.5a4.5 4.5 0 014.5 4.5c0 3.2-4.5 6.5-4.5 6.5S2.5 9.2 2.5 6A4.5 4.5 0 017 1.5z" stroke="#8CC800" strokeWidth="1.4"/><circle cx="7" cy="6" r="1.6" stroke="#8CC800" strokeWidth="1.4"/></svg>
             Material real del evento | Landia, Córdoba
           </div>
@@ -878,7 +878,7 @@ export function LandingPage() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram de Landia (@landia_ar)"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: S.muted, textDecoration: 'none', fontSize: '13px', fontWeight: 500, transition: 'color 0.15s' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: S.muted, textDecoration: 'none', fontSize: '13px', fontWeight: 600, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.color = S.faint)}
               onMouseLeave={e => (e.currentTarget.style.color = S.muted)}
             >
@@ -898,7 +898,7 @@ export function LandingPage() {
           <div className="nb-reveal nb-blockchain-grid" style={{ background: '#0A0A0F', borderRadius: '36px', overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'stretch' }}>
             <div style={{ position: 'absolute', top: '-20%', left: '20%', width: '60%', height: '80%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
             <div className="nb-blockchain-left" style={{ padding: '80px', position: 'relative', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-              <h2 style={{ fontSize: 'clamp(38px, 3.2vw, 54px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 24px 0', color: '#FFFFFF' }}>
+              <h2 style={{ fontSize: 'clamp(38px, 3.2vw, 54px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 24px 0', color: '#FFFFFF' }}>
                 Cada QR,<br />certificado en<br />
                 <span className="nb-marker-line">blockchain.</span>
               </h2>
@@ -914,7 +914,7 @@ export function LandingPage() {
                   <div key={label} className="nb-bc-feat" style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(198,255,0,0.08)', border: '1px solid rgba(198,255,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '2px' }}>{label}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', marginBottom: '2px' }}>{label}</div>
                       <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>{sub}</div>
                     </div>
                   </div>
@@ -939,7 +939,7 @@ export function LandingPage() {
                     </div>
                     <div style={{ paddingBottom: i < arr.length - 1 ? '12px' : '0', paddingTop: '2px' }}>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF', marginBottom: '3px' }}>{step}</div>
-                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-geist-mono), monospace' }}>
                         {detail.includes('…') ? <ScrambleText value={detail} delay={(0.15 + i * 0.28) * 1000 + 250} /> : detail}
                       </div>
                     </div>
@@ -955,8 +955,8 @@ export function LandingPage() {
 
           <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '64px' }}>
             <div>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 16px 0' }}>Más que consumos</p>
-              <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 16px 0' }}>Más que consumos</p>
+              <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
                 Entradas, parking<br />y <span className="nb-marker-line" style={{ marginLeft: '-0.12em' }}>mucho más.</span>
               </h2>
             </div>
@@ -976,7 +976,7 @@ export function LandingPage() {
         <section id="eventos" className="nb-eventos-section" style={{ padding: '0 40px 120px', maxWidth: '1280px', margin: '0 auto' }}>
 
           <div className="nb-reveal nb-steps-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '72px' }}>
-            <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
+            <h2 style={{ fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.92', margin: 0, color: '#0A0A0F' }}>
               Para cada<br />tipo de evento.
             </h2>
             <p className="nb-steps-sub" style={{ maxWidth: '380px', color: S.muted, fontSize: '16px', lineHeight: '1.75', textAlign: 'right', marginBottom: '4px' }}>
@@ -1039,9 +1039,9 @@ export function LandingPage() {
                   transitionDelay: `${i * 0.08}s`,
                 }}>
                   <div className="nb-evento-ico" aria-hidden="true" style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(10,10,15,0.04)', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '4px' }}>{icon}</div>
-                  <h3 style={{ fontSize: featured ? '22px' : '17px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', margin: 0 }}>{title}</h3>
+                  <h3 style={{ fontSize: featured ? '22px' : '17px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', margin: 0 }}>{title}</h3>
                   <p style={{ fontSize: featured ? '14px' : '13px', color: S.muted, lineHeight: '1.7', margin: 0, maxWidth: featured ? '440px' : 'none' }}>{desc}</p>
-                  <span style={{ marginTop: 'auto', paddingTop: '20px', fontSize: '12px', fontWeight: 700, letterSpacing: '-0.01em', color: '#0A0A0F' }}>
+                  <span style={{ marginTop: 'auto', paddingTop: '20px', fontSize: '12px', fontWeight: 600, letterSpacing: '-0.01em', color: '#0A0A0F' }}>
                     {stat}
                   </span>
                 </div>
@@ -1051,7 +1051,7 @@ export function LandingPage() {
 
           <div className="nb-reveal" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px', marginTop: '64px', textAlign: 'center' }}>
             <p style={{ fontSize: '16px', color: S.muted, margin: 0, maxWidth: '420px' }}>¿No ves tu tipo de evento? Lo adaptamos a lo que necesites.</p>
-            <a href="/registro" className="nb-bc-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 22px', height: '52px', boxSizing: 'border-box', borderRadius: '100px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, letterSpacing: '-0.01em' }}>
+            <a href="/registro" className="nb-bc-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#C6FF00', color: '#0A0F00', padding: '0 8px 0 22px', height: '52px', boxSizing: 'border-box', borderRadius: '100px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, letterSpacing: '-0.01em' }}>
               Empezá gratis
               <span className="nb-bc-cta-arrow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', borderRadius: '100px', background: '#0A0F00' }}>
                 <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="#C6FF00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -1066,8 +1066,8 @@ export function LandingPage() {
           <div className="nb-faq-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', alignItems: 'start' }}>
 
             <div className="nb-reveal nb-faq-sticky" style={{ position: 'sticky', top: '96px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>FAQ</p>
-              <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>FAQ</p>
+              <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
                 Preguntas<br />frecuentes.
               </h2>
               <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: 0 }}>
@@ -1097,7 +1097,7 @@ export function LandingPage() {
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         gap: '16px', padding: '22px 0', background: 'none', border: 'none',
                         cursor: 'pointer', textAlign: 'left',
-                        fontFamily: "var(--font-bricolage, 'Bricolage Grotesque', 'DM Sans', sans-serif)",
+                        fontFamily: "var(--font-geist-sans), sans-serif",
                       }}
                     >
                       <span style={{ fontSize: '16px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.3' }}>{q}</span>
@@ -1135,7 +1135,7 @@ export function LandingPage() {
         <section className="nb-cta-section" style={{ padding: '0 40px 160px', maxWidth: '1280px', margin: '0 auto' }}>
           <div className="nb-reveal nb-cta-inner" style={{ background: '#0A0A0F', borderRadius: '36px', padding: '100px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
             <div className="nb-cta-glow" style={{ position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: '60%', height: '80%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.08) 0%, transparent 65%)', pointerEvents: 'none' }} />
-            <h2 style={{ fontSize: 'clamp(54px, 6.5vw, 96px)', fontWeight: 500, letterSpacing: '-0.055em', lineHeight: '0.88', margin: '0 0 28px 0', color: '#FFFFFF', maxWidth: '700px' }}>
+            <h2 style={{ fontSize: 'clamp(54px, 6.5vw, 96px)', fontWeight: 600, letterSpacing: '-0.055em', lineHeight: '0.88', margin: '0 0 28px 0', color: '#FFFFFF', maxWidth: '700px' }}>
               Tu próximo<br />evento <span className="nb-marker-line">sin cajas.</span>
             </h2>
             <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.7', margin: '0 0 52px 0', maxWidth: '440px' }}>
@@ -1152,7 +1152,7 @@ export function LandingPage() {
                 Ya tengo cuenta
               </Link>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>
               {['Sin tarjeta', 'Setup en 20 min', 'Cancelás cuando quieras'].map((t, i) => (
                 <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '14px' }}>
                   {i > 0 && <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.25)' }} />}
@@ -1189,7 +1189,7 @@ function CheckMark() {
 
 function StepNum({ n, lime = false }: { n: string; lime?: boolean }) {
   return (
-    <span style={{ display: 'block', fontSize: '30px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, color: lime ? '#0A0F00' : '#0A0A0F' }}>{n}</span>
+    <span style={{ display: 'block', fontSize: '30px', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, color: lime ? '#0A0F00' : '#0A0A0F' }}>{n}</span>
   )
 }
 
@@ -1432,7 +1432,7 @@ function EventPasses() {
       <div aria-hidden="true" style={{ position: 'absolute', top: '-30%', right: '-12%', width: '62%', height: '130%', background: 'radial-gradient(ellipse, rgba(198,255,0,0.22) 0%, transparent 62%)', pointerEvents: 'none' }} />
 
       <div style={{ position: 'relative', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <p className="nb-pass-eyebrow" style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 14px 18px' }}>Qué podés vender</p>
+        <p className="nb-pass-eyebrow" style={{ fontSize: '12px', fontWeight: 600, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 14px 18px' }}>Qué podés vender</p>
         <div ref={tabsRef} className="nb-pass-tabs" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {EVENT_PASSES.map(({ key, label, desc, icon, isNew }, i) => {
             const isActive = i === active
@@ -1440,9 +1440,9 @@ function EventPasses() {
               <button key={key} type="button" className="nb-pass-tab" aria-pressed={isActive} onClick={() => select(i)}>
                 <span aria-hidden="true" className="nb-pass-tab-icon" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? '#C6FF00' : 'rgba(10,10,15,0.04)', border: `1px solid ${isActive ? 'rgba(140,200,0,0.5)' : 'rgba(0,0,0,0.06)'}`, transition: 'background 0.3s, border-color 0.3s' }}>{icon}</span>
                 <span className="nb-pass-tab-text" style={{ flex: 1, minWidth: 0, paddingTop: '9px' }}>
-                  <span className="nb-pass-tab-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', transition: 'color 0.3s' }}>
+                  <span className="nb-pass-tab-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '17px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.02em', lineHeight: '1.2', transition: 'color 0.3s' }}>
                     {label}
-                    {isNew && <span className="nb-pass-new" style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: '1.2', color: '#C6FF00', background: '#0A0A0F', padding: '3px 7px', borderRadius: '100px' }}>Nuevo</span>}
+                    {isNew && <span className="nb-pass-new" style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: '1.2', color: '#C6FF00', background: '#0A0A0F', padding: '3px 7px', borderRadius: '100px' }}>Nuevo</span>}
                   </span>
                   <span className="nb-pass-tab-desc">
                     <span style={{ overflow: 'hidden', minHeight: 0 }}>
@@ -1490,14 +1490,14 @@ function EventPasses() {
                 <div className="nb-pass-card" style={{ background: tone.bg, color: tone.fg }}>
                   <span className="nb-pass-peek" style={{ color: tone.sub }}>{pass.kind}</span>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.pillFg, background: tone.pill, padding: '4px 10px', borderRadius: '100px' }}>{pass.kind}</span>
-                    <span style={{ fontSize: '11px', fontWeight: 500, color: tone.sub }}>Tu evento · Nubapay</span>
+                    <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.pillFg, background: tone.pill, padding: '4px 10px', borderRadius: '100px' }}>{pass.kind}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: tone.sub }}>Tu evento · Nubapay</span>
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: '1.1', margin: '14px 0 12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pass.title}</div>
+                  <div style={{ fontSize: '26px', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: '1.1', margin: '14px 0 12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pass.title}</div>
                   <div style={{ display: 'flex', gap: '28px' }}>
                     {pass.meta.map(([k, v]) => (
                       <div key={k}>
-                        <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.sub, marginBottom: '3px' }}>{k}</div>
+                        <div style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: tone.sub, marginBottom: '3px' }}>{k}</div>
                         <div style={{ fontSize: '13px', fontWeight: 600 }}>{v}</div>
                       </div>
                     ))}
@@ -1505,8 +1505,8 @@ function EventPasses() {
                   <div style={{ position: 'absolute', left: '18px', right: '18px', top: '160px', borderTop: `1.5px dashed ${tone.line}` }} />
                   <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                     <div>
-                      <div style={{ fontSize: '12px', fontFamily: 'monospace', color: tone.sub }}>#{pass.code}</div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, marginTop: '3px' }}>QR de un solo uso</div>
+                      <div style={{ fontSize: '12px', fontFamily: 'var(--font-geist-mono), monospace', color: tone.sub }}>#{pass.code}</div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, marginTop: '3px' }}>QR de un solo uso</div>
                     </div>
                     <div style={{ background: '#FFFFFF', borderRadius: '8px', padding: '5px', boxShadow: pass.tone === 'light' ? 'inset 0 0 0 1px rgba(0,0,0,0.06)' : 'none' }}>
                       <QRPattern value={`https://nubapay.com/p/${pass.code}`} size={42} />
@@ -1522,8 +1522,8 @@ function EventPasses() {
         <div style={{ position: 'relative', marginTop: '28px', width: '100%', maxWidth: '380px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: '18px', padding: '12px 12px 12px 16px', boxSizing: 'border-box', boxShadow: '0 10px 24px -16px rgba(10,15,0,0.25)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: S.muted }}>Tu carrito</span>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}><CartTotal to={PASS_CART_TOTAL} /></span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#C6FF00', fontSize: '11px', fontWeight: 700, padding: '7px 12px', borderRadius: '100px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}><CartTotal to={PASS_CART_TOTAL} /></span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0A0A0F', color: '#C6FF00', fontSize: '11px', fontWeight: 600, padding: '7px 12px', borderRadius: '100px' }}>
               <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5 5.5-5.5" stroke="#C6FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Pagado
             </span>
@@ -1676,8 +1676,8 @@ function ContactSection() {
         <div className="nb-contact-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: '80px', alignItems: 'center' }}>
 
           <div>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Contacto</p>
-            <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 500, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: S.faint, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Contacto</p>
+            <h2 style={{ fontSize: 'clamp(36px, 3.5vw, 52px)', fontWeight: 600, letterSpacing: '-0.045em', lineHeight: '0.95', margin: '0 0 20px 0', color: '#0A0A0F' }}>
               ¿Hablamos?
             </h2>
             <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: '0 0 36px 0', maxWidth: '420px' }}>
@@ -1716,7 +1716,7 @@ function ContactSection() {
                 <span style={{ width: '48px', height: '48px', borderRadius: '50%', background: S.accent, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="20" height="16" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke={S.accentFg} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
-                <h3 style={{ fontSize: '26px', fontWeight: 500, letterSpacing: '-0.035em', margin: 0, color: '#0A0A0F' }}>¡Mensaje enviado!</h3>
+                <h3 style={{ fontSize: '26px', fontWeight: 600, letterSpacing: '-0.035em', margin: 0, color: '#0A0A0F' }}>¡Mensaje enviado!</h3>
                 <p style={{ fontSize: '15px', color: S.muted, lineHeight: '1.7', margin: 0 }}>
                   Gracias {name.trim()}. Te respondemos a <strong style={{ color: '#0A0A0F', fontWeight: 600 }}>{email.trim()}</strong> dentro de las próximas 24 horas hábiles.
                 </p>

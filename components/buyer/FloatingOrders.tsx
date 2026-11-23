@@ -27,9 +27,9 @@ export function FloatingOrders({ eventId, catalogSlug }: FloatingOrdersProps) {
       <button
         onClick={() => setOpen(true)}
         style={{ fontFamily: BUYER_FONT }}
-        className="fixed bottom-[88px] right-4 z-40 md:bottom-[72px] flex items-center gap-2 rounded-full bg-white border border-gray-200 shadow-lg px-4 py-2.5 text-[13px] font-bold text-gray-900 hover:bg-gray-50 transition-colors"
+        className="fixed bottom-[88px] right-4 z-40 md:bottom-[72px] flex items-center gap-2 rounded-full bg-white border border-gray-200 shadow-lg px-4 py-2.5 text-[13px] font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
       >
-        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-black">
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-semibold">
           {orders.length}
         </span>
         Mis pedidos
@@ -50,7 +50,7 @@ export function FloatingOrders({ eventId, catalogSlug }: FloatingOrdersProps) {
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
-              <span className="text-[16px] font-bold text-gray-900">Mis pedidos</span>
+              <span className="text-[16px] font-semibold text-gray-900">Mis pedidos</span>
               <button
                 onClick={() => setOpen(false)}
                 className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
@@ -81,7 +81,7 @@ export function FloatingOrders({ eventId, catalogSlug }: FloatingOrdersProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-bold text-gray-900">{formatPrice(order.total)}</span>
+                    <span className="text-[14px] font-semibold text-gray-900">{formatPrice(order.total)}</span>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M6 3l5 5-5 5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>

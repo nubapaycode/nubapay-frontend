@@ -109,7 +109,7 @@ export function BulkActionsBar({
               type="button"
               onClick={() => setStage('idle')}
               disabled={stage === 'running'}
-              className="rounded-full px-3.5 py-2 text-[13px] font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
+              className="rounded-full px-3.5 py-2 text-[13px] font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
             >
               Volver
             </button>
@@ -147,7 +147,7 @@ export function BulkActionsBar({
           <button
             type="button"
             onClick={onClear}
-            className="shrink-0 rounded-full bg-[#F5F5F7] px-3.5 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-200 hover:text-gray-900"
+            className="shrink-0 rounded-full bg-[#F5F5F7] px-3.5 py-1.5 text-[13px] font-semibold text-gray-700 transition-colors hover:bg-gray-200 hover:text-gray-900"
           >
             Listo
           </button>
@@ -167,7 +167,7 @@ function BarButton({
       type="button"
       {...props}
       className={cn(
-        'inline-flex items-center gap-1.5 px-1 py-1.5 text-[13px] font-medium text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-40 disabled:hover:text-gray-500',
+        'inline-flex items-center gap-1.5 px-1 py-1.5 text-[13px] font-semibold text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-40 disabled:hover:text-gray-500',
         className,
       )}
     >

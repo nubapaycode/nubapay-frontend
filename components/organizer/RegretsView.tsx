@@ -28,7 +28,7 @@ export function RegretStatusBadge({ status }: { status: RegretStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold',
         resolved ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800',
       )}
     >
@@ -87,7 +87,7 @@ function RegretLinkCard({ eventId }: { eventId: string }) {
           type="button"
           onClick={copy}
           disabled={!url}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gray-900 px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
         >
           {copied ? <Check size={14} strokeWidth={2} aria-hidden /> : <Copy size={14} strokeWidth={1.75} aria-hidden />}
           {copied ? 'Copiado' : 'Copiar link'}
@@ -157,7 +157,7 @@ export function RegretsView({ eventId }: { eventId: string }) {
               setPage(1)
             }}
             className={cn(
-              'rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
+              'rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors',
               filter === f.key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
             )}
           >

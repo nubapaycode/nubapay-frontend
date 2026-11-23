@@ -149,7 +149,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
   }
 
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+    <div style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
       <style>{`
         .nb-event-card { animation: nb-card-in 280ms ease-out both; }
         .nb-event-card:hover { border-color: rgba(0,0,0,0.16) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
@@ -220,7 +220,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
               <path d="M7 2v4M15 2v4M2 9h18" stroke="#C8C8D0" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <p style={{ fontSize: '17px', fontWeight: 700, color: '#0A0A0F', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+          <p style={{ fontSize: '17px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             {canCreateEvents ? 'Creá tu primer evento' : 'Aún no tenés eventos'}
           </p>
           <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 32px', maxWidth: '280px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>
@@ -261,7 +261,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
                 type="button"
                 onClick={() => setDrawerOpen(true)}
                 className="transition-transform active:scale-95"
-                style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '12px 28px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ ...organizerAccentFilledButtonStyle(), border: 'none', borderRadius: '100px', padding: '12px 28px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
               >
                 Crear primer evento
               </button>
@@ -290,7 +290,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                         <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{event.name}</p>
                         {showStatus && (
-                          <span style={{ fontSize: '10px', fontWeight: 700, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 600, background: sc.bg, color: sc.color, padding: '3px 9px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
                             {STATUS_LABEL[status] ?? status}
                           </span>
                         )}
@@ -373,7 +373,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
       />
 
       {/* Drawer */}
-      <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', zIndex: 50, width: '360px', background: '#FFFFFF', boxShadow: '-8px 0 40px rgba(0,0,0,0.12)', borderRadius: '24px 0 0 24px', transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', zIndex: 50, width: '360px', background: '#FFFFFF', boxShadow: '-8px 0 40px rgba(0,0,0,0.12)', borderRadius: '24px 0 0 24px', transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)', fontFamily: "var(--font-geist-sans), sans-serif" }}>
         <div style={{ padding: '28px 28px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
             <h2 style={{ fontSize: '17px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>Nuevo evento</h2>
@@ -403,7 +403,7 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
               onClick={handleAdd}
               disabled={saving}
               className="transition-transform active:scale-95"
-              style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '14px', fontSize: '15px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, marginTop: '4px', letterSpacing: '-0.01em' }}
+              style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, marginTop: '4px', letterSpacing: '-0.01em' }}
             >
               {saving ? 'Guardando…' : 'Crear evento'}
             </button>
@@ -417,13 +417,13 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
         onClose={closeDeleteModal}
         containerClassName="z-[60]"
       >
-        <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+        <div style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M4 6h12M8 6V4h4v2M9 10v4M11 10v4M5 6l1 10h8l1-10" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0A0A0F', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
             ¿Eliminar evento?
           </h3>
           <p style={{ fontSize: '13px', color: '#9A9AA8', margin: '0 0 6px', lineHeight: 1.5 }}>

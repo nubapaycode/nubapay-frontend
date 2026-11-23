@@ -676,7 +676,7 @@ export function EventOrganizerSidebar({
               {!collapsed && (
                 <>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-medium text-gray-400">{title ? 'Evento' : 'Organizer'}</span>
+                    <span className="block text-[11px] font-semibold text-gray-400">{title ? 'Evento' : 'Organizer'}</span>
                     <span className="block truncate text-[13px] font-semibold text-gray-900">{title ?? 'Mis eventos'}</span>
                   </span>
                   <ChevronsUpDown
@@ -745,7 +745,7 @@ export function EventOrganizerSidebar({
                       title={collapsed ? item.label : undefined}
                       className={`group/item relative z-10 flex h-9 items-center gap-2.5 rounded-[10px] text-[13px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900 ${
                         collapsed ? 'justify-center' : 'pl-[7px] pr-2'
-                      } ${active ? 'font-medium text-gray-900' : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'}`}
+                      } ${active ? 'font-semibold text-gray-900' : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'}`}
                     >
                       {/* El ícono activo va sobre el color de marca: funciona con cualquier acento. */}
                       <span
@@ -793,7 +793,7 @@ export function EventOrganizerSidebar({
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={open}
                     aria-controls={panelId}
-                    className="group/head flex h-7 w-full items-center gap-1.5 rounded-lg pl-[10px] pr-2 text-[11px] font-medium text-gray-400 transition-colors hover:text-gray-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900"
+                    className="group/head flex h-7 w-full items-center gap-1.5 rounded-lg pl-[10px] pr-2 text-[11px] font-semibold text-gray-400 transition-colors hover:text-gray-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900"
                   >
                     <span className="flex-1 text-left">{group.label}</span>
                     {/* Plegada con la herramienta actual adentro: un punto lo recuerda. */}
@@ -839,7 +839,7 @@ export function EventOrganizerSidebar({
               href={`${basePath}/metodos-pago`}
               aria-label={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
               title={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
-              className={`flex w-full items-center gap-2.5 rounded-xl border text-[13px] font-medium transition-colors ${
+              className={`flex w-full items-center gap-2.5 rounded-xl border text-[13px] font-semibold transition-colors ${
                 collapsed ? 'h-9 justify-center' : 'px-3 py-2'
               } ${
                 mpState === 'connected'
@@ -977,7 +977,7 @@ export function EventOrganizerSidebar({
                         className="absolute bottom-0 left-full z-40 ml-2 w-72 origin-bottom-left rounded-xl border border-gray-200/80 bg-white p-1 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.22),0_2px_6px_rgba(16,24,40,0.06)]"
                         style={{ animation: 'profile-pop 140ms cubic-bezier(0.22,1,0.36,1) backwards' }}
                       >
-                        <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-medium text-gray-400">Tocá un link para copiarlo</p>
+                        <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-semibold text-gray-400">Tocá un link para copiarlo</p>
                         {([
                           { key: 'catalog', label: 'Catálogo', url: catalogUrl, icon: <Package size={15} strokeWidth={1.75} /> },
                           { key: 'tickets', label: 'Tickets', url: ticketsUrl, icon: <Ticket size={15} strokeWidth={1.75} /> },
@@ -1051,7 +1051,7 @@ export function EventOrganizerSidebar({
             {!collapsed && (
               <>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12px] font-medium text-gray-700 group-hover:text-gray-900" title={emailLabel}>
+                  <span className="block truncate text-[12px] font-semibold text-gray-700 group-hover:text-gray-900" title={emailLabel}>
                     {emailLabel || '…'}
                   </span>
                   <span className="block text-[11px] text-gray-400">
@@ -1235,7 +1235,7 @@ export function EventOrganizerSidebar({
               <button
                 type="button"
                 onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               >
                 Cerrar
               </button>
@@ -1250,7 +1250,7 @@ export function EventOrganizerSidebar({
                         href={item.href}
                         onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
                         className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${
-                          active ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-700 hover:bg-gray-50'
+                          active ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         <span className={active ? 'text-gray-900' : 'text-gray-400'}>{item.icon}</span>

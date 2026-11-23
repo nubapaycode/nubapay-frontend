@@ -62,7 +62,7 @@ export function ParkingMap({
       </div>
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="min-w-0">
-          <p id="parking-map-title" className="text-[15px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text }}>
+          <p id="parking-map-title" className="text-[15px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text }}>
             Dónde queda el estacionamiento
           </p>
           <p className="text-[13px]" style={{ color: '#6B6B78' }}>
@@ -74,7 +74,7 @@ export function ParkingMap({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-11 flex-shrink-0 items-center rounded-full px-5 text-sm font-bold transition-opacity active:opacity-85"
+          className="flex h-11 flex-shrink-0 items-center rounded-full px-5 text-sm font-semibold transition-opacity active:opacity-85"
           style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
         >
           Cómo llegar

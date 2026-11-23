@@ -146,7 +146,7 @@ export function TourOverlay() {
           borderRadius: 100,
           padding: '10px 20px',
           fontSize: 13,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -238,7 +238,7 @@ export function TourOverlay() {
           borderRadius: 16,
           padding: '16px 18px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+          fontFamily: "var(--font-geist-sans), sans-serif",
           ...tipPos,
         }}
       >
@@ -281,7 +281,7 @@ export function TourOverlay() {
           </button>
         </div>
 
-        <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
+        <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, letterSpacing: '-0.01em' }}>
           {currentStep.title}
         </p>
         <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
@@ -299,7 +299,7 @@ export function TourOverlay() {
             borderRadius: 100,
             padding: '9px 16px',
             fontSize: 13,
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: 'pointer',
             letterSpacing: '-0.01em',
           }}

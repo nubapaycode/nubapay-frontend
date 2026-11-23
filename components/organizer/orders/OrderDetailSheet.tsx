@@ -207,7 +207,7 @@ export function OrderDetailSheet({
                   window.setTimeout(() => setLinkCopied(false), 1400)
                 })
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
               {linkCopied ? <Check size={14} strokeWidth={2} className="text-emerald-600" /> : <Link2 size={14} strokeWidth={1.75} />}
               {linkCopied ? 'Copiado' : 'Copiar enlace'}
@@ -228,7 +228,7 @@ export function OrderDetailSheet({
           {/* Encabezado */}
           <div key={order.id} className="nb-swap px-5 pb-5 pt-5">
             <div className="mb-3 flex items-center gap-2">
-              <span className="text-[13px] font-medium text-gray-500">
+              <span className="text-[13px] font-semibold text-gray-500">
                 {order.orderNumber != null ? `Pedido #${order.orderNumber}` : 'Pedido'}
               </span>
               <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold', st.badge)}>
@@ -266,7 +266,7 @@ export function OrderDetailSheet({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-3">
-                        <p className={cn('text-[13px] font-medium', ev.tone === 'todo' ? 'text-gray-400' : 'text-gray-900')}>{ev.title}</p>
+                        <p className={cn('text-[13px] font-semibold', ev.tone === 'todo' ? 'text-gray-400' : 'text-gray-900')}>{ev.title}</p>
                         {ev.at && <span className="shrink-0 text-[11px] tabular-nums text-gray-400">{fullDateTime(ev.at)}</span>}
                       </div>
                       {ev.detail && <p className="mt-0.5 text-[12px] text-gray-500">{ev.detail}</p>}
@@ -364,7 +364,7 @@ export function OrderDetailSheet({
                     setPayError('')
                     setPayOpen(true)
                   }}
-                  className="text-[13px] font-medium text-emerald-700 transition-colors hover:text-emerald-800"
+                  className="text-[13px] font-semibold text-emerald-700 transition-colors hover:text-emerald-800"
                 >
                   Marcar como pagada…
                 </button>
@@ -375,7 +375,7 @@ export function OrderDetailSheet({
                     Aprueba el pago <b>sin consultar al proveedor</b> y envía el mail con el QR al comprador. Usalo solo si ya
                     verificaste el cobro.
                   </p>
-                  <label className="mt-3 block text-[11px] font-medium text-emerald-900" htmlFor="mark-paid-reason">
+                  <label className="mt-3 block text-[11px] font-semibold text-emerald-900" htmlFor="mark-paid-reason">
                     Motivo (mínimo 8 caracteres)
                   </label>
                   <input
@@ -391,7 +391,7 @@ export function OrderDetailSheet({
                       type="button"
                       onClick={() => setPayOpen(false)}
                       disabled={paying}
-                      className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                      className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
                     >
                       Volver
                     </button>
@@ -420,7 +420,7 @@ export function OrderDetailSheet({
                     setCancelError('')
                     setCancelStage('first')
                   }}
-                  className="text-[13px] font-medium text-red-600 transition-colors hover:text-red-700"
+                  className="text-[13px] font-semibold text-red-600 transition-colors hover:text-red-700"
                 >
                   Cancelar pedido…
                 </button>
@@ -440,7 +440,7 @@ export function OrderDetailSheet({
                       type="button"
                       onClick={() => setCancelStage('none')}
                       disabled={cancelling}
-                      className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                      className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
                     >
                       Volver
                     </button>

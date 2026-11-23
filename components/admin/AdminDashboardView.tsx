@@ -268,7 +268,7 @@ function Dashboard() {
         <div className="flex h-14 flex-shrink-0 items-center justify-between gap-2 px-4">
           <p className="text-sm font-semibold lg:hidden">Todas las herramientas</p>
           <p className="hidden items-center gap-2 text-[15px] font-semibold tracking-tight text-admin-brand lg:flex">
-            <span aria-hidden className="flex size-6 items-center justify-center rounded-md bg-admin-brand text-[12px] font-bold text-black">
+            <span aria-hidden className="flex size-6 items-center justify-center rounded-md bg-admin-brand text-[12px] font-semibold text-black">
               N
             </span>
             Nubapay
@@ -315,7 +315,7 @@ function Dashboard() {
                           aria-current={on ? 'page' : undefined}
                           aria-keyshortcuts={String(n)}
                           className={cx(
-                            'group relative flex h-[72px] w-full flex-col items-start justify-center gap-2 rounded-lg border border-white/[0.07] bg-admin-surface px-3 text-sm font-medium transition-colors duration-150',
+                            'group relative flex h-[72px] w-full flex-col items-start justify-center gap-2 rounded-lg border border-white/[0.07] bg-admin-surface px-3 text-sm font-semibold transition-colors duration-150',
                             'lg:h-[34px] lg:flex-row lg:items-center lg:justify-start lg:gap-2.5 lg:rounded-md lg:border-0 lg:bg-transparent lg:px-2.5 lg:text-[13px]',
                             'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-admin-accent',
                             on ? 'border-admin-primary/50 text-white' : 'text-white/70 hover:bg-white/[0.04] hover:text-white/90 lg:text-white/60',
@@ -326,7 +326,7 @@ function Dashboard() {
                           {t.key === 'health' && !!alerts?.total && (
                             <span
                               className={cx(
-                                'absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 font-admin-mono text-[10px] font-medium leading-none lg:static',
+                                'absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 font-admin-mono text-[10px] font-semibold leading-none lg:static',
                                 alerts.critical ? 'bg-red-500 text-white' : 'bg-amber-400 text-black',
                               )}
                               aria-label={`${alerts.total} alertas`}
@@ -415,11 +415,11 @@ function Dashboard() {
           </button>
         </div>
         {payments.enabled === false ? (
-          <p role="status" className="flex items-center gap-2 border-t border-red-400/20 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-200 md:px-8">
+          <p role="status" className="flex items-center gap-2 border-t border-red-400/20 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 md:px-8">
             <AlertTriangle size={13} /> Pagos inhabilitados en toda la plataforma: nadie puede comprar.
           </p>
         ) : payments.enabled && payments.effective === false ? (
-          <p role="status" className="flex items-center gap-2 border-t border-amber-400/20 bg-amber-400/10 px-4 py-2 text-xs font-medium text-amber-200 md:px-8">
+          <p role="status" className="flex items-center gap-2 border-t border-amber-400/20 bg-amber-400/10 px-4 py-2 text-xs font-semibold text-amber-200 md:px-8">
             <AlertTriangle size={13} /> Pagos guardados como habilitados, pero el servidor los reporta inhabilitados. Revisá Redis en Salud.
           </p>
         ) : null}
@@ -496,7 +496,7 @@ function Dashboard() {
                 onClick={() => go(t.key)}
                 aria-current={tab === t.key ? 'page' : undefined}
                 className={cx(
-                  'relative flex h-14 flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition-colors duration-150',
+                  'relative flex h-14 flex-col items-center justify-center gap-1 text-[10.5px] font-semibold transition-colors duration-150',
                   'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-admin-accent',
                   on ? 'text-white' : 'text-white/55',
                 )}
@@ -506,7 +506,7 @@ function Dashboard() {
                   {t.key === 'health' && !!alerts?.total && (
                     <span
                       className={cx(
-                        'absolute -right-2.5 -top-1.5 min-w-4 rounded-full px-1 py-0.5 text-center font-admin-mono text-[9px] font-medium leading-none',
+                        'absolute -right-2.5 -top-1.5 min-w-4 rounded-full px-1 py-0.5 text-center font-admin-mono text-[9px] font-semibold leading-none',
                         alerts.critical ? 'bg-red-500 text-white' : 'bg-amber-400 text-black',
                       )}
                       aria-label={`${alerts.total} alertas`}
@@ -525,7 +525,7 @@ function Dashboard() {
             onClick={() => setNavOpen((o) => !o)}
             aria-expanded={navOpen}
             className={cx(
-              'relative flex h-14 flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition-colors duration-150',
+              'relative flex h-14 flex-col items-center justify-center gap-1 text-[10.5px] font-semibold transition-colors duration-150',
               'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-admin-accent',
               moreActive ? 'text-white' : 'text-white/55',
             )}

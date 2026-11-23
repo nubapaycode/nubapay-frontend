@@ -187,7 +187,7 @@ function NubaSelect({
                   borderRadius: '10px',
                   padding: '9px 12px',
                   fontSize: '13px',
-                  fontWeight: selected ? 600 : 500,
+                  fontWeight: selected ? 600 : 400,
                   color: selected ? ORGANIZER_ACCENT_FOREGROUND : '#0A0A0F',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -361,7 +361,7 @@ function DateTimeField({
             background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px',
             boxShadow: '0 12px 32px rgba(0,0,0,0.14)', padding: '16px',
             animation: 'nb-select-pop 0.15s cubic-bezier(0.16,1,0.3,1)',
-            fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+            fontFamily: "var(--font-geist-sans), sans-serif",
           }}
         >
           {/* Month navigation */}
@@ -369,7 +369,7 @@ function DateTimeField({
             <button type="button" onClick={prevMonth} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.01em' }}>
               {MONTH_NAMES[viewMonth]} {viewYear}
             </span>
             <button type="button" onClick={nextMonth} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
@@ -399,7 +399,7 @@ function DateTimeField({
                     width: '100%', aspectRatio: '1', borderRadius: '8px', border: 'none',
                     background: sel ? ORGANIZER_ACCENT_BACKGROUND : 'transparent',
                     color: sel ? ORGANIZER_ACCENT_FOREGROUND : tod ? '#0A0A0F' : '#374151',
-                    fontSize: '12px', fontWeight: sel || tod ? 700 : 400,
+                    fontSize: '12px', fontWeight: sel || tod ? 600 : 400,
                     cursor: 'pointer',
                     outline: tod && !sel ? `1.5px solid rgba(0,0,0,0.15)` : 'none',
                     transition: 'background 0.1s',
@@ -430,14 +430,14 @@ function DateTimeField({
                     setSelHour(v)
                   }}
                   onBlur={e => setSelHour(String(Math.min(23, Math.max(0, Number(e.target.value) || 0))).padStart(2, '0'))}
-                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 700, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
+                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 600, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
                 />
                 <button type="button" onClick={() => setSelHour(h => String((Number(h) + 23) % 24).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               </div>
 
-              <span style={{ fontSize: '22px', fontWeight: 700, color: '#C8C8D0', lineHeight: 1, marginTop: '-2px' }}>:</span>
+              <span style={{ fontSize: '22px', fontWeight: 600, color: '#C8C8D0', lineHeight: 1, marginTop: '-2px' }}>:</span>
 
               {/* Minutos */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
@@ -452,7 +452,7 @@ function DateTimeField({
                     setSelMin(v)
                   }}
                   onBlur={e => setSelMin(String(Math.min(59, Math.max(0, Number(e.target.value) || 0))).padStart(2, '0'))}
-                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 700, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
+                  style={{ width: '44px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#FAFAFA', padding: '8px 4px', fontSize: '18px', fontWeight: 600, color: '#0A0A0F', textAlign: 'center', outline: 'none', letterSpacing: '0.02em' }}
                 />
                 <button type="button" onClick={() => setSelMin(m => String((Number(m) + 55) % 60).padStart(2, '0'))} style={{ width: '32px', height: '28px', border: 'none', background: '#F5F5F7', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280' }}>
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -466,7 +466,7 @@ function DateTimeField({
             <button
               type="button"
               onClick={() => { onChange(''); setOpen(false) }}
-              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '12px', fontWeight: 500, padding: '7px 12px', cursor: 'pointer' }}
+              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '12px', fontWeight: 600, padding: '7px 12px', cursor: 'pointer' }}
             >
               Limpiar
             </button>
@@ -474,7 +474,7 @@ function DateTimeField({
               type="button"
               onClick={handleConfirm}
               disabled={selDay === null}
-              style={{ flex: 2, borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '12px', fontWeight: 700, padding: '7px 12px', cursor: selDay === null ? 'not-allowed' : 'pointer', opacity: selDay === null ? 0.4 : 1 }}
+              style={{ flex: 2, borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '12px', fontWeight: 600, padding: '7px 12px', cursor: selDay === null ? 'not-allowed' : 'pointer', opacity: selDay === null ? 0.4 : 1 }}
             >
               Confirmar
             </button>
@@ -1263,7 +1263,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => setDrawerMode('categories')}
             title="Gestionar categorías"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-[13px] font-semibold text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             <ListTree size={15} strokeWidth={1.75} aria-hidden />
             Categorías
@@ -1358,7 +1358,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     type="button"
                     aria-pressed={active}
                     onClick={() => chooseStatus(key)}
-                    className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors ${
+                    className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold transition-colors ${
                       active
                         ? 'bg-white text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.08)]'
                         : 'text-gray-500 hover:text-gray-900'
@@ -1378,7 +1378,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => chooseStatus(active ? 'all' : 'no_image')}
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors ${
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-semibold transition-colors ${
                     active
                       ? 'border-gray-300 bg-gray-100 text-gray-900'
                       : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-900'
@@ -1455,7 +1455,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                         </svg>
                       )}
                     </button>
-                    <span className="text-[11px] font-medium text-gray-400">
+                    <span className="text-[11px] font-semibold text-gray-400">
                       {selectingAllPages
                         ? 'Cargando…'
                         : selectedIds.size > 0
@@ -1551,7 +1551,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
       <div
         className={`fixed top-0 right-0 h-full z-50 bg-white shadow-2xl transition-transform duration-300 flex flex-col ${drawerMode ? 'translate-x-0' : 'translate-x-full'} ${drawerContent === 'combo' ? 'w-[min(100vw,30rem)]' : 'w-[min(100vw,24rem)]'}`}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)', borderTopLeftRadius: '24px', borderBottomLeftRadius: '24px', fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)', borderTopLeftRadius: '24px', borderBottomLeftRadius: '24px', fontFamily: "var(--font-geist-sans), sans-serif" }}
       >
         {/* ── Drawer header (shared) ── */}
         {drawerContent && (() => {
@@ -1596,7 +1596,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleAddCategory}
                 disabled={!catName.trim()}
-                style={{ ...(catName.trim() ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '12px', padding: '11px 18px', fontSize: '13px', fontWeight: 700, cursor: catName.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                style={{ ...(catName.trim() ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '12px', padding: '11px 18px', fontSize: '13px', fontWeight: 600, cursor: catName.trim() ? 'pointer' : 'not-allowed', flexShrink: 0 }}
               >
                 Agregar
               </button>
@@ -1644,7 +1644,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           type="button"
                           onClick={() => void handleSaveCategory(c.id)}
                           disabled={savingCat || editingCatName.trim().length < 2}
-                          style={{ ...(editingCatName.trim().length >= 2 ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 700, cursor: editingCatName.trim().length >= 2 ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                          style={{ ...(editingCatName.trim().length >= 2 ? organizerAccentFilledButtonStyle() : { background: '#F5F5F5', color: '#C8C8D0' }), border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: editingCatName.trim().length >= 2 ? 'pointer' : 'not-allowed', flexShrink: 0 }}
                         >
                           {savingCat ? '…' : 'Guardar'}
                         </button>
@@ -1766,7 +1766,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                       />
                       {imageUploading && (
                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
+                          <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 600 }}>Subiendo…</span>
                         </div>
                       )}
                     </div>
@@ -1793,7 +1793,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <label
                         htmlFor="catalog-item-photo-product"
-                        style={{ fontSize: '12px', fontWeight: 500, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
+                        style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
                       >
                         {imageUploading ? 'Subiendo…' : 'Cambiar foto'}
                       </label>
@@ -1818,7 +1818,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleSaveProduct}
                 disabled={saving || imageUploading}
-                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 600, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear producto'}
               </button>
@@ -1830,7 +1830,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
           <>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <section className="flex flex-col gap-3">
-              <p className="text-[11px] font-medium text-gray-400">Datos del combo</p>
+              <p className="text-[11px] font-semibold text-gray-400">Datos del combo</p>
               <input type="text" value={comboName} onChange={e => { setComboName(e.target.value); setFormError(''); setComboNameError(false) }} placeholder="Nombre visible para el cliente" disabled={saving || imageUploading}
                 style={{
                   width: '100%', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', outline: 'none',
@@ -1897,7 +1897,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                     />
                     {imageUploading && (
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>Subiendo…</span>
+                        <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: 600 }}>Subiendo…</span>
                       </div>
                     )}
                   </div>
@@ -1924,7 +1924,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <label
                       htmlFor="catalog-item-photo-combo"
-                      style={{ fontSize: '12px', fontWeight: 500, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
+                      style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: saving || imageUploading ? 0.5 : 1 }}
                     >
                       {imageUploading ? 'Subiendo…' : 'Cambiar foto'}
                     </label>
@@ -1944,7 +1944,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 {/* Header */}
                 <div style={{ padding: '12px 14px', background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '11px', fontWeight: 600, color: '#9A9AA8' }}>Qué incluye</span>
-                  <span style={{ fontSize: '11px', color: '#C8C8D0', fontWeight: 500 }}>{comboPickerItems.length} ítem{comboPickerItems.length === 1 ? '' : 's'}</span>
+                  <span style={{ fontSize: '11px', color: '#C8C8D0', fontWeight: 600 }}>{comboPickerItems.length} ítem{comboPickerItems.length === 1 ? '' : 's'}</span>
                 </div>
 
                 <ul style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1990,7 +1990,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           >
                             −
                           </button>
-                          <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '13px', fontWeight: 700, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{entry.quantity}</span>
+                          <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#0A0A0F', fontVariantNumeric: 'tabular-nums' }}>{entry.quantity}</span>
                           <button
                             type="button"
                             disabled={saving}
@@ -2025,7 +2025,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             )}
 
             <section className="flex flex-col gap-2">
-              <p className="text-[11px] font-medium text-gray-400">Sumar desde el catálogo</p>
+              <p className="text-[11px] font-semibold text-gray-400">Sumar desde el catálogo</p>
               <input
                 type="text"
                 value={comboPickerQuery}
@@ -2054,7 +2054,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                           onClick={() => addSingleToCombo(p.id)}
                         >
                           <span className="flex-1 min-w-0">
-                            <span className="block text-sm font-medium text-gray-900 truncate">{p.name}</span>
+                            <span className="block text-sm font-semibold text-gray-900 truncate">{p.name}</span>
                             <span className="block text-[11px] text-gray-400 truncate mt-0.5">
                               {formatPrice(p.price)}
                               {p.category_name ? ` · ${p.category_name}` : ''}
@@ -2090,7 +2090,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 onClick={handleSaveCombo}
                 disabled={saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))}
-                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 700, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: (saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
+                style={{ width: '100%', borderRadius: '100px', ...organizerAccentFilledButtonStyle(), border: 'none', padding: '13px', fontSize: '14px', fontWeight: 600, cursor: saving || imageUploading ? 'not-allowed' : 'pointer', opacity: (saving || imageUploading || (!editingCatalogId && (comboDrawerSinglesLoading || comboDrawerSingles.length === 0))) ? 0.6 : 1, letterSpacing: '-0.01em' }}
               >
                 {saving ? 'Guardando…' : editingCatalogId ? 'Guardar cambios' : 'Crear combo'}
               </button>
@@ -2115,7 +2115,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
           borderRadius: '100px', padding: '8px 8px 8px 22px',
           display: 'flex', alignItems: 'center', gap: '14px',
           boxShadow: '0 12px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.08)',
-          fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+          fontFamily: "var(--font-geist-sans), sans-serif",
         }}
         role="region"
         aria-label="Acciones masivas"
@@ -2129,7 +2129,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => runBulkAction('activate')}
             disabled={bulkSubmitting}
-            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
+            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 600, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
           >
             Activar
           </button>
@@ -2137,7 +2137,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             type="button"
             onClick={() => runBulkAction('pause')}
             disabled={bulkSubmitting}
-            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
+            style={{ background: 'transparent', border: 'none', color: '#6B7280', fontSize: '13px', fontWeight: 600, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 4px' }}
           >
             Pausar
           </button>
@@ -2166,7 +2166,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 setSelectedIds(new Set())
                 setDrawerMode('combo')
               }}
-              style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6B7280', fontSize: '13px', fontWeight: 500, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', opacity: catalogTab === 'products' && selectedIds.size >= 2 ? 1 : 0, transition: 'background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s' }}
+              style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6B7280', fontSize: '13px', fontWeight: 600, cursor: bulkSubmitting ? 'not-allowed' : 'pointer', padding: '6px 14px', borderRadius: '100px', whiteSpace: 'nowrap', opacity: catalogTab === 'products' && selectedIds.size >= 2 ? 1 : 0, transition: 'background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.background = ORGANIZER_ACCENT_BACKGROUND; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = ORGANIZER_ACCENT_FOREGROUND }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; e.currentTarget.style.color = '#6B7280' }}
             >
@@ -2199,7 +2199,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
         className="!p-0 overflow-hidden max-w-sm w-full"
       >
         {promoModalProduct && (
-          <div style={{ fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)" }}>
+          <div style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
 
             {/* Header */}
             <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
@@ -2208,7 +2208,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                   <BadgePercent size={15} strokeWidth={1.5} style={{ color: ORGANIZER_ACCENT_FOREGROUND }} aria-hidden />
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: '15px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {promoModalProduct.name}
                   </p>
                   <p style={{ fontSize: '12px', color: '#9A9AA8', margin: 0 }}>Promoción del catálogo</p>
@@ -2219,7 +2219,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
             {/* Precio de referencia */}
             <div style={{ margin: '16px 20px 0', padding: '10px 14px', background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <span style={{ fontSize: '12px', color: '#9A9AA8' }}>Precio de lista</span>
-              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.01em' }}>{formatPrice(promoModalProduct.price)}</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#0A0A0F', letterSpacing: '-0.01em' }}>{formatPrice(promoModalProduct.price)}</span>
             </div>
 
             {/* Campos */}
@@ -2266,7 +2266,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
 
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 14px', background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', cursor: promoSaving ? 'not-allowed' : 'pointer' }}>
                 <div>
-                  <p style={{ fontSize: '13px', fontWeight: 500, color: '#0A0A0F', margin: 0 }}>Activa en el catálogo</p>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0A0A0F', margin: 0 }}>Activa en el catálogo</p>
                   <p style={{ fontSize: '11px', color: '#9A9AA8', margin: '2px 0 0 0' }}>Si está en fechas válidas se muestra al cliente</p>
                 </div>
                 <ToggleSwitch checked={promoActive} disabled={promoSaving} onChange={() => setPromoActive(v => !v)} />
@@ -2285,7 +2285,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={promoSaving}
                 onClick={() => void savePromo()}
-                style={{ width: '100%', borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '14px', fontWeight: 700, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1 }}
+                style={{ width: '100%', borderRadius: '100px', border: 'none', ...organizerAccentFilledButtonStyle(), fontSize: '14px', fontWeight: 600, padding: '12px 18px', cursor: promoSaving ? 'not-allowed' : 'pointer', opacity: promoSaving ? 0.65 : 1 }}
               >
                 {promoSaving ? 'Guardando…' : 'Guardar promoción'}
               </button>
@@ -2330,7 +2330,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
               </svg>
             </div>
             <div>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
                 Eliminar {selectedIds.size} {selectedIds.size === 1 ? 'ítem' : 'ítems'}
               </p>
               <p style={{ fontSize: '14px', color: '#6B7280', margin: '8px 0 0 0', lineHeight: 1.6 }}>
@@ -2346,7 +2346,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
               type="button"
               disabled={bulkSubmitting}
               onClick={() => setBulkConfirm(null)}
-              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 500, padding: '8px 16px', cursor: bulkSubmitting ? 'not-allowed' : 'pointer', opacity: bulkSubmitting ? 0.5 : 1 }}
+              style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 600, padding: '8px 16px', cursor: bulkSubmitting ? 'not-allowed' : 'pointer', opacity: bulkSubmitting ? 0.5 : 1 }}
             >
               Cancelar
             </button>
@@ -2378,7 +2378,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 </svg>
               </div>
               <div>
-                <p style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#0A0A0F', margin: 0, letterSpacing: '-0.02em' }}>
                   {deleteTarget.kind === 'category' ? 'Eliminar categoría' : deleteTarget.variant === 'combo' ? 'Eliminar combo' : 'Eliminar producto'}
                 </p>
                 <p style={{ fontSize: '14px', color: '#6B7280', margin: '8px 0 0 0', lineHeight: 1.6 }}>
@@ -2399,7 +2399,7 @@ export function ProductsView({ eventId }: { eventId: string }) {
                 type="button"
                 disabled={deleteSubmitting}
                 onClick={() => setDeleteTarget(null)}
-                style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 500, padding: '8px 16px', cursor: deleteSubmitting ? 'not-allowed' : 'pointer', opacity: deleteSubmitting ? 0.5 : 1 }}
+                style={{ flex: 1, borderRadius: '100px', border: '1px solid rgba(0,0,0,0.1)', background: '#FFFFFF', color: '#6B7280', fontSize: '13px', fontWeight: 600, padding: '8px 16px', cursor: deleteSubmitting ? 'not-allowed' : 'pointer', opacity: deleteSubmitting ? 0.5 : 1 }}
               >
                 Cancelar
               </button>

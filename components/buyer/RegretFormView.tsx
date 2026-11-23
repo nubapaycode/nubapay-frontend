@@ -31,7 +31,7 @@ function Label({ htmlFor, children }: { htmlFor: string; children: string }) {
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider"
+      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider"
       style={{ color: BUYER_COLORS.muted }}
     >
       {children} <span style={{ color: '#DC2626' }}>*</span>
@@ -151,7 +151,7 @@ export function RegretFormView({ catalogSlug, eventName }: RegretFormViewProps) 
         </svg>
       </button>
       <span
-        className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold tracking-tight"
+        className="absolute left-1/2 -translate-x-1/2 text-[16px] font-semibold tracking-tight"
         style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}
       >
         Arrepentimiento
@@ -173,7 +173,7 @@ export function RegretFormView({ catalogSlug, eventName }: RegretFormViewProps) 
             </svg>
           </div>
           <div>
-            <p className="mb-1 text-[19px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+            <p className="mb-1 text-[19px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
               Recibimos tu solicitud
             </p>
             <p className="text-[14px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
@@ -203,7 +203,7 @@ export function RegretFormView({ catalogSlug, eventName }: RegretFormViewProps) 
         className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6 pb-12"
       >
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
+          <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
             Botón de arrepentimiento
           </h1>
           <p className="mt-1 text-[14px] leading-relaxed" style={{ color: BUYER_COLORS.muted }}>
@@ -358,7 +358,7 @@ export function RegretFormView({ catalogSlug, eventName }: RegretFormViewProps) 
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-full px-5 py-3.5 text-[15px] font-bold transition-opacity active:opacity-80 disabled:opacity-60"
+          className="rounded-full px-5 py-3.5 text-[15px] font-semibold transition-opacity active:opacity-80 disabled:opacity-60"
           style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
         >
           {submitting ? 'Enviando…' : 'Enviar solicitud'}

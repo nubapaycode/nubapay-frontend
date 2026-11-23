@@ -188,7 +188,7 @@ export function TopProductsPanel({
           <div className="mb-3 flex size-10 items-center justify-center rounded-2xl bg-gray-50">
             <ArrowUpRight size={18} strokeWidth={1.5} className="text-gray-400" aria-hidden />
           </div>
-          <p className="text-sm font-medium text-gray-900">Sin ventas aún</p>
+          <p className="text-sm font-semibold text-gray-900">Sin ventas aún</p>
           <p className="mt-1 text-xs text-gray-400">Los más vendidos aparecerán acá</p>
         </div>
       ) : (
@@ -204,7 +204,7 @@ export function TopProductsPanel({
                   title={selected === p.name ? 'Quitar filtro' : `Filtrar por ${p.name}`}
                 >
                   <span className="w-4 shrink-0 text-[11px] font-semibold tabular-nums text-gray-300">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-gray-800">{p.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-gray-800">{p.name}</span>
                   <span className="text-[12px] tabular-nums text-gray-400">{formatCount(p.quantity)} u.</span>
                   <Money value={p.revenue} hidden={hidden} className="w-24 text-right text-[13px] font-semibold tabular-nums text-gray-900" />
                 </BarRow>
@@ -216,7 +216,7 @@ export function TopProductsPanel({
               <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="pointer-events-auto rounded-full border border-gray-200 bg-white px-3 py-1 text-[12px] font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                className="pointer-events-auto rounded-full border border-gray-200 bg-white px-3 py-1 text-[12px] font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
               >
                 Ver los {products.length}
               </button>
@@ -267,7 +267,7 @@ export function LivePanel({ summary, hidden }: { summary: DashboardSummary; hidd
     <Panel
       title="Ritmo en vivo"
       aside={
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
           <span className="relative flex size-2">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
             <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
@@ -308,7 +308,7 @@ export function FilterChip({ label, value, onClear }: { label: string; value: st
   return (
     <span className="nb-pop inline-flex h-9 items-center gap-1 rounded-xl border border-gray-200 bg-white pl-3 pr-1 text-[13px] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <span className="text-gray-400">{label}</span>
-      <span className="max-w-[160px] truncate font-medium text-gray-900">{value}</span>
+      <span className="max-w-[160px] truncate font-semibold text-gray-900">{value}</span>
       <button
         type="button"
         onClick={onClear}

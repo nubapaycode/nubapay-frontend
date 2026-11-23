@@ -72,7 +72,7 @@ export function DocsIndexView({ eventId }: { eventId?: string }) {
                 </li>
               ))}
             </ol>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-gray-900">
+            <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-gray-900">
               Ver la guía
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
             </span>
@@ -112,7 +112,7 @@ export function DocsIndexView({ eventId }: { eventId?: string }) {
           <Command size={15} aria-hidden />
         </span>
         <span>
-          <span className="font-medium text-gray-900">Atajo:</span> apretá ⌘K (o Ctrl+K) en cualquier pantalla para buscar pedidos o saltar a una herramienta.
+          <span className="font-semibold text-gray-900">Atajo:</span> apretá ⌘K (o Ctrl+K) en cualquier pantalla para buscar pedidos o saltar a una herramienta.
         </span>
       </Link>
     </DocsShell>

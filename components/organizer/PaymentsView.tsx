@@ -167,7 +167,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
                   active ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200/80 hover:border-gray-300',
                 )}
               >
-                <span className="flex items-center gap-2 text-[12px] font-medium text-gray-500">
+                <span className="flex items-center gap-2 text-[12px] font-semibold text-gray-500">
                   <span className={cn('size-1.5 rounded-full', STATUS_UI[c.key].dot)} aria-hidden />
                   {c.label}
                 </span>
@@ -213,7 +213,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
           <select
             value={sort}
             onChange={e => setSortF(e.target.value as PaymentsSort)}
-            className="h-9 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-medium text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none hover:border-gray-300 focus:border-gray-400"
+            className="h-9 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-semibold text-gray-700 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none hover:border-gray-300 focus:border-gray-400"
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>
@@ -257,7 +257,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
         </div>
       ) : (
         <div className={cn('overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-opacity', refreshing && 'opacity-70')}>
-          <div className="hidden grid-cols-[120px_minmax(160px,1fr)_minmax(150px,1fr)_120px_110px] gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-medium text-gray-400 md:grid">
+          <div className="hidden grid-cols-[120px_minmax(160px,1fr)_minmax(150px,1fr)_120px_110px] gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[11px] font-semibold text-gray-400 md:grid">
             <span>Estado</span>
             <span>Pedido</span>
             <span>Medio</span>

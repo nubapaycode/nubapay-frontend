@@ -72,12 +72,12 @@ export function DocsShell({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-nubapay.svg" alt="nubapay" width={75} height={26} className="h-[22px] w-auto" />
             <span className="h-4 w-px bg-gray-300" aria-hidden />
-            <span className="text-[13px] font-medium text-gray-600">Documentación</span>
+            <span className="text-[13px] font-semibold text-gray-600">Documentación</span>
           </Link>
           {eventId ? (
             <Link
               href={`/eventos/${encodeURIComponent(eventId)}/resumen`}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
             >
               <ArrowLeft size={13} aria-hidden />
               Volver al panel
@@ -85,7 +85,7 @@ export function DocsShell({
           ) : (
             <Link
               href="/eventos"
-              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-medium text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[12.5px] font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:text-gray-900"
             >
               Ir al panel
             </Link>
@@ -104,7 +104,7 @@ export function DocsShell({
         <Link
           href={docsHref(undefined, eventId)}
           className={cn(
-            'shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors',
+            'shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
             !activeSlug ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600',
           )}
         >
@@ -116,7 +116,7 @@ export function DocsShell({
             href={docsHref(a.slug, eventId)}
             aria-current={a.slug === activeSlug ? 'page' : undefined}
             className={cn(
-              'shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors',
+              'shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
               a.slug === activeSlug ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600',
             )}
           >
@@ -170,7 +170,7 @@ export function DocsShell({
                   if (items.length === 0) return null
                   return (
                     <div key={g.key} className="mb-4">
-                      <p className="mb-1 px-2 text-[11px] font-medium text-gray-400">{g.label}</p>
+                      <p className="mb-1 px-2 text-[11px] font-semibold text-gray-400">{g.label}</p>
                       <ul>
                         {items.map(a => {
                           const active = a.slug === activeSlug
@@ -181,7 +181,7 @@ export function DocsShell({
                                 aria-current={active ? 'page' : undefined}
                                 className={cn(
                                   'relative flex items-center rounded-lg px-2 py-1.5 text-[13px] transition-colors',
-                                  active ? 'bg-white font-medium text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)] ring-1 ring-gray-200/80' : 'text-gray-600 hover:bg-white/70 hover:text-gray-900',
+                                  active ? 'bg-white font-semibold text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)] ring-1 ring-gray-200/80' : 'text-gray-600 hover:bg-white/70 hover:text-gray-900',
                                 )}
                               >
                                 {active ? (

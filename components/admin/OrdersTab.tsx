@@ -170,7 +170,7 @@ export function OrdersTab({
                     className="cursor-pointer transition-colors hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                   >
                     <Td>
-                      <span className="font-medium text-white">{o.order_number ?? '—'}</span>
+                      <span className="font-semibold text-white">{o.order_number ?? '—'}</span>
                       {o.is_test && (
                         <span className="ml-2">
                           <Pill tone="warning">Test</Pill>

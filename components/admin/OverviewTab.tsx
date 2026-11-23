@@ -95,7 +95,7 @@ function MetricCell({
         )}
       />
       <span className={cx('block text-xs transition-colors duration-150', selected ? 'text-white/85' : 'text-white/55')}>{label}</span>
-      <span className="mt-1.5 block text-[17px] font-medium tracking-tight text-white tabular-nums min-[360px]:text-lg sm:text-[22px]">
+      <span className="mt-1.5 block text-[17px] font-semibold tracking-tight text-white tabular-nums min-[360px]:text-lg sm:text-[22px]">
         <CountUp value={value} format={format} />
       </span>
       <span className="mt-1 block">
@@ -144,7 +144,7 @@ function UpcomingEvents() {
           {events.map((e) => (
             <li key={e.id} className="flex items-center justify-between gap-3 px-5 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white/90">{e.name}</p>
+                <p className="truncate text-sm font-semibold text-white/90">{e.name}</p>
                 <p className="truncate text-xs text-white/55">{e.organizer?.email ?? 'sin organizador'}</p>
               </div>
               <div className="flex-shrink-0 text-right">
@@ -200,7 +200,7 @@ function PlatformTotals({
       ) : (
         <>
           <p className="text-xs text-white/55">A cobrar en total</p>
-          <p className="mt-1 text-[28px] font-medium tracking-tight tabular-nums text-admin-accent">
+          <p className="mt-1 text-[28px] font-semibold tracking-tight tabular-nums text-admin-accent">
             {formatPrice(summary.total_commission + summary.total_service_fee)}
           </p>
           <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-4">
@@ -211,7 +211,7 @@ function PlatformTotals({
               ['Facturado', fmtMoneyCompact(summary.total_revenue)],
             ].map(([label, v]) => (
               <div key={label}>
-                <dd className="text-xl font-medium tracking-tight tabular-nums text-white">{v}</dd>
+                <dd className="text-xl font-semibold tracking-tight tabular-nums text-white">{v}</dd>
                 <dt className="text-xs text-white/55">{label}</dt>
               </div>
             ))}
@@ -306,7 +306,7 @@ export function OverviewTab({
             <div className="px-5 pb-4 pt-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-[13px] font-medium text-white">{METRICS[metric].label} por día</h2>
+                  <h2 className="text-[13px] font-semibold text-white">{METRICS[metric].label} por día</h2>
                   <p className="mt-0.5 text-xs text-white/55">
                     {fmtDay(data.range.from)} – {fmtDay(data.range.to)} · hora Argentina
                   </p>
@@ -352,7 +352,7 @@ export function OverviewTab({
                   ['Fallidas', data.funnel.failed],
                 ].map(([label, v]) => (
                   <div key={label as string}>
-                    <dd className="text-lg font-medium tracking-tight tabular-nums text-white">{fmtInt(v as number)}</dd>
+                    <dd className="text-lg font-semibold tracking-tight tabular-nums text-white">{fmtInt(v as number)}</dd>
                     <dt className="text-[11px] text-white/55">{label}</dt>
                   </div>
                 ))}

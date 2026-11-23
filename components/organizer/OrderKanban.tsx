@@ -29,7 +29,7 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
       display: 'grid',
       gridTemplateColumns: 'repeat(5, 1fr)',
       gap: '12px',
-      fontFamily: "var(--font-dm-sans, 'DM Sans', sans-serif)",
+      fontFamily: "var(--font-geist-sans), sans-serif",
     }}>
       {COLUMNS.map(col => {
         const colOrders = orders.filter(o => o.status === col.key)
@@ -55,7 +55,7 @@ export function OrderKanban({ orders, onMarkReady, onMarkDelivered }: OrderKanba
               </span>
               <span style={{
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 color: col.key === 'ready' ? ORGANIZER_ACCENT_FOREGROUND : col.accent,
                 background:
                   col.key === 'ready'

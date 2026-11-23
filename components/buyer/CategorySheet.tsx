@@ -145,7 +145,7 @@ export function CategorySheet({ open, onClose, categories, active, onChange, cou
 
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between px-5 pb-4 pt-2">
-          <span className="text-[18px] font-bold" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+          <span className="text-[18px] font-semibold" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
             Categorías
           </span>
           <button
@@ -193,7 +193,7 @@ export function CategorySheet({ open, onClose, categories, active, onChange, cou
 
                 {/* Badge cantidad */}
                 <span
-                  className="rounded-full px-2 py-0.5 text-xs font-bold"
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold"
                   style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.muted }}
                 >
                   {count}

@@ -11,8 +11,12 @@
   --color-admin-brand: #c6ff00;
 }
 
-/* `inline`: las variables de next/font existen solo dentro del layout de /admin, no en :root. */
+/* Tipografía: Geist en toda la app y Bricolage Grotesque solo para el wordmark del logo.
+   `inline`: las variables de next/font viven en <html> (las pone app/layout.tsx), no en :root. */
 @theme inline {
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-logo: var(--font-bricolage), var(--font-geist-sans), sans-serif;
   --font-admin: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   --font-admin-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -28,10 +32,12 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Tipografía del sistema por encima de la clase de Inter (va en CSS y no como style en línea:
-   el navegador reescribe ese atributo y React lo marcaba como error de hidratación) */
-body.font-system {
-  font-family: -apple-system, "SF Pro Text", "SF Pro Display", BlinkMacSystemFont, Inter, sans-serif;
+/* Balance tipográfico: regular (400) para el texto y semibold (600) para el énfasis.
+   El navegador pone <b>, <strong> y <th> en bold (700). */
+@layer base {
+  b, strong, th {
+    font-weight: 600;
+  }
 }
 
 @keyframes scanner-sweep {

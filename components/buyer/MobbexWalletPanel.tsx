@@ -114,7 +114,7 @@ const EMBED_CROP_TOP = 80
 const inputClass =
   'w-full rounded-[14px] border px-4 py-3.5 text-[15px] outline-none transition-shadow focus:ring-2'
 const primaryButton =
-  'flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold text-white transition-opacity disabled:opacity-50'
+  'flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold text-white transition-opacity disabled:opacity-50'
 
 function expiry(card: WalletCard): string {
   if (!card.exp_month || !card.exp_year) return ''
@@ -597,7 +597,7 @@ export function MobbexWalletPanel({
             maxLength={6}
             value={code}
             onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-            className={`${inputClass} text-center text-[24px] font-bold tracking-[0.4em]`}
+            className={`${inputClass} text-center text-[24px] font-semibold tracking-[0.4em]`}
             style={{ borderColor: BUYER_COLORS.border, background: BUYER_COLORS.subtleFill }}
             aria-label="Código de verificación"
           />
@@ -673,7 +673,7 @@ export function MobbexWalletPanel({
                       }}
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[14px] font-bold">
+                        <span className="block text-[14px] font-semibold">
                           {c.brand || 'Tarjeta'} •••• {c.last4}
                         </span>
                         <span className="block text-[12px]" style={{ color: BUYER_COLORS.muted }}>
@@ -740,7 +740,7 @@ export function MobbexWalletPanel({
             <button
               type="button"
               onClick={() => void openEmbedded()}
-              className="flex h-[48px] w-full items-center justify-center gap-2 rounded-full text-[14px] font-bold transition-opacity active:opacity-80"
+              className="flex h-[48px] w-full items-center justify-center gap-2 rounded-full text-[14px] font-semibold transition-opacity active:opacity-80"
               style={
                 checkout.cards.length > 0
                   ? { border: `1.5px solid ${BUYER_COLORS.border}`, background: '#fff', color: BUYER_COLORS.text }
@@ -842,7 +842,7 @@ export function MobbexWalletPanel({
       )}
 
       {error && (
-        <p role="alert" className="text-[13px] font-medium" style={{ color: '#DC2626' }}>
+        <p role="alert" className="text-[13px] font-semibold" style={{ color: '#DC2626' }}>
           {error}
         </p>
       )}

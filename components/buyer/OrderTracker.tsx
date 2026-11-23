@@ -61,7 +61,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   return (
     <div className="flex items-center justify-between py-3">
       <span className="text-[13px]" style={{ color: BUYER_COLORS.muted }}>{label}</span>
-      <span className="text-[13px] font-medium" style={{ color: BUYER_COLORS.text }}>{children}</span>
+      <span className="text-[13px] font-semibold" style={{ color: BUYER_COLORS.text }}>{children}</span>
     </div>
   )
 }
@@ -426,7 +426,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           </button>
         )}
         <span
-          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-bold tracking-tight"
+          className="absolute left-1/2 -translate-x-1/2 text-[16px] font-semibold tracking-tight"
           style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}
         >
           {order?.order_number ? `Pedido #${order.order_number}` : 'Tu pedido'}
@@ -466,7 +466,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             </div>
 
             <div className="flex flex-col items-center gap-1 text-center">
-              <p className="text-[15px] font-bold" style={{ color: BUYER_COLORS.text }}>Preparando el pago…</p>
+              <p className="text-[15px] font-semibold" style={{ color: BUYER_COLORS.text }}>Preparando el pago…</p>
               <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>Te vamos a redirigir a {paymentMethodLabel} en un momento.</p>
             </div>
 
@@ -533,7 +533,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             </div>
 
             <div className="flex flex-col items-center gap-1 text-center">
-              <p className="text-[15px] font-bold" style={{ color: BUYER_COLORS.text }}>Cargando tu pedido…</p>
+              <p className="text-[15px] font-semibold" style={{ color: BUYER_COLORS.text }}>Cargando tu pedido…</p>
               <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>Esto puede llegar a tardar unos minutos, no abandones la página.</p>
             </div>
 
@@ -638,7 +638,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-[15px] font-bold leading-snug" style={{ color: hero.titleColor }}>{hero.title}</p>
+              <p className="text-[15px] font-semibold leading-snug" style={{ color: hero.titleColor }}>{hero.title}</p>
               <p className="mt-0.5 text-[12px] leading-snug" style={{ color: hero.subtitleColor }}>{hero.subtitle}</p>
             </div>
           </div>
@@ -651,7 +651,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             style={{ background: '#fff', border: `1px solid #BBF7D0` }}
           >
             <div className="flex flex-col items-center gap-1 text-center">
-              <p className="text-[16px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+              <p className="text-[16px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
                 Presentá este QR para pagar {formatPrice(order.total_amount)}
               </p>
               <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
@@ -693,7 +693,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 </svg>
               </div>
               <div>
-                <p className="text-[15px] font-bold leading-tight" style={{ color: BUYER_COLORS.text }}>
+                <p className="text-[15px] font-semibold leading-tight" style={{ color: BUYER_COLORS.text }}>
                   {order?.order_number ? `Pedido #${order.order_number} reservado` : 'Estamos procesando tu orden'}
                 </p>
                 <p className="text-[12px] mt-0.5" style={{ color: BUYER_COLORS.muted }}>
@@ -715,7 +715,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   "Pagar con X" de nuevo — mostramos un estado de confirmación. */}
               {paymentResult === 'success' ? (
                 <div
-                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold"
+                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold"
                   style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                 >
                   <Spinner size="sm" />
@@ -743,7 +743,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 />
               ) : cardInReview ? (
                 <div
-                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold"
+                  className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold"
                   style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                 >
                   <Spinner size="sm" />
@@ -754,7 +754,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 type="button"
                 disabled={!mpCheckoutReady}
                 onClick={() => { if (order?.checkout_url) goToCheckout(order.checkout_url) }}
-                className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-bold transition-opacity disabled:opacity-70"
+                className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold transition-opacity disabled:opacity-70"
                 style={{
                   background: activeMethod?.bg ?? BUYER_COLORS.subtleFill,
                   color: activeMethod?.color ?? BUYER_COLORS.text,
@@ -833,7 +833,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
             style={{ background: '#fff', border: `1px solid ${BUYER_COLORS.border}` }}
           >
             <div className="flex flex-col items-center gap-1 text-center">
-              <p className="text-[16px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
+              <p className="text-[16px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.02em' }}>
                 Presentá este QR en el punto indicado
               </p>
               <p className="text-[12px]" style={{ color: BUYER_COLORS.muted }}>
@@ -874,7 +874,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
           <button
             type="button"
             onClick={() => router.push(backPath)}
-            className="flex h-[50px] w-full items-center justify-center rounded-full text-[15px] font-bold transition-opacity active:opacity-80"
+            className="flex h-[50px] w-full items-center justify-center rounded-full text-[15px] font-semibold transition-opacity active:opacity-80"
             style={{ background: '#16A34A', color: '#fff' }}
           >
             {isTicketOrder ? 'Volver a las entradas' : 'Volver a pedir'}
@@ -899,12 +899,12 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                   <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[6px] text-[12px] font-bold"
+                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[6px] text-[12px] font-semibold"
                         style={{ background: BUYER_COLORS.subtleFill, color: BUYER_COLORS.text }}
                       >
                         {item.quantity}
                       </span>
-                      <span className="truncate text-[14px] font-medium" style={{ color: BUYER_COLORS.text }}>
+                      <span className="truncate text-[14px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                         {item.product_name}
                       </span>
                     </div>
@@ -920,7 +920,7 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
                 className="flex items-center justify-between px-4 py-3 mt-1"
                 style={{ borderTop: `1px solid ${BUYER_COLORS.border}` }}
               >
-                <span className="text-[14px] font-medium" style={{ color: BUYER_COLORS.muted }}>Costo de servicio</span>
+                <span className="text-[14px] font-semibold" style={{ color: BUYER_COLORS.muted }}>Costo de servicio</span>
                 <span className="text-[13px] font-semibold" style={{ color: BUYER_COLORS.text }}>
                   {formatPrice(order.service_fee ?? 0)}
                 </span>
@@ -930,8 +930,8 @@ export function OrderTracker({ orderId, catalogSlug }: OrderTrackerProps) {
               className="flex items-center justify-between px-4 py-3 mt-1"
               style={{ borderTop: `1px solid ${BUYER_COLORS.border}` }}
             >
-              <span className="text-[14px] font-bold" style={{ color: BUYER_COLORS.text }}>Total</span>
-              <span className="text-[18px] font-bold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
+              <span className="text-[14px] font-semibold" style={{ color: BUYER_COLORS.text }}>Total</span>
+              <span className="text-[18px] font-semibold tracking-tight" style={{ color: BUYER_COLORS.text, letterSpacing: '-0.03em' }}>
                 {formatPrice(order.total_amount)}
               </span>
             </div>

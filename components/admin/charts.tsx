@@ -205,8 +205,8 @@ export function SeriesTable({ points, format, label }: { points: SeriesPoint[]; 
       <table className="w-full text-left text-sm">
         <thead className="sticky top-0 bg-admin-raised">
           <tr>
-            <th className="px-3 py-2 text-xs font-medium text-white/50">Día</th>
-            <th className="px-3 py-2 text-right text-xs font-medium text-white/50">{label}</th>
+            <th className="px-3 py-2 text-xs font-semibold text-white/50">Día</th>
+            <th className="px-3 py-2 text-right text-xs font-semibold text-white/50">{label}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.04]">

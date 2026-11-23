@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -7,6 +8,7 @@ import {
   MapPin, Music, Plus, ScanLine, ShieldCheck, ShoppingBag, Store, Ticket, TrendingUp, Truck, Wine, Zap,
 } from 'lucide-react'
 
+import { paymentMethods, SIPAGO_CARD_LOGOS } from '@/components/buyer/paymentMethods'
 import { browserFetch } from '@/lib/browserFetch'
 import { gsap, MOTION_OK, MOTION_REDUCED, ScrollTrigger, useGSAP } from './gsap'
 import { CountUp, LoopVideo, prefersReducedMotion, Reveal, useCtaHover, usePointerEffects, useReveal, useScrollState, useSmoothScroll } from './hooks'
@@ -30,9 +32,11 @@ const USE_3D = false
 /** Pantallas del iPhone del hero, en el orden del flujo de compra. */
 const SCREENS = ['Catálogo', 'Carrito', 'Pago', 'Retiro con QR']
 
-const TICKER = [
-  'Sin cajas', 'Menú digital', 'Entradas y parking', 'QR antifraude', 'Pagos online',
-  'IA integrada', 'Tiempo real', 'Eventos masivos',
+/** Pasarelas integradas en el panel; el ícono de Mercado Pago es el mismo del checkout. */
+const GATEWAYS = [
+  { name: 'Mercado Pago', icon: paymentMethods.find(m => m.id === 'mp')?.icon },
+  { name: 'Mobbex', icon: <Image src="/images/mobbex.png" alt="" width={30} height={30} /> },
+  { name: 'Sipago', icon: <Image src="/images/sipagologo.png" alt="" width={30} height={30} /> },
 ]
 
 const STEPS = [
@@ -200,7 +204,7 @@ function Hero() {
           </p>
           <div className="lv2-hero-cta lv2-fade-up">
             <ArrowBtn href="#contacto">Agendá una demo</ArrowBtn>
-            <a href="#como-funciona" className="lv2-btn lv2-btn--ghost">Ver cómo funciona</a>
+            <a href="#como-funciona" className="lv2-btn lv2-btn--ghost lv2-btn--regular">Ver cómo funciona</a>
           </div>
         </div>
 
@@ -236,18 +240,29 @@ function Hero() {
   )
 }
 
-function Ticker() {
+/* ───────── Medios de pago ───────── */
+
+function PaymentStrip() {
   return (
-    <div className="lv2-ticker">
-      <span className="sr-only">{TICKER.join(' · ')}</span>
-      <div className="lv2-ticker-mask" aria-hidden="true">
-        <div className="lv2-ticker-track">
-          {[...TICKER, ...TICKER, ...TICKER].map((t, i) => (
-            <div key={i} className="lv2-ticker-item">{t}<i /></div>
+    <section className="lv2-pay" aria-labelledby="lv2-pay-h">
+      <div className="lv2-wrap lv2-pay-in">
+        <p id="lv2-pay-h" className="lv2-pay-label">Cobrás con</p>
+        <ul className="lv2-pay-gw">
+          {GATEWAYS.map(g => (
+            <li key={g.name}><span className="lv2-pay-ico" aria-hidden="true">{g.icon}</span>{g.name}</li>
           ))}
-        </div>
+          <li className="lv2-pay-add">
+            <span className="lv2-pay-ico lv2-pay-ico--add" aria-hidden="true">+3</span>
+            <span className="sr-only">y 3 medios de pago más</span>
+          </li>
+        </ul>
+        <ul className="lv2-pay-cards" aria-label="Tarjetas aceptadas">
+          {SIPAGO_CARD_LOGOS.map(c => (
+            <li key={c.src}><Image src={c.src} alt={c.alt} width={56} height={22} unoptimized /></li>
+          ))}
+        </ul>
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -700,7 +715,7 @@ export default function NewLanding() {
       <Nav scrolled={scrolled} />
       <main>
         <Hero />
-        <Ticker />
+        <PaymentStrip />
         <Journey />
         <Stats />
         <Panel />
