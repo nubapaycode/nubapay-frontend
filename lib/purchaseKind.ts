@@ -13,8 +13,6 @@ export const PURCHASE_COPY: Record<
     metaCheckoutDescription: string
     backLabel: string
     heading: string
-    /** Aclaración bajo el título de la lista. */
-    headingNote?: string
     noneTitle: string
     noneBody: string
     closed: string
@@ -56,7 +54,6 @@ export const PURCHASE_COPY: Record<
     metaCheckoutDescription: 'Completá tus datos y pagá tu lugar de estacionamiento.',
     backLabel: 'Volver al parking',
     heading: 'Elegí tu lugar',
-    headingNote: 'Podés reservar un solo lugar por compra: auto, moto o camión.',
     noneTitle: 'Sin parking disponible',
     noneBody: 'Este evento todavía no tiene lugares de estacionamiento a la venta. Volvé a entrar más cerca de la fecha.',
     closed: 'La venta de parking para este evento está cerrada.',

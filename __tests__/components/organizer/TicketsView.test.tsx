@@ -265,10 +265,10 @@ describe('TicketsView · parking', () => {
     expect(screen.getByPlaceholderText('Sin límite')).toHaveFocus()
   })
 
-  it('explica la regla de un lugar por persona', async () => {
+  it('explica la regla de un lugar por vehículo', async () => {
     ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto] })
     render(<TicketsView eventId={eventId} kind="parking" />)
-    expect(await screen.findByText(/Cada persona puede reservar un solo lugar/)).toBeInTheDocument()
+    expect(await screen.findByText(/Cada vehículo puede reservar un solo lugar/)).toBeInTheDocument()
   })
 
   it('la pestaña Reservas lista patente, DNI y si ingresó', async () => {

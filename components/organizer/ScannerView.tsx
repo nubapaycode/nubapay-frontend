@@ -29,13 +29,24 @@ const CHIP_LABEL_TONE: Record<ChipTone, string> = {
   danger: 'text-red-600',
 }
 
-function StatusChip({ tone, icon: Icon, children }: { tone: ChipTone; icon: LucideIcon; children: ReactNode }) {
+function StatusChip({
+  tone,
+  icon: Icon,
+  normalCase = false,
+  children,
+}: {
+  tone: ChipTone
+  icon: LucideIcon
+  /** Texto en minúsculas normales (parking) en vez de versalitas. */
+  normalCase?: boolean
+  children: ReactNode
+}) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full', CHIP_ICON_TONE[tone])}>
         <Icon size={15} strokeWidth={2} aria-hidden />
       </span>
-      <p className={cn('text-xs font-medium uppercase tracking-wider', CHIP_LABEL_TONE[tone])}>{children}</p>
+      <p className={cn('font-medium', normalCase ? 'text-sm' : 'text-xs uppercase tracking-wider', CHIP_LABEL_TONE[tone])}>{children}</p>
     </div>
   )
 }
@@ -59,13 +70,13 @@ function OrderIdentity({ order }: { order: Order }) {
         <dl className={cn('grid grid-cols-2 gap-2', (number || name) && 'mt-3')}>
           {plate && (
             <div className="rounded-xl bg-gray-50 px-3 py-2">
-              <dt className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Patente</dt>
+              <dt className="text-xs font-medium text-gray-400">Patente</dt>
               <dd className="font-mono text-lg font-semibold tracking-widest text-gray-900">{plate}</dd>
             </div>
           )}
           {dni && (
             <div className="rounded-xl bg-gray-50 px-3 py-2">
-              <dt className="text-[11px] font-medium uppercase tracking-wider text-gray-400">DNI</dt>
+              <dt className="text-xs font-medium text-gray-400">DNI</dt>
               <dd className="text-lg font-semibold tabular-nums text-gray-900">{dni}</dd>
             </div>
           )}
@@ -109,10 +120,15 @@ function saveScanMode(mode: ScanMode) {
   }
 }
 
-type ScanKind = 'tickets' | 'products' | 'mixed'
+/** Segundos antes de volver solo a escanear otro después de un resultado. */
+const AUTO_NEXT_SECONDS = 4
+
+type ScanKind = 'tickets' | 'products' | 'mixed' | 'parking'
 
 function scanKind(order: Order | null): ScanKind {
   const items = order?.items ?? []
+  // Parking: un lugar por persona, así que no hay cantidades que elegir.
+  if (items.length > 0 && (items.some(i => i.kind === 'parking') || order?.vehiclePlate?.trim())) return 'parking'
   if (items.length > 0 && items.every(i => i.isTicket)) return 'tickets'
   if (items.some(i => i.isTicket)) return 'mixed'
   return 'products'
@@ -146,6 +162,15 @@ const SCAN_COPY: Record<ScanKind, {
     pendingNote: 'Quedan entradas sin usar. Podés volver a escanear este mismo QR más tarde para usarlas.',
     alreadyDone: 'Las entradas ya fueron usadas',
   },
+  parking: {
+    prompt: 'Lugar de parking',
+    confirmAll: 'Aceptar',
+    confirmSome: () => 'Aceptar',
+    verified: 'Parking verificado',
+    partial: 'Uso parcial registrado',
+    pendingNote: 'Queda parking sin usar. Podés volver a escanear este mismo QR más tarde.',
+    alreadyDone: 'El parking ya fue usado',
+  },
   mixed: {
     prompt: 'Entradas a usar y productos a entregar',
     confirmAll: 'Confirmar',
@@ -164,6 +189,29 @@ function itemWording(item: { isTicket?: boolean; quantity: number }) {
     : { alreadyDone: 'ya entregado', done: 'Entregado', doneLower: 'entregado' }
 }
 
+/** "Escanear otro" con cuenta regresiva: si nadie lo toca, avanza solo. Se monta con cada resultado. */
+function AutoNextButton({ onNext }: { onNext: () => void }) {
+  const [left, setLeft] = useState(AUTO_NEXT_SECONDS)
+  useEffect(() => {
+    const tick = window.setInterval(() => setLeft(prev => Math.max(0, prev - 1)), 1000)
+    const done = window.setTimeout(onNext, AUTO_NEXT_SECONDS * 1000)
+    return () => {
+      window.clearInterval(tick)
+      window.clearTimeout(done)
+    }
+  }, [onNext])
+  return (
+    <button
+      type="button"
+      onClick={onNext}
+      style={organizerAccentFilledButtonStyle()}
+      className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
+    >
+      Escanear otro{left > 0 ? ` (${left})` : ''}
+    </button>
+  )
+}
+
 export function ScannerView({ eventId }: { eventId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -179,7 +227,9 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
   const [readerValue, setReaderValue] = useState('')
-  const copy = SCAN_COPY[scanKind(order)]
+  const kind = scanKind(order)
+  const copy = SCAN_COPY[kind]
+  const isParking = kind === 'parking'
 
   const incQty = useCallback((id: string, max: number) => {
     setSelectedQty(prev => {
@@ -233,8 +283,14 @@ export function ScannerView({ eventId }: { eventId: string }) {
   }, [eventId, stopCamera])
 
   const confirmScan = useCallback(async () => {
+    // Parking: se acepta todo lo pendiente de una vez, sin elegir cantidades.
+    const source: Record<string, number> = isParking && order
+      ? Object.fromEntries(
+          order.items.map((item, i) => [item.id ?? String(i), item.quantity - (item.redeemedQuantity ?? 0)]),
+        )
+      : selectedQty
     const itemQuantities = Object.fromEntries(
-      Object.entries(selectedQty).filter(([, qty]) => qty > 0),
+      Object.entries(source).filter(([, qty]) => qty > 0),
     )
     if (!pendingOrderId || Object.keys(itemQuantities).length === 0) return
     setState('confirm_loading')
@@ -252,7 +308,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setErrorMsg(result.error)
       setState('error')
     }
-  }, [eventId, pendingOrderId, selectedQty])
+  }, [eventId, pendingOrderId, selectedQty, isParking, order])
 
   const confirmCashReceived = useCallback(async () => {
     if (!pendingOrderId) return
@@ -562,7 +618,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
           <div className="flex flex-col gap-3">
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <OrderIdentity order={order} />
-              <StatusChip tone="neutral" icon={PackageCheck}>
+              <StatusChip tone="neutral" icon={PackageCheck} normalCase={isParking}>
                 {copy.prompt}
               </StatusChip>
               <div className="flex flex-col gap-1">
@@ -592,7 +648,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                       </span>
                       {fullyRedeemed ? (
                         <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">{itemWording(item).done}</span>
-                      ) : (
+                      ) : isParking ? null : (
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
@@ -624,13 +680,15 @@ export function ScannerView({ eventId }: { eventId: string }) {
               <button
                 type="button"
                 onClick={confirmScan}
-                disabled={state === 'confirm_loading' || selectedCount === 0}
+                disabled={state === 'confirm_loading' || (!isParking && selectedCount === 0)}
                 style={organizerAccentFilledButtonStyle()}
                 className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {state === 'confirm_loading'
                   ? 'Confirmando…'
-                  : selectedCount === 0
+                  : isParking
+                    ? copy.confirmAll
+                    : selectedCount === 0
                     ? copy.confirmAll
                     : copy.confirmSome(selectedCount)}
               </button>
@@ -663,14 +721,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 ))}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={next}
-              style={organizerAccentFilledButtonStyle()}
-              className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
-            >
-              Escanear otro
-            </button>
+            <AutoNextButton onNext={next} />
           </div>
         )}
 
@@ -714,14 +765,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
             <p className="text-xs text-gray-400 text-center px-2">
               {copy.pendingNote}
             </p>
-            <button
-              type="button"
-              onClick={next}
-              style={organizerAccentFilledButtonStyle()}
-              className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
-            >
-              Escanear otro
-            </button>
+            <AutoNextButton onNext={next} />
           </div>
         )}
 
@@ -744,14 +788,7 @@ export function ScannerView({ eventId }: { eventId: string }) {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={next}
-              style={organizerAccentFilledButtonStyle()}
-              className="w-full rounded-full py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
-            >
-              Escanear otro
-            </button>
+            <AutoNextButton onNext={next} />
           </div>
         )}
 

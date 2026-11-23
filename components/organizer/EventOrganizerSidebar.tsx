@@ -904,7 +904,7 @@ export function EventOrganizerSidebar({
           }
         }}
       >
-        <div className="flex w-full items-end justify-center min-h-[56px] overflow-visible px-1 pt-1">
+        <div className="flex w-full items-end justify-center min-h-[68px] overflow-visible px-1 pt-1">
           {mobileSlots.map(slot => {
             if (slot.kind === 'fab') {
               const fabActive = isItemActive(pathname, slot.item)
@@ -923,15 +923,8 @@ export function EventOrganizerSidebar({
                     onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
                   >
                     <span className="relative">
-                      {fabActive && (
-                        <span
-                          className="absolute inset-0 rounded-full animate-ping"
-                          style={{ backgroundColor: ORG_ACC, opacity: 0.35 }}
-                          aria-hidden
-                        />
-                      )}
                       <span
-                        className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full border-4 shadow-lg transition-transform active:scale-95"
+                        className="relative flex size-[60px] shrink-0 items-center justify-center rounded-full [&_svg]:size-6 border-4 shadow-lg transition-transform active:scale-95"
                         style={{
                           backgroundColor: ORG_ACC,
                           color: ORG_INK,
@@ -943,9 +936,6 @@ export function EventOrganizerSidebar({
                       >
                         {slot.item.icon}
                       </span>
-                    </span>
-                    <span className="text-[9px] font-semibold leading-none" style={{ color: ORG_INK }}>
-                      {slot.item.label}
                     </span>
                   </Link>
                 </div>
@@ -961,18 +951,18 @@ export function EventOrganizerSidebar({
                     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8)
                     setMoreOpen(true)
                   }}
-                  className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                  className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-center py-3 min-h-[64px]"
                   aria-expanded={moreOpen}
                   aria-haspopup="dialog"
                   aria-label="Ver más herramientas"
                 >
                   <span className="relative flex items-center justify-center">
                     <span
-                      className="flex items-center justify-center rounded-full transition-all duration-150"
+                      className="flex items-center justify-center rounded-full transition-all duration-150 [&_svg]:size-5"
                       style={
                         moreOverflowActive
-                          ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                          : { width: 36, height: 24, color: '#9CA3AF' }
+                          ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 48, height: 32, color: ORG_INK }
+                          : { width: 48, height: 32, color: '#9CA3AF' }
                       }
                     >
                       {moreIcon}
@@ -985,17 +975,6 @@ export function EventOrganizerSidebar({
                       />
                     )}
                   </span>
-                  <span
-                    className="text-[9px] leading-none text-center"
-                    style={{
-                      color: moreOverflowActive ? ORG_INK : '#9CA3AF',
-                      fontWeight: moreOverflowActive ? 600 : 400,
-                      opacity: moreOverflowActive ? 1 : 0,
-                      transition: 'color 150ms, opacity 150ms',
-                    }}
-                  >
-                    Ver más
-                  </span>
                 </button>
               )
             }
@@ -1005,29 +984,20 @@ export function EventOrganizerSidebar({
               <Link
                 key={slot.item.href}
                 href={slot.item.href}
-                className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-end gap-1 py-2 min-h-[52px]"
+                aria-label={slot.item.label}
+                aria-current={active ? 'page' : undefined}
+                className="flex min-w-0 flex-1 max-w-[5.5rem] flex-col items-center justify-center py-3 min-h-[64px]"
                 onClick={() => { if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(8) }}
               >
                 <span
-                  className="flex items-center justify-center rounded-full transition-all duration-150"
+                  className="flex items-center justify-center rounded-full transition-all duration-150 [&_svg]:size-5"
                   style={
                     active
-                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 36, height: 24, color: ORG_INK }
-                      : { width: 36, height: 24, color: '#9CA3AF' }
+                      ? { background: `color-mix(in srgb, ${ORG_ACC} 18%, transparent)`, width: 48, height: 32, color: ORG_INK }
+                      : { width: 48, height: 32, color: '#9CA3AF' }
                   }
                 >
                   {slot.item.icon}
-                </span>
-                <span
-                  className="text-[9px] leading-none text-center"
-                  style={{
-                    color: active ? ORG_INK : '#9CA3AF',
-                    fontWeight: active ? 600 : 400,
-                    opacity: active ? 1 : 0,
-                    transition: 'color 150ms, opacity 150ms',
-                  }}
-                >
-                  {slot.item.label}
                 </span>
               </Link>
             )

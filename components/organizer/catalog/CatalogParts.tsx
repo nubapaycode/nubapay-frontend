@@ -155,18 +155,41 @@ export function CatalogItemRow({
   const { active: promoActive, promoPrice, label: promoLabel } = promoState(item, promo)
   const isCombo = item.type === 'combo'
 
+  const actions = (
+    <>
+      <RowAction label={promoActive ? 'Editar promoción' : 'Agregar promoción'} onClick={onPromo} active={promoActive}>
+        <BadgePercent size={15} strokeWidth={1.75} aria-hidden />
+      </RowAction>
+      <RowAction label="Editar" onClick={onEdit}>
+        <Pencil size={15} strokeWidth={1.75} aria-hidden />
+      </RowAction>
+      <RowAction label={`Eliminar ${item.name}`} onClick={onDelete} danger>
+        <Trash2 size={15} strokeWidth={1.75} aria-hidden />
+      </RowAction>
+    </>
+  )
+
+  const price = promoPrice != null ? (
+    <>
+      <Money value={promoPrice} className="text-[14px] font-semibold tabular-nums text-gray-900" />
+      <Money value={item.price} className="text-[12px] tabular-nums text-gray-400 line-through" />
+    </>
+  ) : (
+    <Money value={item.price} className="text-[14px] font-semibold tabular-nums text-gray-900" />
+  )
+
   return (
     <div
       {...drag?.handlers}
       className={cn(
-        'group relative flex items-center gap-3 px-4 py-3 transition-colors',
+        'group relative flex items-start gap-3 px-4 py-3 transition-colors md:items-center',
         drag?.over ? 'bg-gray-50' : 'hover:bg-gray-50/60',
         drag?.dragging && 'opacity-40',
       )}
     >
       {drag?.over && <span className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-gray-900" aria-hidden />}
       {drag && (
-        <span className="-ml-1 cursor-grab text-gray-300 opacity-0 transition-opacity hover:text-gray-500 active:cursor-grabbing group-hover:opacity-100" title="Arrastrá para reordenar">
+        <span className="-ml-1 hidden cursor-grab md:inline text-gray-300 opacity-0 transition-opacity hover:text-gray-500 active:cursor-grabbing group-hover:opacity-100" title="Arrastrá para reordenar">
           <GripVertical size={15} strokeWidth={1.75} aria-hidden />
         </span>
       )}
@@ -174,14 +197,14 @@ export function CatalogItemRow({
         <Checkbox label={`Seleccionar ${item.name}`} checked={Boolean(checked)} onChange={onToggleChecked} />
       )}
 
-      <div className={cn('flex min-w-0 flex-1 items-center gap-3', !item.is_active && 'opacity-60')}>
+      <div className={cn('flex min-w-0 flex-1 items-start gap-3 md:items-center', !item.is_active && 'opacity-60')}>
         <CatalogThumb src={item.image_url} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <button
               type="button"
               onClick={onEdit}
-              className="truncate text-left text-[14px] font-semibold tracking-tight text-gray-900 hover:underline"
+              className="min-w-0 max-w-full truncate text-left text-[14px] font-semibold tracking-tight text-gray-900 hover:underline"
             >
               {item.name}
             </button>
@@ -206,31 +229,19 @@ export function CatalogItemRow({
           ) : (
             <p className="mt-0.5 truncate text-[12px] text-gray-500">{item.category_name ?? 'Sin categoría'}</p>
           )}
+          {/* Celular: precio y acciones debajo del nombre, así el nombre usa todo el ancho. */}
+          <div className="mt-1.5 flex items-center justify-between gap-2 md:hidden">
+            <div className="flex items-baseline gap-1.5">{price}</div>
+            <div className="-mr-1.5 flex items-center gap-0.5">{actions}</div>
+          </div>
         </div>
 
-        <div className="shrink-0 text-right">
-          {promoPrice != null ? (
-            <>
-              <Money value={promoPrice} className="block text-[14px] font-semibold tabular-nums text-gray-900" />
-              <Money value={item.price} className="block text-[12px] tabular-nums text-gray-400 line-through" />
-            </>
-          ) : (
-            <Money value={item.price} className="block text-[14px] font-semibold tabular-nums text-gray-900" />
-          )}
-        </div>
+        <div className="hidden shrink-0 flex-col items-end text-right md:flex">{price}</div>
       </div>
 
       {/* Acciones: visibles al pasar el mouse en escritorio, siempre en pantallas táctiles. */}
-      <div className="flex shrink-0 items-center gap-0.5 transition-opacity md:opacity-0 md:focus-within:opacity-100 md:group-hover:opacity-100">
-        <RowAction label={promoActive ? 'Editar promoción' : 'Agregar promoción'} onClick={onPromo} active={promoActive}>
-          <BadgePercent size={15} strokeWidth={1.75} aria-hidden />
-        </RowAction>
-        <RowAction label="Editar" onClick={onEdit}>
-          <Pencil size={15} strokeWidth={1.75} aria-hidden />
-        </RowAction>
-        <RowAction label={`Eliminar ${item.name}`} onClick={onDelete} danger>
-          <Trash2 size={15} strokeWidth={1.75} aria-hidden />
-        </RowAction>
+      <div className="hidden shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 md:flex">
+        {actions}
       </div>
       <div className="ml-1 shrink-0">{toggle}</div>
     </div>

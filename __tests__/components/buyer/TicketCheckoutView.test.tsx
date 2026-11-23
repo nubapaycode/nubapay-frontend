@@ -136,20 +136,14 @@ describe('TicketCheckoutView', () => {
 })
 
 describe('validateVehicle', () => {
-  it('acepta DNI con puntos y patentes viejas, nuevas y en minúscula', () => {
-    expect(validateVehicle({ dni: '30.123.456', plate: 'ab 123 cd' })).toEqual({})
-    expect(validateVehicle({ dni: '1234567', plate: 'ABC-123' })).toEqual({})
+  it('acepta patentes viejas, nuevas y en minúscula', () => {
+    expect(validateVehicle({ plate: 'ab 123 cd' })).toEqual({})
+    expect(validateVehicle({ plate: 'ABC-123' })).toEqual({})
   })
 
-  it('pide DNI y patente, y marca los inválidos', () => {
-    expect(validateVehicle({ dni: '', plate: '' })).toEqual({
-      dni: 'Ingresá tu DNI',
-      plate: 'Ingresá la patente del vehículo',
-    })
-    expect(validateVehicle({ dni: '12345', plate: 'ABCDEF' })).toEqual({
-      dni: 'El DNI tiene que tener 7 u 8 números',
-      plate: 'Ingresá una patente válida, ej. AB123CD o ABC123',
-    })
+  it('pide la patente y marca las inválidas', () => {
+    expect(validateVehicle({ plate: '' })).toEqual({ plate: 'Ingresá la patente del vehículo' })
+    expect(validateVehicle({ plate: 'ABCDEF' })).toEqual({ plate: 'Ingresá una patente válida, ej. AB123CD o ABC123' })
   })
 })
 
@@ -172,7 +166,7 @@ describe('TicketCheckoutView · parking', () => {
     const buyer = screen.getByRole('heading', { name: 'Datos del comprador' })
     const parking = screen.getByRole('heading', { name: 'Datos de estacionamiento' })
     expect(buyer.compareDocumentPosition(parking) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByLabelText('DNI')).toBeInTheDocument()
+    expect(screen.queryByLabelText('DNI')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Patente')).toBeInTheDocument()
   })
 
@@ -182,19 +176,18 @@ describe('TicketCheckoutView · parking', () => {
     expect(screen.queryByRole('heading', { name: 'Datos de estacionamiento' })).not.toBeInTheDocument()
   })
 
-  it('no paga sin DNI ni patente', async () => {
+  it('no paga sin patente', async () => {
     storeParking()
     ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
     render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
     await fillBuyer()
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
-    expect(screen.getByText('Ingresá tu DNI')).toBeInTheDocument()
     expect(screen.getByText('Ingresá la patente del vehículo')).toBeInTheDocument()
     const methods = (browserFetch as jest.Mock).mock.calls.map(call => call[1]?.method)
     expect(methods).not.toContain('PATCH')
   })
 
-  it('manda DNI y patente normalizados al confirmar', async () => {
+  it('manda la patente normalizada al confirmar', async () => {
     storeParking()
     ;(browserFetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -203,7 +196,6 @@ describe('TicketCheckoutView · parking', () => {
     render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
-    await userEvent.type(screen.getByLabelText('DNI'), '30.123.456')
     await userEvent.type(screen.getByLabelText('Patente'), 'ab 123 cd')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
 
@@ -212,12 +204,11 @@ describe('TicketCheckoutView · parking', () => {
       customer_name: 'Ana Pérez',
       customer_email: 'ana@mail.com',
       customer_phone: '11 5555-1234',
-      customer_dni: '30123456',
       vehicle_plate: 'AB123CD',
     })
   })
 
-  it('muestra el error del servidor si ya hay un parking con esos datos', async () => {
+  it('muestra el error del servidor si la patente ya tiene parking', async () => {
     storeParking()
     ;(browserFetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
       init?.method === 'PATCH'
@@ -227,10 +218,38 @@ describe('TicketCheckoutView · parking', () => {
     render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
-    await userEvent.type(screen.getByLabelText('DNI'), '30123456')
     await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
-    expect(await screen.findByText('Esta patente ya tiene un lugar de parking para este evento.')).toBeInTheDocument()
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos completar la compra')
+    expect(alert).toHaveTextContent('Esta patente ya tiene un lugar de parking para este evento.')
     expect(push).not.toHaveBeenCalled()
+  })
+
+  it('marca la patente cuando el servidor la rechaza y deja cerrar el aviso', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PATCH'
+        ? {
+            ok: false,
+            status: 422,
+            json: async () => ({
+              error: 'Esta patente ya tiene un lugar de parking para este evento.',
+              code: 'parking_already_purchased',
+            }),
+          }
+        : { ok: true, json: async () => ({ order_id: 'o1' }) },
+    )
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await screen.findByRole('alert')
+    const plate = screen.getByLabelText('Patente')
+    expect(plate).toHaveAttribute('aria-invalid', 'true')
+    expect(plate).toHaveFocus()
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar aviso' }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

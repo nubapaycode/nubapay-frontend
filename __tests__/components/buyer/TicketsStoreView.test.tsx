@@ -186,7 +186,6 @@ describe('TicketsStoreView · parking', () => {
 
   it('permite un solo lugar por compra: no se puede sumar otro del mismo vehículo', async () => {
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    expect(screen.getByText(/un solo lugar por compra/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
     expect(screen.getByRole('button', { name: 'Agregar uno' })).toBeDisabled()
   })

@@ -156,11 +156,6 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
               <h2 className="text-xl font-bold tracking-tight md:text-2xl" style={{ color: BUYER_COLORS.text }}>
                 {copy.heading}
               </h2>
-              {copy.headingNote && (
-                <p className="mt-1 text-sm" style={{ color: '#6B6B78' }}>
-                  {copy.headingNote}
-                </p>
-              )}
             </div>
             <div className="flex flex-col gap-3 md:gap-4">
               {items.map(ticket => (

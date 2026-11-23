@@ -35,8 +35,8 @@ const DANGER = '#DC2626'
 
 export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone'
 export type BuyerValues = Record<BuyerField, string>
-/** Datos de estacionamiento: solo se piden al comprar parking. */
-export type VehicleField = 'dni' | 'plate'
+/** Datos de estacionamiento: solo se piden al comprar parking. El lugar queda atado a la patente. */
+export type VehicleField = 'plate'
 export type VehicleValues = Record<VehicleField, string>
 type FormField = BuyerField | VehicleField
 
@@ -60,17 +60,11 @@ const FIELDS: FieldDef<BuyerField>[] = [
 ]
 
 const VEHICLE_FIELDS: FieldDef<VehicleField>[] = [
-  { id: 'dni', label: 'DNI', placeholder: 'Sin puntos, ej. 30123456', autoComplete: 'off', inputMode: 'numeric' },
-  { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true },
+  { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true, full: true },
 ]
 
 const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '' }
-const EMPTY_VEHICLE: VehicleValues = { dni: '', plate: '' }
-
-/** DNI solo con números (acepta puntos y espacios al escribir). */
-export function normalizeDni(raw: string): string {
-  return raw.replace(/[.\s-]/g, '')
-}
+const EMPTY_VEHICLE: VehicleValues = { plate: '' }
 
 /** Patente en mayúsculas, sin espacios, puntos ni guiones: "ab 123 cd" → "AB123CD". */
 export function normalizePlate(raw: string): string {
@@ -80,9 +74,6 @@ export function normalizePlate(raw: string): string {
 /** Errores de los datos del estacionamiento; objeto vacío si todo es válido. Mismas reglas que el backend. */
 export function validateVehicle(values: VehicleValues): Partial<Record<VehicleField, string>> {
   const errors: Partial<Record<VehicleField, string>> = {}
-  const dni = normalizeDni(values.dni)
-  if (!dni) errors.dni = 'Ingresá tu DNI'
-  else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI tiene que tener 7 u 8 números'
   const plate = normalizePlate(values.plate)
   if (!plate) errors.plate = 'Ingresá la patente del vehículo'
   else if (!/^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{5,8}$/.test(plate)) errors.plate = 'Ingresá una patente válida, ej. AB123CD o ABC123'
@@ -102,6 +93,49 @@ export function validateBuyer(values: BuyerValues): Partial<Record<BuyerField, s
   if (!phoneDigits) errors.phone = 'Ingresá tu teléfono'
   else if (phoneDigits.length < 8) errors.phone = 'Ingresá un teléfono válido'
   return errors
+}
+
+/** Errores del servidor que corresponden a la patente: se muestran en el campo, no solo abajo. */
+const PLATE_ERROR_CODES = ['parking_already_purchased', 'vehicle_data_required', 'invalid_vehicle_data']
+
+function ErrorAlert({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="mb-3 flex items-start gap-3 rounded-[14px] border px-3.5 py-3"
+      style={{ background: '#FEF2F2', borderColor: 'rgba(220,38,38,0.25)' }}
+    >
+      <span
+        className="mt-px flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
+        style={{ background: DANGER, color: '#fff' }}
+        aria-hidden
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 3.5v4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          <circle cx="7" cy="10.25" r="0.95" fill="currentColor" />
+        </svg>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-bold leading-snug" style={{ color: '#991B1B' }}>
+          No pudimos completar la compra
+        </p>
+        <p className="mt-0.5 text-[13px] leading-snug" style={{ color: '#B91C1C' }}>
+          {message}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="-mr-1 -mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-colors hover:bg-red-100"
+        style={{ color: '#B91C1C' }}
+        aria-label="Cerrar aviso"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+          <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  )
 }
 
 function formatCountdown(ms: number): string {
@@ -230,10 +264,22 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   }
 
   const handleChange = (field: FormField, value: string) => {
-    if (field === 'dni' || field === 'plate') setVehicle(v => ({ ...v, [field]: value }))
+    if (field === 'plate') setVehicle(v => ({ ...v, [field]: value }))
     else setValues(v => ({ ...v, [field]: value }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: undefined }))
     if (submitError) setSubmitError('')
+  }
+
+  /** Muestra el error del servidor; si es de la patente, también lo marca en el campo y lo enfoca. */
+  const showServerError = (body: { error?: string; code?: string }, fallback: string) => {
+    const message = body.error ?? fallback
+    setSubmitError(message)
+    if (isParking && body.code && PLATE_ERROR_CODES.includes(body.code)) {
+      setErrors(e => ({ ...e, plate: message }))
+      const input = document.getElementById('buyer-plate')
+      input?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      input?.focus({ preventScroll: true })
+    }
   }
 
   const handlePay = async () => {
@@ -259,7 +305,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     try {
       const items = selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity }))
       const vehicleData = isParking
-        ? { customer_dni: normalizeDni(vehicle.dni), vehicle_plate: normalizePlate(vehicle.plate) }
+        ? { vehicle_plate: normalizePlate(vehicle.plate) }
         : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
@@ -286,7 +332,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             orderId = null
           } else {
             const body = await res.json().catch(() => ({}))
-            setSubmitError(body.error ?? 'No se pudo confirmar la compra. Intentá de nuevo.')
+            showServerError(body, 'No se pudo confirmar la compra. Intentá de nuevo.')
             return
           }
         }
@@ -307,7 +353,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
         })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          setSubmitError(body.error ?? 'No se pudo crear la compra. Intentá de nuevo.')
+          showServerError(body, 'No se pudo crear la compra. Intentá de nuevo.')
           return
         }
         const data = await res.json()
@@ -549,7 +595,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               {VEHICLE_FIELDS.map(field => renderField(field, vehicle[field.id]))}
             </div>
             <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
-              Se permite un solo lugar por persona y por vehículo.
+              El lugar queda a nombre de esta patente: se permite un solo lugar por vehículo.
             </p>
           </Section>
         )}
@@ -617,9 +663,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               {buyBlockedMessage(purchaseClosed, 'pay')}
             </p>
           ) : submitError ? (
-            <p className="mb-2 text-center text-[13px] font-semibold" style={{ color: DANGER }} role="alert">
-              {submitError}
-            </p>
+            <ErrorAlert message={submitError} onClose={() => setSubmitError('')} />
           ) : null}
           <div className="flex items-center justify-between gap-4">
             <div>
