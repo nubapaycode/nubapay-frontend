@@ -116,6 +116,9 @@ describe('TicketsStoreView · parking', () => {
   it('el mapa es un link a Google Maps y no captura el scroll', () => {
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
     expect(screen.getByTitle('Mapa del estacionamiento')).toHaveClass('pointer-events-none')
+    // En desktop sí se puede mover el mapa: el link que lo tapa se oculta.
+    expect(screen.getByTitle('Mapa del estacionamiento')).toHaveClass('lg:pointer-events-auto')
+    expect(screen.getByRole('link', { name: 'Abrir el estacionamiento en Google Maps' })).toHaveClass('lg:hidden')
     expect(screen.getByRole('link', { name: 'Abrir el estacionamiento en Google Maps' })).toHaveAttribute(
       'href',
       'https://www.google.com/maps/place/X/@-34.6,-58.4,17z',
@@ -179,6 +182,31 @@ describe('TicketsStoreView · parking', () => {
     expect(screen.getByText('1 lugar')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
     expect(push).toHaveBeenCalledWith('/parking/fiesta/comprar')
+  })
+
+  it('permite un solo lugar por compra: no se puede sumar otro del mismo vehículo', async () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText(/un solo lugar por compra/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
+    expect(screen.getByRole('button', { name: 'Agregar uno' })).toBeDisabled()
+  })
+
+  it('elegir otro vehículo reemplaza al anterior', async () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar Moto' }))
+    expect(screen.getByText('1 lugar')).toBeInTheDocument()
+    const stored = JSON.parse(sessionStorage.getItem('nubapay_ticket_selection')!)
+    expect(stored.lines).toEqual([{ ticketId: 'p2', quantity: 1 }])
+  })
+
+  it('recorta a un lugar una selección vieja con varios', () => {
+    sessionStorage.setItem(
+      'nubapay_ticket_selection',
+      JSON.stringify({ slug: 'fiesta#parking', lines: [{ ticketId: 'p1', quantity: 3 }, { ticketId: 'p2', quantity: 1 }] }),
+    )
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText('1 lugar')).toBeInTheDocument()
   })
 
   it('la selección de parking no se mezcla con la de entradas', async () => {

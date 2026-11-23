@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation'
 import { buyerFlowPath, parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { eventDateParts } from '@/lib/eventDate'
+import { isGoogleMapsUrl } from '@/lib/googleMaps'
 import { hasModule } from '@/lib/modules'
-import { PURCHASE_COPY, checkoutPath, itemsOf, selectionScope, type PurchaseKind } from '@/lib/purchaseKind'
+import { PURCHASE_COPY, checkoutPath, itemsOf, limitSelection, maxPerPurchase, selectionScope, type PurchaseKind } from '@/lib/purchaseKind'
 import { startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
-import { formatPrice } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
 import { ParkingMap } from './ParkingMap'
@@ -51,13 +52,21 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
   const router = useRouter()
   const copy = PURCHASE_COPY[kind]
   const items = itemsOf(event, kind)
-  const { lines, quantityOf, setQuantity } = useTicketSelection(selectionScope(catalogSlug, kind))
+  const { lines: storedLines, quantityOf, setQuantity, selectOnly } = useTicketSelection(selectionScope(catalogSlug, kind))
+  const lines = limitSelection(storedLines, kind)
+  const maxQuantity = maxPerPurchase(kind)
+  // Parking: un solo lugar por compra, así que elegir un vehículo reemplaza al anterior.
+  const addItem = (id: string) => (maxQuantity === 1 ? selectOnly(id) : setQuantity(id, quantityOf(id) + 1))
   const paymentsEnabled = event.paymentsEnabled
   const purchaseClosed = event.purchaseClosed ?? false
   const hasCatalog = event.products.length + event.combos.length + event.blocks.length > 0
   const ticketFee = event.serviceFeePercent?.ticket ?? 0
   const date = eventDateParts(event.date)
   const venue = event.venue.trim()
+
+  // Parking con mapa: en desktop, la lista a la izquierda y el mapa fijo a la derecha.
+  const showMap = kind === 'parking' && !!event.parkingMapsUrl && isGoogleMapsUrl(event.parkingMapsUrl)
+  const container = showMap ? 'max-w-3xl lg:max-w-6xl' : 'max-w-3xl'
 
   const heroSrc = event.coverImageUrl && event.coverImageUrl.trim() !== '' ? event.coverImageUrl : '/images/Frame.jpg'
 
@@ -86,7 +95,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           unoptimized={heroSrc.startsWith('http')}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/15" />
-        <div className="relative mx-auto flex h-full max-w-3xl items-end gap-4 px-4 pb-6 md:gap-5 md:px-6 md:pb-8">
+        <div className={cn('relative mx-auto flex h-full items-end gap-4', container, 'px-4 pb-6 md:gap-5 md:px-6 md:pb-8')}>
           {date && (
             <div
               className="flex w-[60px] flex-shrink-0 flex-col items-center overflow-hidden rounded-[14px] bg-white text-center md:w-[72px]"
@@ -115,7 +124,14 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-4 pb-10 pt-7 md:px-6 md:pt-10">
+      <section
+        className={cn(
+          'mx-auto px-4 pb-10 pt-7 md:px-6 md:pt-10',
+          container,
+          showMap && 'lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8',
+        )}
+      >
+        <div className="min-w-0">
         {!paymentsEnabled && (
           <div
             className="mb-5 rounded-[14px] px-4 py-3 text-center text-[13px] font-semibold"
@@ -140,16 +156,22 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
               <h2 className="text-xl font-bold tracking-tight md:text-2xl" style={{ color: BUYER_COLORS.text }}>
                 {copy.heading}
               </h2>
+              {copy.headingNote && (
+                <p className="mt-1 text-sm" style={{ color: '#6B6B78' }}>
+                  {copy.headingNote}
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-3 md:gap-4">
               {items.map(ticket => (
                 <TicketCard
                   key={ticket.id}
                   ticket={ticket}
-                  quantity={quantityOf(ticket.id)}
-                  onAdd={t => paymentsEnabled && setQuantity(t.id, quantityOf(t.id) + 1)}
+                  quantity={lines.find(l => l.ticketId === ticket.id)?.quantity ?? 0}
+                  onAdd={t => paymentsEnabled && addItem(t.id)}
                   onUpdateQuantity={setQuantity}
                   cartDisabled={!paymentsEnabled}
+                  maxQuantity={maxQuantity}
                 />
               ))}
             </div>
@@ -181,7 +203,15 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           </Link>
         )}
 
-        {kind === 'parking' && <ParkingMap url={event.parkingMapsUrl} resolvedUrl={event.parkingMapsResolvedUrl} />}
+        </div>
+
+        {showMap && (
+          <ParkingMap
+            url={event.parkingMapsUrl}
+            resolvedUrl={event.parkingMapsResolvedUrl}
+            className="lg:sticky lg:top-6 lg:mt-0"
+          />
+        )}
       </section>
 
       {paymentsEnabled && count > 0 && (
@@ -189,7 +219,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           className="fixed inset-x-0 bottom-0 z-40 border-t bg-white px-4 pt-3 md:px-6"
           style={{ borderColor: BUYER_COLORS.border, paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
         >
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+          <div className={cn('mx-auto flex items-center justify-between gap-4', container)}>
             <div className="min-w-0" aria-live="polite">
               <p className="text-lg font-bold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
                 {formatPrice(subtotal)}

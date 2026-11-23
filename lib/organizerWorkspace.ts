@@ -1220,3 +1220,53 @@ export async function deleteWorkspaceProductPromotion(
   if (!res.ok) return { ok: false, error: body.error ?? 'Error' }
   return { ok: true }
 }
+
+// ---------------------------------------------------------------------------
+// Parking: reservas (lugares pagados con patente y DNI)
+// ---------------------------------------------------------------------------
+
+export type ParkingReservationStatus = 'all' | 'pending' | 'in'
+
+export interface ParkingReservation {
+  orderId: string
+  orderNumber: number | null
+  customerName: string | null
+  customerEmail: string | null
+  customerPhone: string | null
+  customerDni: string | null
+  vehiclePlate: string | null
+  /** Tipo de vehículo comprado (nombre del ítem al momento de la compra). */
+  vehicle: string
+  icon: string | null
+  /** Ya se escaneó el QR en la entrada del estacionamiento. */
+  entered: boolean
+  enteredAt: string | null
+  createdAt: string | null
+}
+
+export async function fetchParkingReservations(
+  eventId: string,
+  { q = '', status = 'all' }: { q?: string; status?: ParkingReservationStatus } = {},
+): Promise<
+  | { ok: true; reservations: ParkingReservation[]; counts: Record<ParkingReservationStatus, number> }
+  | { ok: false; error: string }
+> {
+  try {
+    const res = await browserFetch(workspacePath(eventId, 'parking/reservations', { q: q.trim(), status }), {
+      headers: authHeadersJson(),
+    })
+    const body = (await res.json().catch(() => ({}))) as {
+      reservations?: ParkingReservation[]
+      counts?: Record<ParkingReservationStatus, number>
+      error?: string
+    }
+    if (!res.ok) return { ok: false, error: body.error ?? 'No se pudieron cargar las reservas' }
+    return {
+      ok: true,
+      reservations: body.reservations ?? [],
+      counts: body.counts ?? { all: 0, pending: 0, in: 0 },
+    }
+  } catch {
+    return { ok: false, error: 'Error de conexión. Revisá tu internet e intentá de nuevo.' }
+  }
+}

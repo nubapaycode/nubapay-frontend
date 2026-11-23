@@ -82,6 +82,9 @@ export interface Order {
   customerName?: string | null
   customerPhone?: string | null
   customerEmail?: string | null
+  /** Parking: DNI del comprador y patente del vehículo (normalizados por el backend). */
+  customerDni?: string | null
+  vehiclePlate?: string | null
   items: CartItem[]
   total: number
   status: OrderStatus

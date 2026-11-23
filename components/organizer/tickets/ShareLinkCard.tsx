@@ -13,12 +13,17 @@ export function ShareLinkCard({
   label = 'Link para vender tickets',
   fileName,
   onError,
+  stacked = false,
+  className,
 }: {
   url: string
   hasCover: boolean
   label?: string
   fileName: string
   onError: (msg: string) => void
+  /** Columna angosta (panel lateral): link arriba y botones abajo, sin pasar a fila en pantallas anchas. */
+  stacked?: boolean
+  className?: string
 }) {
   const [copied, setCopied] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
@@ -46,8 +51,13 @@ export function ShareLinkCard({
   const display = url.replace(/^https?:\/\//, '')
 
   return (
-    <section className="nb-rise mb-6 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+    <section
+      className={cn(
+        'nb-rise mb-6 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]',
+        className,
+      )}
+    >
+      <div className={cn('flex flex-col gap-3 p-4', !stacked && 'sm:flex-row sm:items-center')}>
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-medium text-gray-500">{label}</p>
           <p className="mt-0.5 truncate text-[14px] font-medium text-gray-900" title={url}>
@@ -88,11 +98,11 @@ export function ShareLinkCard({
       </div>
 
       {qrOpen && (
-        <div className="nb-pop flex flex-col items-center gap-4 border-t border-gray-100 bg-gray-50/60 p-4 sm:flex-row">
+        <div className={cn('nb-pop flex flex-col items-center gap-4 border-t border-gray-100 bg-gray-50/60 p-4', !stacked && 'sm:flex-row')}>
           <div className="rounded-xl border border-gray-200 bg-white p-3">
             <QRCodeCanvas ref={qrRef} value={url} size={132} marginSize={1} aria-label={`Código QR: ${label}`} />
           </div>
-          <div className="flex-1 text-center sm:text-left">
+          <div className={cn('flex-1 text-center', !stacked && 'sm:text-left')}>
             <p className="text-[13px] font-medium text-gray-900">Escaneá para comprar</p>
             <p className="mt-0.5 text-[12px] text-gray-500">Usalo en flyers, historias o en la puerta del evento.</p>
             <button

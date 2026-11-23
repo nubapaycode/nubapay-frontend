@@ -3,7 +3,14 @@ import userEvent from '@testing-library/user-event'
 
 import { TicketsView } from '@/components/organizer/TicketsView'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
-import { createTicket, deleteTicket, fetchTickets, patchTicket, reorderTickets } from '@/lib/organizerWorkspace'
+import {
+  createTicket,
+  deleteTicket,
+  fetchParkingReservations,
+  fetchTickets,
+  patchTicket,
+  reorderTickets,
+} from '@/lib/organizerWorkspace'
 
 jest.mock('@/lib/organizerWorkspace', () => ({
   fetchTickets: jest.fn(),
@@ -11,6 +18,7 @@ jest.mock('@/lib/organizerWorkspace', () => ({
   patchTicket: jest.fn(),
   deleteTicket: jest.fn(),
   reorderTickets: jest.fn(),
+  fetchParkingReservations: jest.fn(),
 }))
 jest.mock('qrcode.react', () => ({ QRCodeCanvas: () => <canvas aria-label="Código QR del link de tickets" /> }))
 
@@ -214,7 +222,86 @@ describe('TicketsView · parking', () => {
     render(<TicketsView eventId={eventId} kind="parking" />)
     expect(await screen.findByText('org.nubapay.app/parking/mi-fiesta')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Abrir$/ })).toHaveAttribute('href', 'https://org.nubapay.app/parking/mi-fiesta')
-    expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+    // Con un link guardado el mapa queda compacto: el formulario aparece al tocar "Cambiar".
+    expect(screen.getByRole('link', { name: 'Abrir en Google Maps' })).toHaveAttribute('href', 'https://maps.app.goo.gl/abc')
+    expect(screen.queryByLabelText('Link de Google Maps')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar' }))
+    expect(screen.getByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByLabelText('Link de Google Maps')).not.toBeInTheDocument()
+  })
+
+  it('sin link de ubicación muestra el formulario directo', async () => {
+    ;(fetchOrganizerEventDetail as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      event: { slug: 'mi-fiesta', cover_image_url: 'https://x/y.jpg', parking_maps_url: null },
+    })
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('')
+  })
+
+  it('muestra la ocupación arriba de los vehículos', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({
+      ok: true,
+      tickets: [
+        { ...auto, stock: 50, sold: 12, revenue: 36000, redeemed: 3 },
+        { ...auto, id: 'pk-2', name: 'Moto', stock: 30, sold: 0 },
+      ],
+    })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    const occupancy = await screen.findByRole('region', { name: 'Ocupación del estacionamiento' })
+    expect(occupancy).toHaveTextContent('12 de 80')
+    expect(occupancy).toHaveTextContent('68libres')
+    expect(occupancy.compareDocumentPosition(screen.getByText('Moto')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/no tiene límite de lugares/)).not.toBeInTheDocument()
+  })
+
+  it('avisa los vehículos sin límite de lugares y abre el formulario en "Lugares"', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByText(/Auto no tiene límite de lugares/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Definir lugares de Auto' }))
+    expect(screen.getByPlaceholderText('Sin límite')).toHaveFocus()
+  })
+
+  it('explica la regla de un lugar por persona', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto] })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    expect(await screen.findByText(/Cada persona puede reservar un solo lugar/)).toBeInTheDocument()
+  })
+
+  it('la pestaña Reservas lista patente, DNI y si ingresó', async () => {
+    ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [auto] })
+    ;(fetchParkingReservations as jest.Mock).mockResolvedValue({
+      ok: true,
+      counts: { all: 2, pending: 1, in: 1 },
+      reservations: [
+        {
+          orderId: 'o1', orderNumber: 7, customerName: 'Ana Pérez', customerEmail: 'ana@mail.com', customerPhone: null,
+          customerDni: '30123456', vehiclePlate: 'AB123CD', vehicle: 'Auto', icon: 'car', entered: false, enteredAt: null, createdAt: null,
+        },
+        {
+          orderId: 'o2', orderNumber: 8, customerName: 'Luis Gómez', customerEmail: null, customerPhone: null,
+          customerDni: '28999111', vehiclePlate: 'ABC123', vehicle: 'Auto', icon: 'car', entered: true, enteredAt: '2026-11-23T20:15:00', createdAt: null,
+        },
+      ],
+    })
+    render(<TicketsView eventId={eventId} kind="parking" />)
+    await userEvent.click(await screen.findByRole('tab', { name: 'Reservas' }))
+    expect(await screen.findByText('AB123CD')).toBeInTheDocument()
+    expect(screen.getByText(/DNI 30123456/)).toBeInTheDocument()
+    expect(screen.getAllByText('Por ingresar').length).toBeGreaterThan(0)
+    expect(screen.getByRole('tab', { name: /Reservas/ })).toHaveTextContent('2')
+
+    await userEvent.type(screen.getByPlaceholderText(/Buscar por patente/), 'ab 123')
+    await waitFor(() =>
+      expect(fetchParkingReservations).toHaveBeenLastCalledWith(eventId, { q: 'ab 123', status: 'all' }),
+    )
+    await userEvent.click(screen.getByRole('tab', { name: /Ingresaron/ }))
+    await waitFor(() =>
+      expect(fetchParkingReservations).toHaveBeenLastCalledWith(eventId, { q: 'ab 123', status: 'in' }),
+    )
   })
 
   it('con un link corto muestra la vista previa usando la URL resuelta por el servidor', async () => {
@@ -236,7 +323,7 @@ describe('TicketsView · parking', () => {
   it('con un link corto sin resolver no hay vista previa, pero el link queda guardado', async () => {
     ;(fetchTickets as jest.Mock).mockResolvedValue({ ok: true, tickets: [] })
     render(<TicketsView eventId={eventId} kind="parking" />)
-    expect(await screen.findByLabelText('Link de Google Maps')).toHaveValue('https://maps.app.goo.gl/abc')
+    expect(await screen.findByRole('link', { name: 'Abrir en Google Maps' })).toHaveAttribute('href', 'https://maps.app.goo.gl/abc')
     expect(screen.queryByTitle('Mapa del estacionamiento')).not.toBeInTheDocument()
   })
 

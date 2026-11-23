@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { TicketCheckoutView, validateBuyer } from '@/components/buyer/TicketCheckoutView'
+import { TicketCheckoutView, validateBuyer, validateVehicle } from '@/components/buyer/TicketCheckoutView'
 import { browserFetch } from '@/lib/browserFetch'
 import type { Event } from '@/types'
 
@@ -132,5 +132,105 @@ describe('TicketCheckoutView', () => {
   it('sin selección invita a elegir entradas', () => {
     render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
     expect(screen.getByText('No elegiste entradas')).toBeInTheDocument()
+  })
+})
+
+describe('validateVehicle', () => {
+  it('acepta DNI con puntos y patentes viejas, nuevas y en minúscula', () => {
+    expect(validateVehicle({ dni: '30.123.456', plate: 'ab 123 cd' })).toEqual({})
+    expect(validateVehicle({ dni: '1234567', plate: 'ABC-123' })).toEqual({})
+  })
+
+  it('pide DNI y patente, y marca los inválidos', () => {
+    expect(validateVehicle({ dni: '', plate: '' })).toEqual({
+      dni: 'Ingresá tu DNI',
+      plate: 'Ingresá la patente del vehículo',
+    })
+    expect(validateVehicle({ dni: '12345', plate: 'ABCDEF' })).toEqual({
+      dni: 'El DNI tiene que tener 7 u 8 números',
+      plate: 'Ingresá una patente válida, ej. AB123CD o ABC123',
+    })
+  })
+})
+
+describe('TicketCheckoutView · parking', () => {
+  const parkingEvent: Event = {
+    ...event,
+    parking: [{ id: 'p1', kind: 'parking', icon: 'car', name: 'Auto', description: '', price: 3000, available: true }],
+  }
+
+  function storeParking() {
+    sessionStorage.setItem(
+      'nubapay_ticket_selection',
+      JSON.stringify({ slug: 'fiesta#parking', lines: [{ ticketId: 'p1', quantity: 1 }], expiresAt: Date.now() + 600000 }),
+    )
+  }
+
+  it('pide los datos del estacionamiento debajo de los del comprador', () => {
+    storeParking()
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    const buyer = screen.getByRole('heading', { name: 'Datos del comprador' })
+    const parking = screen.getByRole('heading', { name: 'Datos de estacionamiento' })
+    expect(buyer.compareDocumentPosition(parking) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByLabelText('DNI')).toBeInTheDocument()
+    expect(screen.getByLabelText('Patente')).toBeInTheDocument()
+  })
+
+  it('las entradas no piden datos del estacionamiento', () => {
+    storeSelection()
+    render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    expect(screen.queryByRole('heading', { name: 'Datos de estacionamiento' })).not.toBeInTheDocument()
+  })
+
+  it('no paga sin DNI ni patente', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await fillBuyer()
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    expect(screen.getByText('Ingresá tu DNI')).toBeInTheDocument()
+    expect(screen.getByText('Ingresá la patente del vehículo')).toBeInTheDocument()
+    const methods = (browserFetch as jest.Mock).mock.calls.map(call => call[1]?.method)
+    expect(methods).not.toContain('PATCH')
+  })
+
+  it('manda DNI y patente normalizados al confirmar', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ order_id: 'o1', order_number: 7, checkout_url: null }),
+    })
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.type(screen.getByLabelText('DNI'), '30.123.456')
+    await userEvent.type(screen.getByLabelText('Patente'), 'ab 123 cd')
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+
+    const patchCall = (browserFetch as jest.Mock).mock.calls.find(call => call[1]?.method === 'PATCH')
+    expect(JSON.parse(patchCall[1].body)).toEqual({
+      customer_name: 'Ana Pérez',
+      customer_email: 'ana@mail.com',
+      customer_phone: '11 5555-1234',
+      customer_dni: '30123456',
+      vehicle_plate: 'AB123CD',
+    })
+  })
+
+  it('muestra el error del servidor si ya hay un parking con esos datos', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PATCH'
+        ? { ok: false, status: 422, json: async () => ({ error: 'Esta patente ya tiene un lugar de parking para este evento.' }) }
+        : { ok: true, json: async () => ({ order_id: 'o1' }) },
+    )
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.type(screen.getByLabelText('DNI'), '30123456')
+    await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    expect(await screen.findByText('Esta patente ya tiene un lugar de parking para este evento.')).toBeInTheDocument()
+    expect(push).not.toHaveBeenCalled()
   })
 })

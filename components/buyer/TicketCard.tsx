@@ -12,6 +12,8 @@ interface TicketCardProps {
   onUpdateQuantity: (ticketId: string, quantity: number) => void
   /** Switch global de pagos inhabilitado: oculta los controles de agregar. */
   cartDisabled?: boolean
+  /** Tope de unidades por compra (parking: 1). */
+  maxQuantity?: number | null
 }
 
 /** Gris del fondo de la página: las muescas del troquel lo usan para "recortar" la entrada. */
@@ -47,10 +49,10 @@ function Perforation({ stubColor }: { stubColor: string }) {
  * troquel, y talón con precio y selector de cantidad. El talón toma el color del organizador
  * cuando hay unidades elegidas.
  */
-export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisabled = false }: TicketCardProps) {
+export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisabled = false, maxQuantity = null }: TicketCardProps) {
   const remaining = ticket.remaining ?? null
   const available = ticket.available !== false && remaining !== 0
-  const atLimit = remaining !== null && quantity >= remaining
+  const atLimit = (remaining !== null && quantity >= remaining) || (maxQuantity !== null && quantity >= maxQuantity)
   const empty = quantity === 0
   const selected = available && !empty
 

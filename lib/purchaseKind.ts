@@ -13,6 +13,8 @@ export const PURCHASE_COPY: Record<
     metaCheckoutDescription: string
     backLabel: string
     heading: string
+    /** Aclaración bajo el título de la lista. */
+    headingNote?: string
     noneTitle: string
     noneBody: string
     closed: string
@@ -54,6 +56,7 @@ export const PURCHASE_COPY: Record<
     metaCheckoutDescription: 'Completá tus datos y pagá tu lugar de estacionamiento.',
     backLabel: 'Volver al parking',
     heading: 'Elegí tu lugar',
+    headingNote: 'Podés reservar un solo lugar por compra: auto, moto o camión.',
     noneTitle: 'Sin parking disponible',
     noneBody: 'Este evento todavía no tiene lugares de estacionamiento a la venta. Volvé a entrar más cerca de la fecha.',
     closed: 'La venta de parking para este evento está cerrada.',
@@ -75,6 +78,26 @@ export const PURCHASE_COPY: Record<
  */
 export function selectionScope(slug: string, kind: PurchaseKind): string {
   return kind === 'parking' ? `${slug}#parking` : slug
+}
+
+/** Tope de unidades por compra: parking es un solo lugar (auto, moto o camión). */
+export function maxPerPurchase(kind: PurchaseKind): number | null {
+  return kind === 'parking' ? 1 : null
+}
+
+/** Recorta una selección guardada al tope del tipo (p. ej. una selección vieja con varios lugares). */
+export function limitSelection<T extends { quantity: number }>(lines: T[], kind: PurchaseKind): T[] {
+  const max = maxPerPurchase(kind)
+  if (max === null) return lines
+  const out: T[] = []
+  let left = max
+  for (const line of lines) {
+    if (left <= 0) break
+    const quantity = Math.min(line.quantity, left)
+    out.push(quantity === line.quantity ? line : { ...line, quantity })
+    left -= quantity
+  }
+  return out
 }
 
 export function itemsOf(event: Event, kind: PurchaseKind): Ticket[] {

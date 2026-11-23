@@ -336,6 +336,8 @@ export function OrderDetailSheet({
               {order.customerName && <CopyField label="Nombre" value={order.customerName} />}
               {order.customerEmail && <CopyField label="Email" value={order.customerEmail} />}
               {order.customerPhone && <CopyField label="Teléfono" value={order.customerPhone} />}
+              {order.customerDni && <CopyField label="DNI" value={order.customerDni} />}
+              {order.vehiclePlate && <CopyField label="Patente" value={order.vehiclePlate} />}
               {order.paymentMethod && (
                 <div className="py-2">
                   <p className="text-[11px] text-gray-400">Método de pago</p>
@@ -345,7 +347,7 @@ export function OrderDetailSheet({
                   </p>
                 </div>
               )}
-              {!order.customerName && !order.customerEmail && !order.customerPhone && (
+              {!order.customerName && !order.customerEmail && !order.customerPhone && !order.vehiclePlate && (
                 <p className="py-2 text-[13px] text-gray-400">El comprador no dejó datos de contacto.</p>
               )}
             </div>

@@ -82,6 +82,8 @@ interface UseTicketSelection {
   expiresAt: number | null
   quantityOf: (ticketId: string) => number
   setQuantity: (ticketId: string, quantity: number) => void
+  /** Deja elegida solo esta opción, con cantidad 1 (parking: un lugar por compra). */
+  selectOnly: (ticketId: string) => void
 }
 
 const EMPTY: TicketSelectionLine[] = []
@@ -107,7 +109,12 @@ export function useTicketSelection(slug: string): UseTicketSelection {
     [slug],
   )
 
+  const selectOnly = useCallback(
+    (ticketId: string) => writeStored({ slug, lines: [{ ticketId, quantity: 1 }] }),
+    [slug],
+  )
+
   const quantityOf = useCallback((ticketId: string) => lines.find(l => l.ticketId === ticketId)?.quantity ?? 0, [lines])
 
-  return { ready, lines, expiresAt: own?.expiresAt ?? null, quantityOf, setQuantity }
+  return { ready, lines, expiresAt: own?.expiresAt ?? null, quantityOf, setQuantity, selectOnly }
 }

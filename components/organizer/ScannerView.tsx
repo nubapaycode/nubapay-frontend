@@ -43,11 +43,34 @@ function StatusChip({ tone, icon: Icon, children }: { tone: ChipTone; icon: Luci
 function OrderIdentity({ order }: { order: Order }) {
   const number = order.orderNumber != null ? `#${order.orderNumber}` : null
   const name = order.customerName?.trim() || null
-  if (!number && !name) return null
+  const plate = order.vehiclePlate?.trim() || null
+  const dni = order.customerDni?.trim() || null
+  if (!number && !name && !plate && !dni) return null
   return (
-    <div className="mb-3 flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
-      {number && <span className="text-sm font-semibold tracking-tight text-gray-900">{number}</span>}
-      {name && <span className="min-w-0 truncate text-sm text-gray-400">{name}</span>}
+    <div className="mb-3 border-b border-gray-100 pb-3">
+      {(number || name) && (
+        <div className="flex items-center justify-between gap-3">
+          {number && <span className="text-sm font-semibold tracking-tight text-gray-900">{number}</span>}
+          {name && <span className="min-w-0 truncate text-sm text-gray-400">{name}</span>}
+        </div>
+      )}
+      {/* Parking: el guardia compara la patente con el vehículo y el DNI con el conductor. */}
+      {(plate || dni) && (
+        <dl className={cn('grid grid-cols-2 gap-2', (number || name) && 'mt-3')}>
+          {plate && (
+            <div className="rounded-xl bg-gray-50 px-3 py-2">
+              <dt className="text-[11px] font-medium uppercase tracking-wider text-gray-400">Patente</dt>
+              <dd className="font-mono text-lg font-semibold tracking-widest text-gray-900">{plate}</dd>
+            </div>
+          )}
+          {dni && (
+            <div className="rounded-xl bg-gray-50 px-3 py-2">
+              <dt className="text-[11px] font-medium uppercase tracking-wider text-gray-400">DNI</dt>
+              <dd className="text-lg font-semibold tabular-nums text-gray-900">{dni}</dd>
+            </div>
+          )}
+        </dl>
+      )}
     </div>
   )
 }

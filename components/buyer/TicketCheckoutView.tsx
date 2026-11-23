@@ -1,7 +1,7 @@
 'use client'
 
 import { buyBlockedMessage } from '@/lib/buyerAvailability'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -12,7 +12,7 @@ import { BUYER_COLORS, BUYER_FONT } from '@/lib/buyerUi'
 import { formatEventDateLong } from '@/lib/eventDate'
 import { saveOrder } from '@/lib/hooks/useOrderHistory'
 import { cartItemsKey, clearPendingOrder, loadPendingOrder, pendingIdempotencyKey, savePendingOrder } from '@/lib/pendingOrder'
-import { PURCHASE_COPY, itemsOf, selectionScope, storePath, type PurchaseKind } from '@/lib/purchaseKind'
+import { PURCHASE_COPY, itemsOf, limitSelection, selectionScope, storePath, type PurchaseKind } from '@/lib/purchaseKind'
 import { computeCartTotals } from '@/lib/serviceFee'
 import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
 import { cn, formatPrice } from '@/lib/utils'
@@ -35,23 +35,59 @@ const DANGER = '#DC2626'
 
 export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone'
 export type BuyerValues = Record<BuyerField, string>
+/** Datos de estacionamiento: solo se piden al comprar parking. */
+export type VehicleField = 'dni' | 'plate'
+export type VehicleValues = Record<VehicleField, string>
+type FormField = BuyerField | VehicleField
 
-const FIELDS: {
-  id: BuyerField
+interface FieldDef<F extends FormField> {
+  id: F
   label: string
   placeholder: string
   type?: string
   autoComplete: string
-  inputMode?: 'email' | 'tel'
+  inputMode?: 'email' | 'tel' | 'numeric'
   full?: boolean
-}[] = [
+  /** Muestra lo que se escribe en mayúsculas (patente). */
+  uppercase?: boolean
+}
+
+const FIELDS: FieldDef<BuyerField>[] = [
   { id: 'name', label: 'Nombre y apellido', placeholder: 'Tu nombre y apellido', autoComplete: 'name', full: true },
   { id: 'email', label: 'Email', placeholder: 'Ingresá tu correo electrónico', type: 'email', autoComplete: 'email', inputMode: 'email' },
   { id: 'emailConfirm', label: 'Repetir email', placeholder: 'Repetí tu correo electrónico', type: 'email', autoComplete: 'email', inputMode: 'email' },
   { id: 'phone', label: 'Teléfono', placeholder: 'Tu teléfono', type: 'tel', autoComplete: 'tel', inputMode: 'tel', full: true },
 ]
 
+const VEHICLE_FIELDS: FieldDef<VehicleField>[] = [
+  { id: 'dni', label: 'DNI', placeholder: 'Sin puntos, ej. 30123456', autoComplete: 'off', inputMode: 'numeric' },
+  { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true },
+]
+
 const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '' }
+const EMPTY_VEHICLE: VehicleValues = { dni: '', plate: '' }
+
+/** DNI solo con números (acepta puntos y espacios al escribir). */
+export function normalizeDni(raw: string): string {
+  return raw.replace(/[.\s-]/g, '')
+}
+
+/** Patente en mayúsculas, sin espacios, puntos ni guiones: "ab 123 cd" → "AB123CD". */
+export function normalizePlate(raw: string): string {
+  return raw.replace(/[\s.-]/g, '').toUpperCase()
+}
+
+/** Errores de los datos del estacionamiento; objeto vacío si todo es válido. Mismas reglas que el backend. */
+export function validateVehicle(values: VehicleValues): Partial<Record<VehicleField, string>> {
+  const errors: Partial<Record<VehicleField, string>> = {}
+  const dni = normalizeDni(values.dni)
+  if (!dni) errors.dni = 'Ingresá tu DNI'
+  else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI tiene que tener 7 u 8 números'
+  const plate = normalizePlate(values.plate)
+  if (!plate) errors.plate = 'Ingresá la patente del vehículo'
+  else if (!/^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{5,8}$/.test(plate)) errors.plate = 'Ingresá una patente válida, ej. AB123CD o ABC123'
+  return errors
+}
 
 /** Errores por campo de los datos del comprador; objeto vacío si todo es válido. */
 export function validateBuyer(values: BuyerValues): Partial<Record<BuyerField, string>> {
@@ -99,11 +135,14 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const router = useRouter()
   const copy = PURCHASE_COPY[kind]
   const scope = selectionScope(catalogSlug, kind)
-  const { ready, lines, expiresAt } = useTicketSelection(scope)
+  const { ready, lines: storedLines, expiresAt } = useTicketSelection(scope)
+  const lines = useMemo(() => limitSelection(storedLines, kind), [storedLines, kind])
   const now = useNow(expiresAt !== null)
 
   const [values, setValues] = useState<BuyerValues>(EMPTY_VALUES)
-  const [errors, setErrors] = useState<Partial<Record<BuyerField, string>>>({})
+  const [vehicle, setVehicle] = useState<VehicleValues>(EMPTY_VEHICLE)
+  const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({})
+  const isParking = kind === 'parking'
   // Las entradas no se pagan en efectivo (el backend también lo rechaza).
   const methods = paymentMethods.filter(m => m.id !== 'cash' && availablePaymentMethods.includes(m.id))
   const [paymentMethod, setPaymentMethod] = useState(methods[0]?.id ?? '')
@@ -190,17 +229,21 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     router.push(backHref)
   }
 
-  const handleChange = (field: BuyerField, value: string) => {
-    setValues(v => ({ ...v, [field]: value }))
+  const handleChange = (field: FormField, value: string) => {
+    if (field === 'dni' || field === 'plate') setVehicle(v => ({ ...v, [field]: value }))
+    else setValues(v => ({ ...v, [field]: value }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: undefined }))
     if (submitError) setSubmitError('')
   }
 
   const handlePay = async () => {
     if (!paymentsEnabled || expired || selected.length === 0) return
-    const found = validateBuyer(values)
+    const found: Partial<Record<FormField, string>> = {
+      ...validateBuyer(values),
+      ...(isParking ? validateVehicle(vehicle) : {}),
+    }
     setErrors(found)
-    const firstInvalid = FIELDS.find(f => found[f.id])
+    const firstInvalid = [...FIELDS, ...(isParking ? VEHICLE_FIELDS : [])].find(f => found[f.id])
     if (firstInvalid) {
       document.getElementById(`buyer-${firstInvalid.id}`)?.focus()
       return
@@ -215,6 +258,9 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     let navigating = false
     try {
       const items = selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity }))
+      const vehicleData = isParking
+        ? { customer_dni: normalizeDni(vehicle.dni), vehicle_plate: normalizePlate(vehicle.plate) }
+        : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
         await precreateRef.current
@@ -231,6 +277,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             customer_name: values.name.trim(),
             customer_email: values.email.trim(),
             customer_phone: values.phone.trim(),
+            ...vehicleData,
           }),
         })
         if (!res.ok && res.status !== 409) {
@@ -253,6 +300,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             customer_name: values.name.trim(),
             customer_email: values.email.trim(),
             customer_phone: values.phone.trim(),
+            ...vehicleData,
             payment_method: paymentMethod,
             items,
           }),
@@ -353,6 +401,36 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
 
   const inputBase =
     'w-full rounded-[12px] border-[1.5px] bg-white px-4 py-3 text-[16px] outline-none transition-colors focus:border-[#0A0A0F]'
+
+  const renderField = <F extends FormField>(field: FieldDef<F>, value: string) => {
+    const error = errors[field.id]
+    return (
+      <div key={field.id} className={cn(field.full && 'md:col-span-2')}>
+        <label htmlFor={`buyer-${field.id}`} className="mb-1.5 block text-sm font-semibold" style={{ color: BUYER_COLORS.text }}>
+          {field.label}
+        </label>
+        <input
+          id={`buyer-${field.id}`}
+          type={field.type ?? 'text'}
+          inputMode={field.inputMode}
+          autoComplete={field.autoComplete}
+          autoCapitalize={field.uppercase ? 'characters' : undefined}
+          value={value}
+          onChange={e => handleChange(field.id, e.target.value)}
+          placeholder={field.placeholder}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `buyer-${field.id}-error` : undefined}
+          className={cn(inputBase, field.uppercase && 'uppercase placeholder:normal-case')}
+          style={{ borderColor: error ? DANGER : 'rgba(0,0,0,0.12)', color: BUYER_COLORS.text, fontFamily: BUYER_FONT }}
+        />
+        {error && (
+          <p id={`buyer-${field.id}-error`} className="mt-1 text-[13px]" style={{ color: DANGER }}>
+            {error}
+          </p>
+        )}
+      </div>
+    )
+  }
 
   return shell(
     <>
@@ -458,43 +536,23 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
 
         <Section title="Datos del comprador">
           <div className="grid gap-4 md:grid-cols-2">
-            {FIELDS.map(field => {
-              const error = errors[field.id]
-              return (
-                <div key={field.id} className={cn(field.full && 'md:col-span-2')}>
-                  <label
-                    htmlFor={`buyer-${field.id}`}
-                    className="mb-1.5 block text-sm font-semibold"
-                    style={{ color: BUYER_COLORS.text }}
-                  >
-                    {field.label}
-                  </label>
-                  <input
-                    id={`buyer-${field.id}`}
-                    type={field.type ?? 'text'}
-                    inputMode={field.inputMode}
-                    autoComplete={field.autoComplete}
-                    value={values[field.id]}
-                    onChange={e => handleChange(field.id, e.target.value)}
-                    placeholder={field.placeholder}
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? `buyer-${field.id}-error` : undefined}
-                    className={inputBase}
-                    style={{ borderColor: error ? DANGER : 'rgba(0,0,0,0.12)', color: BUYER_COLORS.text, fontFamily: BUYER_FONT }}
-                  />
-                  {error && (
-                    <p id={`buyer-${field.id}-error`} className="mt-1 text-[13px]" style={{ color: DANGER }}>
-                      {error}
-                    </p>
-                  )}
-                </div>
-              )
-            })}
+            {FIELDS.map(field => renderField(field, values[field.id]))}
           </div>
           <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
             {copy.emailNote}
           </p>
         </Section>
+
+        {isParking && (
+          <Section title="Datos de estacionamiento">
+            <div className="grid gap-4 md:grid-cols-2">
+              {VEHICLE_FIELDS.map(field => renderField(field, vehicle[field.id]))}
+            </div>
+            <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
+              Se permite un solo lugar por persona y por vehículo.
+            </p>
+          </Section>
+        )}
 
         <Section title="Datos de pago">
           {methods.length === 0 ? (

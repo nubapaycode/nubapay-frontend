@@ -51,8 +51,11 @@ export function TicketFormModal({
   initial,
   onClose,
   onSubmit,
+  focusStock = false,
 }: {
   open: boolean
+  /** Abre con el foco en "Lugares"/"Cupo" (aviso de parking sin límite de lugares). */
+  focusStock?: boolean
   /** Entrada o parking: cambia los textos y muestra el selector de ícono del vehículo. */
   kind?: TicketKind
   /** Ticket que se edita (para mostrar lo vendido en la vista previa); null al crear. */
@@ -127,7 +130,7 @@ export function TicketFormModal({
             className={inputClass}
             value={form.name}
             maxLength={150}
-            autoFocus
+            autoFocus={!focusStock}
             placeholder={isParking ? 'Auto, Moto, Camioneta…' : 'Entrada general, Parking VIP…'}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           />
@@ -200,6 +203,7 @@ export function TicketFormModal({
               min={0}
               step={1}
               value={form.stock}
+              autoFocus={focusStock}
               placeholder="Sin límite"
               onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
             />
