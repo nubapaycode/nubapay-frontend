@@ -962,7 +962,7 @@ export function LandingPage() {
             </div>
             <p className="nb-steps-sub" style={{ maxWidth: '380px', color: S.muted, fontSize: '16px', lineHeight: '1.75', textAlign: 'right', marginBottom: '4px' }}>
               Vendé todo tu evento desde la misma página: la entrada, el estacionamiento,
-              los consumos y el merch. Cada compra con su propio QR antifraude.
+              los consumos y el merch. Cada compra con su propio QR.
             </p>
           </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useId } from 'react'
+import { useId, useState } from 'react'
 
 /*
  * iPhone 15 Pro en SVG con capturas reales del flujo comprador.
@@ -41,13 +41,24 @@ function StatusBar({ dark }: { dark: boolean }) {
   )
 }
 
-/** `single`: renderiza sólo la captura actual (para listas con un teléfono por paso, sin cargar las demás). */
-export default function RealPhone({ screen, eager = false, single = false }: { screen: number; eager?: boolean; single?: boolean }) {
+/** `single`: renderiza sólo la captura actual (para listas con un teléfono por paso, sin cargar las demás).
+ *  `slide`: cambio de pantalla estilo iOS en lugar del fundido (la nueva entra desde un costado y la
+ *  anterior se corre un 30% oscureciéndose), el mismo movimiento que hace el iPhone 3D. */
+export default function RealPhone({ screen, eager = false, single = false, slide = false }: { screen: number; eager?: boolean; single?: boolean; slide?: boolean }) {
   const uid = useId().replace(/:/g, '')
   const current = PHONE_SCREENS[screen] ?? PHONE_SCREENS[0]
+  /* Pantalla anterior: sólo ella y la nueva se animan; las del medio (saltos de varios pasos) se
+     acomodan sin transición para que no crucen la pantalla por debajo */
+  const [shown, setShown] = useState(screen)
+  const [from, setFrom] = useState(screen)
+  if (screen !== shown) { setFrom(shown); setShown(screen) }
+  const slideClass = (i: number) => [
+    i === screen ? 'is-on' : i < screen ? 'is-before' : 'is-after',
+    i === screen || i === from ? 'is-moving' : '',
+  ].join(' ')
 
   return (
-    <div className="lv2-iphone" style={{ aspectRatio: `${W}/${H}` }} role="img" aria-label={current.alt}>
+    <div className={`lv2-iphone${slide ? ' is-slide' : ''}`} style={{ aspectRatio: `${W}/${H}` }} role="img" aria-label={current.alt}>
       <div
         className="lv2-ip-screen"
         style={{ left: pct(SX, W), top: pct(SY, H), width: pct(SW, W), height: pct(SH, H), borderRadius: `${(SR / SW) * 100}% / ${(SR / SH) * 100}%` }}
@@ -63,8 +74,11 @@ export default function RealPhone({ screen, eager = false, single = false }: { s
               width={1179}
               height={2394}
               decoding="async"
-              loading={eager ? 'eager' : 'lazy'}
-              className={i === screen ? 'is-on' : ''}
+              // Sólo la pantalla inicial va con prioridad: precargar las 4 retrasaba el LCP del hero.
+              loading={eager && i === screen ? 'eager' : 'lazy'}
+              fetchPriority={eager && i === screen ? 'high' : undefined}
+              className={slide ? slideClass(i) : i === screen ? 'is-on' : ''}
+              style={slide ? { zIndex: i + 1 } : undefined}
             />
           )))}
         </div>

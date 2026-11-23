@@ -10,12 +10,12 @@ import {
 
 import { paymentMethods, SIPAGO_CARD_LOGOS } from '@/components/buyer/paymentMethods'
 import { browserFetch } from '@/lib/browserFetch'
-import { gsap, MOTION_OK, MOTION_REDUCED, ScrollTrigger, useGSAP } from './gsap'
+import { gsap, MOTION_OK, ScrollTrigger, useGSAP } from './gsap'
 import { CountUp, LoopVideo, prefersReducedMotion, Reveal, useCtaHover, usePointerEffects, useReveal, useScrollState, useSmoothScroll } from './hooks'
 import FinalCta from './FinalCta'
 import Footer from './Footer'
 import Nav from './Nav'
-import Phone3D, { type PhoneSpin } from './Phone3D'
+import Phone3D from './Phone3D'
 import RealPhone from './RealPhone'
 import Tickets from './Tickets'
 import 'lenis/dist/lenis.css'
@@ -26,8 +26,13 @@ import './landing-v2.css'
 /** Breakpoint del recorrido: el CSS pasa a una sola columna con `max-width: 900px`. */
 const DESKTOP = '(min-width: 901px)'
 
-/** Teléfono: `false` usa el iPhone SVG con capturas (RealPhone, sin three.js); `true` vuelve al 3D de Phone3D. */
-const USE_3D = false
+/** Desde acá el recorrido usa el iPhone 3D; en tablets (901–1100px) va el iPhone SVG, más liviano. */
+const WIDE = '(min-width: 1101px)'
+
+/** Teléfono por sección: `false` usa el iPhone SVG con capturas (RealPhone, sin three.js); `true` usa el 3D de Phone3D.
+ *  El hero va en SVG para no retrasar la primera carga; el recorrido usa el 3D que gira con el scroll. */
+const HERO_3D = false
+const JOURNEY_3D = true
 
 /** Pantallas del iPhone del hero, en el orden del flujo de compra. */
 const SCREENS = ['Catálogo', 'Carrito', 'Pago', 'Retiro con QR']
@@ -63,10 +68,9 @@ const STATS = [
 ]
 
 const PANEL_CARDS = [
-  { icon: <Bell size={20} />, title: 'Pedidos en tiempo real', text: 'Kanban de pedidos por estado: pagado, en preparación, listo y entregado.', stat: 'Actualización instantánea' },
-  { icon: <MapPin size={20} />, title: 'Puntos de retiro', text: 'Barra Principal, VIP, Patio. Cada punto con su propio catálogo y su equipo.', stat: 'Ilimitados' },
-  { icon: <CreditCard size={20} />, title: 'Cobros y comisiones', text: 'Conectá MercadoPago y mirá cada cobro y cada comisión sin planillas.', stat: 'Liquidación clara' },
-  { icon: <ListChecks size={20} />, title: 'Catálogo y stock', text: 'Productos, categorías y combos. Pausá lo que se agota con un toque.', stat: 'Listo en 20 min' },
+  { icon: <Bell size={20} />, title: 'Pedidos en tiempo real', text: 'Seguí cada pedido por estado: pagado, en preparación, listo y entregado.', stat: 'Actualización instantánea' },
+  { icon: <CreditCard size={20} />, title: 'Cobros', text: 'Mirá cada cobro en un solo lugar, sin planillas.', stat: 'Liquidación clara' },
+  { icon: <ListChecks size={20} />, title: 'Catálogo y stock', text: 'Productos, categorías y combos. El stock se actualiza solo con cada venta.', stat: 'Listo en 20 min' },
   { icon: <ScanLine size={20} />, title: 'Scanner de retiro', text: 'Tu staff valida cada QR desde su celular y entrega el pedido al instante.', stat: 'Sin hardware extra' },
 ]
 
@@ -79,7 +83,7 @@ const PASSES = [
 
 const EVENTS = [
   { icon: <Music size={22} />, title: 'Festivales y recitales', text: 'Control total de barras de bebidas, comidas y merchandising durante el show, sin colapsar el punto de venta.', stat: 'Miles de pedidos simultáneos' },
-  { icon: <Wine size={22} />, title: 'Boliches y discotecas', text: 'Tragos y botellas sin interrumpir la fiesta. Pedís desde tu lugar con tu QR único.', stat: 'Retiro en segundos' },
+  { icon: <Wine size={22} />, title: 'Boliches y bares', text: 'Tragos y botellas sin interrumpir la fiesta. Pedís desde tu lugar con tu QR único.', stat: 'Retiro en segundos' },
   { icon: <Building2 size={22} />, title: 'Fiestas privadas y corporativas', text: 'Menú personalizado y visibilidad en tiempo real de cada venta y retiro.', stat: 'Control por sectores' },
   { icon: <Store size={22} />, title: 'Ferias y mercados gastronómicos', text: 'Cada stand con su catálogo y su punto de retiro independiente, en un solo panel.', stat: 'Un panel, todos los puestos' },
   { icon: <Truck size={22} />, title: 'Food trucks y barras móviles', text: 'El staff opera desde cualquier dispositivo y el asistente retira sin esperar turno.', stat: 'Sin hardware adicional' },
@@ -170,7 +174,7 @@ function Hero() {
         .from('.lv2-dots', { opacity: 0, y: 12, duration: 0.8 }, 1.3)
         .from('.lv2-hero-arrow', { opacity: 0, scale: 0.6, duration: 0.9, ease: 'back.out(1.8)', stagger: 0.08 }, 1.2)
       /* El iPhone SVG sube desde abajo con un leve giro, en paralelo al titular (el 3D anima su propia entrada) */
-      if (!USE_3D) {
+      if (!HERO_3D) {
         gsap.from('.lv2-stage .lv2-iphone', { y: 150, scale: 0.88, rotate: -5, opacity: 0, duration: 1.9, delay: 0.3, ease: 'expo.out', clearProps: 'transform,opacity' })
       }
     })
@@ -215,7 +219,7 @@ function Hero() {
           onPointerEnter={() => { paused.current = true }}
         >
           <StageBg />
-          {USE_3D
+          {HERO_3D
             ? <Phone3D screen={screen} lift={20} />
             : <div className="lv2-phone-wrap"><RealPhone screen={screen} eager /></div>}
 
@@ -275,59 +279,39 @@ function Journey() {
   const stickRef = useRef<HTMLDivElement>(null)
 
   const sectionRef = useRef<HTMLElement>(null)
-  const spinRef = useRef<PhoneSpin>({ ry: 0, rx: 0, z: 0 })
 
-  /* Desktop: teléfono 3D sticky que gira con el scroll. En mobile no se monta (ni three.js ni su WebGL):
+  /* Desktop: teléfono 3D sticky, quieto, que cambia de pantalla con un slide (en tablets, el SVG). En mobile no se monta (ni three.js ni su WebGL):
      cada paso lleva su captura estática y listo. */
   const [desktop, setDesktop] = useState(false)
+  const [wide, setWide] = useState(false)
   useEffect(() => {
     const mq = window.matchMedia(DESKTOP)
-    const sync = () => setDesktop(mq.matches)
+    const mqWide = window.matchMedia(WIDE)
+    const sync = () => {
+      setDesktop(mq.matches)
+      setWide(mqWide.matches)
+    }
     sync()
     mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
+    mqWide.addEventListener('change', sync)
+    return () => { mq.removeEventListener('change', sync); mqWide.removeEventListener('change', sync) }
   }, [])
 
-  /* El recorrido va del centro del primer paso al centro del último. Con movimiento:
-     timeline con scrub, una vuelta de 360° por paso (con meseta de frente en cada uno) del iPhone 3D.
-     La pantalla cambia a mitad de vuelta (180°), cuando se ve la espalda. */
+  /* El recorrido va del centro del primer paso al centro del último; el teléfono muestra la pantalla
+     del paso visible (el 3D la cambia con un slide). */
   useGSAP(() => {
     const steps = refs.current.filter((el): el is HTMLDivElement => !!el)
-    const host = stickRef.current?.parentElement
-    const spin = spinRef.current
-    if (steps.length < 2 || !host) return
+    if (steps.length < 2) return
     const last = steps.length - 1
-    const range = {
-      trigger: steps[0].parentElement,
-      start: () => `top+=${steps[0].offsetHeight / 2} center`,
-      end: () => `bottom-=${steps[last].offsetHeight / 2} center`,
-      invalidateOnRefresh: true,
-    }
-
     const mm = gsap.matchMedia()
-    if (USE_3D) mm.add(`${MOTION_OK} and ${DESKTOP}`, () => {
-      const tl = gsap.timeline({
-        defaults: { ease: 'none' },
-        /* scrub alto + Lenis: el giro "persigue" al scroll con inercia en vez de ir pegado */
-        scrollTrigger: { ...range, scrub: 1.4 },
-        onUpdate: () => {
-          setActive(Math.min(Math.round(tl.time()), last))
-          /* Las leen el halo del fondo y (en mobile) las tarjetas de texto */
-          host.style.setProperty('--ryn', String(Math.sin(spin.ry) * 18))
-          host.style.setProperty('--lift', String(spin.z))
-        },
+    mm.add(DESKTOP, () => {
+      ScrollTrigger.create({
+        trigger: steps[0].parentElement,
+        start: () => `top+=${steps[0].offsetHeight / 2} center`,
+        end: () => `bottom-=${steps[last].offsetHeight / 2} center`,
+        invalidateOnRefresh: true,
+        onUpdate: self => setActive(Math.round(self.progress * last)),
       })
-      /* Vuelta en el 80% central de cada tramo, con curvas suaves de arranque y frenado */
-      for (let i = 0; i < last; i++) {
-        tl.to(spin, { ry: `+=${Math.PI * 2}`, duration: 0.8, ease: 'sine.inOut' }, i + 0.1)
-          .to(spin, { z: 1, rx: 0.12, duration: 0.4, ease: 'sine.out' }, i + 0.1)
-          .to(spin, { z: 0, rx: 0, duration: 0.4, ease: 'sine.in' }, i + 0.5)
-      }
-      tl.to({}, { duration: 0 }, last)
-    })
-    /* Sin 3D (o con movimiento reducido) el teléfono sólo cambia de pantalla según el paso visible */
-    mm.add(USE_3D ? `${MOTION_REDUCED} and ${DESKTOP}` : DESKTOP, () => {
-      ScrollTrigger.create({ ...range, onUpdate: self => setActive(Math.round(self.progress * last)) })
     })
   }, { scope: sectionRef })
 
@@ -361,9 +345,9 @@ function Journey() {
               {STEPS.map((s, i) => <i key={s.title} className={active === i ? 'is-on' : ''} />)}
             </div>
             <StageBg />
-            {desktop && (USE_3D
-              ? <Phone3D screen={active} variant="journey" spin={spinRef} />
-              : <div className="lv2-phone-wrap"><RealPhone screen={active} /></div>)}
+            {desktop && (JOURNEY_3D && wide
+              ? <Phone3D screen={active} variant="journey" />
+              : <div className="lv2-phone-wrap"><RealPhone screen={active} slide /></div>)}
           </div>
         </div>
       </div>
@@ -409,13 +393,13 @@ function Panel() {
           <Reveal className="lv2-card lv2-bento-main lv2-spot">
             <div className="lv2-bento-main-top">
               <div className="lv2-card-ico"><LayoutDashboard size={22} /></div>
-              <h3>Métricas en vivo del evento</h3>
+              <h3>Métricas en vivo</h3>
               <p>Recaudación, pedidos activos, ventas por hora y ranking de productos. Todo actualizado en el momento.</p>
             </div>
             <div className="lv2-tilt">
               <div className="lv2-tilt-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/mock3.png" width={1697} height={927} loading="lazy"
+                <img src="/images/mock3.webp" width={1697} height={927} loading="lazy" decoding="async"
                   alt="Panel del organizador de Nubapay: dashboard del evento con recaudación, pedidos y ventas por hora" />
               </div>
             </div>
@@ -469,7 +453,7 @@ function CaseStudy() {
           <div>
             <h2 id="lv2-case-h" className="lv2-h2">Menos filas,<br /><span className="lv2-mark">más ventas.</span></h2>
           </div>
-          <p className="lv2-lead">Nubapay en un festival de Córdoba: la gente pidió desde el celular, pagó online y retiró su pedido mostrando el QR. Sin colas, sin efectivo.</p>
+          <p className="lv2-lead">Nubapay en un festival de Córdoba: la gente pidió desde el celular, pagó online y retiró su pedido mostrando el QR. Sin colas.</p>
         </Reveal>
 
         {/* Tira tipo reels con material real del evento */}
@@ -478,7 +462,7 @@ function CaseStudy() {
           {REELS.map((r, i) => (
             <Reveal key={r.src} d={i * 0.08} className={`lv2-reel${r.featured ? ' lv2-reel--feat' : ''}`}>
               {r.type === 'video'
-                ? <LoopVideo src={r.src} label={r.alt} />
+                ? <LoopVideo src={r.src} label={r.alt} poster={`/images/landing-v2/poster-${r.src.split('/').pop()!.replace('.mp4', '.webp')}`} />
                 // eslint-disable-next-line @next/next/no-img-element
                 : <img src={r.src} alt={r.alt} loading="lazy" decoding="async" />}
               <div className="lv2-reel-cap" aria-hidden="true"><b>{r.title}</b><small>{r.sub}</small></div>
@@ -524,7 +508,7 @@ function Passes() {
           <div>
             <h2 id="lv2-pass-h" className="lv2-h2">Entradas, parking<br />y <span className="lv2-mark">mucho más.</span></h2>
           </div>
-          <p className="lv2-lead">Vendé todo tu evento desde la misma página: la entrada, el estacionamiento, los consumos y el merch. Cada compra con su propio QR antifraude.</p>
+          <p className="lv2-lead">Vendé todo tu evento desde la misma página: la entrada, el estacionamiento, los consumos y el merch. Cada compra con su propio QR.</p>
         </Reveal>
         <div className="lv2-passes">
           {PASSES.map((p, i) => (

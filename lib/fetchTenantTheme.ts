@@ -13,6 +13,9 @@ const defaultInherit: TenantThemePayload = {
   resolved_subdomain: null,
 }
 
+/** Tope de espera al backend para resolver el tema del host. */
+const TENANT_THEME_TIMEOUT_MS = 2500
+
 const tenantThemeVerbose =
   process.env.DEBUG_TENANT_THEME === '1' || process.env.NEXT_PUBLIC_DEBUG_TENANT_THEME === '1'
 
@@ -34,7 +37,8 @@ export const fetchTenantThemeForRequest = cache(async (): Promise<TenantThemePay
   })
 
   try {
-    const res = await fetch(url, { cache: 'no-store', headers: extra })
+    // Con timeout: si Flask tarda, la página sigue con el tema por defecto en vez de quedar colgada.
+    const res = await fetch(url, { cache: 'no-store', headers: extra, signal: AbortSignal.timeout(TENANT_THEME_TIMEOUT_MS) })
 
     logTenantThemeServer('response', { status: res.status, ok: res.ok })
 

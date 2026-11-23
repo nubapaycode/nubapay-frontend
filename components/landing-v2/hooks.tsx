@@ -290,7 +290,7 @@ export function CountUp({ to, prefix = '', suffix = '', duration = 1.7 }: {
 }
 
 /** Video que sólo reproduce mientras está en pantalla. */
-export function LoopVideo({ src, label }: { src: string; label: string }) {
+export function LoopVideo({ src, label, poster }: { src: string; label: string; poster?: string }) {
   const ref = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     const v = ref.current
@@ -303,7 +303,7 @@ export function LoopVideo({ src, label }: { src: string; label: string }) {
     return () => obs.disconnect()
   }, [])
   return (
-    <video ref={ref} src={src} muted loop playsInline preload="metadata" aria-label={label} />
+    <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} />
   )
 }
 

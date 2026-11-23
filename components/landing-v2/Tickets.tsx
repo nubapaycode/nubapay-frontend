@@ -93,7 +93,7 @@ export default function Tickets() {
       <div className="lv2-wrap">
         <Reveal className="lv2-head">
           <div>
-            <h2 id="lv2-tix-h" className="lv2-h2">Vendé entradas.<br />Validalas en la <span className="lv2-mark">puerta.</span></h2>
+            <h2 id="lv2-tix-h" className="lv2-h2">Vendé entradas.<br />Con QR <span className="lv2-mark">único.</span></h2>
           </div>
           <p className="lv2-lead">Publicá tus entradas en la página del evento, cobralas online y controlá el ingreso escaneando el QR desde cualquier celular.</p>
         </Reveal>

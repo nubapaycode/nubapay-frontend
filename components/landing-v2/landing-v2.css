@@ -295,7 +295,10 @@
 .lv2-phone3d canvas {
   display: block; width: 100%; height: 100%;
   filter: drop-shadow(0 40px 50px rgba(10, 15, 0, 0.3)) drop-shadow(0 12px 18px rgba(10, 15, 0, 0.16));
+  /* Se gira arrastrando (el contenedor no recibe clics; el lienzo sí). `pan-y` deja scrollear en táctiles */
+  pointer-events: auto; cursor: grab; touch-action: pan-y; user-select: none;
 }
+.lv2-phone3d canvas.is-dragging { cursor: grabbing; }
 /* Flechas de vidrio a los costados del teléfono (centradas con él, que está 20px arriba) */
 .lv2-hero-arrow {
   position: absolute; top: calc(50% - 20px); translate: 0 -50%; z-index: 4; width: 52px; height: 52px; border-radius: 50%;
@@ -340,6 +343,15 @@
   opacity: 0; z-index: 0; transform: scale(1.03); transition: opacity 0s linear 0.65s, transform 0s linear 0.65s;
 }
 .lv2-ip-shots img.is-on { opacity: 1; z-index: 1; transform: none; transition: opacity 0.6s ease, transform 0.9s var(--lv-ease); }
+/* Variante `slide` (iOS): las capturas se apilan por orden; las anteriores quedan corridas y oscurecidas,
+   las siguientes esperan afuera a la derecha. Mismo easing que el slide del 3D (power3.inOut). */
+.lv2-iphone.is-slide .lv2-ip-shots img {
+  opacity: 1; transform: translateX(100%); filter: none;
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1), filter 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.lv2-iphone.is-slide .lv2-ip-shots img.is-on { transform: none; }
+.lv2-iphone.is-slide .lv2-ip-shots img.is-before { transform: translateX(-30%); filter: brightness(0.75); }
+.lv2-iphone.is-slide .lv2-ip-shots img:not(.is-moving) { transition: none; }
 .lv2-ip-glare {
   position: absolute; inset: 0; z-index: 3; pointer-events: none;
   background: linear-gradient(118deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 24%, rgba(255, 255, 255, 0) 42%);
@@ -443,6 +455,8 @@
 }
 .lv2-tilt-inner img { width: 100%; height: auto; display: block; }
 .lv2-bento-s { grid-column: span 2; }
+/* Las cards que no entran al costado de la principal comparten la última fila */
+.lv2-bento-s:nth-child(n+4) { grid-column: span 3; }
 
 /* ── Galería del panel: lista de herramientas a la izquierda, ventana a la derecha ── */
 .lv2-gal { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; }
@@ -666,7 +680,7 @@
 .lv2-pass-slot > .lv2-pass { flex: 1; }
 .lv2-passes:hover .lv2-pass { transform: rotate(0deg); }
 .lv2-pass:hover { transform: translateY(-12px) rotate(0deg) !important; z-index: 2; }
-.lv2-pass-kind { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; }
+.lv2-pass-kind { font-size: 13px; font-weight: 600; opacity: 0.55; }
 .lv2-pass h3 { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin: 12px 0 10px; }
 .lv2-pass p { font-size: 13.5px; line-height: 1.55; margin: 0; opacity: 0.65; }
 .lv2-pass-ico { margin-bottom: 20px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(10, 15, 0, 0.07); }
@@ -868,7 +882,6 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
   .lv2-pass { --r: 0deg !important; }
   .lv2-bento-main { grid-column: span 6; grid-row: auto; }
   .lv2-bento-s { grid-column: span 3; }
-  .lv2-bento-s:last-child { grid-column: span 6; }
   .lv2-contact { grid-template-columns: 1fr; gap: 50px; padding: 56px 44px; }
   .lv2-contact > :first-child { top: 0; }
   .lv2-tix { grid-template-columns: 1fr; }
@@ -967,7 +980,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
   .lv2-ticker { margin-bottom: 90px; }
   .lv2-pay { margin-bottom: 90px; }
   .lv2-pay-cards { margin-left: 0; }
-  .lv2-bento-s { grid-column: span 6; }
+  .lv2-bento-s, .lv2-bento-s:nth-child(n+4) { grid-column: span 6; }
   .lv2-card { padding: 24px; }
   .lv2-passes { grid-template-columns: 1fr; }
   .lv2-tix-stage { min-height: 0; padding: 44px 16px; border-radius: 28px; }
@@ -998,6 +1011,7 @@ textarea.lv2-input { resize: none; min-height: 130px; line-height: 1.6; }
   .lv2-bg-blob, .lv2-ticker-track, .lv2-cta-glow { animation: none; }
   .lv2-step { opacity: 1; }
   .lv2-ip-shots img { transition: opacity 0.2s; transform: none; }
+  .lv2-iphone.is-slide .lv2-ip-shots img { transition: none; }
   .lv2-gal-stage img { transform: none; transition: opacity 0.2s; }
   .lv2-card:hover, .lv2-pass:hover { transform: none !important; translate: none; }
   .lv2-reel:hover { translate: none; }
