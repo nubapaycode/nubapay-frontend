@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   metadataBase: resolveMetadataBase(),
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' }],
-    apple: [{ url: '/favicon.svg' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   title: {
     default: SITE_NAME,

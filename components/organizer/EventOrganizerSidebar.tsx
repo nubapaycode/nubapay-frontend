@@ -528,8 +528,12 @@ export function EventOrganizerSidebar({
             ) : brandName ? (
               <span className="truncate text-[15px] font-semibold tracking-tight text-gray-900">{brandName}</span>
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element -- SVG estático del logo
-              <img src="/logo-nubapay.svg" alt="nubapay" width={66} height={22} className="h-[22px] w-auto" />
+              <span className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático del símbolo */}
+                <img src="/simbolo-nubapay.svg" alt="" aria-hidden width={17} height={14} className="h-[14px] w-auto" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático del logo */}
+                <img src="/logo-nubapay.svg" alt="nubapay" width={66} height={22} className="h-[22px] w-auto" />
+              </span>
             )
           )}
           <button

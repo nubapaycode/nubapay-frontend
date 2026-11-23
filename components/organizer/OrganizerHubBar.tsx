@@ -20,7 +20,9 @@ export function OrganizerHubBar({ compact }: { compact?: boolean }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático del símbolo */}
+        <img src="/simbolo-nubapay.svg" alt="" aria-hidden width={16} height={13} style={{ height: '13px', width: 'auto' }} />
         <span style={{ fontSize: '16px', fontWeight: 700, color: '#0A0A0F', letterSpacing: '-0.03em' }}>nubapay</span>
         <span style={{ fontSize: '10px', fontWeight: 700, color: '#C8C8D0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>organizer</span>
       </div>
