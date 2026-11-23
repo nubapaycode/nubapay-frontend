@@ -178,23 +178,55 @@ describe('TicketsStoreView · parking', () => {
 
   it('"Comprar" lleva al checkout de parking', async () => {
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
-    expect(screen.getByText('1 lugar')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: /^Auto/ }))
+    expect(screen.getByRole('radio', { name: /^Auto/ })).toBeChecked()
     await userEvent.click(screen.getByRole('button', { name: 'Comprar' }))
     expect(push).toHaveBeenCalledWith('/parking/fiesta/comprar')
   })
 
-  it('permite un solo lugar por compra: no se puede sumar otro del mismo vehículo', async () => {
+  it('elige el vehículo como opción única, sin contador de cantidad', () => {
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
-    expect(screen.getByRole('button', { name: 'Agregar uno' })).toBeDisabled()
+    expect(screen.getByRole('radiogroup', { name: 'Elegí tu lugar' })).toBeInTheDocument()
+    expect(screen.getAllByRole('radio')).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: 'Quitar uno' })).not.toBeInTheDocument()
+  })
+
+  it('muestra los lugares libres, avisa cuando quedan pocos y bloquea los agotados', () => {
+    const event: Event = {
+      ...parkingEvent,
+      parking: [
+        { id: 'p1', kind: 'parking', icon: 'car', name: 'Auto', description: '', price: 3000, available: true, remaining: 120 },
+        { id: 'p2', kind: 'parking', icon: 'motorcycle', name: 'Moto', description: '', price: 1500, available: true, remaining: 3 },
+        { id: 'p3', kind: 'parking', icon: 'bus', name: 'Colectivo', description: '', price: 9000, available: true, remaining: 0 },
+      ],
+    }
+    render(<TicketsStoreView event={event} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText('120 lugares libres')).toBeInTheDocument()
+    expect(screen.getByText('¡Quedan 3 lugares!')).toBeInTheDocument()
+    expect(screen.getByText('Agotado')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /^Colectivo/ })).toBeDisabled()
+  })
+
+  it('identifica la página como estacionamiento y enlaza al mapa', () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    expect(screen.getByText('Estacionamiento')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver ubicación' })).toHaveAttribute('href', '#ubicacion')
+  })
+
+  it('la barra de compra muestra el vehículo elegido', async () => {
+    render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
+    await userEvent.click(screen.getByRole('radio', { name: /^Moto/ }))
+    // Una vez en la opción y otra en la barra de abajo.
+    expect(screen.getAllByText('Moto')).toHaveLength(2)
+    expect(screen.queryByText('1 lugar')).not.toBeInTheDocument()
   })
 
   it('elegir otro vehículo reemplaza al anterior', async () => {
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Moto' }))
-    expect(screen.getByText('1 lugar')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: /^Auto/ }))
+    await userEvent.click(screen.getByRole('radio', { name: /^Moto/ }))
+    expect(screen.getByRole('radio', { name: /^Moto/ })).toBeChecked()
+    expect(screen.getByRole('radio', { name: /^Auto/ })).not.toBeChecked()
     const stored = JSON.parse(sessionStorage.getItem('nubapay_ticket_selection')!)
     expect(stored.lines).toEqual([{ ticketId: 'p2', quantity: 1 }])
   })
@@ -205,12 +237,12 @@ describe('TicketsStoreView · parking', () => {
       JSON.stringify({ slug: 'fiesta#parking', lines: [{ ticketId: 'p1', quantity: 3 }, { ticketId: 'p2', quantity: 1 }] }),
     )
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    expect(screen.getByText('1 lugar')).toBeInTheDocument()
+    expect(screen.getAllByRole('radio', { checked: true })).toHaveLength(1)
   })
 
   it('la selección de parking no se mezcla con la de entradas', async () => {
     const { unmount } = render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" kind="parking" />)
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar Auto' }))
+    await userEvent.click(screen.getByRole('radio', { name: /^Auto/ }))
     unmount()
     render(<TicketsStoreView event={parkingEvent} catalogSlug="fiesta" />)
     expect(screen.queryByRole('button', { name: 'Comprar' })).not.toBeInTheDocument()

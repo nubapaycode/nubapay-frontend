@@ -16,10 +16,13 @@ import { cn } from '@/lib/utils'
  * a la que lleva un link corto (`maps.app.goo.gl`): solo con ella se sabe qué lugar mostrar.
  */
 export function ParkingMap({
+  id,
   url,
   resolvedUrl,
   className,
 }: {
+  /** Ancla para saltar al mapa (link "Ver ubicación"). */
+  id?: string
   url: string | null | undefined
   resolvedUrl?: string | null
   className?: string
@@ -28,8 +31,8 @@ export function ParkingMap({
   const embed = mapsEmbedUrl(resolvedUrl) ?? mapsEmbedUrl(url)
 
   return (
-    <section aria-labelledby="parking-map-title" className={cn('mt-8 overflow-hidden rounded-[20px] bg-white', className)}>
-      <div className="relative h-44 w-full overflow-hidden md:h-52 lg:h-80" style={{ background: BUYER_COLORS.subtleFill }}>
+    <section id={id} aria-labelledby="parking-map-title" className={cn('mt-8 overflow-hidden rounded-[20px] bg-white', className)}>
+      <div className="relative h-44 w-full overflow-hidden md:h-52 lg:h-[400px]" style={{ background: BUYER_COLORS.subtleFill }}>
         {embed ? (
           <iframe
             src={embed}

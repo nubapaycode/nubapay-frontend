@@ -1,5 +1,6 @@
 'use client'
 
+import { MapPin, SquareParking } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -15,6 +16,7 @@ import { cn, formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
 import { ParkingMap } from './ParkingMap'
+import { ParkingOption } from './ParkingOption'
 import { TICKET_PAGE_BG, TicketCard } from './TicketCard'
 
 interface TicketsStoreViewProps {
@@ -51,6 +53,7 @@ function CrossLink({ href, title, subtitle }: { href: string; title: string; sub
 export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: TicketsStoreViewProps) {
   const router = useRouter()
   const copy = PURCHASE_COPY[kind]
+  const isParking = kind === 'parking'
   const items = itemsOf(event, kind)
   const { lines: storedLines, quantityOf, setQuantity, selectOnly } = useTicketSelection(selectionScope(catalogSlug, kind))
   const lines = limitSelection(storedLines, kind)
@@ -65,7 +68,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
   const venue = event.venue.trim()
 
   // Parking con mapa: en desktop, la lista a la izquierda y el mapa fijo a la derecha.
-  const showMap = kind === 'parking' && !!event.parkingMapsUrl && isGoogleMapsUrl(event.parkingMapsUrl)
+  const showMap = isParking && !!event.parkingMapsUrl && isGoogleMapsUrl(event.parkingMapsUrl)
   const container = showMap ? 'max-w-3xl lg:max-w-6xl' : 'max-w-3xl'
 
   const heroSrc = event.coverImageUrl && event.coverImageUrl.trim() !== '' ? event.coverImageUrl : '/images/Frame.jpg'
@@ -114,6 +117,15 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
             </div>
           )}
           <div className="min-w-0">
+            {isParking && (
+              <span
+                className="mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold md:text-[13px]"
+                style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
+              >
+                <SquareParking size={14} strokeWidth={2.25} aria-hidden />
+                Estacionamiento
+              </span>
+            )}
             <h1 className="text-[26px] font-bold leading-[1.1] text-white md:text-[40px]" style={{ letterSpacing: '-0.03em' }}>
               {event.name}
             </h1>
@@ -152,11 +164,38 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           </div>
         ) : (
           <>
-            <div className="mb-4 md:mb-5">
-              <h2 className="text-xl font-bold tracking-tight md:text-2xl" style={{ color: BUYER_COLORS.text }}>
+            <div className="mb-4 flex items-end justify-between gap-4 md:mb-5">
+              <h2
+                id="store-heading"
+                className="text-xl font-bold tracking-tight md:text-2xl"
+                style={{ color: BUYER_COLORS.text }}
+              >
                 {copy.heading}
               </h2>
+              {showMap && (
+                <a
+                  href="#ubicacion"
+                  className="flex flex-shrink-0 items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline lg:hidden"
+                  style={{ color: BUYER_COLORS.text }}
+                >
+                  <MapPin size={15} strokeWidth={2} aria-hidden />
+                  Ver ubicación
+                </a>
+              )}
             </div>
+            {isParking ? (
+              <div role="radiogroup" aria-labelledby="store-heading" className="flex flex-col gap-2.5 md:gap-3">
+                {items.map(ticket => (
+                  <ParkingOption
+                    key={ticket.id}
+                    ticket={ticket}
+                    checked={lines.some(l => l.ticketId === ticket.id)}
+                    onSelect={selectOnly}
+                    disabled={!paymentsEnabled}
+                  />
+                ))}
+              </div>
+            ) : (
             <div className="flex flex-col gap-3 md:gap-4">
               {items.map(ticket => (
                 <TicketCard
@@ -170,13 +209,14 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
                 />
               ))}
             </div>
+            )}
           </>
         )}
 
         {kind === 'ticket' && hasModule(event.modules, 'parking') && (event.parking?.length ?? 0) > 0 && (
           <CrossLink href={parkingPath(catalogSlug)} title="Reservá tu estacionamiento" subtitle="Elegí tu tipo de vehículo y mirá dónde queda." />
         )}
-        {kind === 'parking' && hasModule(event.modules, 'tickets') && event.tickets.length > 0 && (
+        {isParking && hasModule(event.modules, 'tickets') && event.tickets.length > 0 && (
           <CrossLink href={ticketsPath(catalogSlug)} title="Comprá tus entradas" subtitle="Elegí tu entrada para el evento." />
         )}
 
@@ -202,9 +242,10 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
 
         {showMap && (
           <ParkingMap
+            id="ubicacion"
             url={event.parkingMapsUrl}
             resolvedUrl={event.parkingMapsResolvedUrl}
-            className="lg:sticky lg:top-6 lg:mt-0"
+            className="scroll-mt-6 lg:sticky lg:top-6 lg:mt-0"
           />
         )}
       </section>
@@ -220,7 +261,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
                 {formatPrice(subtotal)}
               </p>
               <p className="text-[13px]" style={{ color: '#6B6B78' }}>
-                {copy.countLabel(count)}
+                {isParking && selected[0] ? selected[0].ticket.name : copy.countLabel(count)}
                 {ticketFee > 0 ? ' más costo de servicio' : ''}
               </p>
             </div>

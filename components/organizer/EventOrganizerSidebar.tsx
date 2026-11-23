@@ -6,6 +6,9 @@ import {
   ArrowUpRight,
   BookOpen,
   Check,
+  ChevronDown,
+  ChevronRight,
+  Copy,
   ChevronsUpDown,
   CreditCard,
   Keyboard,
@@ -72,14 +75,21 @@ export type NavItem = {
   shortcut?: string
 }
 
-export type NavGroup = 'operacion' | 'catalogo' | 'dinero' | 'ajustes'
+export type NavGroup = 'principal' | 'venta' | 'clientes' | 'ajustes'
 
-export const NAV_GROUPS: { key: NavGroup; label: string }[] = [
-  { key: 'operacion', label: 'Operación' },
-  { key: 'catalogo', label: 'Catálogo' },
-  { key: 'dinero', label: 'Dinero' },
-  { key: 'ajustes', label: 'Ajustes' },
+/**
+ * Secciones de la barra de escritorio. "Principal" (lo de todos los días) va siempre a la vista;
+ * las demás son acordeones plegables para que la barra no se vea cargada.
+ */
+export const NAV_GROUPS: { key: NavGroup; label: string; collapsible: boolean }[] = [
+  { key: 'principal', label: 'Principal', collapsible: false },
+  { key: 'venta', label: 'Qué vendés', collapsible: true },
+  { key: 'clientes', label: 'Clientes', collapsible: true },
+  { key: 'ajustes', label: 'Ajustes', collapsible: true },
 ]
+
+/** Secciones que arrancan plegadas la primera vez (se usan menos). */
+const DEFAULT_CLOSED_GROUPS: NavGroup[] = ['clientes', 'ajustes']
 
 function navItems(basePath: string): NavItem[] {
   const icon = (Icon: typeof LayoutGrid, size = 16) => (
@@ -98,7 +108,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/resumen`,
       shortcut: 'd',
       label: 'Dashboard',
-      group: 'operacion',
+      group: 'principal',
       icon: dashIcon,
       showDesktop: true,
       mobileTabOrder: 0,
@@ -108,7 +118,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/productos`,
       shortcut: 'c',
       label: 'Catálogo',
-      group: 'catalogo',
+      group: 'venta',
       icon: catalogIcon,
       showDesktop: true,
       mobileTabOrder: 1,
@@ -120,7 +130,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/tickets`,
       shortcut: 't',
       label: 'Tickets',
-      group: 'catalogo',
+      group: 'venta',
       icon: ticketsIcon,
       showDesktop: true,
       tool: 'products',
@@ -129,7 +139,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/parking`,
       label: 'Parking',
-      group: 'catalogo',
+      group: 'venta',
       icon: icon(ParkingSquare),
       showDesktop: true,
       tool: 'products',
@@ -137,8 +147,9 @@ function navItems(basePath: string): NavItem[] {
     },
     {
       href: `${basePath}/tienda`,
+      // Link, slug y portada de la tienda: se configura una vez, por eso va en Ajustes.
       label: 'Tienda',
-      group: 'catalogo',
+      group: 'ajustes',
       icon: icon(Store),
       showDesktop: true,
       tool: 'storefront',
@@ -147,7 +158,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/escaner`,
       shortcut: 's',
       label: 'Escáner',
-      group: 'operacion',
+      group: 'principal',
       icon: scannerIcon,
       showDesktop: true,
       mobileFab: true,
@@ -158,7 +169,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/pedidos`,
       shortcut: 'p',
       label: 'Pedidos',
-      group: 'operacion',
+      group: 'principal',
       icon: ordersIcon,
       showDesktop: true,
       mobileTabOrder: 2,
@@ -168,7 +179,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/arrepentimientos`,
       label: 'Arrepentimientos',
-      group: 'operacion',
+      group: 'clientes',
       icon: icon(Undo2),
       showDesktop: true,
       tool: 'orders',
@@ -176,7 +187,7 @@ function navItems(basePath: string): NavItem[] {
     {
       href: `${basePath}/avisos`,
       label: 'Avisos',
-      group: 'operacion',
+      group: 'clientes',
       icon: icon(Megaphone),
       showDesktop: true,
       ownerOnly: true,
@@ -185,7 +196,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/puntos-de-retiro`,
       shortcut: 'r',
       label: 'Puntos de retiro',
-      group: 'catalogo',
+      group: 'venta',
       icon: pickupIcon,
       showDesktop: true,
       tool: 'pickup_points',
@@ -194,7 +205,7 @@ function navItems(basePath: string): NavItem[] {
       href: `${basePath}/pagos`,
       shortcut: 'b',
       label: 'Cobros',
-      group: 'dinero',
+      group: 'principal',
       icon: paymentsIcon,
       showDesktop: true,
       section: 'cobros',
@@ -267,6 +278,7 @@ function isItemActive(pathname: string, item: NavItem) {
 }
 
 const COLLAPSE_KEY = 'nubapay_sidebar_collapsed'
+const GROUPS_KEY = 'nubapay_sidebar_closed_groups'
 
 type Props = {
   eventTitle: string | null
@@ -368,6 +380,8 @@ export function EventOrganizerSidebar({
   const [sheetDragY, setSheetDragY] = useState(0)
   const [profileOpen, setProfileOpen] = useState(false)
   const [copiedKey, setCopiedKey] = useState<'catalog' | 'tickets' | 'parking' | 'error' | null>(null)
+  /** Submenú "Links públicos" dentro del popover del perfil. */
+  const [linksOpen, setLinksOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const publicOrigin = usePublicOrigin()
   const slug = eventSlug.trim()
@@ -399,6 +413,37 @@ export function EventOrganizerSidebar({
         /* sin storage: el cambio vale solo para esta visita */
       }
       return !c
+    })
+  }, [])
+
+  // Secciones plegadas (acordeón). Se recuerdan por navegador.
+  const [closedGroups, setClosedGroups] = useState<Set<NavGroup>>(() => new Set(DEFAULT_CLOSED_GROUPS))
+  const persistClosedGroups = (next: Set<NavGroup>) => {
+    try {
+      localStorage.setItem(GROUPS_KEY, JSON.stringify([...next]))
+    } catch {
+      /* sin storage: el cambio vale solo para esta visita */
+    }
+  }
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY)
+      if (!raw) return
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return
+      const valid = parsed.filter((g): g is NavGroup => NAV_GROUPS.some(ng => ng.key === g))
+      queueMicrotask(() => setClosedGroups(new Set(valid)))
+    } catch {
+      /* sin storage o valor inválido: quedan las de por defecto */
+    }
+  }, [])
+  const toggleGroup = useCallback((key: NavGroup) => {
+    setClosedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      persistClosedGroups(next)
+      return next
     })
   }, [])
 
@@ -450,18 +495,74 @@ export function EventOrganizerSidebar({
     return () => window.removeEventListener('nubapay-auth-change', syncEmail)
   }, [])
 
+  /** Secciones con ítems visibles en la barra de escritorio. */
+  const desktopGroups = useMemo(
+    () =>
+      NAV_GROUPS.map(group => ({
+        group,
+        groupItems: desktopItems
+          .map((item, index) => ({ item, index }))
+          .filter(({ item }) => item.group === group.key),
+      })).filter(g => g.groupItems.length > 0),
+    [desktopItems],
+  )
+
+  /**
+   * Una sección es acordeón solo con la barra expandida y si tiene más de un ítem
+   * (un encabezado para un solo ítem es ruido). Plegada, se ven todos los íconos.
+   */
+  const isAccordion = useCallback(
+    (key: NavGroup, count: number) =>
+      !collapsed && count > 1 && NAV_GROUPS.some(g => g.key === key && g.collapsible),
+    [collapsed],
+  )
+
+  const activeItem = desktopItems.find(item => isItemActive(pathname, item))
+  const activeGroup = activeItem?.group
+
+  // Al entrar a una herramienta (por link, atajo o buscador) se abre su sección.
   useEffect(() => {
-    queueMicrotask(() => {
-      const activeIndex = desktopItems.findIndex(item => isItemActive(pathname, item))
-      if (activeIndex === -1) {
-        setPill(p => ({ ...p, ready: false }))
-        return
-      }
-      const el = itemRefs.current[activeIndex]
-      if (!el) return
-      setPill({ top: el.offsetTop, height: el.offsetHeight, ready: true })
-    })
-  }, [pathname, desktopItems, collapsed])
+    if (!activeGroup) return
+    queueMicrotask(() =>
+      setClosedGroups(prev => {
+        if (!prev.has(activeGroup)) return prev
+        const next = new Set(prev)
+        next.delete(activeGroup)
+        persistClosedGroups(next)
+        return next
+      }),
+    )
+  }, [pathname, activeGroup])
+
+  const groupsRef = useRef<HTMLDivElement>(null)
+  const measurePill = useCallback(() => {
+    const activeIndex = desktopItems.findIndex(item => isItemActive(pathname, item))
+    const item = desktopItems[activeIndex]
+    const count = item ? desktopItems.filter(i => i.group === item.group).length : 0
+    // Sin ítem activo, o con su sección plegada: no hay tarjeta.
+    if (!item || (isAccordion(item.group, count) && closedGroups.has(item.group))) {
+      setPill(p => (p.ready ? { ...p, ready: false } : p))
+      return
+    }
+    const el = itemRefs.current[activeIndex]
+    if (!el) return
+    const top = el.offsetTop
+    const height = el.offsetHeight
+    setPill(p => (p.ready && p.top === top && p.height === height ? p : { top, height, ready: true }))
+  }, [pathname, desktopItems, isAccordion, closedGroups])
+
+  useEffect(() => {
+    queueMicrotask(measurePill)
+  }, [measurePill])
+
+  // Mientras un acordeón se abre o cierra, los ítems de abajo se mueven: la tarjeta los sigue.
+  useEffect(() => {
+    const el = groupsRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => measurePill())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [measurePill])
 
   useEffect(() => {
     if (!moreOpen) return
@@ -475,7 +576,12 @@ export function EventOrganizerSidebar({
   // Popover de la card del perfil: se cierra con Esc o clic afuera.
   useEffect(() => {
     if (!profileOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setProfileOpen(false) }
+    // Esc cierra primero el submenú de links y después el popover.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (linksOpen) setLinksOpen(false)
+      else setProfileOpen(false)
+    }
     const onDown = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false)
     }
@@ -485,7 +591,7 @@ export function EventOrganizerSidebar({
       document.removeEventListener('keydown', onKey)
       document.removeEventListener('mousedown', onDown)
     }
-  }, [profileOpen])
+  }, [profileOpen, linksOpen])
 
   const copyLink = async (key: 'catalog' | 'tickets' | 'parking', url: string) => {
     try {
@@ -622,60 +728,98 @@ export function EventOrganizerSidebar({
             aria-hidden
           />
 
-          {NAV_GROUPS.map(group => ({
-            group,
-            groupItems: desktopItems
-              .map((item, index) => ({ item, index }))
-              .filter(({ item }) => item.group === group.key),
-          }))
-            .filter(g => g.groupItems.length > 0)
-            .map(({ group, groupItems }, groupIndex) => (
-              // Sin títulos de sección: con ocho herramientas alcanza el aire entre grupos (y queda igual plegada).
-              <div
-                key={group.key}
-                role="group"
-                aria-label={group.label}
-                className={groupIndex > 0 ? 'mt-2 border-t border-gray-200/70 pt-2' : ''}
-              >
-                {groupItems.map(({ item, index }) => {
-                  const active = isItemActive(pathname, item)
-                  return (
-                    <div key={item.href} ref={el => { itemRefs.current[index] = el }}>
-                      <Link
-                        href={item.href}
-                        data-tour={item.tourId}
-                        aria-current={active ? 'page' : undefined}
-                        aria-label={collapsed ? item.label : undefined}
-                        title={collapsed ? item.label : undefined}
-                        className={`group/item relative z-10 flex h-9 items-center gap-2.5 rounded-[10px] text-[13px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900 ${
-                          collapsed ? 'justify-center' : 'pl-[7px] pr-2'
-                        } ${active ? 'font-medium text-gray-900' : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'}`}
+          <div ref={groupsRef}>
+            {desktopGroups.map(({ group, groupItems }, groupIndex) => {
+              const accordion = isAccordion(group.key, groupItems.length)
+              const open = !accordion || !closedGroups.has(group.key)
+              const panelId = `nav-group-${group.key}`
+              const links = groupItems.map(({ item, index }) => {
+                const active = isItemActive(pathname, item)
+                return (
+                  <div key={item.href} ref={el => { itemRefs.current[index] = el }}>
+                    <Link
+                      href={item.href}
+                      data-tour={item.tourId}
+                      aria-current={active ? 'page' : undefined}
+                      aria-label={collapsed ? item.label : undefined}
+                      title={collapsed ? item.label : undefined}
+                      className={`group/item relative z-10 flex h-9 items-center gap-2.5 rounded-[10px] text-[13px] transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900 ${
+                        collapsed ? 'justify-center' : 'pl-[7px] pr-2'
+                      } ${active ? 'font-medium text-gray-900' : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'}`}
+                    >
+                      {/* El ícono activo va sobre el color de marca: funciona con cualquier acento. */}
+                      <span
+                        className={`flex size-[22px] shrink-0 items-center justify-center rounded-md transition-colors [&_svg]:size-[15px] ${
+                          active ? '' : 'text-gray-400 group-hover/item:text-gray-600'
+                        }`}
+                        style={active ? { background: ORG_ACC, color: ORG_INK } : undefined}
                       >
-                        {/* El ícono activo va sobre el color de marca: funciona con cualquier acento. */}
+                        {item.icon}
+                      </span>
+                      {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                      {!collapsed && item.shortcut && (
                         <span
-                          className={`flex size-[22px] shrink-0 items-center justify-center rounded-md transition-colors [&_svg]:size-[15px] ${
-                            active ? '' : 'text-gray-400 group-hover/item:text-gray-600'
-                          }`}
-                          style={active ? { background: ORG_ACC, color: ORG_INK } : undefined}
+                          className="flex gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-visible/item:opacity-100"
+                          aria-hidden
                         >
-                          {item.icon}
+                          <Kbd>G</Kbd>
+                          <Kbd>{item.shortcut.toUpperCase()}</Kbd>
                         </span>
-                        {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
-                        {!collapsed && item.shortcut && (
-                          <span
-                            className="flex gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-visible/item:opacity-100"
-                            aria-hidden
-                          >
-                            <Kbd>G</Kbd>
-                            <Kbd>{item.shortcut.toUpperCase()}</Kbd>
-                          </span>
-                        )}
-                      </Link>
+                      )}
+                    </Link>
+                  </div>
+                )
+              })
+
+              // Barra plegada o sección de un solo ítem: sin encabezado, separada por una línea.
+              if (!accordion) {
+                return (
+                  <div
+                    key={group.key}
+                    role="group"
+                    aria-label={group.label}
+                    className={groupIndex > 0 ? (collapsed ? 'mt-2 border-t border-gray-200/70 pt-2' : 'mt-3') : ''}
+                  >
+                    {links}
+                  </div>
+                )
+              }
+
+              const hidesActive = !open && activeGroup === group.key
+              return (
+                <div key={group.key} className={groupIndex > 0 ? 'mt-3' : ''}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={open}
+                    aria-controls={panelId}
+                    className="group/head flex h-7 w-full items-center gap-1.5 rounded-lg pl-[10px] pr-2 text-[11px] font-medium text-gray-400 transition-colors hover:text-gray-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gray-900"
+                  >
+                    <span className="flex-1 text-left">{group.label}</span>
+                    {/* Plegada con la herramienta actual adentro: un punto lo recuerda. */}
+                    {hidesActive && (
+                      <span className="size-1.5 rounded-full" style={{ background: ORG_ACC }} aria-hidden />
+                    )}
+                    {!open && <span className="tabular-nums text-gray-300" aria-hidden>{groupItems.length}</span>}
+                    <ChevronDown
+                      size={14}
+                      strokeWidth={1.75}
+                      className={`shrink-0 transition-transform duration-200 motion-reduce:transition-none ${open ? '' : '-rotate-90'}`}
+                      aria-hidden
+                    />
+                  </button>
+                  <div
+                    className="grid transition-[grid-template-rows] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                    style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+                  >
+                    <div id={panelId} role="group" aria-label={group.label} inert={!open} className="min-h-0 overflow-hidden">
+                      {links}
                     </div>
-                  )
-                })}
-              </div>
-            ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </nav>
 
         <div className="mt-2 flex shrink-0 flex-col gap-1">
@@ -804,36 +948,77 @@ export function EventOrganizerSidebar({
                 Ayuda y soporte
               </ProfileMenuButton>
 
-              {(catalogUrl || ticketsUrl || parkingUrl) && <div className="my-1 h-px bg-gray-100" aria-hidden />}
-              {catalogUrl && (
-                <ProfileMenuButton
-                  icon={copiedKey === 'catalog' ? <Check size={15} strokeWidth={2} className="text-green-600" /> : <Link2 size={15} strokeWidth={1.75} />}
-                  onClick={() => void copyLink('catalog', catalogUrl)}
-                  title={catalogUrl}
-                >
-                  {copiedKey === 'catalog' ? 'Link copiado' : 'Copiar link del catálogo'}
-                </ProfileMenuButton>
-              )}
-              {ticketsUrl && (
-                <ProfileMenuButton
-                  icon={copiedKey === 'tickets' ? <Check size={15} strokeWidth={2} className="text-green-600" /> : <Ticket size={15} strokeWidth={1.75} />}
-                  onClick={() => void copyLink('tickets', ticketsUrl)}
-                  title={ticketsUrl}
-                >
-                  {copiedKey === 'tickets' ? 'Link copiado' : 'Copiar link de tickets'}
-                </ProfileMenuButton>
-              )}
-              {parkingUrl && (
-                <ProfileMenuButton
-                  icon={copiedKey === 'parking' ? <Check size={15} strokeWidth={2} className="text-green-600" /> : <ParkingSquare size={15} strokeWidth={1.75} />}
-                  onClick={() => void copyLink('parking', parkingUrl)}
-                  title={parkingUrl}
-                >
-                  {copiedKey === 'parking' ? 'Link copiado' : 'Copiar link de parking'}
-                </ProfileMenuButton>
-              )}
-              {copiedKey === 'error' && (
-                <p className="px-2.5 pb-1 text-[11px] text-red-600">No se pudo copiar el link.</p>
+              {(catalogUrl || ticketsUrl || parkingUrl) && (
+                <>
+                  <div className="my-1 h-px bg-gray-100" aria-hidden />
+                  {/* Links públicos: un solo ítem que abre un segundo popover para copiarlos. */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      aria-haspopup="menu"
+                      aria-expanded={linksOpen}
+                      onClick={() => setLinksOpen(o => !o)}
+                      className={`${profileItemClass} ${linksOpen ? 'bg-gray-100 text-gray-900' : ''}`}
+                    >
+                      <span className="shrink-0 text-gray-400" aria-hidden><Link2 size={15} strokeWidth={1.75} /></span>
+                      <span className="flex-1 truncate">Links públicos</span>
+                      <ChevronRight
+                        size={14}
+                        strokeWidth={1.75}
+                        className={`shrink-0 transition-colors ${linksOpen ? 'text-gray-700' : 'text-gray-300'}`}
+                        aria-hidden
+                      />
+                    </button>
+                    {linksOpen && (
+                      <div
+                        role="menu"
+                        aria-label="Links públicos"
+                        className="absolute bottom-0 left-full z-40 ml-2 w-72 origin-bottom-left rounded-xl border border-gray-200/80 bg-white p-1 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.22),0_2px_6px_rgba(16,24,40,0.06)]"
+                        style={{ animation: 'profile-pop 140ms cubic-bezier(0.22,1,0.36,1) backwards' }}
+                      >
+                        <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-medium text-gray-400">Tocá un link para copiarlo</p>
+                        {([
+                          { key: 'catalog', label: 'Catálogo', url: catalogUrl, icon: <Package size={15} strokeWidth={1.75} /> },
+                          { key: 'tickets', label: 'Tickets', url: ticketsUrl, icon: <Ticket size={15} strokeWidth={1.75} /> },
+                          { key: 'parking', label: 'Parking', url: parkingUrl, icon: <ParkingSquare size={15} strokeWidth={1.75} /> },
+                        ] as const)
+                          .filter(l => l.url)
+                          .map(l => {
+                            const copied = copiedKey === l.key
+                            return (
+                              <button
+                                key={l.key}
+                                type="button"
+                                role="menuitem"
+                                onClick={() => void copyLink(l.key, l.url)}
+                                title={l.url}
+                                className="group/link flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-left transition-colors hover:bg-gray-100 focus-visible:bg-gray-100 focus-visible:outline-none"
+                              >
+                                <span className="shrink-0 text-gray-400" aria-hidden>{l.icon}</span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-[13px] text-gray-700 group-hover/link:text-gray-900">
+                                    {copied ? 'Link copiado' : l.label}
+                                  </span>
+                                  <span className="block truncate text-[11px] text-gray-400">
+                                    {l.url.replace(/^https?:\/\//, '')}
+                                  </span>
+                                </span>
+                                {copied ? (
+                                  <Check size={14} strokeWidth={2} className="shrink-0 text-green-600" aria-hidden />
+                                ) : (
+                                  <Copy size={14} strokeWidth={1.75} className="shrink-0 text-gray-300 transition-colors group-hover/link:text-gray-500" aria-hidden />
+                                )}
+                              </button>
+                            )
+                          })}
+                        {copiedKey === 'error' && (
+                          <p className="px-2.5 pb-1 text-[11px] text-red-600">No se pudo copiar el link.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
               <div className="my-1 h-px bg-gray-100" aria-hidden />
@@ -848,7 +1033,7 @@ export function EventOrganizerSidebar({
 
           <button
             type="button"
-            onClick={() => setProfileOpen(o => !o)}
+            onClick={() => { setLinksOpen(false); setProfileOpen(o => !o) }}
             aria-haspopup="menu"
             aria-expanded={profileOpen}
             aria-label={collapsed ? `Cuenta: ${emailLabel}` : undefined}
