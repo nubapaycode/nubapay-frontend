@@ -65,7 +65,7 @@ function OrderIdentity({ order }: { order: Order }) {
           {name && <span className="min-w-0 truncate text-sm text-gray-400">{name}</span>}
         </div>
       )}
-      {/* Parking: el guardia compara la patente con el vehículo. El DNI solo aparece en compras viejas. */}
+      {/* Parking: el guardia compara la patente con el vehículo. El DNI figura en toda compra de parking (en las anteriores a que fuera obligatorio puede faltar). */}
       {(plate || dni) && (
         <dl className={cn('grid gap-2', plate && dni && 'grid-cols-2', (number || name) && 'mt-3')}>
           {plate && (

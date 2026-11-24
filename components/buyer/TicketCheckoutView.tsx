@@ -35,7 +35,7 @@ const DANGER = '#DC2626'
 
 export type BuyerField = 'name' | 'email' | 'emailConfirm' | 'phone'
 export type BuyerValues = Record<BuyerField, string>
-/** Datos de estacionamiento: solo se piden al comprar parking. El lugar queda atado a la patente; el DNI es opcional. */
+/** Datos de estacionamiento: solo se piden al comprar parking. El lugar queda atado a la patente; el DNI del titular es obligatorio y puede repetirse en varias compras. */
 export type VehicleField = 'plate' | 'dni'
 export type VehicleValues = Record<VehicleField, string>
 type FormField = BuyerField | VehicleField
@@ -61,7 +61,7 @@ const FIELDS: FieldDef<BuyerField>[] = [
 
 const VEHICLE_FIELDS: FieldDef<VehicleField>[] = [
   { id: 'plate', label: 'Patente', placeholder: 'Ej. AB123CD o ABC123', autoComplete: 'off', uppercase: true },
-  { id: 'dni', label: 'DNI (opcional)', placeholder: 'Sin puntos, ej. 30123456', autoComplete: 'off', inputMode: 'numeric' },
+  { id: 'dni', label: 'DNI del titular', placeholder: 'Sin puntos, ej. 30123456', autoComplete: 'off', inputMode: 'numeric' },
 ]
 
 const EMPTY_VALUES: BuyerValues = { name: '', email: '', emailConfirm: '', phone: '' }
@@ -83,9 +83,10 @@ export function validateVehicle(values: VehicleValues): Partial<Record<VehicleFi
   const plate = normalizePlate(values.plate)
   if (!plate) errors.plate = 'Ingresá la patente del vehículo'
   else if (!/^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{5,8}$/.test(plate)) errors.plate = 'Ingresá una patente válida, ej. AB123CD o ABC123'
-  // DNI opcional: solo se valida si se completó.
+  // DNI obligatorio. No limita las compras: un mismo DNI puede reservar varios vehículos.
   const dni = normalizeDni(values.dni)
-  if (dni && !/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI tiene que tener 7 u 8 números'
+  if (!dni) errors.dni = 'Ingresá el DNI del titular'
+  else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI tiene que tener 7 u 8 números'
   return errors
 }
 
@@ -104,7 +105,7 @@ export function validateBuyer(values: BuyerValues): Partial<Record<BuyerField, s
   return errors
 }
 
-/** Errores del servidor que corresponden a la patente: se muestran en el campo, no solo abajo. */
+/** Errores del servidor que corresponden a los datos del vehículo: se muestran en el campo, no solo abajo. */
 const PLATE_ERROR_CODES = ['parking_already_purchased', 'vehicle_data_required', 'invalid_vehicle_data']
 
 function ErrorAlert({ message, onClose }: { message: string; onClose: () => void }) {
@@ -279,13 +280,15 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     if (submitError) setSubmitError('')
   }
 
-  /** Muestra el error del servidor; si es de la patente, también lo marca en el campo y lo enfoca. */
+  /** Muestra el error del servidor; si es del vehículo, también lo marca en el campo (patente o DNI) y lo enfoca. */
   const showServerError = (body: { error?: string; code?: string }, fallback: string) => {
     const message = body.error ?? fallback
     setSubmitError(message)
     if (isParking && body.code && PLATE_ERROR_CODES.includes(body.code)) {
-      setErrors(e => ({ ...e, plate: message }))
-      const input = document.getElementById('buyer-plate')
+      // Los mensajes del DNI lo nombran; el resto (patente repetida, inválida, faltante) es de la patente.
+      const field: VehicleField = /\bDNI\b/.test(message) ? 'dni' : 'plate'
+      setErrors(e => ({ ...e, [field]: message }))
+      const input = document.getElementById(`buyer-${field}`)
       input?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
       input?.focus({ preventScroll: true })
     }
@@ -314,7 +317,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     try {
       const items = selected.map(s => ({ ticket_id: s.ticket.id, quantity: s.quantity }))
       const vehicleData = isParking
-        ? { vehicle_plate: normalizePlate(vehicle.plate), ...(vehicle.dni.trim() ? { customer_dni: normalizeDni(vehicle.dni) } : {}) }
+        ? { vehicle_plate: normalizePlate(vehicle.plate), customer_dni: normalizeDni(vehicle.dni) }
         : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
@@ -604,7 +607,8 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               {VEHICLE_FIELDS.map(field => renderField(field, vehicle[field.id]))}
             </div>
             <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
-              El lugar queda a nombre de esta patente: se permite un solo lugar por vehículo.
+              El lugar queda a nombre de esta patente: se permite un solo lugar por vehículo. Con un mismo DNI podés
+              reservar para varios vehículos, una compra por cada patente.
             </p>
           </Section>
         )}

@@ -136,18 +136,29 @@ describe('TicketCheckoutView', () => {
 })
 
 describe('validateVehicle', () => {
-  it('acepta patentes viejas, nuevas y en minúscula, con o sin DNI', () => {
-    expect(validateVehicle({ plate: 'ab 123 cd', dni: '' })).toEqual({})
+  it('acepta patentes viejas, nuevas y en minúscula, con DNI con o sin puntos', () => {
+    expect(validateVehicle({ plate: 'ab 123 cd', dni: '30123456' })).toEqual({})
     expect(validateVehicle({ plate: 'ABC-123', dni: '30.123.456' })).toEqual({})
+    expect(validateVehicle({ plate: 'ABC123', dni: '1234567' })).toEqual({})
   })
 
   it('pide la patente y marca las inválidas', () => {
-    expect(validateVehicle({ plate: '', dni: '' })).toEqual({ plate: 'Ingresá la patente del vehículo' })
-    expect(validateVehicle({ plate: 'ABCDEF', dni: '' })).toEqual({ plate: 'Ingresá una patente válida, ej. AB123CD o ABC123' })
+    expect(validateVehicle({ plate: '', dni: '30123456' })).toEqual({ plate: 'Ingresá la patente del vehículo' })
+    expect(validateVehicle({ plate: 'ABCDEF', dni: '30123456' })).toEqual({ plate: 'Ingresá una patente válida, ej. AB123CD o ABC123' })
   })
 
-  it('el DNI es opcional, pero si se completa tiene que ser válido', () => {
+  it('el DNI es obligatorio y tiene que ser válido', () => {
+    expect(validateVehicle({ plate: 'AB123CD', dni: '' })).toEqual({ dni: 'Ingresá el DNI del titular' })
+    expect(validateVehicle({ plate: 'AB123CD', dni: '  ' })).toEqual({ dni: 'Ingresá el DNI del titular' })
     expect(validateVehicle({ plate: 'AB123CD', dni: '12345' })).toEqual({ dni: 'El DNI tiene que tener 7 u 8 números' })
+    expect(validateVehicle({ plate: 'AB123CD', dni: '123456789' })).toEqual({ dni: 'El DNI tiene que tener 7 u 8 números' })
+  })
+
+  it('pide patente y DNI juntos cuando faltan los dos', () => {
+    expect(validateVehicle({ plate: '', dni: '' })).toEqual({
+      plate: 'Ingresá la patente del vehículo',
+      dni: 'Ingresá el DNI del titular',
+    })
   })
 })
 
@@ -170,7 +181,7 @@ describe('TicketCheckoutView · parking', () => {
     const buyer = screen.getByRole('heading', { name: 'Datos del comprador' })
     const parking = screen.getByRole('heading', { name: 'Datos de estacionamiento' })
     expect(buyer.compareDocumentPosition(parking) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByLabelText('DNI (opcional)')).toBeInTheDocument()
+    expect(screen.getByLabelText('DNI del titular')).toBeInTheDocument()
     expect(screen.getByLabelText('Patente')).toBeInTheDocument()
   })
 
@@ -201,7 +212,7 @@ describe('TicketCheckoutView · parking', () => {
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
     await userEvent.type(screen.getByLabelText('Patente'), 'ab 123 cd')
-    await userEvent.type(screen.getByLabelText('DNI (opcional)'), '30.123.456')
+    await userEvent.type(screen.getByLabelText('DNI del titular'), '30.123.456')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
 
     const patchCall = (browserFetch as jest.Mock).mock.calls.find(call => call[1]?.method === 'PATCH')
@@ -212,6 +223,46 @@ describe('TicketCheckoutView · parking', () => {
       vehicle_plate: 'AB123CD',
       customer_dni: '30123456',
     })
+  })
+
+  it('no paga sin DNI: marca el campo y no confirma la orden', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await fillBuyer()
+    await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    expect(screen.getByText('Ingresá el DNI del titular')).toBeInTheDocument()
+    expect(screen.getByLabelText('DNI del titular')).toHaveAttribute('aria-invalid', 'true')
+    const methods = (browserFetch as jest.Mock).mock.calls.map(call => call[1]?.method)
+    expect(methods).not.toContain('PATCH')
+  })
+
+  it('el campo de DNI ya no dice "opcional" y avisa que un DNI puede repetirse', () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Con un mismo DNI podés reservar para varios vehículos/)).toBeInTheDocument()
+  })
+
+  it('si el servidor rechaza el DNI, lo marca en el campo del DNI y no en el de la patente', async () => {
+    storeParking()
+    ;(browserFetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PATCH'
+        ? { ok: false, status: 422, json: async () => ({ error: 'Ingresá el DNI del titular para reservar el parking.', code: 'vehicle_data_required' }) }
+        : { ok: true, json: async () => ({ order_id: 'o1' }) },
+    )
+    render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.type(screen.getByLabelText('DNI del titular'), '30123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await screen.findByRole('alert')
+    expect(screen.getByLabelText('DNI del titular')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('DNI del titular')).toHaveFocus()
+    expect(screen.getByLabelText('Patente')).not.toHaveAttribute('aria-invalid', 'true')
   })
 
   it('muestra el error del servidor si la patente ya tiene parking', async () => {
@@ -225,6 +276,7 @@ describe('TicketCheckoutView · parking', () => {
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
     await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.type(screen.getByLabelText('DNI del titular'), '30123456')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos completar la compra')
@@ -250,6 +302,7 @@ describe('TicketCheckoutView · parking', () => {
     await waitFor(() => expect(browserFetch).toHaveBeenCalled())
     await fillBuyer()
     await userEvent.type(screen.getByLabelText('Patente'), 'AB123CD')
+    await userEvent.type(screen.getByLabelText('DNI del titular'), '30123456')
     await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
     await screen.findByRole('alert')
     const plate = screen.getByLabelText('Patente')

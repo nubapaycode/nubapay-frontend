@@ -564,7 +564,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
 
             <p className="mt-4 flex items-start gap-2 px-1 text-[12px] text-gray-500">
               <Info size={14} strokeWidth={1.75} className="mt-px shrink-0 text-gray-400" aria-hidden />
-              Cada vehículo puede reservar un solo lugar. Al comprar se pide la patente, que no se puede repetir, y opcionalmente el DNI.
+              Cada vehículo puede reservar un solo lugar. Al comprar se pide la patente, que no se puede repetir, y el DNI del titular, que sí puede repetirse: un mismo DNI puede comprar para varios vehículos.
             </p>
           </div>
 
