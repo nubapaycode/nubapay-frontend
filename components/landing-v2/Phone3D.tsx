@@ -13,7 +13,9 @@ import RealPhone, { PHONE_SCREENS } from './RealPhone'
  * Movimiento con GSAP: entrada girando desde abajo, gira al scrollear fuera del hero y hace un
  * pequeño giro al cambiar de pantalla. En "Cómo funciona" (`variant="journey"`) queda quieto en la
  * pose de reposo (o lo gira la sección a través de `spin`) y la pantalla cambia con un slide.
- * Si no hay WebGL se muestra el iPhone en SVG (`RealPhone`).
+ * Se muestra el iPhone en SVG (`RealPhone`) en su lugar si no hay WebGL, si la aceleración por hardware
+ * está desactivada, si el usuario pidió reducir las animaciones o si la carga tarda más de `LOAD_BUDGET`
+ * (en ese caso, por el resto de la visita).
  *
  * Rendimiento: three.js (sólo las clases de `three-lite`) se descarga recién cuando el teléfono está
  * por entrar en pantalla y el navegador está libre; se dibuja sólo cuando algo cambia; las texturas de
@@ -92,6 +94,35 @@ function nearViewport(el: Element, margin: string, signal: AbortSignal) {
     io.observe(el)
     signal.addEventListener('abort', () => io.disconnect())
   })
+}
+
+/** Tiempo máximo (ms) desde que arranca la carga hasta el primer frame; si se pasa, queda el SVG. */
+const LOAD_BUDGET = 4000
+/** Marca de sesión: si una vez tardó demasiado, en el resto de la visita ni se intenta el 3D. */
+const SLOW_KEY = 'lv2-phone3d-slow'
+
+function rememberedSlow() {
+  try { return sessionStorage.getItem(SLOW_KEY) === '1' } catch { return false }
+}
+function rememberSlow() {
+  try { sessionStorage.setItem(SLOW_KEY, '1') } catch { /* sin storage: se reintenta la próxima vez */ }
+}
+
+/** WebGL con aceleración por hardware. Con la aceleración desactivada el navegador o no da contexto
+ *  (`failIfMajorPerformanceCaveat`) o lo dibuja por software (SwiftShader, llvmpipe, Microsoft Basic Render). */
+function hasHardwareWebGL() {
+  try {
+    const canvas = document.createElement('canvas')
+    const opts = { failIfMajorPerformanceCaveat: true }
+    const gl = (canvas.getContext('webgl2', opts) ?? canvas.getContext('webgl', opts)) as WebGLRenderingContext | null
+    if (!gl) return false
+    const info = gl.getExtension('WEBGL_debug_renderer_info')
+    const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : ''
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+    return !/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)
+  } catch {
+    return false
+  }
 }
 
 /** Pantalla completa de iOS: barra de estado dibujada + la captura (que viene sin barra). */
@@ -294,11 +325,32 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
     let cleanup = () => {}
     const abort = new AbortController()
 
+    /* Se queda con el SVG: libera lo que se haya armado del 3D y muestra `RealPhone` */
+    const giveUp = () => {
+      if (disposed) return
+      disposed = true
+      abort.abort()
+      cleanup()
+      cleanup = () => {}
+      setFallback(true)
+    }
+    let deadline: ReturnType<typeof setTimeout> | undefined
+    /* Si la pestaña está en segundo plano el navegador frena todo: se espera a que vuelva */
+    const onDeadline = () => {
+      if (document.hidden) { deadline = setTimeout(onDeadline, 500); return }
+      rememberSlow()
+      giveUp()
+    }
+
     ;(async () => {
       const hero = variant === 'hero'
+      /* Sin animaciones (prefers-reduced-motion), sin aceleración por hardware o con una carga previa
+         demasiado lenta en esta visita: va directo el SVG, sin descargar three.js */
+      if (prefersReducedMotion() || rememberedSlow() || !hasHardwareWebGL()) { giveUp(); return }
       /* El hero arranca ya (está arriba de todo); el resto espera a estar cerca de la ventana */
       if (!hero) await nearViewport(host, '0px 0px 600px 0px', abort.signal)
       if (disposed) return
+      deadline = setTimeout(onDeadline, LOAD_BUDGET)
       /* three.js y la primera captura bajan en paralelo; las otras capturas, después */
       const first = screenRef.current
       const [T, firstImg] = await Promise.all([import('./three-lite'), loadImage(PHONE_SCREENS[first].src), document.fonts.ready])
@@ -306,7 +358,6 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
       if (disposed) return
       const { RoomEnvironment, RoundedBoxGeometry } = T
 
-      const reduced = prefersReducedMotion()
       const small = window.matchMedia('(max-width: 900px)').matches
       const dpr = Math.min(window.devicePixelRatio, small ? 1.5 : 2)
       /* Sin WebGL el constructor tira error y se cae al SVG (no hace falta abrir un contexto de prueba).
@@ -547,7 +598,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
       }
 
       /* ── Movimiento ── */
-      const pose = reduced || !hero ? { ...REST, y: 0, s: 1 } : { ry: 1.9, rx: 0.5, rz: -0.12, y: -150, s: 0.86 }
+      const pose = hero ? { ry: 1.9, rx: 0.5, rz: -0.12, y: -150, s: 0.86 } : { ...REST, y: 0, s: 1 }
       const scroll = { ry: 0, rx: 0, y: 0 }
       const flick = { v: 0 }
       /* Giro con el mouse: se suma a la pose, con tope, y al soltar vuelve a cero */
@@ -557,7 +608,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
 
       const tweens: (gsap.core.Tween | gsap.core.Timeline)[] = []
       let st: ScrollTrigger | null = null
-      if (!reduced && hero) {
+      if (hero) {
         tweens.push(gsap.to(pose, { ...REST, y: 0, s: 1, duration: 2.2, ease: 'expo.out', delay: 0.15 }))
         const section = host.closest('section')
         if (section) {
@@ -579,12 +630,6 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
         const tex = screens[i]
         /* Todavía no está pintada (scroll muy rápido): se muestra apenas esté, si sigue siendo la pedida */
         if (!tex) { ensureScreen(i).then(() => { if (!disposed && screenRef.current === i) show(i) }); return }
-        if (reduced) {
-          slide.mapA.value = tex
-          cur = next = i
-          dirty = true
-          return
-        }
         slide.mapB.value = tex
         slide.dir.value = i >= cur ? 1 : -1
         next = i
@@ -654,9 +699,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
         press = null
         canvas.releasePointerCapture(e.pointerId)
         canvas.classList.remove('is-dragging')
-        gsap.to(drag, reduced
-          ? { ry: 0, rx: 0, duration: 0.25, ease: 'power2.out' }
-          : { ry: 0, rx: 0, duration: 1.1, ease: 'elastic.out(1, 0.75)' })
+        gsap.to(drag, { ry: 0, rx: 0, duration: 1.1, ease: 'elastic.out(1, 0.75)' })
       }
       canvas.addEventListener('pointerdown', onDown)
       canvas.addEventListener('pointermove', onMove)
@@ -685,6 +728,7 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
       await renderer.compileAsync(scene, camera)
       /* Si se desmontó mientras compilaba, el cleanup ya liberó todo */
       if (disposed) return
+      clearTimeout(deadline)
       gsap.ticker.add(tick)
       tick()
       host.classList.add('is-ready')
@@ -692,9 +736,10 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
       if (screenRef.current !== first) show(screenRef.current)
       /* El resto de las capturas, en ratos libres y en orden de cercanía a la actual */
       PHONE_SCREENS.map((_, i) => i).sort((a, b) => Math.abs(a - first) - Math.abs(b - first)).forEach(i => { void ensureScreen(i) })
-    })().catch(() => { if (!disposed) setFallback(true) })
+    })().catch(giveUp)
 
     return () => {
+      clearTimeout(deadline)
       disposed = true
       abort.abort()
       cleanup()
@@ -702,7 +747,8 @@ export default function Phone3D({ screen, variant = 'hero', spin, lift = 0 }: {
   }, [variant, spin, lift])
 
   if (fallback) {
-    return <div className="lv2-phone-wrap"><RealPhone screen={screen} eager /></div>
+    /* Mismo comportamiento que el SVG que se usa en cada sección: el hero con prioridad, el recorrido con slide */
+    return <div className="lv2-phone-wrap"><RealPhone screen={screen} eager={variant === 'hero'} slide={variant === 'journey'} /></div>
   }
   return (
     <div
