@@ -18,7 +18,6 @@ import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib
 import { cn, formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
-import { WhatsAppOptIn } from './WhatsAppOptIn'
 import { CARD_LOGO_METHOD_IDS, CardLogos, paymentMethods } from './paymentMethods'
 import { TICKET_PAGE_BG } from './TicketCard'
 
@@ -185,9 +184,8 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const now = useNow(expiresAt !== null)
 
   const [values, setValues] = useState<BuyerValues>(EMPTY_VALUES)
-  // WhatsApp: solo si el organizador lo tiene activo. Va sin marcar: el comprador tiene que aceptarlo.
+  // WhatsApp: si el organizador lo tiene activo, el QR se manda siempre al teléfono del formulario (ya es obligatorio).
   const whatsappEnabled = event.whatsappEnabled ?? false
-  const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [vehicle, setVehicle] = useState<VehicleValues>(EMPTY_VEHICLE)
   const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({})
   const isParking = kind === 'parking'
@@ -331,8 +329,8 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
       const vehicleData = isParking
         ? { vehicle_plate: normalizePlate(vehicle.plate), customer_dni: normalizeDni(vehicle.dni) }
         : {}
-      // Siempre se manda el valor actual: así destildar la casilla también quita un consentimiento anterior.
-      const whatsappData = whatsappEnabled ? { whatsapp_opt_in: whatsappOptIn } : {}
+      // El backend exige el flag para guardar el teléfono y mandar el QR.
+      const whatsappData = whatsappEnabled ? { whatsapp_opt_in: true } : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
         await precreateRef.current
@@ -616,9 +614,9 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             {copy.emailNote}
           </p>
           {whatsappEnabled && (
-            <div className="mt-4">
-              <WhatsAppOptIn checked={whatsappOptIn} onChange={setWhatsappOptIn} hint="Te lo mandamos al teléfono de arriba, además del email." />
-            </div>
+            <p className="mt-2 text-[13px]" style={{ color: MUTED }}>
+              Te mandamos tu QR por WhatsApp al teléfono de arriba, además del email.
+            </p>
           )}
         </Section>
 

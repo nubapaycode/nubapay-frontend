@@ -20,7 +20,6 @@ import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
 import type { ServiceFeePercent } from '@/types'
 
-import { WhatsAppOptIn } from './WhatsAppOptIn'
 import { CARD_LOGO_METHOD_IDS, CardLogos, paymentMethods } from './paymentMethods'
 
 interface CheckoutViewProps {
@@ -56,8 +55,7 @@ export function CheckoutView({
   const displayItems = items.length > 0 ? items : keptItemsRef.current
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  // WhatsApp: sin marcar por defecto (el comprador tiene que aceptarlo). El teléfono solo se pide si lo acepta.
-  const [whatsappOptIn, setWhatsappOptIn] = useState(false)
+  // WhatsApp: si el organizador lo tiene activo, el QR se manda siempre y el teléfono es obligatorio.
   const [phone, setPhone] = useState('')
   const [phoneError, setPhoneError] = useState(false)
 
@@ -197,16 +195,17 @@ export function CheckoutView({
     if (trimmedName === '') { setError('Ingresá tu nombre para continuar'); return }
     if (trimmedEmail === '') { setError('Ingresá tu email para continuar'); return }
     if (emailMalformed) { setError('Ingresá un email válido'); return }
-    const wantsWhatsapp = whatsappEnabled && whatsappOptIn
+    const wantsWhatsapp = whatsappEnabled
     const phoneDigits = phone.replace(/\D/g, '')
     if (wantsWhatsapp && (phoneDigits.length < 8 || phoneDigits.length > 15)) {
       setPhoneError(true)
       setError('Ingresá un teléfono válido, con código de área, para recibir tu QR por WhatsApp')
+      document.getElementById('checkout-phone')?.focus()
       return
     }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
     if (displayItems.length === 0) return
-    // Solo viaja si el comprador lo aceptó: sin casilla tildada no se manda teléfono ni consentimiento.
+    // Con WhatsApp activo en el organizador siempre viaja el teléfono (el backend exige el flag para guardarlo).
     const whatsappData = wantsWhatsapp ? { customer_phone: phone.trim(), whatsapp_opt_in: true } : {}
 
     setLoading(true)
@@ -488,37 +487,32 @@ export function CheckoutView({
           />
         </div>
 
-        {/* WhatsApp: solo si el organizador lo tiene activo. Sin marcar por defecto. */}
+        {/* WhatsApp: solo si el organizador lo tiene activo. El QR se manda siempre, sin preguntar. */}
         {whatsappEnabled && (
-          <div className="flex flex-col gap-3">
-            <WhatsAppOptIn
-              checked={whatsappOptIn}
-              onChange={v => { setWhatsappOptIn(v); setPhoneError(false); if (error) setError('') }}
+          <div>
+            <label htmlFor="checkout-phone" className="mb-3 block text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>
+              Tu teléfono de WhatsApp
+            </label>
+            <input
+              id="checkout-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={e => { setPhone(e.target.value); setPhoneError(false); if (error) setError('') }}
+              placeholder="Ej: 11 5555-1234"
+              aria-invalid={phoneError}
+              className="w-full rounded-[12px] px-4 py-3 text-[16px] outline-none transition-colors"
+              style={{
+                border: `1.5px solid ${phoneError ? '#DC2626' : BUYER_COLORS.border}`,
+                background: '#fff',
+                color: BUYER_COLORS.text,
+                fontFamily: BUYER_FONT,
+              }}
             />
-            {whatsappOptIn && (
-              <div>
-                <label htmlFor="checkout-phone" className="mb-3 block text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>
-                  Tu teléfono de WhatsApp
-                </label>
-                <input
-                  id="checkout-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={e => { setPhone(e.target.value); setPhoneError(false); if (error) setError('') }}
-                  placeholder="Ej: 11 5555-1234"
-                  aria-invalid={phoneError}
-                  className="w-full rounded-[12px] px-4 py-3 text-[16px] outline-none transition-colors"
-                  style={{
-                    border: `1.5px solid ${phoneError ? '#DC2626' : BUYER_COLORS.border}`,
-                    background: '#fff',
-                    color: BUYER_COLORS.text,
-                    fontFamily: BUYER_FONT,
-                  }}
-                />
-              </div>
-            )}
+            <p className="mt-2 text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+              Te mandamos tu QR por WhatsApp, además del email.
+            </p>
           </div>
         )}
 
