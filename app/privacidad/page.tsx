@@ -13,13 +13,11 @@ export const metadata: Metadata = {
 
 const BREADCRUMB_LD = { __html: breadcrumbJsonLd([{ name: 'Política de Privacidad', path: '/privacidad' }]) }
 
-// TODO(pendiente): agregar cuando estén los datos. Sección 1: razón social/titular, CUIT y domicilio legal.
-// Sección de contacto (última): domicilio y WhatsApp. Se quitaron del texto para no mostrar placeholders.
 const sections: LegalSection[] = [
   {
     num: '1',
     title: 'Identificación del responsable',
-    body: `La plataforma Nubapay es operada por:\n\nCorreo de contacto: contacto@nubapay.app\nSitio web: www.nubapay.app\nJurisdicción: República Argentina\n\nEn adelante, "Nubapay", "la Plataforma", "nosotros" o "el Responsable".`,
+    body: `La plataforma Nubapay es operada por:\n\nTitular: Alejo Vaquero\nCUIT: 23-46971353-9\nDomicilio legal: Bv. Los Andes 665, Piso 2, Dpto. S:E, Barrio Ducasse, 5000 Córdoba, Argentina\nCorreo de contacto: contacto@nubapay.app\nSitio web: www.nubapay.app\nJurisdicción: República Argentina\n\nEn adelante, "Nubapay", "la Plataforma", "nosotros" o "el Responsable".`,
   },
   {
     num: '2',
@@ -301,7 +299,7 @@ const sections: LegalSection[] = [
   {
     num: '35',
     title: 'Contacto',
-    body: `Para consultas, solicitudes o reclamos relacionados con esta Política o el tratamiento de datos personales:\n\nResponsable: Nubapay\nCorreo electrónico: contacto@nubapay.app\nSitio web: www.nubapay.app`,
+    body: `Para consultas, solicitudes o reclamos relacionados con esta Política o el tratamiento de datos personales:\n\nResponsable: Nubapay (Alejo Vaquero, CUIT 23-46971353-9)\nDomicilio legal: Bv. Los Andes 665, Piso 2, Dpto. S:E, Barrio Ducasse, 5000 Córdoba, Argentina\nCorreo electrónico: contacto@nubapay.app\nSitio web: www.nubapay.app`,
   },
   {
     num: '36',
@@ -319,7 +317,7 @@ export default function PrivacidadPage() {
         lines={['Política de', 'privacidad.']}
         intro="En Nubapay valoramos la privacidad de nuestros usuarios y nos comprometemos a proteger los datos personales recolectados y tratados a través de nuestra plataforma. Al acceder o utilizarla, declarás haber leído y comprendido esta Política."
         meta={[
-          { label: 'Última actualización', value: 'Mayo 2025' },
+          { label: 'Última actualización', value: 'Noviembre 2026' },
           { label: 'Versión', value: '1.0' },
           { label: 'Jurisdicción', value: 'República Argentina' },
         ]}
