@@ -20,6 +20,10 @@ export type PlatformAdminUser = {
   onboarding_completed: boolean
   /** Módulos habilitados (catalogo, tickets, parking). Ausente en respuestas viejas = los de por defecto. */
   modules?: string[]
+  /** WhatsApp Business de Nubapay habilitado para este organizador. */
+  whatsapp_enabled?: boolean
+  /** WhatsApp del organizador (solo dígitos, internacional) para el resumen de ventas. */
+  whatsapp_phone?: string | null
 }
 
 export type PlatformAdminEvent = {
@@ -609,6 +613,18 @@ export type OrderGroup = 'paid' | 'pending' | 'redeemed' | 'cancelled' | 'failed
 
 export function fetchPlatformEventDetail(eventId: string, range: DateRangeParams = {}) {
   return getJson<AdminEventDetail>(`/events/${encodeURIComponent(eventId)}/detail`, range)
+}
+
+/**
+ * Activa o desactiva WhatsApp para un organizador y/o cambia su número (el del resumen de ventas).
+ * El servidor normaliza el número (`+54 9 11 5555-1234` → `5491155551234`); vacío lo borra.
+ */
+export function setUserWhatsApp(userId: string, change: { enabled?: boolean; phone?: string | null }) {
+  return sendJson<{ ok: true; whatsapp_enabled: boolean; whatsapp_phone: string | null }>(
+    `/users/${encodeURIComponent(userId)}/whatsapp`,
+    'PATCH',
+    change,
+  )
 }
 
 /** Cambia qué módulos puede usar un usuario. Sus eventos ofrecen esos módulos (el staff trabaja con lo del dueño). */

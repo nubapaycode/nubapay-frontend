@@ -20,6 +20,7 @@ import { computeCartTotals, orderLinePayload } from '@/lib/serviceFee'
 import { formatPrice } from '@/lib/utils'
 import type { ServiceFeePercent } from '@/types'
 
+import { WhatsAppOptIn } from './WhatsAppOptIn'
 import { CARD_LOGO_METHOD_IDS, CardLogos, paymentMethods } from './paymentMethods'
 
 interface CheckoutViewProps {
@@ -33,6 +34,8 @@ interface CheckoutViewProps {
   availablePaymentMethods?: string[]
   /** Costo de servicio (%) vigente según el backend; si falta se usan los valores por defecto. */
   serviceFeePercent?: ServiceFeePercent
+  /** El organizador tiene WhatsApp activo: se ofrece recibir el QR por ahí (pide teléfono). */
+  whatsappEnabled?: boolean
 }
 
 export function CheckoutView({
@@ -42,6 +45,7 @@ export function CheckoutView({
   purchaseClosed = false,
   availablePaymentMethods = ['mp'],
   serviceFeePercent,
+  whatsappEnabled = false,
 }: CheckoutViewProps) {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
@@ -52,6 +56,10 @@ export function CheckoutView({
   const displayItems = items.length > 0 ? items : keptItemsRef.current
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  // WhatsApp: sin marcar por defecto (el comprador tiene que aceptarlo). El teléfono solo se pide si lo acepta.
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false)
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState(false)
 
   // Los tickets no se pueden pagar en efectivo (el backend también lo rechaza).
   const hasTickets = displayItems.some(i => i.kind === 'ticket')
@@ -189,8 +197,17 @@ export function CheckoutView({
     if (trimmedName === '') { setError('Ingresá tu nombre para continuar'); return }
     if (trimmedEmail === '') { setError('Ingresá tu email para continuar'); return }
     if (emailMalformed) { setError('Ingresá un email válido'); return }
+    const wantsWhatsapp = whatsappEnabled && whatsappOptIn
+    const phoneDigits = phone.replace(/\D/g, '')
+    if (wantsWhatsapp && (phoneDigits.length < 8 || phoneDigits.length > 15)) {
+      setPhoneError(true)
+      setError('Ingresá un teléfono válido, con código de área, para recibir tu QR por WhatsApp')
+      return
+    }
     if (!paymentMethod) { setError('Seleccioná un método de pago'); return }
     if (displayItems.length === 0) return
+    // Solo viaja si el comprador lo aceptó: sin casilla tildada no se manda teléfono ni consentimiento.
+    const whatsappData = wantsWhatsapp ? { customer_phone: phone.trim(), whatsapp_opt_in: true } : {}
 
     setLoading(true)
     setError('')
@@ -221,6 +238,7 @@ export function CheckoutView({
           body: JSON.stringify({
             customer_name: name.trim(),
             customer_email: email.trim(),
+            ...whatsappData,
           }),
         })
         if (!res.ok && res.status !== 409) {
@@ -231,6 +249,7 @@ export function CheckoutView({
             orderId = null
           } else {
             const body = await res.json().catch(() => ({}))
+            if (body.code === 'invalid_whatsapp_phone') setPhoneError(true)
             setError(body.error ?? 'Error al confirmar tus datos. Intentá de nuevo.')
             return
           }
@@ -247,6 +266,7 @@ export function CheckoutView({
           body: JSON.stringify({
             customer_name: name.trim(),
             customer_email: email.trim(),
+            ...whatsappData,
             payment_method: paymentMethod,
             items: displayItems.map(orderLinePayload),
           }),
@@ -254,6 +274,7 @@ export function CheckoutView({
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
+          if (body.code === 'invalid_whatsapp_phone') setPhoneError(true)
           setError(body.error ?? 'Error al crear la orden. Intentá de nuevo.')
           return
         }
@@ -466,6 +487,40 @@ export function CheckoutView({
             }}
           />
         </div>
+
+        {/* WhatsApp: solo si el organizador lo tiene activo. Sin marcar por defecto. */}
+        {whatsappEnabled && (
+          <div className="flex flex-col gap-3">
+            <WhatsAppOptIn
+              checked={whatsappOptIn}
+              onChange={v => { setWhatsappOptIn(v); setPhoneError(false); if (error) setError('') }}
+            />
+            {whatsappOptIn && (
+              <div>
+                <label htmlFor="checkout-phone" className="mb-3 block text-[18px] font-semibold" style={{ color: BUYER_COLORS.text }}>
+                  Tu teléfono de WhatsApp
+                </label>
+                <input
+                  id="checkout-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={e => { setPhone(e.target.value); setPhoneError(false); if (error) setError('') }}
+                  placeholder="Ej: 11 5555-1234"
+                  aria-invalid={phoneError}
+                  className="w-full rounded-[12px] px-4 py-3 text-[16px] outline-none transition-colors"
+                  style={{
+                    border: `1.5px solid ${phoneError ? '#DC2626' : BUYER_COLORS.border}`,
+                    background: '#fff',
+                    color: BUYER_COLORS.text,
+                    fontFamily: BUYER_FONT,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Método de pago */}
         <div>

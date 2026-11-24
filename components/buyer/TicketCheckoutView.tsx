@@ -18,6 +18,7 @@ import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib
 import { cn, formatPrice } from '@/lib/utils'
 import type { Event } from '@/types'
 
+import { WhatsAppOptIn } from './WhatsAppOptIn'
 import { CARD_LOGO_METHOD_IDS, CardLogos, paymentMethods } from './paymentMethods'
 import { TICKET_PAGE_BG } from './TicketCard'
 
@@ -184,6 +185,9 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const now = useNow(expiresAt !== null)
 
   const [values, setValues] = useState<BuyerValues>(EMPTY_VALUES)
+  // WhatsApp: solo si el organizador lo tiene activo. Va sin marcar: el comprador tiene que aceptarlo.
+  const whatsappEnabled = event.whatsappEnabled ?? false
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [vehicle, setVehicle] = useState<VehicleValues>(EMPTY_VEHICLE)
   const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({})
   const isParking = kind === 'parking'
@@ -284,6 +288,14 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const showServerError = (body: { error?: string; code?: string }, fallback: string) => {
     const message = body.error ?? fallback
     setSubmitError(message)
+    if (body.code === 'invalid_whatsapp_phone') {
+      // El teléfono es el mismo campo de siempre: se marca ahí para corregirlo.
+      setErrors(e => ({ ...e, phone: message }))
+      const input = document.getElementById('buyer-phone')
+      input?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      input?.focus({ preventScroll: true })
+      return
+    }
     if (isParking && body.code && PLATE_ERROR_CODES.includes(body.code)) {
       // Los mensajes del DNI lo nombran; el resto (patente repetida, inválida, faltante) es de la patente.
       const field: VehicleField = /\bDNI\b/.test(message) ? 'dni' : 'plate'
@@ -319,6 +331,8 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
       const vehicleData = isParking
         ? { vehicle_plate: normalizePlate(vehicle.plate), customer_dni: normalizeDni(vehicle.dni) }
         : {}
+      // Siempre se manda el valor actual: así destildar la casilla también quita un consentimiento anterior.
+      const whatsappData = whatsappEnabled ? { whatsapp_opt_in: whatsappOptIn } : {}
       let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       if (!orderId && precreateRef.current) {
         await precreateRef.current
@@ -336,6 +350,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             customer_email: values.email.trim(),
             customer_phone: values.phone.trim(),
             ...vehicleData,
+            ...whatsappData,
           }),
         })
         if (!res.ok && res.status !== 409) {
@@ -359,6 +374,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             customer_email: values.email.trim(),
             customer_phone: values.phone.trim(),
             ...vehicleData,
+            ...whatsappData,
             payment_method: paymentMethod,
             items,
           }),
@@ -599,6 +615,11 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
           <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
             {copy.emailNote}
           </p>
+          {whatsappEnabled && (
+            <div className="mt-4">
+              <WhatsAppOptIn checked={whatsappOptIn} onChange={setWhatsappOptIn} hint="Te lo mandamos al teléfono de arriba, además del email." />
+            </div>
+          )}
         </Section>
 
         {isParking && (

@@ -25,6 +25,8 @@ export type StorefrontApiResponse = {
   parking_maps_resolved_url?: string | null
   /** Módulos que ofrece el evento. */
   modules?: string[]
+  /** El organizador tiene WhatsApp activo (el comprador puede pedir su QR por ahí). */
+  whatsapp_enabled?: boolean
   /** Costo de servicio (%) que el backend suma al total: 5% tickets, 2% productos. */
   service_fee_percent?: ServiceFeePercent
   categories?: string[]
@@ -62,6 +64,7 @@ export function mapStorefrontToEvent(data: StorefrontApiResponse): Event {
     parkingMapsUrl: data.parking_maps_url ?? null,
     parkingMapsResolvedUrl: data.parking_maps_resolved_url ?? null,
     modules: data.modules,
+    whatsappEnabled: data.whatsapp_enabled ?? false,
     serviceFeePercent: data.service_fee_percent,
     categories: data.categories ?? [],
     showCategoryShortcuts: event.showCategoryShortcuts ?? false,

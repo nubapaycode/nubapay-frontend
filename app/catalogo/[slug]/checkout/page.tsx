@@ -39,6 +39,7 @@ export default async function CatalogoCheckoutPage({ params }: Props) {
         purchaseClosed={data.purchase_closed ?? false}
         availablePaymentMethods={data.available_payment_methods ?? ['mp']}
         serviceFeePercent={data.service_fee_percent}
+        whatsappEnabled={data.whatsapp_enabled ?? false}
       />
     </main>
   )

@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react'
 import { fmtDateTime } from './format'
 import { Card, EmptyState, ErrorNote, Pager, Pill, Skeleton, Table, Td, Th, Toggle, cx, inputCls, useAsync, useDebounced, usePageForKey, useToast } from './ui'
 import { ALL_MODULES, DEFAULT_MODULES, type ModuleKey } from '@/lib/modules'
-import { fetchPlatformUsersFiltered, setUserModules } from '@/lib/platformAdmin'
+import { fetchPlatformUsersFiltered, setUserModules, setUserWhatsApp } from '@/lib/platformAdmin'
 
 const PAGE_SIZE = 25
 
@@ -42,6 +42,38 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
     }
   }
 
+  // WhatsApp: interruptor y número del organizador. `waDraft` es lo que se está escribiendo en el campo.
+  const [waOverrides, setWaOverrides] = useState<Record<string, { enabled: boolean; phone: string | null }>>({})
+  const [waDraft, setWaDraft] = useState<Record<string, string>>({})
+  const [waSaving, setWaSaving] = useState<Record<string, boolean>>({})
+  const whatsappOf = (u: { id: string; whatsapp_enabled?: boolean; whatsapp_phone?: string | null }) =>
+    waOverrides[u.id] ?? { enabled: Boolean(u.whatsapp_enabled), phone: u.whatsapp_phone ?? null }
+  const phoneLabel = (phone: string | null) => (phone ? `+${phone}` : '')
+
+  async function saveWhatsApp(
+    u: { id: string; name: string; whatsapp_enabled?: boolean; whatsapp_phone?: string | null },
+    change: { enabled?: boolean; phone?: string | null },
+  ) {
+    if (waSaving[u.id]) return
+    const current = whatsappOf(u)
+    setWaSaving(s => ({ ...s, [u.id]: true }))
+    if (change.enabled !== undefined) setWaOverrides(o => ({ ...o, [u.id]: { ...current, enabled: change.enabled as boolean } }))
+    const r = await setUserWhatsApp(u.id, change)
+    setWaSaving(s => ({ ...s, [u.id]: false }))
+    if (r.ok) {
+      setWaOverrides(o => ({ ...o, [u.id]: { enabled: r.data.whatsapp_enabled, phone: r.data.whatsapp_phone } }))
+      setWaDraft(d => {
+        const next = { ...d }
+        delete next[u.id]
+        return next
+      })
+      toast('success', `WhatsApp de ${u.name} actualizado`)
+    } else {
+      setWaOverrides(o => ({ ...o, [u.id]: current }))
+      toast('error', r.error)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="relative max-w-md">
@@ -62,7 +94,7 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
           <EmptyState title="Sin usuarios" />
         ) : (
           <div className={cx('transition-opacity', loading && 'opacity-60')}>
-            <Table min={900}>
+            <Table min={1100}>
               <thead className="border-b border-white/[0.06]">
                 <tr>
                   <Th>Nombre</Th>
@@ -70,6 +102,7 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
                   <Th>Rol</Th>
                   <Th>Tenant</Th>
                   <Th>Herramientas</Th>
+                  <Th>WhatsApp</Th>
                   <Th>Onboarding</Th>
                   <Th>Alta</Th>
                 </tr>
@@ -105,6 +138,43 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
                     </Td>
                     <Td>
                       <Pill tone={u.onboarding_completed ? 'good' : 'neutral'}>{u.onboarding_completed ? 'Completo' : 'Pendiente'}</Pill>
+                    </Td>
+                    <Td>
+                      <div className="flex min-w-[220px] flex-col gap-2">
+                        <label className="flex items-center gap-2 text-[12px] text-white/70">
+                          <Toggle
+                            checked={whatsappOf(u).enabled}
+                            disabled={waSaving[u.id]}
+                            label={`WhatsApp para ${u.name}`}
+                            onChange={on => void saveWhatsApp(u, { enabled: on })}
+                          />
+                          <span aria-hidden>{whatsappOf(u).enabled ? 'Activo' : 'Apagado'}</span>
+                        </label>
+                        <input
+                          aria-label={`WhatsApp del organizador ${u.name}`}
+                          className={cx(inputCls, 'py-1.5 text-[12px]')}
+                          placeholder="+54 9 11 5555-1234"
+                          inputMode="tel"
+                          disabled={waSaving[u.id]}
+                          value={waDraft[u.id] ?? phoneLabel(whatsappOf(u).phone)}
+                          onChange={e => setWaDraft(d => ({ ...d, [u.id]: e.target.value }))}
+                          onBlur={() => {
+                            const draft = waDraft[u.id]
+                            if (draft !== undefined && draft.trim() !== phoneLabel(whatsappOf(u).phone)) {
+                              void saveWhatsApp(u, { phone: draft.trim() })
+                            } else if (draft !== undefined) {
+                              setWaDraft(d => {
+                                const next = { ...d }
+                                delete next[u.id]
+                                return next
+                              })
+                            }
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') e.currentTarget.blur()
+                          }}
+                        />
+                      </div>
                     </Td>
                     <Td muted className="whitespace-nowrap">
                       {fmtDateTime(u.created_at)}

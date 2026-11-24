@@ -312,3 +312,78 @@ describe('TicketCheckoutView · parking', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
+
+describe('TicketCheckoutView · WhatsApp', () => {
+  const waEvent: Event = { ...event, whatsappEnabled: true }
+  const patchBody = () => {
+    const call = (browserFetch as jest.Mock).mock.calls.find(c => c[1]?.method === 'PATCH')
+    return call ? JSON.parse(call[1].body) : null
+  }
+
+  it('si el organizador no tiene WhatsApp, no ofrece la casilla', () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
+    render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    expect(screen.queryByLabelText(/QR por WhatsApp/)).not.toBeInTheDocument()
+  })
+
+  it('con WhatsApp activo ofrece la casilla, sin marcar', () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
+    render(<TicketCheckoutView event={waEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    expect(screen.getByLabelText(/Quiero recibir mi QR por WhatsApp/)).not.toBeChecked()
+  })
+
+  it('sin tildar manda whatsapp_opt_in en false (así destildar quita un consentimiento anterior)', async () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1', order_number: 3, checkout_url: null }) })
+    render(<TicketCheckoutView event={waEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await waitFor(() => expect(patchBody()).not.toBeNull())
+    expect(patchBody().whatsapp_opt_in).toBe(false)
+  })
+
+  it('tildada manda el consentimiento junto con el teléfono del formulario', async () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1', order_number: 3, checkout_url: null }) })
+    render(<TicketCheckoutView event={waEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.click(screen.getByLabelText(/Quiero recibir mi QR por WhatsApp/))
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await waitFor(() => expect(patchBody()).not.toBeNull())
+    expect(patchBody()).toMatchObject({ whatsapp_opt_in: true, customer_phone: '11 5555-1234' })
+  })
+
+  it('sin WhatsApp en el organizador no viaja ninguna clave de WhatsApp', async () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1', order_number: 3, checkout_url: null }) })
+    render(<TicketCheckoutView event={event} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await waitFor(() => expect(patchBody()).not.toBeNull())
+    expect(patchBody()).not.toHaveProperty('whatsapp_opt_in')
+  })
+
+  it('si el servidor rechaza el teléfono, lo marca en el campo del teléfono y lo enfoca', async () => {
+    storeSelection()
+    ;(browserFetch as jest.Mock).mockImplementation(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PATCH'
+        ? { ok: false, status: 422, json: async () => ({ error: 'Ingresá un teléfono válido, con código de área, para recibir tu QR por WhatsApp.', code: 'invalid_whatsapp_phone' }) }
+        : { ok: true, json: async () => ({ order_id: 'o1' }) },
+    )
+    render(<TicketCheckoutView event={waEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} />)
+    await waitFor(() => expect(browserFetch).toHaveBeenCalled())
+    await fillBuyer()
+    await userEvent.click(screen.getByLabelText(/Quiero recibir mi QR por WhatsApp/))
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar' }))
+    await screen.findByRole('alert')
+    expect(screen.getByLabelText('Teléfono')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Teléfono')).toHaveFocus()
+    expect(push).not.toHaveBeenCalled()
+  })
+})
+

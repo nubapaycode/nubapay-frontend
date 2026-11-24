@@ -125,6 +125,8 @@ export interface Event {
   parkingMapsResolvedUrl?: string | null
   /** Módulos que ofrece el evento (catalogo, tickets, parking). */
   modules?: string[]
+  /** El organizador tiene WhatsApp activo: el checkout ofrece "Recibir mi QR por WhatsApp". */
+  whatsappEnabled?: boolean
   /** Costo de servicio al comprador, en % sobre tickets y sobre productos. */
   serviceFeePercent?: ServiceFeePercent
   /** Categorías activas con productos, en el orden configurado por el organizador. */
