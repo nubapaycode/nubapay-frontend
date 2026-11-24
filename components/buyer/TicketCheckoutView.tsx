@@ -607,8 +607,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
               {VEHICLE_FIELDS.map(field => renderField(field, vehicle[field.id]))}
             </div>
             <p className="mt-4 text-[13px]" style={{ color: MUTED }}>
-              El lugar queda a nombre de esta patente: se permite un solo lugar por vehículo. Con un mismo DNI podés
-              reservar para varios vehículos, una compra por cada patente.
+              El lugar queda a nombre de esta patente: se permite un solo lugar por vehículo.
             </p>
           </Section>
         )}

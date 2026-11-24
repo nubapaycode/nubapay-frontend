@@ -238,12 +238,12 @@ describe('TicketCheckoutView · parking', () => {
     expect(methods).not.toContain('PATCH')
   })
 
-  it('el campo de DNI ya no dice "opcional" y avisa que un DNI puede repetirse', () => {
+  it('el campo de DNI ya no dice "opcional"', () => {
     storeParking()
     ;(browserFetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ order_id: 'o1' }) })
     render(<TicketCheckoutView event={parkingEvent} catalogSlug="fiesta" availablePaymentMethods={['mp']} kind="parking" />)
     expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/Con un mismo DNI podés reservar para varios vehículos/)).toBeInTheDocument()
+    expect(screen.getByLabelText('DNI del titular')).toBeInTheDocument()
   })
 
   it('si el servidor rechaza el DNI, lo marca en el campo del DNI y no en el de la patente', async () => {
