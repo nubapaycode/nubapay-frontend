@@ -102,8 +102,8 @@ export function UsersTab({ initialQuery }: { initialQuery?: string }) {
                   <Th>Rol</Th>
                   <Th>Tenant</Th>
                   <Th>Herramientas</Th>
-                  <Th>WhatsApp</Th>
                   <Th>Onboarding</Th>
+                  <Th>WhatsApp</Th>
                   <Th>Alta</Th>
                 </tr>
               </thead>
