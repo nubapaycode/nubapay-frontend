@@ -572,6 +572,8 @@ export type AdminEventDetail = {
     has_mobbex: boolean
     cash_enabled: boolean
     service_fee_enabled: boolean
+    /** Comisión de la plataforma como fracción (0.01 = 1%). Solo aplica sin costo de servicio. */
+    commission_rate: number
   }
   stats: {
     orders_created: number
@@ -640,7 +642,16 @@ export function setEventSalesActive(eventId: string, isActive: boolean) {
   )
 }
 
-/** Switch de modo de cobro: true = costo de servicio al comprador, false = comisión 1%. */
+/** Cambia la comisión de la plataforma de un evento. `rate` es una fracción: 0.10 = 10% (el servidor admite 0 a 0.5). */
+export function setEventCommissionRate(eventId: string, rate: number) {
+  return sendJson<{ ok: true; is_active: boolean; service_fee_enabled: boolean; commission_rate: number }>(
+    `/events/${encodeURIComponent(eventId)}/controls`,
+    'PATCH',
+    { commission_rate: rate },
+  )
+}
+
+/** Switch de modo de cobro: true = costo de servicio al comprador, false = comisión del evento. */
 export function setEventServiceFeeEnabled(eventId: string, enabled: boolean) {
   return sendJson<{ ok: true; is_active: boolean; service_fee_enabled: boolean }>(
     `/events/${encodeURIComponent(eventId)}/controls`,
@@ -659,7 +670,9 @@ export type SettlementRow = {
   commission: number
   service_fee: number
   service_fee_enabled: boolean
-  /** Monto que le corresponde a la plataforma en esta sección (comisión 1% o costo de servicio). */
+  /** Comisión actual del evento (fracción). Las órdenes ya vendidas conservan la tasa que tenían al comprarse. */
+  commission_rate: number
+  /** Monto que le corresponde a la plataforma en esta sección (comisión o costo de servicio). */
   amount: number
 }
 
@@ -678,8 +691,7 @@ export type SettlementSection = {
 
 export type Settlement = {
   range: { from: string; to: string }
-  commission_rate: number
-  /** Eventos con comisión del 1% sobre lo facturado por el organizador. */
+  /** Eventos con comisión sobre lo facturado por el organizador (cada evento tiene su tasa). */
   commission: SettlementSection
   /** Eventos con costo de servicio cobrado al comprador. */
   service_fee: SettlementSection

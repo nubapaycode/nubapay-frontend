@@ -35,6 +35,7 @@ import {
   fetchPlatformEventDetail,
   fetchPlatformOrdersFiltered,
   setEventSalesActive,
+  setEventCommissionRate,
   setEventServiceFeeEnabled,
   type AdminEventDetail,
   type DateRangeParams,
@@ -80,6 +81,23 @@ function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: st
       {sub && <p className="mt-0.5 text-[11px] text-white/50">{sub}</p>}
     </div>
   )
+}
+
+/** Máximo que acepta el servidor (50%). */
+const MAX_COMMISSION_PERCENT = 50
+
+/** Fracción del servidor (0.075) -> texto del input en porcentaje ("7.5"), sin ruido de punto flotante. */
+function formatPercentInput(rate: number): string {
+  return String(Math.round(rate * 10000) / 100)
+}
+
+/** Texto del input en porcentaje ("7,5" o "7.5") -> fracción (0.075); null si no es un porcentaje válido (0 a 50). */
+function parsePercentInput(text: string): number | null {
+  const t = text.trim().replace(',', '.')
+  if (t === '' || !/^\d*\.?\d+$/.test(t)) return null
+  const pct = Number(t)
+  if (!Number.isFinite(pct) || pct < 0 || pct > MAX_COMMISSION_PERCENT) return null
+  return Math.round(pct * 100) / 10000
 }
 
 function rangeLabel(d: AdminEventDetail): string {
@@ -155,7 +173,30 @@ export function EventPanel({
     }
   }
 
-  // --- modo de cobro (comisión 1% vs costo de servicio al comprador) ---
+  // --- comisión de la plataforma del evento (porcentaje editable) ---
+  const savedRate = d?.event.commission_rate
+  // null = sin editar: el input muestra lo guardado en el servidor.
+  const [rateEdit, setRateEdit] = useState<string | null>(null)
+  const [rateBusy, setRateBusy] = useState(false)
+  const rateDraft = rateEdit ?? (savedRate !== undefined ? formatPercentInput(savedRate) : '')
+  const draftRate = parsePercentInput(rateDraft)
+  const rateChanged = draftRate !== null && savedRate !== undefined && draftRate !== savedRate
+  async function saveCommissionRate() {
+    if (!d || draftRate === null) return
+    setRateBusy(true)
+    const r = await setEventCommissionRate(d.event.id, draftRate)
+    setRateBusy(false)
+    if (r.ok) {
+      setRateEdit(null)
+      toast('success', `Comisión del ${formatPercentInput(r.data.commission_rate)}% guardada: aplica a las compras nuevas (puede demorar hasta 30 s)`)
+      reload()
+      onChanged?.()
+    } else {
+      toast('error', r.error)
+    }
+  }
+
+  // --- modo de cobro (comisión del evento vs costo de servicio al comprador) ---
   const [feeBusy, setFeeBusy] = useState(false)
   async function toggleServiceFee() {
     if (!d) return
@@ -168,7 +209,7 @@ export function EventPanel({
         'success',
         next
           ? 'Costo de servicio activado: aplica a las compras nuevas (puede demorar hasta 30 s)'
-          : 'Costo de servicio desactivado: vuelve la comisión del 1% (puede demorar hasta 30 s)',
+          : `Costo de servicio desactivado: vuelve la comisión del ${formatPercentInput(d.event.commission_rate)}% (puede demorar hasta 30 s)`,
       )
       reload()
       onChanged?.()
@@ -227,8 +268,8 @@ export function EventPanel({
             <p className="text-sm font-semibold text-white">Costo de servicio al comprador</p>
             <p className="mt-0.5 text-xs text-white/60">
               {d.event.service_fee_enabled
-                ? 'Activado: el comprador paga 5% en tickets y 2% en productos, para Nubapay. No se cobra la comisión del 1% al organizador.'
-                : 'Desactivado: el comprador no paga extra y le cobrás el 1% de comisión al organizador sobre lo que factura.'}
+                ? 'Activado: el comprador paga 5% en tickets y 2% en productos, para Nubapay. No se cobra comisión al organizador.'
+                : `Desactivado: el comprador no paga extra y le cobrás el ${formatPercentInput(d.event.commission_rate)}% de comisión al organizador sobre lo que factura.`}
             </p>
           </div>
           <Toggle
@@ -237,6 +278,44 @@ export function EventPanel({
             disabled={feeBusy}
             onChange={toggleServiceFee}
           />
+        </div>
+      )}
+
+      {d && (
+        <div className="flex flex-wrap items-center justify-between gap-4 admin-panel px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white">Comisión de Nubapay</p>
+            <p className="mt-0.5 text-xs text-white/60">
+              {d.event.service_fee_enabled
+                ? 'Ahora no se cobra comisión (está activo el costo de servicio). Queda guardada por si lo desactivás.'
+                : 'Porcentaje que le cobrás al organizador sobre lo que factura. Por defecto 1%; aplica a las compras nuevas, lo ya vendido conserva su comisión.'}
+            </p>
+          </div>
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (rateChanged && !rateBusy) saveCommissionRate()
+            }}
+          >
+            <div className="relative">
+              <input
+                aria-label="Comisión (%)"
+                inputMode="decimal"
+                value={rateDraft}
+                onChange={(e) => setRateEdit(e.target.value)}
+                aria-invalid={draftRate === null}
+                className={cx(inputAutoCls, 'w-24 py-1.5 pr-7 text-right tabular-nums', draftRate === null && 'border-red-400/60')}
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-white/50">%</span>
+            </div>
+            <Btn variant="primary" type="submit" disabled={!rateChanged || rateBusy}>
+              {rateBusy ? 'Guardando…' : 'Guardar'}
+            </Btn>
+          </form>
+          {draftRate === null && (
+            <p className="w-full text-xs text-red-300">Ingresá un porcentaje entre 0 y {MAX_COMMISSION_PERCENT} (por ejemplo 10 o 7,5).</p>
+          )}
         </div>
       )}
 

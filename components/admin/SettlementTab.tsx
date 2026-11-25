@@ -23,11 +23,14 @@ function SettlementSectionView({
   subtitle,
   amountLabel,
   section,
+  showRate = false,
 }: {
   title: string
   subtitle: string
   amountLabel: string
   section: SettlementSection
+  /** Muestra la tasa de comisión de cada evento. */
+  showRate?: boolean
 }) {
   return (
     <section className="space-y-4">
@@ -87,6 +90,7 @@ function SettlementSectionView({
                 <Th>Organizador</Th>
                 <Th align="right">Órdenes</Th>
                 <Th align="right">Facturado</Th>
+                {showRate && <Th align="right">Tasa actual</Th>}
                 <Th align="right">{amountLabel}</Th>
               </tr>
             </thead>
@@ -97,6 +101,7 @@ function SettlementSectionView({
                   <Td muted>{e.organizer_email}</Td>
                   <Td align="right">{fmtInt(e.paid_orders)}</Td>
                   <Td align="right">{formatPrice(e.revenue)}</Td>
+                  {showRate && <Td align="right">{(e.commission_rate * 100).toLocaleString('es-AR')}%</Td>}
                   <Td align="right" className="!font-semibold !text-white">
                     {formatPrice(e.amount)}
                   </Td>
@@ -154,7 +159,7 @@ export function SettlementTab() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Total strong label="Total a cobrar" value={formatPrice(data.totals.platform_income)} />
-            <Total label={`Comisión ${(data.commission_rate * 100).toLocaleString('es-AR')}%`} value={formatPrice(data.totals.commission)} />
+            <Total label="Comisión" value={formatPrice(data.totals.commission)} />
             <Total label="Costo de servicio" value={formatPrice(data.totals.service_fee)} />
             <Total
               label="Órdenes pagas"
@@ -163,10 +168,11 @@ export function SettlementTab() {
           </div>
 
           <SettlementSectionView
-            title={`Eventos con comisión ${(data.commission_rate * 100).toLocaleString('es-AR')}%`}
-            subtitle="La comisión se calcula sobre lo que facturó el organizador."
+            title="Eventos con comisión"
+            subtitle="La comisión se calcula sobre lo que facturó el organizador, con la tasa de cada evento."
             amountLabel="Comisión a cobrar"
             section={data.commission}
+            showRate
           />
 
           <SettlementSectionView
