@@ -49,12 +49,16 @@ export type DashboardSummary = {
   series?: { kind: 'hourly' | 'daily'; points: DashboardSeriesPoint[] }
   /** Rango aplicado (null = todo el evento). */
   range?: { from: string; to: string } | null
-  /** Totales del período anterior de igual duración (null sin rango). */
+  /**
+   * Con rango: totales del período anterior de igual duración (`range`). Sin rango (todo el evento): totales
+   * del evento anterior del mismo organizador a la misma altura (`range` null y `event`). null si no hay.
+   */
   comparison?: {
     total_revenue: number
     order_count: number
     avg_ticket: number
-    range: { from: string; to: string }
+    range: { from: string; to: string } | null
+    event?: { id: string; name: string }
   } | null
   filters?: { payment: DashboardPaymentKey | null; product: string | null }
   payment_breakdown: { key: DashboardPaymentKey; count: number; revenue: number }[]

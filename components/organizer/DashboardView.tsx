@@ -341,9 +341,13 @@ export function DashboardView({ eventId }: { eventId: string }) {
           onPreset={choosePreset}
           onCustom={chooseCustom}
         />
-        {comparison && (
+        {comparison && (comparison.range || comparison.event) && (
           <span className="text-[12px] text-gray-400">
-            vs. {formatDay(comparison.range.from)} – {formatDay(comparison.range.to)}
+            {/* Con rango se compara con el período anterior; sin rango, con el evento anterior del organizador. */}
+            vs.{' '}
+            {comparison.range
+              ? `${formatDay(comparison.range.from)} – ${formatDay(comparison.range.to)}`
+              : comparison.event?.name}
           </span>
         )}
         {paymentLabel && <FilterChip label="Pago" value={paymentLabel} onClear={() => setPayment(null)} />}

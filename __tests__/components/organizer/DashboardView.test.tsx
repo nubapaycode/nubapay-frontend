@@ -187,4 +187,23 @@ describe('DashboardView', () => {
       expect(screen.getByText('Se compra junto con…')).toBeInTheDocument()
     })
   })
+
+  it('sin rango, si compara con el evento anterior (range null) no se rompe y dice contra cuál', async () => {
+    ;(fetchEventDashboard as jest.Mock).mockResolvedValue({
+      ok: true,
+      data: {
+        ...dashboardPayload,
+        range: null,
+        comparison: {
+          total_revenue: 4150,
+          order_count: 2,
+          avg_ticket: 2075,
+          range: null,
+          event: { id: 'prev', name: 'Festival anterior' },
+        },
+      },
+    })
+    await renderLoaded()
+    expect(screen.getByText(/vs\. Festival anterior/)).toBeInTheDocument()
+  })
 })
