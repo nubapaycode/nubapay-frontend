@@ -1,5 +1,6 @@
 'use client'
 
+import { X } from 'lucide-react'
 import { useState } from 'react'
 
 import { Modal } from '@/components/ui/Modal'
@@ -15,6 +16,8 @@ export type TicketFormState = { name: string; description: string; price: string
 export const EMPTY_TICKET_FORM: TicketFormState = { name: '', description: '', price: '', stock: '', icon: DEFAULT_PARKING_ICON }
 
 export type TicketPayload = { name: string; description: string; price: number; stock: number | null; icon?: string }
+
+const labelClass = 'text-[13px] font-semibold text-gray-700'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[14px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]'
@@ -52,8 +55,11 @@ export function TicketFormModal({
   onClose,
   onSubmit,
   focusStock = false,
+  perEvent = false,
 }: {
   open: boolean
+  /** Panel del estacionamiento: el cupo es por evento (cambian los textos y la vista previa). */
+  perEvent?: boolean
   /** Abre con el foco en "Lugares"/"Cupo" (aviso de parking sin límite de lugares). */
   focusStock?: boolean
   /** Entrada o parking: cambia los textos y muestra el selector de ícono del vehículo. */
@@ -112,113 +118,147 @@ export function TicketFormModal({
     }
   }
 
+  const title = isParking ? (editing ? 'Editar vehículo' : 'Nuevo vehículo') : editing ? 'Editar ticket' : 'Nuevo ticket'
+  const subtitle = isParking
+    ? 'Definí el tipo de vehículo, su precio y cuántos lugares hay.'
+    : 'Definí la entrada, su precio y el cupo.'
+  const stockLabel = isParking ? (perEvent ? 'Lugares por evento' : 'Lugares') : 'Cupo'
+  const takenNow = editing ? editing.reserved ?? editing.sold : 0
+
   return (
-    <Modal
-      isOpen={open}
-      onClose={onClose}
-      title={isParking ? (editing ? 'Editar vehículo' : 'Nuevo vehículo') : editing ? 'Editar ticket' : 'Nuevo ticket'}
-      className="max-w-lg"
-    >
-      <div className="flex flex-col gap-4" onKeyDown={onEnter}>
-        <div className="rounded-2xl bg-gray-50 p-3 [--nb-notch:#f9fafb]">
-          <TicketCard ticket={preview} />
+    <Modal isOpen={open} onClose={onClose} className="flex max-h-[92dvh] max-w-3xl flex-col overflow-hidden p-0">
+      <div className="flex min-h-0 flex-1 flex-col" onKeyDown={onEnter}>
+        {/* Encabezado */}
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 pb-4 pt-5">
+          <div className="min-w-0">
+            <h2 className="text-[18px] font-semibold tracking-tight text-gray-900">{title}</h2>
+            <p className="mt-0.5 text-[13px] text-gray-500">{subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="-mr-2 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <X size={18} strokeWidth={2} aria-hidden />
+          </button>
         </div>
 
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
-          {isParking ? 'Tipo de vehículo' : 'Nombre / categoría'}
-          <input
-            className={inputClass}
-            value={form.name}
-            maxLength={150}
-            autoFocus={!focusStock}
-            placeholder={isParking ? 'Auto, Moto, Camioneta…' : 'Entrada general, Parking VIP…'}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          />
-        </label>
-        {isParking && (
-          <fieldset className="flex flex-col gap-1.5">
-            <legend className="mb-1.5 text-[13px] font-semibold text-gray-700">Ícono</legend>
-            <div role="radiogroup" aria-label="Ícono del vehículo" className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-              {PARKING_ICONS.map(({ key, label, Icon }) => {
-                const selected = form.icon === key
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setForm(f => ({ ...f, icon: key }))}
-                    className={cn(
-                      'flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-[11px] font-semibold transition-colors',
-                      selected
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900',
-                    )}
-                  >
-                    <Icon size={20} strokeWidth={1.75} aria-hidden />
-                    {label}
-                  </button>
-                )
-              })}
+        {/* Cuerpo: formulario + vista previa */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid gap-6 px-6 py-5 md:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="flex min-w-0 flex-col gap-5">
+              <label className="flex flex-col gap-1.5">
+                <span className={labelClass}>{isParking ? 'Tipo de vehículo' : 'Nombre / categoría'}</span>
+                <input
+                  className={inputClass}
+                  value={form.name}
+                  maxLength={150}
+                  autoFocus={!focusStock}
+                  placeholder={isParking ? 'Auto, Moto, Camioneta…' : 'Entrada general, Parking VIP…'}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                />
+              </label>
+
+              {isParking && (
+                <fieldset className="flex flex-col gap-2">
+                  <legend className={cn(labelClass, 'mb-2')}>Ícono</legend>
+                  <div role="radiogroup" aria-label="Ícono del vehículo" className="grid grid-cols-5 gap-1.5">
+                    {PARKING_ICONS.map(({ key, label, Icon }) => {
+                      const selected = form.icon === key
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          aria-label={label}
+                          title={label}
+                          onClick={() => setForm(f => ({ ...f, icon: key }))}
+                          className={cn(
+                            'flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-[10px] font-semibold leading-tight transition-[border-color,background-color,color,box-shadow]',
+                            selected
+                              ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-[0_0_0_3px_rgba(17,24,39,0.08)]'
+                              : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-900',
+                          )}
+                        >
+                          <Icon size={20} strokeWidth={1.75} aria-hidden />
+                          <span className="max-w-full truncate px-1">{label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>Precio</span>
+                  <span className="relative">
+                    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-gray-400">$</span>
+                    <input
+                      className={`${inputClass} pl-7 tabular-nums`}
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      value={form.price}
+                      placeholder="0"
+                      onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                    />
+                  </span>
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className={labelClass}>{stockLabel}</span>
+                  <input
+                    className={`${inputClass} tabular-nums`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={1}
+                    value={form.stock}
+                    autoFocus={focusStock}
+                    placeholder="Sin límite"
+                    onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
+                  />
+                </label>
+              </div>
+              <p className="-mt-3 text-[12px] text-gray-400">
+                {takenNow > 0
+                  ? `Ya hay ${takenNow} vendidas o reservadas: ${isParking ? 'los lugares' : 'el cupo'} no pueden ser menos.`
+                  : `Dejalo vacío si no hay límite${perEvent ? '. Se cuenta en cada evento por separado.' : '.'}`}
+              </p>
+
+              <label className="flex flex-col gap-1.5">
+                <span className={labelClass}>
+                  Descripción <span className="font-normal text-gray-400">(opcional)</span>
+                </span>
+                <textarea
+                  className={cn(inputClass, 'resize-none')}
+                  rows={3}
+                  value={form.description}
+                  placeholder={isParking ? 'Medidas máximas, techado, horario…' : 'Qué incluye, horario de ingreso, edad mínima…'}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                />
+              </label>
             </div>
-          </fieldset>
-        )}
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
-          <span>
-            Descripción <span className="font-normal text-gray-400">(opcional)</span>
-          </span>
-          <textarea
-            className={inputClass}
-            rows={2}
-            value={form.description}
-            placeholder={isParking ? 'Medidas máximas, techado, horario…' : 'Qué incluye, horario de ingreso, edad mínima…'}
-            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          />
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
-            Precio
-            <span className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-gray-400">$</span>
-              <input
-                className={`${inputClass} pl-7 tabular-nums`}
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                value={form.price}
-                placeholder="0"
-                onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-              />
-            </span>
-          </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700">
-            <span>
-              {isParking ? 'Lugares' : 'Cupo'} <span className="font-normal text-gray-400">(opcional)</span>
-            </span>
-            <input
-              className={`${inputClass} tabular-nums`}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              value={form.stock}
-              autoFocus={focusStock}
-              placeholder="Sin límite"
-              onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
-            />
-          </label>
-        </div>
-        {editing && (editing.reserved ?? editing.sold) > 0 && (
-          <p className="-mt-2 text-[12px] text-gray-400">Ya hay {editing.reserved ?? editing.sold} vendidas o reservadas: {isParking ? 'los lugares' : 'el cupo'} no pueden ser menos.</p>
-        )}
 
-        {error && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-700">
-            {error}
-          </p>
-        )}
-        <div className="flex justify-end gap-2 pt-1">
+            <aside className="md:sticky md:top-0 md:self-start" aria-label="Vista previa">
+              <p className={cn(labelClass, 'mb-2')}>Así se ve</p>
+              <div className="rounded-2xl bg-gray-50 p-3 [--nb-notch:#f9fafb]">
+                <TicketCard ticket={preview} variant={perEvent ? 'account' : 'event'} />
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* Pie */}
+        <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-white px-6 py-4">
+          {error && (
+            <p role="alert" className="mr-auto min-w-0 text-[13px] font-medium text-red-600">
+              {error}
+            </p>
+          )}
           <button
             type="button"
             onClick={onClose}

@@ -1,6 +1,5 @@
 'use client'
 
-import { AnnouncementsView } from '@/components/organizer/AnnouncementsView'
 import { BlocksView } from '@/components/organizer/BlocksView'
 import { MercadoPagoSetupView } from '@/components/organizer/MercadoPagoSetupView'
 import { MobbexSetupView } from '@/components/organizer/MobbexSetupView'
@@ -13,7 +12,8 @@ import { SipagoSetupView } from '@/components/organizer/SipagoSetupView'
 import { StaffView } from '@/components/organizer/StaffView'
 import { TicketsView } from '@/components/organizer/TicketsView'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
-import { EventScopePicker, useEventScope } from '@/components/parkingOwner/EventScopePicker'
+import { EventFilter, useEventScope } from '@/components/parkingOwner/EventScopePicker'
+import { RequireModule } from '@/components/parkingOwner/RequireModule'
 
 /**
  * Secciones de configuración del estacionamiento. Son las mismas vistas del panel de un evento, pero sobre
@@ -25,17 +25,29 @@ export const PARKING_PAYMENTS_PATH = '/estacionamiento/cobros/metodos-pago'
 
 export function VehiclesSection() {
   const { account } = useParkingOwnerAccount()
-  return <TicketsView eventId={account.base_event_id} kind="parking" scope="account" />
+  return (
+    <RequireModule module="parking">
+      <TicketsView eventId={account.base_event_id} kind="parking" scope="account" />
+    </RequireModule>
+  )
 }
 
 export function StoreProductsSection() {
   const { account } = useParkingOwnerAccount()
-  return <ProductsView eventId={account.base_event_id} />
+  return (
+    <RequireModule module="catalogo">
+      <ProductsView eventId={account.base_event_id} />
+    </RequireModule>
+  )
 }
 
 export function StoreBlocksSection() {
   const { account } = useParkingOwnerAccount()
-  return <BlocksView eventId={account.base_event_id} />
+  return (
+    <RequireModule module="catalogo">
+      <BlocksView eventId={account.base_event_id} />
+    </RequireModule>
+  )
 }
 
 export function TeamSection() {
@@ -65,38 +77,25 @@ export function MobbexSection() {
 
 /*
  * Vistas de operación. Abiertas sobre el evento base muestran todo el estacionamiento (el backend expande el
- * base a todos sus eventos); el selector permite mirar un solo evento con las mismas pantallas.
+ * base a todos sus eventos); el filtro "Evento" monta la misma pantalla sobre un solo evento.
  */
 
 export const PARKING_ORDERS_PATH = '/estacionamiento/pedidos'
 
 export function OrdersSection() {
   const scope = useEventScope()
-  return (
-    <>
-      <EventScopePicker {...scope} />
-      <OrdersView key={scope.eventId} eventId={scope.eventId} />
-    </>
-  )
+  return <OrdersView key={scope.eventId} eventId={scope.eventId} filterSlot={<EventFilter {...scope} />} />
 }
 
 export function PaymentsListSection() {
   const scope = useEventScope()
   return (
-    <>
-      <EventScopePicker {...scope} />
-      <PaymentsView key={scope.eventId} eventId={scope.eventId} ordersPath={PARKING_ORDERS_PATH} />
-    </>
-  )
-}
-
-export function AnnouncementsSection() {
-  const scope = useEventScope()
-  return (
-    <>
-      <EventScopePicker {...scope} allLabel="Compradores de todos los eventos" />
-      <AnnouncementsView key={scope.eventId} eventId={scope.eventId} />
-    </>
+    <PaymentsView
+      key={scope.eventId}
+      eventId={scope.eventId}
+      ordersPath={PARKING_ORDERS_PATH}
+      filterSlot={<EventFilter {...scope} />}
+    />
   )
 }
 

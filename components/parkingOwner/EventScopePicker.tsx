@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { FilterMenu } from '@/components/organizer/orders/FilterMenu'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
 import { type ParkingOwnerEventOption, fetchParkingOwnerEventOptions } from '@/lib/parkingOwner'
 
@@ -13,7 +14,7 @@ export type EventScope = {
   setEventId: (id: string) => void
 }
 
-/** Estado del selector "todos los eventos / uno": arranca en todo el estacionamiento. */
+/** Estado del filtro de evento: arranca en todo el estacionamiento. */
 export function useEventScope(): EventScope {
   const { account } = useParkingOwnerAccount()
   const [eventId, setEventId] = useState(account.base_event_id)
@@ -32,31 +33,22 @@ export function useEventScope(): EventScope {
   return { eventId, baseEventId: account.base_event_id, options, setEventId }
 }
 
-export function EventScopePicker({
-  eventId,
-  baseEventId,
-  options,
-  setEventId,
-  allLabel = 'Todos los eventos',
-}: EventScope & { allLabel?: string }) {
+/**
+ * Filtro "Evento" con el mismo estilo que los demás filtros de la fila (Pago, Estado…).
+ * Sin selección = todos los eventos del estacionamiento.
+ */
+export function EventFilter({ eventId, baseEventId, options, setEventId }: EventScope) {
+  if (options.length === 0) return null
+  const selected = eventId === baseEventId ? [] : [eventId]
+  const current = options.find(o => o.id === eventId)
   return (
-    <div className="mb-5 flex items-center gap-2">
-      <label htmlFor="event-scope" className="text-[13px] font-semibold text-gray-600">
-        Evento
-      </label>
-      <select
-        id="event-scope"
-        value={eventId}
-        onChange={e => setEventId(e.target.value)}
-        className="h-9 max-w-xs rounded-xl border border-gray-200 bg-white px-3 text-[13px] text-gray-900 outline-none focus:border-gray-400"
-      >
-        <option value={baseEventId}>{allLabel}</option>
-        {options.map(o => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <FilterMenu
+      label={current ? current.name : 'Evento'}
+      hideCount
+      options={options.map(o => ({ value: o.id, label: o.name }))}
+      selected={selected}
+      onChange={v => setEventId(v[0] ?? baseEventId)}
+      triggerClassName="max-w-[240px]"
+    />
   )
 }

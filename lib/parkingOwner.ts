@@ -74,7 +74,7 @@ export async function fetchParkingOwnerAccount(): Promise<Result<ParkingOwnerAcc
 }
 
 export async function patchParkingOwnerAccount(
-  patch: Partial<Pick<ParkingOwnerAccount, 'accepts_event_submissions' | 'name'>>,
+  patch: Partial<Pick<ParkingOwnerAccount, 'accepts_event_submissions' | 'name' | 'slug'>>,
 ): Promise<Result<ParkingOwnerAccount>> {
   const r = await request<{ account: ParkingOwnerAccount }>(
     parkingOwnerPaths.account(),

@@ -155,7 +155,14 @@ function OrdersSkeleton() {
   )
 }
 
-export function OrdersView({ eventId }: { eventId: string }) {
+export function OrdersView({
+  eventId,
+  filterSlot,
+}: {
+  eventId: string
+  /** Filtros extra al lado del buscador (ej. el evento, en el panel del estacionamiento). */
+  filterSlot?: React.ReactNode
+}) {
   const [hydrated, setHydrated] = useState(false)
   const [tab, setTab] = useState<OrdersTab>('orders')
   const [scanRefresh, setScanRefresh] = useState(0)
@@ -507,6 +514,7 @@ export function OrdersView({ eventId }: { eventId: string }) {
             </kbd>
           )}
         </div>
+        {filterSlot}
         {tab === 'orders' && <StatusSelect value={status} onChange={setStatusF} countFor={countFor} />}
         {tab === 'orders' && (
           <>

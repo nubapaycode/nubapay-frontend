@@ -95,4 +95,15 @@ describe('TicketsView · parking heredado', () => {
     // El vendido total (de todos los eventos) no se mezcla con el cupo, que es por evento.
     expect(screen.queryByText(/vendidos/)).not.toBeInTheDocument()
   })
+
+  it('el formulario de un tipo de vehículo del estacionamiento habla de lugares por evento y se puede cerrar', async () => {
+    jest.mocked(fetchTickets).mockResolvedValue({ ok: true, tickets: [ticket({ id: 'base', name: 'Auto' })] })
+    const { getByRole, findByText, queryByText } = render(<TicketsView eventId="base-1" kind="parking" scope="account" />)
+    await findByText('Auto')
+    getByRole('button', { name: 'Nuevo vehículo' }).click()
+    expect(await findByText('Lugares por evento')).toBeInTheDocument()
+    expect(getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
+    // Sin el texto del DNI en la ayuda de parking.
+    expect(queryByText(/DNI del titular/)).not.toBeInTheDocument()
+  })
 })

@@ -63,10 +63,13 @@ function PaymentsSkeleton() {
 export function PaymentsView({
   eventId,
   ordersPath,
+  filterSlot,
 }: {
   eventId: string
   /** Página de pedidos a la que lleva cada pago. Por defecto, la del evento. */
   ordersPath?: string
+  /** Filtros extra al lado del buscador (ej. el evento, en el panel del estacionamiento). */
+  filterSlot?: React.ReactNode
 }) {
   const [rows, setRows] = useState<WorkspacePayment[]>([])
   const [summary, setSummary] = useState<PaymentsSummary | null>(null)
@@ -201,6 +204,7 @@ export function PaymentsView({
             className="h-9 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-[13px] text-gray-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-gray-400 focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]"
           />
         </div>
+        {filterSlot}
         <FilterMenu
           label="Estado"
           multiple

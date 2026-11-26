@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 
 import { ParkingOwnerAccountProvider } from '@/components/parkingOwner/ParkingOwnerAccountContext'
 import {
-  AnnouncementsSection,
   MercadoPagoSection,
   OrdersSection,
   PaymentsListSection,
@@ -37,21 +36,35 @@ jest.mock('@/components/organizer/MercadoPagoSetupView', () => ({
   MercadoPagoSetupView: (p: { eventId: string; backHref: string }) => <div>mp:{p.eventId}:{p.backHref}</div>,
 }))
 jest.mock('@/components/organizer/OrdersView', () => ({
-  OrdersView: (p: { eventId: string }) => <div>orders:{p.eventId}</div>,
+  OrdersView: (p: { eventId: string; filterSlot?: React.ReactNode }) => (
+    <div>
+      <span>orders:{p.eventId}</span>
+      {p.filterSlot}
+    </div>
+  ),
 }))
 jest.mock('@/components/organizer/PaymentsView', () => ({
-  PaymentsView: (p: { eventId: string; ordersPath: string }) => <div>paylist:{p.eventId}:{p.ordersPath}</div>,
+  PaymentsView: (p: { eventId: string; ordersPath: string; filterSlot?: React.ReactNode }) => (
+    <div>
+      <span>paylist:{p.eventId}:{p.ordersPath}</span>
+      {p.filterSlot}
+    </div>
+  ),
 }))
+jest.mock('next/navigation', () => ({ useRouter: () => ({ replace: mockReplace }) }))
 jest.mock('@/components/organizer/ScannerView', () => ({
   ScannerView: (p: { eventId: string }) => <div>scanner:{p.eventId}</div>,
-}))
-jest.mock('@/components/organizer/AnnouncementsView', () => ({
-  AnnouncementsView: (p: { eventId: string }) => <div>ann:{p.eventId}</div>,
 }))
 jest.mock('@/components/organizer/SipagoSetupView', () => ({ SipagoSetupView: () => <div>sipago</div> }))
 jest.mock('@/components/organizer/MobbexSetupView', () => ({ MobbexSetupView: () => <div>mobbex</div> }))
 
 const mockFetch = browserFetch as jest.MockedFunction<typeof browserFetch>
+const mockReplace = jest.fn()
+
+function loginWith(modules: string[]) {
+  localStorage.setItem('nubapay_token', 't')
+  localStorage.setItem('nubapay_user', JSON.stringify({ id: 'u', name: 'U', email: 'u@x.com', role: 'ORGANIZER', modules }))
+}
 const account = {
   base_event_id: 'base-123',
   name: 'Playa Norte',
@@ -68,6 +81,8 @@ const events = [
 
 beforeEach(() => {
   localStorage.clear()
+  mockReplace.mockClear()
+  loginWith(['catalogo', 'parking', 'parking_owner'])
   mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
     const u = String(input)
     if (u.includes('/events?')) return { ok: true, status: 200, json: async () => ({ events }) } as Response
@@ -107,33 +122,47 @@ describe('secciones del panel del estacionamiento', () => {
     expect(screen.getByText('mp:base-123:/estacionamiento/cobros/metodos-pago')).toBeInTheDocument()
   })
 
-  it('Pedidos arranca en todo el estacionamiento y el selector cambia a un evento puntual', async () => {
+  it('Pedidos arranca en todo el estacionamiento y el filtro "Evento" cambia a uno puntual', async () => {
     const user = userEvent.setup()
     renderIn(<OrdersSection />)
     expect(await screen.findByText('orders:base-123')).toBeInTheDocument()
-    const select = screen.getByLabelText('Evento')
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Festival Uno' })).toBeInTheDocument())
+    // El filtro vive en la fila de filtros de la vista, con el mismo estilo que los demás.
+    await user.click(await screen.findByRole('button', { name: /Evento/ }))
+    expect(screen.getByRole('option', { name: 'Festival Uno' })).toBeInTheDocument()
     // ni el evento base ni los eventos donde el usuario es staff aparecen como opción
     expect(screen.queryByRole('option', { name: 'Estacionamiento' })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Donde soy staff' })).not.toBeInTheDocument()
-    await user.selectOptions(select, 'ev-1')
+    await user.click(screen.getByRole('option', { name: 'Festival Uno' }))
     expect(screen.getByText('orders:ev-1')).toBeInTheDocument()
-    await user.selectOptions(select, 'base-123')
+    // El botón muestra el evento elegido; "Limpiar" vuelve a todos.
+    await user.click(screen.getByRole('button', { name: /Festival Uno/ }))
+    await user.click(screen.getByRole('button', { name: /Limpiar/ }))
     expect(screen.getByText('orders:base-123')).toBeInTheDocument()
   })
 
-  it('Escáner, Cobros y Avisos se montan sobre todo el estacionamiento', async () => {
+  it('Escáner y Cobros se montan sobre todo el estacionamiento', async () => {
     renderIn(
       <>
         <ScannerSection />
         <PaymentsListSection />
-        <AnnouncementsSection />
       </>,
     )
     expect(await screen.findByText('scanner:base-123')).toBeInTheDocument()
     expect(screen.getByText('paylist:base-123:/estacionamiento/pedidos')).toBeInTheDocument()
-    expect(screen.getByText('ann:base-123')).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Compradores de todos los eventos' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('button', { name: /Evento/ })).toBeInTheDocument())
+  })
+
+  it('sin el módulo, Vehículos y Tienda no se muestran y vuelven a Eventos', async () => {
+    loginWith(['parking_owner'])
+    renderIn(
+      <>
+        <VehiclesSection />
+        <StoreProductsSection />
+      </>,
+    )
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/estacionamiento/eventos'))
+    expect(screen.queryByText(/tickets:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/products:/)).not.toBeInTheDocument()
   })
 
   it('si no se puede cargar el estacionamiento muestra el error y deja reintentar', async () => {

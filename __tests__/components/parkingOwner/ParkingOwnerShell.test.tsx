@@ -30,20 +30,30 @@ beforeAll(() => {
   })) as unknown as typeof window.matchMedia
 })
 
+function loginWith(modules: string[]) {
+  localStorage.setItem('nubapay_token', 't')
+  localStorage.setItem('nubapay_user', JSON.stringify({ id: 'u', name: 'U', email: 'u@x.com', role: 'ORGANIZER', modules }))
+}
+
+function renderShell() {
+  return render(
+    <ParkingOwnerAccountProvider>
+      <ParkingOwnerShell>
+        <p>contenido</p>
+      </ParkingOwnerShell>
+    </ParkingOwnerAccountProvider>,
+  )
+}
+
 beforeEach(() => {
   localStorage.clear()
+  loginWith(['catalogo', 'parking', 'parking_owner'])
   jest.mocked(browserFetch).mockResolvedValue({ ok: true, status: 200, json: async () => ({ account }) } as Response)
 })
 
 describe('ParkingOwnerShell', () => {
   it('usa la barra del panel de evento con las secciones del estacionamiento', async () => {
-    render(
-      <ParkingOwnerAccountProvider>
-        <ParkingOwnerShell>
-          <p>contenido</p>
-        </ParkingOwnerShell>
-      </ParkingOwnerAccountProvider>,
-    )
+    renderShell()
     const sidebar = await screen.findByRole('complementary', { name: 'Barra lateral' })
     expect(screen.getByText('contenido')).toBeInTheDocument()
 
@@ -54,9 +64,11 @@ describe('ParkingOwnerShell', () => {
     const hrefs = within(sidebar)
       .getAllByRole('link')
       .map(a => a.getAttribute('href'))
-    for (const path of ['eventos', 'pedidos', 'escaner', 'cobros', 'vehiculos', 'tienda', 'avisos', 'equipo', 'configuracion']) {
+    for (const path of ['eventos', 'pedidos', 'escaner', 'cobros', 'vehiculos', 'tienda', 'equipo', 'configuracion']) {
       expect(hrefs).toContain(`/estacionamiento/${path}`)
     }
+    // Los avisos se mandan desde cada evento.
+    expect(hrefs).not.toContain('/estacionamiento/avisos')
     // Nada del panel de un evento.
     expect(hrefs.some(h => h?.startsWith('/eventos/'))).toBe(false)
     expect(hrefs).not.toContain('/estacionamiento/resumen')
@@ -64,5 +76,17 @@ describe('ParkingOwnerShell', () => {
     expect(hrefs).toContain('/estacionamiento/cobros/metodos-pago')
     // Sin buscador de herramientas del evento.
     expect(within(sidebar).queryByText('Buscar…')).not.toBeInTheDocument()
+  })
+
+  it('sin parking ni catálogo, la barra no muestra Vehículos ni Tienda', async () => {
+    loginWith(['parking_owner'])
+    renderShell()
+    const sidebar = await screen.findByRole('complementary', { name: 'Barra lateral' })
+    const hrefs = within(sidebar)
+      .getAllByRole('link')
+      .map(a => a.getAttribute('href'))
+    expect(hrefs).toContain('/estacionamiento/pedidos')
+    expect(hrefs).not.toContain('/estacionamiento/vehiculos')
+    expect(hrefs).not.toContain('/estacionamiento/tienda')
   })
 })
