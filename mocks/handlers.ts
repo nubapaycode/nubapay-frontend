@@ -8,9 +8,12 @@ import {
   MOCK_EVENT_ID,
   mockBlocks,
   mockCategories,
+  mockCourtesies,
   mockDashboard,
   mockEvent,
   mockOrders,
+  mockParkingOwnerAccount,
+  mockParkingTickets,
   mockPayments,
   mockPickupPoints,
   mockProducts,
@@ -18,6 +21,16 @@ import {
   mockTickets,
   mockUser,
 } from './data'
+
+/** Para responder con un error HTTP desde un handler (validaciones, 404…). */
+export class MockHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly json: unknown,
+  ) {
+    super(`Mock HTTP ${status}`)
+  }
+}
 
 type MockHandler = (segments: string[], method: string, body?: unknown, query?: URLSearchParams) => unknown
 
@@ -41,6 +54,13 @@ const routes: MockRoute[] = [
       token: 'mock-jwt-token-0000',
       user: mockUser,
     }),
+  },
+
+  // ── Estacionamiento (dueño) ───────────────────────────────────────────────
+  {
+    method: 'GET',
+    match: (s) => s[0] === 'parking-owner' && s[1] === 'account',
+    handler: () => ({ account: mockParkingOwnerAccount }),
   },
 
   // ── Events ────────────────────────────────────────────────────────────────
@@ -274,7 +294,58 @@ const routes: MockRoute[] = [
   {
     method: 'GET',
     match: (s) => s[0] === 'events' && s[2] === 'tickets' && !s[3],
-    handler: () => ({ tickets: mockTickets }),
+    handler: (_s, _m, _b, query) => ({ tickets: query?.get('kind') === 'parking' ? mockParkingTickets : mockTickets }),
+  },
+
+  // ── Cortesías ─────────────────────────────────────────────────────────────
+  {
+    method: 'GET',
+    match: (s) => s[0] === 'events' && s[2] === 'courtesies' && !s[3],
+    handler: () => ({ courtesies: mockCourtesies.slice(0, 20) }),
+  },
+  {
+    method: 'POST',
+    match: (s) => s[0] === 'events' && s[2] === 'courtesies' && !s[3],
+    handler: (segments, _m, body) => {
+      const b = (body ?? {}) as {
+        kind?: 'parking' | 'ticket'
+        ticket_id?: string
+        customer_name?: string
+        customer_email?: string
+        vehicle_plate?: string
+        customer_dni?: string
+        quantity?: number
+      }
+      const fail = (error: string, field: string) => {
+        throw new MockHttpError(400, { error, field })
+      }
+      const parking = b.kind === 'parking'
+      const types = parking ? mockParkingTickets : mockTickets
+      const type = types.find((t) => t.id === b.ticket_id)
+      if (!type) throw new MockHttpError(404, { error: 'Ese tipo no existe en el evento' })
+      if (!b.customer_name?.trim()) fail('Poné el nombre de la persona', 'customer_name')
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.customer_email ?? '')) fail('Revisá el email: ahí le llega el QR', 'customer_email')
+      if (parking && !/^[A-Z0-9]{6,7}$/i.test(b.vehicle_plate?.replace(/\s/g, '') ?? '')) fail('Revisá la patente', 'vehicle_plate')
+      if (parking && !/^\d{7,8}$/.test(b.customer_dni?.replace(/\D/g, '') ?? '')) fail('Revisá el DNI', 'customer_dni')
+      const quantity = parking ? 1 : Math.max(1, Math.floor(b.quantity ?? 1))
+      if (quantity > 10) fail('Máximo 10 por cortesía', 'quantity')
+
+      const courtesy = {
+        id: `court-${Date.now()}`,
+        order_number: Math.max(...mockCourtesies.map((c) => c.order_number ?? 0)) + 1,
+        event_id: segments[1],
+        event_name: mockEvent.name,
+        customer_name: b.customer_name!.trim(),
+        customer_email: b.customer_email!.trim(),
+        vehicle_plate: parking ? b.vehicle_plate!.replace(/\s/g, '').toUpperCase() : null,
+        item: type.name,
+        quantity,
+        status: 'paid',
+        created_at: new Date().toISOString(),
+      }
+      mockCourtesies.unshift(courtesy)
+      return { courtesy }
+    },
   },
 
   // ── Payments ──────────────────────────────────────────────────────────────
@@ -430,6 +501,7 @@ export function resolveMock(
     const data = route.handler(segments, method, body, query)
     return { status: 200, json: data }
   } catch (err) {
+    if (err instanceof MockHttpError) return { status: err.status, json: err.json }
     console.error('[MOCK] Error en handler:', err)
     return { status: 500, json: { error: 'Error en mock handler' } }
   }

@@ -15,6 +15,23 @@ export const mockUser = {
   staff_memberships: [
     { event_id: MOCK_EVENT_ID, role: 'admin' },
   ],
+  /**
+   * Con `MOCK_PARKING_OWNER=true` el usuario demo es dueño de estacionamiento (entra a /estacionamiento y
+   * /panel lo redirige ahí). Sin la variable, tiene los módulos por defecto.
+   */
+  ...(process.env.MOCK_PARKING_OWNER === 'true'
+    ? { modules: ['catalogo', 'tickets', 'parking', 'parking_owner'] }
+    : {}),
+}
+
+/** Cuenta del estacionamiento (`/parking-owner/account`): el evento demo hace de evento base. */
+export const mockParkingOwnerAccount = {
+  base_event_id: MOCK_EVENT_ID,
+  name: 'Estacionamiento Centenario',
+  slug: 'estacionamiento-centenario',
+  accepts_event_submissions: true,
+  counts: { pending: 2, approved: 1, rejected: 0 },
+  payments: { mp: true, sipago: false, mobbex: false },
 }
 
 export const mockEvent = {
@@ -32,6 +49,8 @@ export const mockEvent = {
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
   user_id: 'user-001',
+  /** Ofrece todo: así se ven las vistas de parking, entradas y catálogo. */
+  modules: ['catalogo', 'tickets', 'parking'],
 }
 
 export const mockCategories = [
@@ -838,4 +857,19 @@ export const mockTickets = [
   { id: 'tk-2', name: 'Campo VIP', description: 'Sector preferencial frente al escenario', price: 32000, currency: 'ARS', stock: 400, sold: 371, reserved: 380, revenue: 11872000, redeemed: 205, sort_order: 1, is_active: true },
   { id: 'tk-3', name: 'Menor (6 a 12 años)', description: 'Con un adulto responsable', price: 7500, currency: 'ARS', stock: null, sold: 96, reserved: 96, revenue: 720000, redeemed: 41, sort_order: 2, is_active: true },
   { id: 'tk-4', name: 'Preventa', description: 'Primera tanda, agotada', price: 11000, currency: 'ARS', stock: 500, sold: 500, reserved: 500, revenue: 5500000, redeemed: 388, sort_order: 3, is_active: false },
+]
+
+/** Tipos de vehículo (`tickets?kind=parking`). */
+export const mockParkingTickets = [
+  { id: 'pk-1', kind: 'parking', icon: 'car', name: 'Auto', description: 'Un auto, válido por todo el evento', price: 8000, currency: 'ARS', stock: 300, sold: 214, reserved: 220, revenue: 1712000, redeemed: 160, sort_order: 0, is_active: true },
+  { id: 'pk-2', kind: 'parking', icon: 'truck', name: 'Camioneta', description: 'Pick-up o utilitario', price: 11000, currency: 'ARS', stock: 80, sold: 52, reserved: 55, revenue: 572000, redeemed: 31, sort_order: 1, is_active: true },
+  { id: 'pk-3', kind: 'parking', icon: 'bike', name: 'Moto', description: '', price: 4000, currency: 'ARS', stock: null, sold: 96, reserved: 96, revenue: 384000, redeemed: 70, sort_order: 2, is_active: true },
+]
+
+/** Cortesías ya generadas (las nuevas se suman arriba mientras corre el servidor). */
+export const mockCourtesies = [
+  { id: 'court-1', order_number: 1101, event_id: MOCK_EVENT_ID, event_name: 'Demo Fest 2026', customer_name: 'Lucía Romero', customer_email: 'lucia.romero@ejemplo.com', vehicle_plate: 'AE482KD', item: 'Auto', quantity: 1, status: 'paid', created_at: '2026-11-25T21:14:00Z' },
+  { id: 'court-2', order_number: 1100, event_id: MOCK_EVENT_ID, event_name: 'Demo Fest 2026', customer_name: 'Prensa · Radio Sur', customer_email: 'produccion@radiosur.com', vehicle_plate: null, item: 'Campo VIP', quantity: 4, status: 'paid', created_at: '2026-11-25T18:40:00Z' },
+  { id: 'court-3', order_number: 1097, event_id: MOCK_EVENT_ID, event_name: 'Demo Fest 2026', customer_name: 'Tomás Benítez', customer_email: 'tomas.b@ejemplo.com', vehicle_plate: 'AB123CD', item: 'Camioneta', quantity: 1, status: 'delivered', created_at: '2026-11-24T16:05:00Z' },
+  { id: 'court-4', order_number: 1090, event_id: MOCK_EVENT_ID, event_name: 'Demo Fest 2026', customer_name: 'Sofía Fernández', customer_email: 'sofi.fernandez@ejemplo.com', vehicle_plate: null, item: 'General', quantity: 2, status: 'paid', created_at: '2026-11-22T12:30:00Z' },
 ]
