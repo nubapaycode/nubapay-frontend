@@ -641,6 +641,39 @@ export async function scanQr(
   return { ok: true, order: body.order }
 }
 
+/**
+ * Escaneo continuo: valida y canjea todo lo pendiente del pedido en un solo viaje al servidor.
+ * `cashPending`: es en efectivo y falta confirmar el cobro (no se canjeó nada).
+ */
+export async function scanQrAll(
+  eventId: string,
+  orderId: string,
+): Promise<
+  | { ok: true; order: Order }
+  | { ok: false; error: string; alreadyScanned?: boolean; cashPending?: boolean; order?: Order }
+> {
+  try {
+    const res = await browserFetch(workspacePath(eventId, 'scan-qr'), {
+      method: 'POST',
+      headers: authHeadersJson(),
+      body: JSON.stringify({ order_id: orderId, redeem_all: true }),
+    })
+    const body = (await res.json().catch(() => ({}))) as { order?: Order; error?: string; code?: string }
+    if (!res.ok || !body.order) {
+      return {
+        ok: false,
+        error: body.error ?? 'Error al escanear',
+        alreadyScanned: body.error === 'Este QR ya fue escaneado',
+        cashPending: body.code === 'cash_pending',
+        order: body.order,
+      }
+    }
+    return { ok: true, order: body.order }
+  } catch {
+    return { ok: false, error: 'Sin conexión con el servidor' }
+  }
+}
+
 export async function confirmCashPayment(
   eventId: string,
   orderId: string,

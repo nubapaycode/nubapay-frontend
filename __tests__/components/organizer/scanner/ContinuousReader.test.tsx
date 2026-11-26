@@ -1,13 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ContinuousReader } from '@/components/organizer/scanner/ContinuousReader'
-import { confirmCashPayment, previewQr, scanQr } from '@/lib/organizerWorkspace'
+import { confirmCashPayment, scanQrAll } from '@/lib/organizerWorkspace'
 import { openScannerDisplay, publishScan } from '@/lib/scanner/displayChannel'
 import type { Order } from '@/types'
 
 jest.mock('@/lib/organizerWorkspace', () => ({
-  previewQr: jest.fn(),
-  scanQr: jest.fn(),
+  scanQrAll: jest.fn(),
   confirmCashPayment: jest.fn(),
 }))
 jest.mock('@/lib/scanner/beep', () => ({ beepOk: jest.fn(), beepError: jest.fn(), unlockBeep: jest.fn() }))
@@ -42,8 +41,7 @@ function scan(code: string) {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  jest.mocked(previewQr).mockImplementation(async (_ev, id) => ({ ok: true, order: order(id) }))
-  jest.mocked(scanQr).mockImplementation(async (_ev, id) => ({ ok: true, order: order(id, { status: 'delivered' }) }))
+  jest.mocked(scanQrAll).mockImplementation(async (_ev, id) => ({ ok: true, order: order(id, { status: 'delivered' }) }))
 })
 
 describe('ContinuousReader (lector físico, escaneo continuo)', () => {
@@ -54,15 +52,17 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     // El campo queda vacío y listo para la siguiente lectura enseguida.
     expect(screen.getByLabelText('Código leído por el lector de QR')).toHaveValue('')
     await waitFor(() => expect(screen.getAllByText('Ingresó')).toHaveLength(2))
-    expect(scanQr).toHaveBeenCalledWith('ev', A, { 'item-1': 1 })
-    expect(scanQr).toHaveBeenCalledWith('ev', B, { 'item-2': 1 })
+    // Un solo viaje al servidor por lectura: valida y canjea todo lo pendiente.
+    expect(scanQrAll).toHaveBeenCalledTimes(2)
+    expect(scanQrAll).toHaveBeenCalledWith('ev', A)
+    expect(scanQrAll).toHaveBeenCalledWith('ev', B)
     const resumen = screen.getByLabelText('Resumen de lecturas')
     expect(within(resumen).getByText('Ingresaron').nextSibling).toHaveTextContent('2')
   })
 
   it('un error avisa y queda marcado, pero se sigue escaneando', async () => {
-    jest.mocked(previewQr).mockImplementation(async (_ev, id) =>
-      id === A ? { ok: false, error: 'Este QR pertenece a otro evento' } : { ok: true, order: order(id) },
+    jest.mocked(scanQrAll).mockImplementation(async (_ev, id) =>
+      id === A ? { ok: false, error: 'Este QR pertenece a otro evento' } : { ok: true, order: order(id, { status: 'delivered' }) },
     )
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(A)
@@ -78,27 +78,25 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     scan(A)
     scan(A)
     expect(await screen.findByText('Lectura repetida')).toBeInTheDocument()
-    await waitFor(() => expect(scanQr).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(scanQrAll).toHaveBeenCalledTimes(1))
   })
 
   it('un QR ya usado queda en amarillo como "Ya estaba escaneado"', async () => {
-    jest.mocked(previewQr).mockResolvedValue({ ok: false, error: 'Este QR ya fue escaneado', alreadyScanned: true, order: order(C) })
+    jest.mocked(scanQrAll).mockResolvedValue({ ok: false, error: 'Este QR ya fue escaneado', alreadyScanned: true, order: order(C) })
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(C)
     expect(await screen.findByText('Ya estaba escaneado')).toBeInTheDocument()
-    expect(scanQr).not.toHaveBeenCalled()
   })
 
   it('efectivo pendiente: no ingresa hasta confirmar el cobro desde la fila', async () => {
-    jest.mocked(previewQr).mockResolvedValue({
-      ok: true,
-      order: order(A, { paymentMethod: 'cash', paymentStatus: 'pending' }),
-    })
+    // El servidor avisa que falta el cobro y no canjea nada; al confirmarlo, se canjea.
+    jest.mocked(scanQrAll)
+      .mockResolvedValueOnce({ ok: false, error: 'Falta cobrar el efectivo', cashPending: true, order: order(A, { paymentMethod: 'cash', paymentStatus: 'pending' }) })
+      .mockResolvedValueOnce({ ok: true, order: order(A, { status: 'delivered' }) })
     jest.mocked(confirmCashPayment).mockResolvedValue({ ok: true, order: order(A, { paymentMethod: 'cash' }) })
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(A)
     const row = (await screen.findByText('Falta cobrar el efectivo')).closest('li') as HTMLElement
-    expect(scanQr).not.toHaveBeenCalled()
     fireEvent.click(within(row).getByRole('button', { name: 'Cobré el efectivo' }))
     await waitFor(() => expect(screen.getByText('Ingresó')).toBeInTheDocument())
     expect(confirmCashPayment).toHaveBeenCalledWith('ev', A)
@@ -119,8 +117,8 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
   })
 
   it('cada resultado se manda a la pantalla del público: verde con la patente o rojo con el motivo', async () => {
-    jest.mocked(previewQr).mockImplementation(async (_ev, id) =>
-      id === B ? { ok: false, error: 'Este QR ya fue escaneado', alreadyScanned: true, order: order(id) } : { ok: true, order: order(id) },
+    jest.mocked(scanQrAll).mockImplementation(async (_ev, id) =>
+      id === B ? { ok: false, error: 'Este QR ya fue escaneado', alreadyScanned: true, order: order(id) } : { ok: true, order: order(id, { status: 'delivered' }) },
     )
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(A)
@@ -146,8 +144,8 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
   })
 
   it('filtra por estado y pagina de a 10', async () => {
-    jest.mocked(previewQr).mockImplementation(async (_ev, id) =>
-      id.startsWith('e') ? { ok: false, error: 'Este QR pertenece a otro evento' } : { ok: true, order: order(id) },
+    jest.mocked(scanQrAll).mockImplementation(async (_ev, id) =>
+      id.startsWith('e') ? { ok: false, error: 'Este QR pertenece a otro evento' } : { ok: true, order: order(id, { status: 'delivered' }) },
     )
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     // 11 que ingresan + 1 con error

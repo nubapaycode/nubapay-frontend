@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { beepError, beepOk } from '@/lib/scanner/beep'
 import { type ScanDisplayMessage, openScannerDisplay, publishScan } from '@/lib/scanner/displayChannel'
 import { extractOrderIds } from '@/lib/scanner/extractOrderIds'
-import { confirmCashPayment, previewQr, scanQr } from '@/lib/organizerWorkspace'
+import { confirmCashPayment, scanQrAll } from '@/lib/organizerWorkspace'
 import { PlateBadge } from '@/components/organizer/scanner/PlateBadge'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { cn } from '@/lib/utils'
@@ -27,15 +27,6 @@ type Row = {
 const MAX_ROWS = 60
 /** Una misma lectura repetida dentro de este tiempo es el mismo disparo (lector que rebota o doble gatillo). */
 const DUPLICATE_WINDOW_MS = 4000
-
-/** Todo lo que falta canjear del pedido (en modo continuo no se eligen cantidades). */
-function remainingQuantities(order: Order): Record<string, number> {
-  return Object.fromEntries(
-    order.items
-      .map((item, i) => [item.id ?? String(i), item.quantity - (item.redeemedQuantity ?? 0)] as const)
-      .filter(([, qty]) => qty > 0),
-  )
-}
 
 function rowTitle(row: Row): string {
   const o = row.order
@@ -113,50 +104,25 @@ export function ContinuousReader({ eventId, onExit }: { eventId: string; onExit:
     }
   }, [])
 
+  /** Un solo viaje al servidor: valida y canjea todo lo pendiente (o avisa por qué no). */
   const redeem = useCallback(
-    async (key: number, orderId: string, order: Order) => {
-      const quantities = remainingQuantities(order)
-      if (Object.keys(quantities).length === 0) {
-        update(key, { status: 'already', message: 'No le queda nada por canjear.', order })
-        beepError()
-        return
-      }
-      const result = await scanQr(eventId, orderId, quantities)
+    async (key: number, orderId: string) => {
+      const result = await scanQrAll(eventId, orderId)
       if (result.ok) {
         update(key, { status: result.order.status === 'delivered' ? 'ok' : 'partial', message: '', order: result.order })
         beepOk()
       } else if (result.alreadyScanned) {
-        update(key, { status: 'already', message: 'Ese QR ya se usó.', order: result.order ?? order })
+        update(key, { status: 'already', message: 'Ese QR ya se usó.', order: result.order })
+        beepError()
+      } else if (result.cashPending) {
+        update(key, { status: 'cash', message: 'Cobrá el efectivo y confirmalo para que ingrese.', order: result.order })
         beepError()
       } else {
-        update(key, { status: 'error', message: result.error, order })
+        update(key, { status: 'error', message: result.error, order: result.order })
         beepError()
       }
     },
     [eventId, update],
-  )
-
-  const process = useCallback(
-    async (key: number, orderId: string) => {
-      const result = await previewQr(eventId, orderId)
-      if (!result.ok) {
-        if (result.alreadyScanned) {
-          update(key, { status: 'already', message: 'Ese QR ya se usó.', order: result.order })
-        } else {
-          update(key, { status: 'error', message: result.error })
-        }
-        beepError()
-        return
-      }
-      const order = result.order
-      if (order.paymentMethod === 'cash' && order.paymentStatus !== 'approved') {
-        update(key, { status: 'cash', message: 'Cobrá el efectivo y confirmalo para que ingrese.', order })
-        beepError()
-        return
-      }
-      await redeem(key, orderId, order)
-    },
-    [eventId, redeem, update],
   )
 
   const confirmCash = useCallback(
@@ -169,7 +135,7 @@ export function ContinuousReader({ eventId, onExit }: { eventId: string; onExit:
         beepError()
         return
       }
-      await redeem(row.key, row.orderId, res.order)
+      await redeem(row.key, row.orderId)
       inputRef.current?.focus()
     },
     [eventId, redeem, update],
@@ -196,10 +162,10 @@ export function ContinuousReader({ eventId, onExit }: { eventId: string; onExit:
           continue
         }
         setRows(prev => [{ key, orderId, status: 'checking' as RowStatus, message: '', at: new Date() }, ...prev].slice(0, MAX_ROWS))
-        void process(key, orderId)
+        void redeem(key, orderId)
       }
     },
-    [process],
+    [redeem],
   )
 
   // El lector "teclea" donde esté el foco: el campo lo recupera siempre.
