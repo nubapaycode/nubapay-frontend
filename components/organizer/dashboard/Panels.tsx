@@ -112,6 +112,8 @@ export function PaymentMethodsPanel({
     ...cfg,
     ...(summary.payment_breakdown?.find(p => p.key === cfg.key) ?? { count: 0, revenue: 0 }),
   }))
+    // Un medio sin pedidos ni recaudación no aporta nada: no se lista. El filtrado se queda para poder quitarlo.
+    .filter(r => r.count > 0 || r.revenue > 0 || r.key === selected)
   const total = rows.reduce((a, r) => a + r.revenue, 0)
 
   return (
@@ -133,6 +135,7 @@ export function PaymentMethodsPanel({
             ) : null,
           )}
       </div>
+      {rows.length === 0 && <p className="py-2 text-[13px] text-gray-400">Todavía no hay cobros.</p>}
       <div className="flex flex-col gap-1">
         {rows.map(r => {
           const pct = total ? (r.revenue / total) * 100 : 0

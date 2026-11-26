@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Calendar, Check, Copy, ExternalLink, Mail, Pencil, Phone } from 'lucide-react'
+import { Calendar, CalendarCheck, Check, CircleSlash, Copy, ExternalLink, Inbox, Mail, Pencil, Phone } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -32,11 +32,99 @@ import { cn, formatDate } from '@/lib/utils'
 
 const PAGE_SIZE = 20
 
-const TABS: { key: EventsTab; label: string; empty: string }[] = [
-  { key: 'pending', label: 'Pendientes', empty: 'No hay solicitudes pendientes. Compartí el link para recibirlas.' },
-  { key: 'approved', label: 'Aprobados', empty: 'Todavía no aprobaste ningún evento.' },
-  { key: 'rejected', label: 'Rechazados', empty: 'No rechazaste ninguna solicitud.' },
+/** Primero los eventos ya aprobados (lo que se gestiona a diario), después las solicitudes pendientes. */
+const TABS: { key: EventsTab; label: string }[] = [
+  { key: 'approved', label: 'Aprobados' },
+  { key: 'pending', label: 'Pendientes' },
+  { key: 'rejected', label: 'Rechazados' },
 ]
+
+/** Estado vacío de cada pestaña: qué significa y qué hacer para que se llene. */
+function EventsEmptyState({
+  tab,
+  account,
+  pendingCount,
+  onShowPending,
+  onCopied,
+}: {
+  tab: EventsTab
+  account: ParkingOwnerAccount
+  pendingCount: number
+  onShowPending: () => void
+  onCopied: (ok: boolean) => void
+}) {
+  const url = `${window.location.origin}${eventRequestPath(account.slug)}`
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      onCopied(true)
+    } catch {
+      onCopied(false)
+    }
+  }
+
+  const content = {
+    approved: {
+      Icon: CalendarCheck,
+      title: 'Todavía no hay eventos aprobados',
+      text: 'Cuando apruebes una solicitud, el evento aparece acá listo para vender y gestionar.',
+    },
+    pending: {
+      Icon: Inbox,
+      title: 'No hay solicitudes pendientes',
+      text: account.accepts_event_submissions
+        ? 'Compartí el link del formulario con los organizadores: cada pedido de evento llega acá para que lo revises.'
+        : 'Las solicitudes están pausadas. Activalas en la tarjeta del link para volver a recibirlas.',
+    },
+    rejected: {
+      Icon: CircleSlash,
+      title: 'No rechazaste ninguna solicitud',
+      text: 'Las solicitudes que rechaces quedan acá como registro, con el motivo si lo dejaste.',
+    },
+  }[tab]
+
+  const primary =
+    'inline-flex h-9 items-center gap-1.5 rounded-xl bg-gray-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800'
+  const secondary =
+    'inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 text-[13px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900'
+
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+      <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-gray-100 text-gray-500" aria-hidden>
+        <content.Icon size={22} strokeWidth={1.75} />
+      </span>
+      <p className="text-[16px] font-semibold tracking-tight text-gray-900">{content.title}</p>
+      <p className="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-gray-500">{content.text}</p>
+
+      {tab === 'approved' && (
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {pendingCount > 0 ? (
+            <button type="button" onClick={onShowPending} className={primary}>
+              Ver solicitudes pendientes ({pendingCount})
+            </button>
+          ) : (
+            <button type="button" onClick={() => void copy()} className={primary}>
+              <Copy size={14} aria-hidden />
+              Copiar link del formulario
+            </button>
+          )}
+        </div>
+      )}
+      {tab === 'pending' && account.accepts_event_submissions && (
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button type="button" onClick={() => void copy()} className={primary}>
+            <Copy size={14} aria-hidden />
+            Copiar link
+          </button>
+          <a href={url} target="_blank" rel="noopener noreferrer" className={secondary}>
+            <ExternalLink size={14} aria-hidden />
+            Ver formulario
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function eventPanelHref(event: OrganizerEventRow): string {
   const tools = workspaceToolsForEvent('owner', event.id, getAuthUser()?.staff_memberships)
@@ -306,7 +394,7 @@ function ApprovedCard({ item }: { item: ParkingOwnerEventItem }) {
 
 export function ParkingOwnerEventsView() {
   const { account, setAccount } = useParkingOwnerAccount()
-  const [tab, setTab] = useState<EventsTab>('pending')
+  const [tab, setTab] = useState<EventsTab>(TABS[0].key)
   const [page, setPage] = useState(1)
   // El resultado guarda la consulta que lo produjo: si no coincide con la actual, sigue cargando.
   const [reloadToken, setReloadToken] = useState(0)
@@ -383,8 +471,6 @@ export function ParkingOwnerEventsView() {
     reload()
   }
 
-  const current = TABS.find(t => t.key === tab)!
-
   return (
     <div>
       <OrganizerToolHeading
@@ -435,9 +521,13 @@ export function ParkingOwnerEventsView() {
           <Spinner size="lg" className="text-gray-900" />
         </div>
       ) : items.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-12 text-center text-[13px] text-gray-500">
-          {current.empty}
-        </p>
+        <EventsEmptyState
+          tab={tab}
+          account={account}
+          pendingCount={counts.pending}
+          onShowPending={() => changeTab('pending')}
+          onCopied={ok => show(ok ? 'Link copiado.' : 'No se pudo copiar. Copiá el enlace manualmente.', ok ? 'success' : 'error')}
+        />
       ) : (
         <div className="space-y-3">
           {items.map(item =>

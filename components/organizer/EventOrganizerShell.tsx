@@ -271,10 +271,12 @@ export function EventOrganizerShell({
         hasMpToken={eventMeta.hasMpToken}
         hasSipagoCredentials={eventMeta.hasSipagoCredentials}
         hasMobbexCredentials={eventMeta.hasMobbexCredentials}
+        groupLabels={{ principal: 'Operación' }}
+        showGroupTitles
         backLink={
           // El dueño que entra a uno de sus eventos desde el panel del estacionamiento vuelve con esto.
           eventMeta.parentEventId && isParkingOwner(getAuthUser())
-            ? { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Volver al panel del estacionamiento' }
+            ? { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Volver' }
             : undefined
         }
       />

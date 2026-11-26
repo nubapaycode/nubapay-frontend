@@ -139,15 +139,6 @@ function navItems(basePath: string): NavItem[] {
       module: 'tickets',
     },
     {
-      href: `${basePath}/parking`,
-      label: 'Parking',
-      group: 'venta',
-      icon: icon(ParkingSquare),
-      showDesktop: true,
-      tool: 'products',
-      module: 'parking',
-    },
-    {
       href: `${basePath}/tienda`,
       // Link, slug y portada de la tienda: se configura una vez, por eso va en Ajustes.
       label: 'Tienda',
@@ -166,6 +157,16 @@ function navItems(basePath: string): NavItem[] {
       mobileFab: true,
       tool: 'scanner',
       tourId: 'sidebar-scanner',
+    },
+    {
+      // Junto al escáner: es lo que se opera en la entrada del estacionamiento.
+      href: `${basePath}/parking`,
+      label: 'Parking',
+      group: 'principal',
+      icon: icon(ParkingSquare),
+      showDesktop: true,
+      tool: 'products',
+      module: 'parking',
     },
     {
       href: `${basePath}/pedidos`,

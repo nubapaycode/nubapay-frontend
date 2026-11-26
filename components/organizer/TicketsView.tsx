@@ -202,7 +202,7 @@ export function TicketsView({
   /**
    * `account`: se usa en el panel del estacionamiento sobre su evento base. Los tipos de vehículo se definen
    * una vez y los heredan todos los eventos; el cupo es por evento, así que no hay link de venta ni ocupación
-   * acá. Las reservas son las de todos los eventos del estacionamiento.
+   * acá. Las reservas de todos los eventos se ven en Pedidos del panel.
    */
   scope?: 'event' | 'account'
 }) {
@@ -564,7 +564,8 @@ export function TicketsView({
         )}
       </header>
 
-      {isParking && (
+      {/* En el panel del estacionamiento las reservas están en Pedidos. */}
+      {isParking && !isAccount && (
         <div role="tablist" aria-label="Secciones de parking" className="mb-5 flex gap-1 border-b border-gray-200">
           {([
             { key: 'vehicles' as const, label: 'Vehículos', count: null },

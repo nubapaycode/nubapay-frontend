@@ -2,8 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { ParkingOwnerAccountProvider } from '@/components/parkingOwner/ParkingOwnerAccountContext'
+import { ParkingOwnerOrdersTabs } from '@/components/parkingOwner/ParkingOwnerOrdersTabs'
 import {
   MercadoPagoSection,
+  ParkingReservationsSection,
   OrdersSection,
   PaymentsListSection,
   ScannerSection,
@@ -51,9 +53,12 @@ jest.mock('@/components/organizer/PaymentsView', () => ({
     </div>
   ),
 }))
-jest.mock('next/navigation', () => ({ useRouter: () => ({ replace: mockReplace }) }))
+jest.mock('next/navigation', () => ({ useRouter: () => ({ replace: mockReplace }), usePathname: () => '/estacionamiento/pedidos' }))
 jest.mock('@/components/organizer/ScannerView', () => ({
   ScannerView: (p: { eventId: string }) => <div>scanner:{p.eventId}</div>,
+}))
+jest.mock('@/components/organizer/tickets/ParkingReservations', () => ({
+  ParkingReservations: (p: { eventId: string }) => <div>reservas:{p.eventId}</div>,
 }))
 jest.mock('@/components/organizer/SipagoSetupView', () => ({ SipagoSetupView: () => <div>sipago</div> }))
 jest.mock('@/components/organizer/MobbexSetupView', () => ({ MobbexSetupView: () => <div>mobbex</div> }))
@@ -170,5 +175,25 @@ describe('secciones del panel del estacionamiento', () => {
     renderIn(<VehiclesSection />)
     expect(await screen.findByRole('alert')).toHaveTextContent('Falló')
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+
+  it('las reservas de vehículos están en Pedidos, sobre todo el estacionamiento', async () => {
+    renderIn(
+      <>
+        <ParkingOwnerOrdersTabs />
+        <ParkingReservationsSection />
+      </>,
+    )
+    expect(await screen.findByText('reservas:base-123')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Reservas de vehículos' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Reservas de vehículos' })).toHaveAttribute('href', '/estacionamiento/pedidos/reservas')
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveAttribute('href', '/estacionamiento/pedidos')
+  })
+
+  it('sin el módulo parking, Pedidos no muestra la pestaña de reservas', async () => {
+    loginWith(['parking_owner'])
+    renderIn(<ParkingOwnerOrdersTabs />)
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled())
+    expect(screen.queryByRole('link', { name: 'Reservas de vehículos' })).not.toBeInTheDocument()
   })
 })

@@ -80,7 +80,7 @@ describe('TicketsView · parking heredado', () => {
     expect(screen.queryByText('Todavía no hay vehículos')).not.toBeInTheDocument()
   })
 
-  it('en el panel del estacionamiento (scope account) no hay link de venta ni ocupación, pero sí reservas', async () => {
+  it('en el panel del estacionamiento (scope account) no hay link de venta, ocupación ni reservas (están en Pedidos)', async () => {
     jest.mocked(fetchTickets).mockResolvedValue({
       ok: true,
       tickets: [ticket({ id: 'base', name: 'Auto', stock: 50, sold: 500 })],
@@ -90,8 +90,7 @@ describe('TicketsView · parking heredado', () => {
     expect(await screen.findByText('Auto')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Vehículos' })).toBeInTheDocument()
     expect(screen.getByText(/lugares por evento/)).toBeInTheDocument()
-    // Las reservas del estacionamiento son las de todos sus eventos.
-    expect(screen.getByRole('tab', { name: /Reservas/ })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Reservas/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/nubapay\.test\/parking/)).not.toBeInTheDocument()
     // El vendido total (de todos los eventos) no se mezcla con el cupo, que es por evento.
     expect(screen.queryByText(/vendidos/)).not.toBeInTheDocument()

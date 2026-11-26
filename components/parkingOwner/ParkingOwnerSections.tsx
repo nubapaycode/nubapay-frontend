@@ -4,6 +4,7 @@ import { BlocksView } from '@/components/organizer/BlocksView'
 import { MercadoPagoSetupView } from '@/components/organizer/MercadoPagoSetupView'
 import { MobbexSetupView } from '@/components/organizer/MobbexSetupView'
 import { OrdersView } from '@/components/organizer/OrdersView'
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { PaymentMethodsView } from '@/components/organizer/PaymentMethodsView'
 import { PaymentsView } from '@/components/organizer/PaymentsView'
 import { ProductsView } from '@/components/organizer/ProductsView'
@@ -11,6 +12,7 @@ import { ScannerView } from '@/components/organizer/ScannerView'
 import { SipagoSetupView } from '@/components/organizer/SipagoSetupView'
 import { StaffView } from '@/components/organizer/StaffView'
 import { TicketsView } from '@/components/organizer/TicketsView'
+import { ParkingReservations } from '@/components/organizer/tickets/ParkingReservations'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
 import { EventFilter, useEventScope } from '@/components/parkingOwner/EventScopePicker'
 import { RequireModule } from '@/components/parkingOwner/RequireModule'
@@ -103,4 +105,18 @@ export function PaymentsListSection() {
 export function ScannerSection() {
   const { account } = useParkingOwnerAccount()
   return <ScannerView eventId={account.base_event_id} />
+}
+
+/** Reservas de parking de todos los eventos del estacionamiento (patente, DNI, si ya ingresó). */
+export function ParkingReservationsSection() {
+  const { account } = useParkingOwnerAccount()
+  return (
+    <RequireModule module="parking">
+      <OrganizerToolHeading
+        title="Reservas de vehículos"
+        description="Los lugares de parking pagados en todos tus eventos, para controlar la entrada."
+      />
+      <ParkingReservations eventId={account.base_event_id} />
+    </RequireModule>
+  )
 }

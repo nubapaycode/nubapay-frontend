@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { ParkingOwnerAccountProvider } from '@/components/parkingOwner/ParkingOwnerAccountContext'
@@ -49,12 +49,18 @@ const approvedEvent = {
   modules: ['catalogo', 'tickets', 'parking'],
 }
 
-function renderView() {
+function renderBare() {
   return render(
     <ParkingOwnerAccountProvider>
       <ParkingOwnerEventsView />
     </ParkingOwnerAccountProvider>,
   )
+}
+
+/** Abre el panel y va a la pestaña Pendientes (la lista arranca en Aprobados). */
+async function renderView() {
+  renderBare()
+  fireEvent.click(await screen.findByRole('tab', { name: /Pendientes/ }))
 }
 
 function json(body: unknown, ok = true, status = 200) {
@@ -96,7 +102,7 @@ beforeEach(() => {
 
 describe('ParkingOwnerEventsView', () => {
   it('muestra el link público y la solicitud pendiente con los datos del organizador', async () => {
-    renderView()
+    await renderView()
     expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
     expect(screen.getByText('ana@example.com')).toHaveAttribute('href', 'mailto:ana@example.com')
@@ -106,7 +112,7 @@ describe('ParkingOwnerEventsView', () => {
 
   it('aprobar llama al endpoint, avisa y refresca la lista', async () => {
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('button', { name: 'Aprobar' }))
 
@@ -138,7 +144,7 @@ describe('ParkingOwnerEventsView', () => {
       })
     })
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('button', { name: 'Aprobar' }))
     expect(await screen.findByText('La solicitud no existe o ya fue resuelta')).toBeInTheDocument()
@@ -161,7 +167,7 @@ describe('ParkingOwnerEventsView', () => {
       })
     })
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('button', { name: 'Rechazar' }))
     const dialog = screen.getByText(/Vas a rechazar/).closest('div') as HTMLElement
@@ -179,7 +185,7 @@ describe('ParkingOwnerEventsView', () => {
 
   it('la pestaña Aprobados lista los eventos creados con link a su panel', async () => {
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('tab', { name: /Aprobados/ }))
     const card = (await screen.findByText('Fiesta Aprobada')).closest('a')
@@ -196,7 +202,7 @@ describe('ParkingOwnerEventsView', () => {
       return base(input, init)
     })
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     const input = screen.getByLabelText('Link para solicitar eventos')
@@ -214,7 +220,7 @@ describe('ParkingOwnerEventsView', () => {
       return base(input, init)
     })
     const user = userEvent.setup()
-    renderView()
+    await renderView()
     await screen.findByText('Festival de Verano')
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     const input = screen.getByLabelText('Link para solicitar eventos')
@@ -222,5 +228,46 @@ describe('ParkingOwnerEventsView', () => {
     await user.type(input, 'otro-link')
     await user.click(screen.getByRole('button', { name: 'Guardar link' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('servidor esté actualizado')
+  })
+
+  it('primero están los aprobados y la lista arranca ahí; después los pendientes', async () => {
+    renderBare()
+    const tabs = await screen.findAllByRole('tab')
+    expect(tabs.map(t => t.textContent?.replace(/\d+/g, '').trim())).toEqual(['Aprobados', 'Pendientes', 'Rechazados'])
+    expect(screen.getByRole('tab', { name: /Aprobados/ })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByText('Fiesta Aprobada')).toBeInTheDocument()
+  })
+
+  it('estados vacíos: cada pestaña explica qué va ahí y ofrece qué hacer', async () => {
+    pendingItems = []
+    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+      const u = String(input)
+      if (u.includes('/parking-owner/account')) return json({ account: { ...account, counts: { pending: 0, approved: 0, rejected: 0 } } })
+      return json({ tab: 'x', items: [], counts: { pending: 0, approved: 0, rejected: 0 }, pagination: { page: 1, page_size: 20, total: 0 } })
+    })
+    renderBare()
+    expect(await screen.findByText('Todavía no hay eventos aprobados')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Copiar link del formulario/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: /Pendientes/ }))
+    expect(await screen.findByText('No hay solicitudes pendientes')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Copiar link$/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver formulario/ })).toHaveAttribute('href', expect.stringContaining('/parking/playa-norte/solicitar-evento'))
+
+    fireEvent.click(screen.getByRole('tab', { name: /Rechazados/ }))
+    expect(await screen.findByText('No rechazaste ninguna solicitud')).toBeInTheDocument()
+  })
+
+  it('sin aprobados pero con pendientes, el vacío lleva a las pendientes', async () => {
+    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+      const u = String(input)
+      if (u.includes('/parking-owner/account')) return json({ account })
+      if (u.includes('tab=approved')) return json({ tab: 'approved', items: [], counts: account.counts, pagination: { page: 1, page_size: 20, total: 0 } })
+      return json({ tab: 'pending', items: [{ event: null, submission }], counts: account.counts, pagination: { page: 1, page_size: 20, total: 1 } })
+    })
+    renderBare()
+    fireEvent.click(await screen.findByRole('button', { name: /Ver solicitudes pendientes \(1\)/ }))
+    expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveAttribute('aria-selected', 'true')
   })
 })
