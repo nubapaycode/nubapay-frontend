@@ -1,6 +1,7 @@
 'use client'
 
 import { BlocksView } from '@/components/organizer/BlocksView'
+import { CourtesyView } from '@/components/organizer/CourtesyView'
 import { MercadoPagoSetupView } from '@/components/organizer/MercadoPagoSetupView'
 import { MobbexSetupView } from '@/components/organizer/MobbexSetupView'
 import { OrdersView } from '@/components/organizer/OrdersView'
@@ -14,6 +15,7 @@ import { StaffView } from '@/components/organizer/StaffView'
 import { TicketsView } from '@/components/organizer/TicketsView'
 import { ParkingReservations } from '@/components/organizer/tickets/ParkingReservations'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
+import { getAuthUser } from '@/lib/authSession'
 import { EventFilter, useEventScope } from '@/components/parkingOwner/EventScopePicker'
 import { RequireModule } from '@/components/parkingOwner/RequireModule'
 
@@ -118,5 +120,17 @@ export function ParkingReservationsSection() {
       />
       <ParkingReservations eventId={account.base_event_id} />
     </RequireModule>
+  )
+}
+
+/** Cortesías del estacionamiento: se elige el evento; la lista muestra las de todos los eventos. */
+export function CourtesiesSection() {
+  const scope = useEventScope()
+  return (
+    <CourtesyView
+      eventId={scope.baseEventId}
+      modules={getAuthUser()?.modules ?? []}
+      events={scope.options.map(o => ({ id: o.id, name: o.name }))}
+    />
   )
 }

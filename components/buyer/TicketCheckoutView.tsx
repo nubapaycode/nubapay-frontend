@@ -15,7 +15,7 @@ import { cartItemsKey, clearPendingOrder, loadPendingOrder, pendingIdempotencyKe
 import { PURCHASE_COPY, itemsOf, limitSelection, selectionScope, storePath, type PurchaseKind } from '@/lib/purchaseKind'
 import { computeCartTotals } from '@/lib/serviceFee'
 import { clearTicketSelection, startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPrice, formatPriceOrFree } from '@/lib/utils'
 import type { Event } from '@/types'
 
 import { CARD_LOGO_METHOD_IDS, CardLogos, paymentMethods } from './paymentMethods'
@@ -546,9 +546,9 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                     </td>
                   )}
                   <td className="py-4 pr-4 font-semibold">{ticket.name}</td>
-                  <td className="py-4 pr-4 text-right tabular-nums">{formatPrice(ticket.price)}</td>
+                  <td className="py-4 pr-4 text-right tabular-nums">{formatPriceOrFree(ticket.price)}</td>
                   <td className="py-4 pr-4 text-center tabular-nums">{quantity}</td>
-                  <td className="py-4 text-right font-semibold tabular-nums">{formatPrice(ticket.price * quantity)}</td>
+                  <td className="py-4 text-right font-semibold tabular-nums">{formatPriceOrFree(ticket.price * quantity)}</td>
                 </tr>
               ))}
             </tbody>
@@ -571,10 +571,10 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">{ticket.name}</p>
                     <p className="text-[13px] tabular-nums" style={{ color: MUTED }}>
-                      {quantity} × {formatPrice(ticket.price)}
+                      {quantity} × {formatPriceOrFree(ticket.price)}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold tabular-nums">{formatPrice(ticket.price * quantity)}</p>
+                  <p className="text-sm font-semibold tabular-nums">{formatPriceOrFree(ticket.price * quantity)}</p>
                 </li>
               ))}
             </ul>
@@ -593,7 +593,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             )}
             <div className="mt-1 flex justify-between gap-6 text-base font-semibold">
               <dt>Total</dt>
-              <dd className="tabular-nums">{formatPrice(total)}</dd>
+              <dd className="tabular-nums">{formatPriceOrFree(total)}</dd>
             </div>
           </dl>
         </Section>

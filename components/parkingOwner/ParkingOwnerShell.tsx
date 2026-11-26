@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarDays, Car, CreditCard, QrCode, ReceiptText, Settings, Store, Users } from 'lucide-react'
+import { CalendarDays, Car, CreditCard, Gift, QrCode, ReceiptText, Settings, Store, Users } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 
@@ -25,6 +25,7 @@ const PARKING_NAV: NavItem[] = [
   { href: `${PARKING_OWNER_HOME}/escaner`, label: 'Escáner', icon: icon(QrCode, 20), group: 'principal', showDesktop: true, mobileFab: true, shortcut: 's' },
   { href: `${PARKING_OWNER_HOME}/vehiculos`, label: 'Vehículos', icon: icon(Car), group: 'principal', showDesktop: true, mobileTabOrder: 1, module: 'parking' },
   { href: `${PARKING_OWNER_HOME}/pedidos`, label: 'Pedidos', icon: icon(ReceiptText), group: 'principal', showDesktop: true, mobileTabOrder: 2, shortcut: 'p' },
+  { href: `${PARKING_OWNER_HOME}/cortesias`, label: 'Cortesías', icon: icon(Gift), group: 'principal', showDesktop: true },
   { href: `${PARKING_OWNER_HOME}/cobros`, label: 'Cobros', icon: icon(CreditCard), group: 'principal', showDesktop: true, shortcut: 'b' },
   { href: `${PARKING_OWNER_HOME}/tienda`, label: 'Tienda', icon: icon(Store), group: 'venta', showDesktop: true, module: 'catalogo' },
   { href: `${PARKING_OWNER_HOME}/equipo`, label: 'Equipo', icon: icon(Users), group: 'ajustes', showDesktop: true, shortcut: 'e' },

@@ -56,7 +56,8 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     await waitFor(() => expect(screen.getAllByText('Ingresó')).toHaveLength(2))
     expect(scanQr).toHaveBeenCalledWith('ev', A, { 'item-1': 1 })
     expect(scanQr).toHaveBeenCalledWith('ev', B, { 'item-2': 1 })
-    expect(screen.getByText(/2/, { selector: 'span.font-semibold' })).toBeInTheDocument()
+    const resumen = screen.getByLabelText('Resumen de lecturas')
+    expect(within(resumen).getByText('Ingresaron').nextSibling).toHaveTextContent('2')
   })
 
   it('un error avisa y queda marcado, pero se sigue escaneando', async () => {
@@ -68,7 +69,8 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     scan(B)
     await waitFor(() => expect(screen.getByText(/pertenece a otro evento/)).toBeInTheDocument())
     await waitFor(() => expect(screen.getByText('Ingresó')).toBeInTheDocument())
-    expect(screen.getByText(/para revisar/)).toBeInTheDocument()
+    const resumen = screen.getByLabelText('Resumen de lecturas')
+    expect(within(resumen).getByText('Para revisar').nextSibling).toHaveTextContent('1')
   })
 
   it('el mismo QR leído dos veces seguidas se canjea una sola vez', async () => {
@@ -141,5 +143,31 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /Abrir pantalla para el público/ }))
     expect(openScannerDisplay).toHaveBeenCalled()
+  })
+
+  it('filtra por estado y pagina de a 10', async () => {
+    jest.mocked(previewQr).mockImplementation(async (_ev, id) =>
+      id.startsWith('e') ? { ok: false, error: 'Este QR pertenece a otro evento' } : { ok: true, order: order(id) },
+    )
+    render(<ContinuousReader eventId="ev" onExit={() => {}} />)
+    // 11 que ingresan + 1 con error
+    for (let i = 0; i < 11; i++) scan(`${String(i).padStart(8, '0')}-1111-4111-8111-111111111111`)
+    scan('eeeeeeee-1111-4111-8111-111111111111')
+    await waitFor(() => expect(within(screen.getByLabelText('Resumen de lecturas')).getByText('Lecturas').nextSibling).toHaveTextContent('12'))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(10))
+    const pager = screen.getByRole('navigation', { name: 'Paginación' })
+    fireEvent.click(within(pager).getByRole('button', { name: '2' }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('tab', { name: /Para revisar/ }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    expect(screen.getByText(/pertenece a otro evento/)).toBeInTheDocument()
+  })
+
+  it('muestra la patente como chapa en la fila', async () => {
+    render(<ContinuousReader eventId="ev" onExit={() => {}} />)
+    scan(A)
+    expect(await screen.findByText('AA111BB')).toBeInTheDocument()
+    expect(screen.getByText('Última')).toBeInTheDocument()
   })
 })

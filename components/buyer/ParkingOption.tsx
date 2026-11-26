@@ -4,7 +4,7 @@ import { Check } from 'lucide-react'
 
 import { BUYER_COLORS } from '@/lib/buyerUi'
 import { ParkingIcon } from '@/lib/parkingIcons'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPriceOrFree } from '@/lib/utils'
 import type { Ticket } from '@/types'
 
 const MUTED = '#6B6B78'
@@ -93,7 +93,7 @@ export function ParkingOption({
         className={cn('flex-shrink-0 text-base font-semibold tabular-nums tracking-tight md:text-lg', soldOut && 'line-through opacity-55')}
         style={{ color: BUYER_COLORS.text }}
       >
-        {formatPrice(ticket.price)}
+        {formatPriceOrFree(ticket.price)}
       </span>
 
       <span

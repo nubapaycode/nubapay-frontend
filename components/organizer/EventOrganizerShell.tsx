@@ -185,6 +185,7 @@ export function EventOrganizerShell({
       pedidos: 'orders',
       escaneos: 'orders',
       arrepentimientos: 'orders',
+      cortesias: 'orders',
       'puntos-de-retiro': 'pickup_points',
       pagos: 'payments',
     }

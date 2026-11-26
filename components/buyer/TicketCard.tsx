@@ -3,7 +3,7 @@
 import type { Ticket } from '@/types'
 import { BUYER_COLORS } from '@/lib/buyerUi'
 import { ParkingIcon } from '@/lib/parkingIcons'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPriceOrFree } from '@/lib/utils'
 
 interface TicketCardProps {
   ticket: Ticket
@@ -110,7 +110,7 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
       >
         <div className={cn('min-w-0', !available && 'opacity-55')}>
           <p className={cn('text-lg font-semibold tabular-nums tracking-tight', !available && 'line-through')}>
-            {Number(ticket.price) === 0 ? 'Sin cargo' : formatPrice(ticket.price)}
+            {formatPriceOrFree(ticket.price)}
           </p>
         </div>
 

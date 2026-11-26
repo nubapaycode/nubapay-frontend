@@ -12,6 +12,7 @@ import {
   Copy,
   ChevronsUpDown,
   CreditCard,
+  Gift,
   Keyboard,
   Landmark,
   LayoutGrid,
@@ -157,6 +158,15 @@ function navItems(basePath: string): NavItem[] {
       mobileFab: true,
       tool: 'scanner',
       tourId: 'sidebar-scanner',
+    },
+    {
+      // Entradas / parking sin cargo a nombre de alguien (con el permiso de pedidos).
+      href: `${basePath}/cortesias`,
+      label: 'Cortesías',
+      group: 'clientes',
+      icon: icon(Gift),
+      showDesktop: true,
+      tool: 'orders',
     },
     {
       // Junto al escáner: es lo que se opera en la entrada del estacionamiento.

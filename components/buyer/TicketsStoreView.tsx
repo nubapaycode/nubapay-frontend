@@ -12,7 +12,7 @@ import { isGoogleMapsUrl } from '@/lib/googleMaps'
 import { hasModule } from '@/lib/modules'
 import { PURCHASE_COPY, checkoutPath, itemsOf, limitSelection, maxPerPurchase, selectionScope, type PurchaseKind } from '@/lib/purchaseKind'
 import { startTicketHold, useTicketSelection } from '@/lib/ticketSelection'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPriceOrFree } from '@/lib/utils'
 import type { Event } from '@/types'
 
 import { ParkingMap } from './ParkingMap'
@@ -258,7 +258,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
           <div className={cn('mx-auto flex items-center justify-between gap-4', container)}>
             <div className="min-w-0" aria-live="polite">
               <p className="text-lg font-semibold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
-                {formatPrice(subtotal)}
+                {formatPriceOrFree(subtotal)}
               </p>
               <p className="text-[13px]" style={{ color: '#6B6B78' }}>
                 {isParking && selected[0] ? selected[0].ticket.name : copy.countLabel(count)}
@@ -271,7 +271,7 @@ export function TicketsStoreView({ event, catalogSlug, kind = 'ticket' }: Ticket
               className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-semibold tracking-tight transition-opacity active:opacity-85 md:px-14"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
-              Comprar
+              {subtotal === 0 ? 'Reservar' : 'Comprar'}
             </button>
           </div>
         </div>

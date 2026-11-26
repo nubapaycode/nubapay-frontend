@@ -13,6 +13,11 @@ export function formatPrice(amount: number, currency = 'ARS'): string {
   }).format(amount)
 }
 
+/** Precio para el comprador: "Sin cargo" cuando es 0 (parking o entradas gratis), si no el monto. */
+export function formatPriceOrFree(amount: number, currency = 'ARS'): string {
+  return Number(amount) === 0 ? 'Sin cargo' : formatPrice(amount, currency)
+}
+
 export function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',

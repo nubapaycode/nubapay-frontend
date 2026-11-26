@@ -84,3 +84,24 @@ describe('Parking sin cargo', () => {
     expect(screen.queryByText(/Este lugar es sin cargo/)).not.toBeInTheDocument()
   })
 })
+
+describe('Parking sin cargo · página de venta', () => {
+  it('el vehículo a $0 dice "Sin cargo" en la lista y en la barra, y el botón es "Reservar"', async () => {
+    const { TicketsStoreView } = await import('@/components/buyer/TicketsStoreView')
+    const event = {
+      ...freeEvent,
+      parking: [
+        { id: 'p0', kind: 'parking' as const, icon: 'car', name: 'Auto', description: '', price: 0, available: true },
+        { id: 'p1', kind: 'parking' as const, icon: 'motorcycle', name: 'Moto', description: '', price: 1500, available: true },
+      ],
+      modules: ['parking'],
+    }
+    render(<TicketsStoreView event={event} catalogSlug="fiesta" kind="parking" />)
+    const auto = screen.getByText('Auto').closest('button, label, [role="radio"]') as HTMLElement
+    expect(auto).toHaveTextContent('Sin cargo')
+    expect(screen.queryByText(/\$\s?0(?![\d.])/)).not.toBeInTheDocument()
+    await userEvent.click(auto)
+    expect(await screen.findByRole('button', { name: 'Reservar' })).toBeInTheDocument()
+    expect(screen.getAllByText('Sin cargo').length).toBeGreaterThan(1)
+  })
+})
