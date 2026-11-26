@@ -4,9 +4,13 @@ import { eventRequestPaths } from '@/lib/api'
 import { brandedRequestHeaders } from '@/lib/server/brandedRequestHeaders'
 import { resolveInternalFetchUrl } from '@/lib/server/resolveInternalFetchUrl'
 
-export type EventRequestInfo = { parking: { name: string; slug: string } }
+export type EventRequestInfo = {
+  parking: { name: string; slug: string }
+  /** false si el estacionamiento pausó las solicitudes. Ausente en backends viejos (pausado ⇒ 404). */
+  accepting?: boolean
+}
 
-/** Datos públicos del estacionamiento; null si no existe o pausó las solicitudes. */
+/** Datos públicos del estacionamiento; null si no existe. */
 export const fetchEventRequestInfo = cache(async (slug: string): Promise<EventRequestInfo | null> => {
   const url = await resolveInternalFetchUrl(eventRequestPaths.form(slug))
   const extra = await brandedRequestHeaders()

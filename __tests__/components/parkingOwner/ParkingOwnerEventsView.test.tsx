@@ -72,6 +72,7 @@ let pendingItems: unknown[]
 beforeEach(() => {
   jest.clearAllMocks()
   localStorage.clear()
+  window.history.replaceState(null, '', '/estacionamiento/eventos')
   pendingItems = [{ event: null, submission }]
   mockFetch.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
     const u = String(input)
@@ -105,7 +106,8 @@ describe('ParkingOwnerEventsView', () => {
     await renderView()
     expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
-    expect(screen.getByText('ana@example.com')).toHaveAttribute('href', 'mailto:ana@example.com')
+    expect(screen.getByText('ana@example.com').closest('a')).toHaveAttribute('href', 'mailto:ana@example.com')
+    expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', 'https://wa.me/5491112345678')
     expect(screen.getByText(/parking\/playa-norte\/solicitar-evento/)).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveAttribute('aria-selected', 'true')
   })
@@ -122,7 +124,9 @@ describe('ParkingOwnerEventsView', () => {
         expect.objectContaining({ method: 'POST' }),
       ),
     )
-    expect(await screen.findByText(/aprobado: ya podés gestionarlo/)).toBeInTheDocument()
+    const notice = await screen.findByRole('status')
+    expect(notice).toHaveTextContent(/Festival de Verano.*aprobado: ya podés gestionarlo/)
+    expect(within(notice).getByRole('link', { name: /Abrir evento/ })).toHaveAttribute('href', expect.stringMatching(/^\/eventos\/ev-1\//))
     await waitFor(() =>
       expect(screen.getByText(/No hay solicitudes pendientes/)).toBeInTheDocument(),
     )
@@ -204,7 +208,7 @@ describe('ParkingOwnerEventsView', () => {
     const user = userEvent.setup()
     await renderView()
     await screen.findByText('Festival de Verano')
-    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    await user.click(screen.getByRole('button', { name: 'Editar link' }))
     const input = screen.getByLabelText('Link para solicitar eventos')
     await user.clear(input)
     await user.type(input, 'Playa Sur')
@@ -222,7 +226,7 @@ describe('ParkingOwnerEventsView', () => {
     const user = userEvent.setup()
     await renderView()
     await screen.findByText('Festival de Verano')
-    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    await user.click(screen.getByRole('button', { name: 'Editar link' }))
     const input = screen.getByLabelText('Link para solicitar eventos')
     await user.clear(input)
     await user.type(input, 'otro-link')
@@ -269,5 +273,37 @@ describe('ParkingOwnerEventsView', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Ver solicitudes pendientes \(1\)/ }))
     expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('la pestaña queda en la URL y se respeta al volver a entrar', async () => {
+    renderBare()
+    fireEvent.click(await screen.findByRole('tab', { name: /Pendientes/ }))
+    expect(window.location.search).toBe('?vista=pendientes')
+    fireEvent.click(screen.getByRole('tab', { name: /Aprobados/ }))
+    expect(window.location.search).toBe('')
+  })
+
+  it('abre directo en Pendientes con ?vista=pendientes', async () => {
+    window.history.replaceState(null, '', '/estacionamiento/eventos?vista=pendientes')
+    renderBare()
+    expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('fuera de Pendientes avisa cuántas solicitudes esperan y lleva a revisarlas', async () => {
+    renderBare()
+    await screen.findByText('Fiesta Aprobada')
+    fireEvent.click(screen.getByRole('button', { name: /1 solicitud espera tu revisión/ }))
+    expect(await screen.findByText('Festival de Verano')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /espera tu revisión/ })).not.toBeInTheDocument()
+  })
+
+  it('los motivos rápidos completan el motivo del rechazo', async () => {
+    const user = userEvent.setup()
+    await renderView()
+    await screen.findByText('Festival de Verano')
+    await user.click(screen.getByRole('button', { name: 'Rechazar' }))
+    await user.click(screen.getByRole('button', { name: 'No tenemos capacidad' }))
+    expect(screen.getByPlaceholderText('Motivo (opcional)')).toHaveValue('No tenemos capacidad')
   })
 })

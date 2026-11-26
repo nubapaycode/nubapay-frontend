@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { EventRequestForm } from '@/components/buyer/EventRequestForm'
+import { EventRequestForm, EventRequestPaused } from '@/components/buyer/EventRequestForm'
 import { fetchTenantThemeForRequest } from '@/lib/fetchTenantTheme'
 import { fetchEventRequestInfo } from '@/lib/publicEventRequest'
 import { BUYER_PRIVATE_ROBOTS, pageMeta } from '@/lib/seo'
@@ -12,7 +12,7 @@ type Props = { params: Promise<{ slug: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const [theme, info] = await Promise.all([fetchTenantThemeForRequest(), fetchEventRequestInfo(slug)])
-  const title = info ? `Pedí tu evento · ${info.parking.name}` : 'Pedí tu evento'
+  const title = info ? `Informá tu evento · ${info.parking.name}` : 'Informá tu evento'
   return augmentMetadataWithTenant(
     pageMeta({
       title,
@@ -30,8 +30,12 @@ export default async function ParkingEventRequestPage({ params }: Props) {
   const info = await fetchEventRequestInfo(slug)
   if (!info) notFound()
   return (
-    <main className="min-h-screen bg-white">
-      <EventRequestForm parkingSlug={info.parking.slug} parkingName={info.parking.name} />
+    <main className="min-h-screen bg-[#F6F6F8]">
+      {info.accepting === false ? (
+        <EventRequestPaused parkingName={info.parking.name} />
+      ) : (
+        <EventRequestForm parkingSlug={info.parking.slug} parkingName={info.parking.name} />
+      )}
     </main>
   )
 }
