@@ -28,4 +28,14 @@ export type LoginResponse = {
   error?: string
 }
 
-export { authPaths, catalogPaths, eventsPaths, partnerTenantPaths, platformAdminPaths, publicPaths, systemPaths } from './api/paths'
+export {
+  authPaths,
+  catalogPaths,
+  eventRequestPaths,
+  eventsPaths,
+  parkingOwnerPaths,
+  partnerTenantPaths,
+  platformAdminPaths,
+  publicPaths,
+  systemPaths,
+} from './api/paths'

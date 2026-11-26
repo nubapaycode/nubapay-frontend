@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { authPaths } from '@/lib/api'
 import { type AuthUser, getAuthToken, getAuthUser, setAuthSession } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import { PARKING_OWNER_HOME, isParkingOwner } from '@/lib/modules'
 import { useLoggedIn } from '@/lib/useLoggedIn'
 import { FetchError } from '@/lib/fetcher'
 
@@ -65,7 +66,8 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
       return
     }
     const target = safeNextPath(next)
-    router.replace(target && !target.startsWith('/admin') ? target : '/panel')
+    const home = isParkingOwner(getAuthUser()) ? PARKING_OWNER_HOME : '/panel'
+    router.replace(target && !target.startsWith('/admin') ? target : home)
   }, [router, next])
 
   const finishAuth = async (token: string, user: AuthUser) => {
@@ -77,6 +79,11 @@ export function LoginView({ initialMode = 'login' }: { initialMode?: Mode }) {
     const target = safeNextPath(next)
     if (target) {
       router.push(target)
+      return
+    }
+    // El dueño de estacionamiento no gestiona un evento puntual: va a su panel global.
+    if (isParkingOwner(user)) {
+      router.push(PARKING_OWNER_HOME)
       return
     }
     // /panel resuelve el primer evento y a qué sección puede entrar el usuario.

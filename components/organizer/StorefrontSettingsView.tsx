@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
-import { ALL_MODULES, hasModule, type ModuleKey } from '@/lib/modules'
+import { EVENT_MODULES, type EventModuleKey, hasModule } from '@/lib/modules'
 import { catalogPublicPath } from '@/lib/siteOrigin'
 import { uploadEventCoverImage } from '@/lib/supabase/uploadEventCover'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
@@ -21,7 +21,7 @@ import { useToast } from '@/components/ui/Toast'
 const CATALOG_QR_SIZE = 240
 
 /** Ruta pública de cada módulo: catálogo, tickets y parking comparten portada y slug. */
-const MODULE_PATH: Record<ModuleKey, (slug: string) => string> = {
+const MODULE_PATH: Record<EventModuleKey, (slug: string) => string> = {
   catalogo: catalogPublicPath,
   tickets: ticketsPath,
   parking: parkingPath,
@@ -58,8 +58,8 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [showShortcutsDraft, setShowShortcutsDraft] = useState(false)
   const [savingShortcuts, setSavingShortcuts] = useState(false)
-  const [copiedModule, setCopiedModule] = useState<ModuleKey | null>(null)
-  const [qrModule, setQrModule] = useState<ModuleKey | null>(null)
+  const [copiedModule, setCopiedModule] = useState<EventModuleKey | null>(null)
+  const [qrModule, setQrModule] = useState<EventModuleKey | null>(null)
   const qrContainerRef = useRef<HTMLDivElement>(null)
   const { show: showToast, ToastPortal } = useToast()
 
@@ -86,7 +86,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
   const publicOriginUi = usePublicOrigin()
   const slugForUrl = slugDraft.trim() || event?.slug || ''
   /** Un link por módulo habilitado al dueño del evento. Sin portada no hay links. */
-  const moduleLinks = ALL_MODULES.filter(m => hasModule(event?.modules, m.key)).map(m => ({
+  const moduleLinks = EVENT_MODULES.filter(m => hasModule(event?.modules, m.key)).map(m => ({
     ...m,
     url: hasCover && publicOriginUi && slugForUrl ? `${publicOriginUi}${MODULE_PATH[m.key](slugForUrl)}` : '',
   }))
@@ -154,7 +154,7 @@ export function StorefrontSettingsView({ eventId }: { eventId: string }) {
     setEvent(res.event)
   }
 
-  const handleCopyLink = async (key: ModuleKey, url: string) => {
+  const handleCopyLink = async (key: EventModuleKey, url: string) => {
     if (!hasCover || !url) return
     try {
       await navigator.clipboard.writeText(url)

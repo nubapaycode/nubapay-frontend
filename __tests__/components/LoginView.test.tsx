@@ -137,6 +137,13 @@ describe('LoginView con sesión guardada', () => {
     expect(screen.queryByRole('button', { name: 'Ingresar' })).not.toBeInTheDocument()
   })
 
+  it('un dueño de estacionamiento va a su panel global, no a /panel', async () => {
+    setAuthSession('valid', { ...demoUser, modules: ['catalogo', 'tickets', 'parking_owner'] })
+    render(<LoginView />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/estacionamiento'))
+    expect(mockReplace).not.toHaveBeenCalledWith('/panel')
+  })
+
   it('un admin de plataforma va a /admin', async () => {
     setAuthSession('valid', { ...demoUser, is_platform_admin: true })
     render(<LoginView />)

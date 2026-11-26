@@ -84,6 +84,8 @@ export interface Order {
   customerEmail?: string | null
   /** Parking: DNI del comprador y patente del vehículo (normalizados por el backend). */
   customerDni?: string | null
+  /** Evento del pedido; solo viene en la vista de todo un estacionamiento. */
+  eventName?: string | null
   vehiclePlate?: string | null
   items: CartItem[]
   total: number

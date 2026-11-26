@@ -151,6 +151,24 @@ export const platformAdminPaths = {
   loadTestPurge: (runId: string) => apiUrl(`/platform/load-tests/${encodeURIComponent(runId)}/purge`),
 }
 
+/** Panel global del dueño de estacionamiento (`/api/parking-owner/…`, requiere el módulo `parking_owner`). */
+export const parkingOwnerPaths = {
+  account: () => apiUrl('/parking-owner/account'),
+  events: (opts: { tab: 'pending' | 'approved' | 'rejected'; page?: number; page_size?: number }) => {
+    const q = new URLSearchParams({ tab: opts.tab })
+    if (opts.page !== undefined) q.set('page', String(opts.page))
+    if (opts.page_size !== undefined) q.set('page_size', String(opts.page_size))
+    return apiUrl(`/parking-owner/events?${q.toString()}`)
+  },
+  approve: (submissionId: string) => apiUrl(`/parking-owner/submissions/${encodeURIComponent(submissionId)}/approve`),
+  reject: (submissionId: string) => apiUrl(`/parking-owner/submissions/${encodeURIComponent(submissionId)}/reject`),
+}
+
+/** Formulario público con el que un organizador pide un evento a un estacionamiento (sin auth). */
+export const eventRequestPaths = {
+  form: (slug: string) => apiUrl(`/public/parking/${encodeURIComponent(slug)}/event-request`),
+}
+
 export const eventsPaths = {
   list: (opts?: { page?: number; page_size?: number }) => {
     const base = apiUrl('/events')

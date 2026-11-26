@@ -1,5 +1,6 @@
 'use client'
 
+import { InheritedPaymentsNotice } from '@/components/organizer/InheritedPaymentsNotice'
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -511,7 +512,14 @@ function MpStepper({
 
 // ── Vista principal ────────────────────────────────────────────────────────
 
-export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
+export function MercadoPagoSetupView({
+  eventId,
+  backHref: backHrefProp,
+}: {
+  eventId: string
+  /** A dónde vuelve el botón "volver". Por defecto, los métodos de pago del evento. */
+  backHref?: string
+}) {
   const [event, setEvent] = useState<OrganizerEventDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const { show: showToast, ToastPortal } = useToast()
@@ -618,7 +626,10 @@ export function MercadoPagoSetupView({ eventId }: { eventId: string }) {
     showToast('Cuenta desconectada.', 'success')
   }
 
-  const backHref = `/eventos/${eventId}/metodos-pago`
+  const backHref = backHrefProp ?? `/eventos/${eventId}/metodos-pago`
+
+  // Un evento de un dueño de estacionamiento cobra siempre con la config del dueño: acá no se conecta nada.
+  if (event?.inherits_payments) return <InheritedPaymentsNotice />
 
   if (loading) {
     return (

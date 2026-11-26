@@ -169,10 +169,33 @@ function ParkingOccupancy({
 
 type ParkingTab = 'vehicles' | 'reservations'
 
-export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kind?: TicketKind }) {
-  const copy = COPY[kind]
+export function TicketsView({
+  eventId,
+  kind = 'ticket',
+  scope = 'event',
+}: {
+  eventId: string
+  kind?: TicketKind
+  /**
+   * `account`: se usa en el panel del estacionamiento sobre su evento base. Los tipos de vehículo se definen
+   * una vez y los heredan todos los eventos; el cupo es por evento, así que no hay link de venta ni ocupación
+   * acá. Las reservas son las de todos los eventos del estacionamiento.
+   */
+  scope?: 'event' | 'account'
+}) {
+  const isAccount = scope === 'account' && kind === 'parking'
+  const copy = isAccount
+    ? {
+        ...COPY.parking,
+        title: 'Vehículos',
+        intro:
+          'Tipos de vehículo con su precio y lugares. Los heredan todos tus eventos: se definen una sola vez acá y el cupo se cuenta por evento.',
+      }
+    : COPY[kind]
   const isParking = kind === 'parking'
   const [tickets, setTickets] = useState<WorkspaceTicket[]>([])
+  // Tipos heredados del estacionamiento (solo en un evento): se muestran aparte y no se editan acá.
+  const [inheritedTickets, setInheritedTickets] = useState<WorkspaceTicket[]>([])
   const [eventSlug, setEventSlug] = useState('')
   const [hasCover, setHasCover] = useState(true)
   const [mapsUrl, setMapsUrl] = useState<string | null>(null)
@@ -208,7 +231,10 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
     void fetchTickets(eventId, kind).then(res => {
       if (cancelled) return
       if (!res.ok) setError(res.error)
-      else setTickets(res.tickets)
+      else {
+        setTickets(res.tickets.filter(t => !t.inherited))
+        setInheritedTickets(res.tickets.filter(t => t.inherited))
+      }
       setLoading(false)
     })
     return () => {
@@ -310,21 +336,49 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
     void persistOrder(next, tickets)
   }
 
+  // La ocupación del evento incluye los tipos heredados: su cupo y sus ventas son del propio evento.
   const totals = useMemo(() => {
-    const sold = tickets.reduce((a, t) => a + t.sold, 0)
-    const revenue = tickets.reduce((a, t) => a + (t.revenue ?? 0), 0)
-    const redeemed = tickets.reduce((a, t) => a + (t.redeemed ?? 0), 0)
-    const limited = tickets.length > 0 && tickets.every(t => t.stock != null)
-    const capacity = limited ? tickets.reduce((a, t) => a + (t.stock ?? 0), 0) : null
+    const all = [...tickets, ...inheritedTickets]
+    const sold = all.reduce((a, t) => a + t.sold, 0)
+    const revenue = all.reduce((a, t) => a + (t.revenue ?? 0), 0)
+    const redeemed = all.reduce((a, t) => a + (t.redeemed ?? 0), 0)
+    const limited = all.length > 0 && all.every(t => t.stock != null)
+    const capacity = limited ? all.reduce((a, t) => a + (t.stock ?? 0), 0) : null
     return { sold, revenue, redeemed, capacity }
-  }, [tickets])
+  }, [tickets, inheritedTickets])
 
-  const publicUrl = eventSlug && origin ? `${origin}${(isParking ? parkingPath : ticketsPath)(eventSlug)}` : ''
+  // El estacionamiento (evento base) no se vende en un link propio: sus eventos sí.
+  const publicUrl =
+    !isAccount && eventSlug && origin ? `${origin}${(isParking ? parkingPath : ticketsPath)(eventSlug)}` : ''
   /** Parking sin límite de lugares: se avisa para no vender más de los que hay. */
   const unlimitedParking = isParking ? tickets.filter(t => t.stock == null && t.is_active) : []
 
+  const renderInherited = () =>
+    inheritedTickets.length === 0 ? null : (
+      <section className="mt-6" aria-label="Heredados del estacionamiento">
+        <div className="mb-3 px-1">
+          <h2 className="text-[14px] font-semibold text-gray-900">Del estacionamiento</h2>
+          <p className="mt-0.5 text-[12px] text-gray-500">
+            Los define el dueño en su panel del estacionamiento. El cupo se cuenta por evento.
+          </p>
+        </div>
+        <ul className="grid gap-3">
+          {inheritedTickets.map(t => (
+            <li key={t.id}>
+              <TicketCard ticket={t} variant="inherited" />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+
   const renderList = () =>
-    tickets.length === 0 ? (
+    tickets.length === 0 && inheritedTickets.length > 0 ? (
+      <p className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-6 text-center text-[13px] text-gray-500">
+        Este evento usa los tipos de vehículo de tu estacionamiento. Si necesitás uno solo para este evento, creá uno
+        propio con “{copy.newButton}”.
+      </p>
+    ) : tickets.length === 0 ? (
       <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
         <div className="mx-auto mb-5 flex h-14 w-24 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 [mask:radial-gradient(circle_at_50%_0,transparent_7px,#000_7.5px)_top/100%_51%_no-repeat,radial-gradient(circle_at_50%_100%,transparent_7px,#000_7.5px)_bottom/100%_51%_no-repeat]">
           {isParking ? (
@@ -413,6 +467,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
             >
               <TicketCard
                 ticket={t}
+                variant={isAccount ? 'account' : 'event'}
                 dragging={dragId === t.id}
                 dragHandleProps={
                   tickets.length > 1
@@ -530,7 +585,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
               </div>
             )}
 
-            {tickets.length > 0 && (
+            {!isAccount && tickets.length + inheritedTickets.length > 0 && (
               <ParkingOccupancy sold={totals.sold} capacity={totals.capacity} revenue={totals.revenue} redeemed={totals.redeemed} />
             )}
 
@@ -561,6 +616,7 @@ export function TicketsView({ eventId, kind = 'ticket' }: { eventId: string; kin
             )}
 
             {renderList()}
+            {renderInherited()}
 
             <p className="mt-4 flex items-start gap-2 px-1 text-[12px] text-gray-500">
               <Info size={14} strokeWidth={1.75} className="mt-px shrink-0 text-gray-400" aria-hidden />

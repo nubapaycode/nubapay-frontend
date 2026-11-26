@@ -77,6 +77,8 @@ export type WorkspacePayment = {
   channel: string | null
   /** Costo de servicio cobrado en el pedido. 0 cuando el evento usa comisión del 1%. */
   service_fee?: number
+  /** Evento del pago; solo viene en la vista de todo un estacionamiento. */
+  event_name?: string | null
 }
 
 export type WorkspacePickupPoint = {
@@ -111,6 +113,8 @@ export type TicketKind = 'ticket' | 'parking'
 export type WorkspaceTicket = {
   id: string
   kind?: TicketKind
+  /** Tipo de parking heredado del estacionamiento (evento base): se ve pero no se edita desde el evento. */
+  inherited?: boolean
   /** Clave del ícono del vehículo (solo parking). */
   icon?: string | null
   name: string
@@ -1237,6 +1241,8 @@ export interface ParkingReservation {
   vehiclePlate: string | null
   /** Tipo de vehículo comprado (nombre del ítem al momento de la compra). */
   vehicle: string
+  /** Evento de la reserva; solo viene en la vista de todo un estacionamiento. */
+  eventName?: string | null
   icon: string | null
   /** Ya se escaneó el QR en la entrada del estacionamiento. */
   entered: boolean

@@ -1,5 +1,6 @@
 'use client'
 
+import { InheritedPaymentsNotice } from '@/components/organizer/InheritedPaymentsNotice'
 import { CheckCircle2, ChevronDown, ChevronLeft, ExternalLink, Eye, EyeOff, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -64,7 +65,14 @@ function CredentialsForm({
   )
 }
 
-export function MobbexSetupView({ eventId }: { eventId: string }) {
+export function MobbexSetupView({
+  eventId,
+  backHref: backHrefProp,
+}: {
+  eventId: string
+  /** A dónde vuelve el botón "volver". Por defecto, los métodos de pago del evento. */
+  backHref?: string
+}) {
   const router = useRouter()
   const [event, setEvent] = useState<OrganizerEventDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,7 +95,7 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
 
   useEffect(() => { void load() }, [load])
 
-  const backHref = `/eventos/${eventId}/metodos-pago`
+  const backHref = backHrefProp ?? `/eventos/${eventId}/metodos-pago`
 
   const handleSave = async () => {
     if (saving) return
@@ -129,6 +137,9 @@ export function MobbexSetupView({ eventId }: { eventId: string }) {
     window.dispatchEvent(new CustomEvent('nubapay-mobbex-disconnected'))
     showToast('Mobbex desconectado', 'success')
   }
+
+  // Un evento de un dueño de estacionamiento cobra siempre con la config del dueño: acá no se conecta nada.
+  if (event?.inherits_payments) return <InheritedPaymentsNotice />
 
   if (loading || !event) {
     return (

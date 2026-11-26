@@ -13,6 +13,11 @@ export function parkingCheckoutPath(slug: string): string {
   return `${parkingPath(slug)}/comprar`
 }
 
+/** Formulario público para pedir un evento a un estacionamiento: `/parking/:slug/solicitar-evento`. */
+export function eventRequestPath(slug: string): string {
+  return `${parkingPath(slug)}/solicitar-evento`
+}
+
 /** Formulario del botón de arrepentimiento: `/catalogo/:slug/arrepentimiento`. */
 export function regretPath(slug: string): string {
   return `/catalogo/${encodeURIComponent(slug.trim())}/arrepentimiento`

@@ -17,6 +17,16 @@ export type OrganizerEventRow = {
   show_category_shortcuts: boolean
   /** Dueño del evento o integrante invitado (staff). */
   membership?: 'owner' | 'staff'
+  /** Permisos del usuario como staff (en un evento hijo vienen del rol que tiene en el estacionamiento). */
+  tools?: OrganizerStaffTools
+  /** Evento base (estacionamiento) del que hereda tipos de vehículo, tienda, equipo y cobros. */
+  parent_event_id?: string | null
+  /** Evento oculto que guarda la configuración de un estacionamiento. */
+  is_parking_base?: boolean
+  /** true si los cobros (credenciales y medios) son los del estacionamiento y no se editan en el evento. */
+  inherits_payments?: boolean
+  /** Módulos que ofrece el evento = los habilitados a su dueño. Ausente en respuestas viejas. */
+  modules?: string[]
   /** Stats opcionales que el backend puede incluir en el listado. */
   order_count?: number
   active_orders?: number

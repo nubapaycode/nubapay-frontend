@@ -1,5 +1,6 @@
 'use client'
 
+import { InheritedPaymentsNotice } from '@/components/organizer/InheritedPaymentsNotice'
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Eye, EyeOff, KeyRound, ShieldCheck, Store, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -195,7 +196,14 @@ function CredentialsForm({
   )
 }
 
-export function SipagoSetupView({ eventId }: { eventId: string }) {
+export function SipagoSetupView({
+  eventId,
+  backHref: backHrefProp,
+}: {
+  eventId: string
+  /** A dónde vuelve el botón "volver". Por defecto, los métodos de pago del evento. */
+  backHref?: string
+}) {
   const [event, setEvent] = useState<OrganizerEventDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const { show: showToast, ToastPortal } = useToast()
@@ -258,7 +266,10 @@ export function SipagoSetupView({ eventId }: { eventId: string }) {
     showToast('Cuenta desconectada.', 'success')
   }
 
-  const backHref = `/eventos/${eventId}/metodos-pago`
+  const backHref = backHrefProp ?? `/eventos/${eventId}/metodos-pago`
+
+  // Un evento de un dueño de estacionamiento cobra siempre con la config del dueño: acá no se conecta nada.
+  if (event?.inherits_payments) return <InheritedPaymentsNotice />
 
   if (loading) {
     return (

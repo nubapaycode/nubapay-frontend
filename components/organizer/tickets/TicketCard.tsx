@@ -121,8 +121,15 @@ export function TicketCard({
   actions,
   dragging,
   dragHandleProps,
+  variant = 'event',
 }: {
   ticket: TicketLike
+  /**
+   * `event` (por defecto): cupo y ventas del evento. `account`: tipo definido en el estacionamiento, el cupo
+   * es por evento y no hay ventas que mostrar. `inherited`: tipo del estacionamiento visto desde un evento
+   * (solo lectura).
+   */
+  variant?: 'event' | 'account' | 'inherited'
   actions?: {
     toggling: boolean
     onToggle: () => void
@@ -139,6 +146,7 @@ export function TicketCard({
   const isParking = t.kind === 'parking'
   const name = t.name.trim() || (isParking ? 'Tipo de vehículo' : 'Nombre del ticket')
   const attendancePct = t.sold ? Math.round(((t.redeemed ?? 0) / t.sold) * 100) : 0
+  const isAccount = variant === 'account'
 
   return (
     <div
@@ -171,7 +179,18 @@ export function TicketCard({
               <h3 className={cn('truncate text-[15px] font-semibold tracking-tight', t.name.trim() ? 'text-gray-900' : 'text-gray-300')}>
                 {name}
               </h3>
-              <StatusPill t={t} />
+              {isAccount ? (
+                <span
+                  className={cn(
+                    'whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                    t.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500',
+                  )}
+                >
+                  {t.is_active ? 'En venta' : 'Pausado'}
+                </span>
+              ) : (
+                <StatusPill t={t} />
+              )}
             </div>
             {t.description && <p className="mt-0.5 line-clamp-2 text-[12px] text-gray-500">{t.description}</p>}
           </div>
@@ -188,6 +207,17 @@ export function TicketCard({
         </div>
 
         {/* Capacidad */}
+        {isAccount ? (
+          <div className="mt-auto pl-1 text-[12px] text-gray-500">
+            {t.stock == null ? (
+              'Sin límite de lugares por evento'
+            ) : (
+              <>
+                <span className="font-semibold tabular-nums text-gray-900">{formatCount(t.stock)}</span> lugares por evento
+              </>
+            )}
+          </div>
+        ) : (
         <div className="mt-auto pl-1">
           <div className="mb-1.5 flex items-baseline justify-between gap-2 text-[12px]">
             <span className={cn('tabular-nums', soldOut ? 'font-semibold text-red-600' : 'text-gray-500')}>
@@ -225,6 +255,7 @@ export function TicketCard({
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Troquel: línea punteada + dos muescas */}
@@ -243,6 +274,8 @@ export function TicketCard({
             <span className="sr-only">{t.is_active ? `Pausar ${t.name}` : `Poner en venta ${t.name}`}</span>
             <span aria-hidden>{t.is_active ? 'En venta' : 'Pausado'}</span>
           </label>
+        ) : variant === 'inherited' ? (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">Del estacionamiento</span>
         ) : (
           <span className="text-[11px] text-gray-400">Vista previa</span>
         )}

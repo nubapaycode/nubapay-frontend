@@ -704,6 +704,9 @@ export function OrdersView({ eventId }: { eventId: string }) {
                               {order.customerName || 'Sin nombre'}
                             </p>
                             {order.customerEmail && <p className="truncate text-[11px] text-gray-400">{order.customerEmail}</p>}
+                            {order.eventName && (
+                              <p className="truncate text-[11px] font-semibold text-gray-500">{order.eventName}</p>
+                            )}
                             {order.vehiclePlate && (
                               <p className="truncate text-[11px] text-gray-500">
                                 Patente <span className="font-semibold tracking-wide text-gray-700">{order.vehiclePlate}</span>

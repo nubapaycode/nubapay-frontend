@@ -21,7 +21,14 @@ function ConnectedBadge() {
   )
 }
 
-export function PaymentMethodsView({ eventId }: { eventId: string }) {
+export function PaymentMethodsView({
+  eventId,
+  basePath,
+}: {
+  eventId: string
+  /** Prefijo de las pantallas de conexión (`/mercadopago`, `/sipago`, `/mobbex`). Por defecto, las del evento. */
+  basePath?: string
+}) {
   const [event, setEvent] = useState<OrganizerEventDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const { show: showToast, ToastPortal } = useToast()
@@ -54,9 +61,10 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
     }
   }, [load])
 
-  const mpHref = `/eventos/${eventId}/metodos-pago/mercadopago`
-  const sipagoHref = `/eventos/${eventId}/metodos-pago/sipago`
-  const mobbexHref = `/eventos/${eventId}/metodos-pago/mobbex`
+  const methodsPath = basePath ?? `/eventos/${eventId}/metodos-pago`
+  const mpHref = `${methodsPath}/mercadopago`
+  const sipagoHref = `${methodsPath}/sipago`
+  const mobbexHref = `${methodsPath}/mobbex`
 
   const [cashSaving, setCashSaving] = useState(false)
   const toggleCash = useCallback(async () => {
@@ -77,6 +85,40 @@ export function PaymentMethodsView({ eventId }: { eventId: string }) {
       <div className="flex w-full flex-col items-center justify-center gap-3 py-24">
         <Spinner size="lg" className="text-gray-900" />
         <p className="text-sm text-gray-400">Cargando…</p>
+      </div>
+    )
+  }
+
+  // Un evento de un estacionamiento cobra con los medios del estacionamiento: no se configuran acá.
+  if (event?.inherits_payments) {
+    const connected = [
+      event.has_mp_token && 'Mercado Pago',
+      event.has_sipago_credentials && 'Sipago',
+      event.has_mobbex_credentials && 'Mobbex',
+      event.cash_enabled && 'Efectivo',
+    ].filter(Boolean) as string[]
+    return (
+      <div className="w-full space-y-8">
+        <ToastPortal />
+        <OrganizerToolHeading
+          title="Métodos de pago"
+          description="Este evento cobra con los medios de pago de tu estacionamiento."
+        />
+        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-sm font-semibold text-gray-900">
+            {connected.length > 0 ? `Medios activos: ${connected.join(', ')}` : 'Todavía no hay medios de pago conectados'}
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Se configuran una sola vez en el panel de tu estacionamiento y valen para todos tus eventos.
+          </p>
+          <Link
+            href="/estacionamiento/cobros/metodos-pago"
+            className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-xl bg-gray-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800"
+          >
+            Ir a los cobros del estacionamiento
+            <ChevronRight size={14} aria-hidden />
+          </Link>
+        </section>
       </div>
     )
   }

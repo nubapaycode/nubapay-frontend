@@ -60,7 +60,14 @@ function PaymentsSkeleton() {
   )
 }
 
-export function PaymentsView({ eventId }: { eventId: string }) {
+export function PaymentsView({
+  eventId,
+  ordersPath,
+}: {
+  eventId: string
+  /** Página de pedidos a la que lleva cada pago. Por defecto, la del evento. */
+  ordersPath?: string
+}) {
   const [rows, setRows] = useState<WorkspacePayment[]>([])
   const [summary, setSummary] = useState<PaymentsSummary | null>(null)
   const [page, setPage] = useState(1)
@@ -127,7 +134,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
   const setSortF = withPageReset(setSort)
 
   const hasFilters = Boolean(q || statusFilter.length || channelFilter.length)
-  const ordersHref = (orderId: string) => `/eventos/${eventId}/pedidos?pedido=${orderId}`
+  const ordersHref = (orderId: string) => `${ordersPath ?? `/eventos/${eventId}/pedidos`}?pedido=${orderId}`
 
   if (loading) return <PaymentsSkeleton />
 
@@ -294,6 +301,7 @@ export function PaymentsView({ eventId }: { eventId: string }) {
                         <ArrowUpRight size={13} strokeWidth={2} className="text-gray-300 transition-colors group-hover:text-gray-900" aria-hidden />
                       </span>
                       {row.customer_name && <span className="block truncate text-[12px] text-gray-500">{row.customer_name}</span>}
+                      {row.event_name && <span className="block truncate text-[11px] font-semibold text-gray-500">{row.event_name}</span>}
                     </span>
                     <span className="flex min-w-0 items-center gap-2 text-[13px] text-gray-700 max-md:justify-self-end">
                       {ch && <span className="size-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: ch.color }} aria-hidden />}

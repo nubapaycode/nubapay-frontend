@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { eventsPaths } from '@/lib/api'
 import { authHeadersJson, getAuthToken, getAuthUser } from '@/lib/authSession'
 import { browserFetch } from '@/lib/browserFetch'
+import { PARKING_OWNER_HOME, isParkingOwner } from '@/lib/modules'
 import { firstAllowedWorkspaceSegment, workspaceToolsForEvent } from '@/lib/organizerStaffTools'
 import type { OrganizerEventRow } from '@/lib/types/organizer'
 
@@ -23,6 +24,11 @@ export default function OrganizerDashboardEntryPage() {
       return
     }
 
+    if (isParkingOwner(getAuthUser())) {
+      router.replace(PARKING_OWNER_HOME)
+      return
+    }
+
     let cancelled = false
     ;(async () => {
       try {
@@ -33,7 +39,7 @@ export default function OrganizerDashboardEntryPage() {
         const first = body.events?.[0]
         if (!cancelled && first?.id) {
           const membership = first.membership === 'staff' ? 'staff' : 'owner'
-          const tools = workspaceToolsForEvent(membership, first.id, getAuthUser()?.staff_memberships)
+          const tools = workspaceToolsForEvent(membership, first.id, getAuthUser()?.staff_memberships, first.tools)
           const segment = firstAllowedWorkspaceSegment(tools)
           router.replace(`/eventos/${first.id}/${segment}`)
           return

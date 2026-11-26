@@ -143,7 +143,8 @@ export function EventsView({ embedded = false }: { embedded?: boolean } = {}) {
 
   const eventPanelHref = (event: OrganizerEventRow) => {
     const membership = event.membership === 'staff' ? 'staff' : 'owner'
-    const tools = workspaceToolsForEvent(membership, event.id, getAuthUser()?.staff_memberships)
+    // `event.tools` trae el rol efectivo: el del evento o, en un evento de estacionamiento, el heredado del base.
+    const tools = workspaceToolsForEvent(membership, event.id, getAuthUser()?.staff_memberships, event.tools)
     const segment = firstAllowedWorkspaceSegment(tools)
     return `/eventos/${event.id}/${segment}`
   }

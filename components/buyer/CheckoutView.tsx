@@ -70,11 +70,13 @@ export function CheckoutView({
     () => paymentMethods.filter(m => allowedMethodIds.includes(m.id)),
     [allowedMethodIds],
   )
-  const [paymentMethod, setPaymentMethod] = useState(() => availablePaymentMethods[0] ?? 'mp')
+  // Sin medios habilitados no se elige ninguno: el evento no tiene configurado cómo cobrar.
+  const [paymentMethod, setPaymentMethod] = useState(() => availablePaymentMethods[0] ?? '')
+  const noPaymentMethods = enabledMethods.length === 0
 
   useEffect(() => {
     if (!allowedMethodIds.includes(paymentMethod)) {
-      setPaymentMethod(allowedMethodIds[0] ?? (cashBlocked ? '' : 'mp'))
+      setPaymentMethod(allowedMethodIds[0] ?? '')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowedMethodIds])
@@ -527,6 +529,11 @@ export function CheckoutView({
                 Los tickets no se pueden pagar en efectivo.
               </p>
             )}
+            {noPaymentMethods && (
+              <p className="text-[13px]" style={{ color: BUYER_COLORS.muted }}>
+                Este evento todavía no tiene medios de pago habilitados.
+              </p>
+            )}
             {enabledMethods.map(method => {
               const selected = paymentMethod === method.id
               return (
@@ -624,7 +631,7 @@ export function CheckoutView({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={displayItems.length === 0 || loading || !paymentsEnabled}
+            disabled={displayItems.length === 0 || loading || !paymentsEnabled || noPaymentMethods}
             className="flex h-[54px] w-full items-center justify-center rounded-full text-[17px] font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40"
             style={{
               background: BUYER_COLORS.accent,
@@ -636,9 +643,11 @@ export function CheckoutView({
               ? buyBlockedLabel(purchaseClosed)
               : loading
               ? 'Procesando...'
-              : displayItems.length > 0
-              ? 'Pagar'
-              : 'Carrito vacío'}
+              : displayItems.length === 0
+              ? 'Carrito vacío'
+              : noPaymentMethods
+              ? 'Sin medios de pago'
+              : 'Pagar'}
           </button>
         </div>
       </div>
