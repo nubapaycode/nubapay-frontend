@@ -153,3 +153,18 @@ export async function fetchParkingOwnerEventOptions(): Promise<Result<ParkingOwn
 export function draftSlug(v: string): string {
   return v.toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]/gu, '').replace(/-{2,}/g, '-')
 }
+
+export type NewParkingEvent = { name: string; description?: string; starts_at?: string | null; ends_at?: string | null }
+
+/**
+ * Crea un evento a mano, sin solicitud. Al crearlo un dueño de estacionamiento, el backend lo cuelga de su
+ * estacionamiento (hereda vehículos, tienda, equipo y cobros). Nace activo, como uno aprobado.
+ */
+export async function createParkingEvent(payload: NewParkingEvent): Promise<Result<OrganizerEventRow>> {
+  const r = await request<{ event: OrganizerEventRow }>(
+    eventsPaths.list(),
+    { method: 'POST', headers: authHeadersJson(), body: JSON.stringify({ ...payload, status: 'active' }) },
+    'No se pudo crear el evento',
+  )
+  return r.ok ? { ok: true, data: r.data.event } : r
+}

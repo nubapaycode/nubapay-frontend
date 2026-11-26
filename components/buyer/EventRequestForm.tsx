@@ -35,6 +35,12 @@ function prettyDay(isoDate: string): string {
 
 type Schedule = { startsAt: string; endsAt: string; nextDay: boolean }
 
+/** `2026-12-20T20:00` (hora local de quien completa) → ISO en UTC. */
+function toUtcIso(local: string): string {
+  const d = new Date(local)
+  return isNaN(d.getTime()) ? local : d.toISOString()
+}
+
 /**
  * Arma inicio y fin a partir de fecha + horas. Si no es de varios días y la hora de fin es menor o igual
  * a la de inicio, el evento termina al día siguiente (el caso típico de una fiesta que pasa la medianoche).
@@ -313,8 +319,9 @@ export function EventRequestForm({ parkingSlug, parkingName }: { parkingSlug: st
       form.append('organizer_email', organizerEmail.trim())
       form.append('organizer_phone', organizerPhone.trim())
       form.append('event_name', eventName.trim())
-      form.append('starts_at', schedule.startsAt)
-      if (schedule.endsAt) form.append('ends_at', schedule.endsAt)
+      // En UTC, como el resto del panel: el evento aprobado muestra la misma hora que eligió el organizador.
+      form.append('starts_at', toUtcIso(schedule.startsAt))
+      if (schedule.endsAt) form.append('ends_at', toUtcIso(schedule.endsAt))
       if (description.trim()) form.append('description', description.trim())
       form.append('website', website)
       if (cover) {

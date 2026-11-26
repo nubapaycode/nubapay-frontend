@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Pencil,
   Phone,
+  Plus,
   RotateCw,
   X,
 } from 'lucide-react'
@@ -36,6 +37,7 @@ import {
   type ParkingOwnerCounts,
   type ParkingOwnerEventItem,
   approveSubmission,
+  createParkingEvent,
   draftSlug,
   fetchParkingOwnerEvents,
   patchParkingOwnerAccount,
@@ -720,6 +722,120 @@ function EventsEmptyState({
 
 // ── Vista ─────────────────────────────────────────────────────────────────────
 
+/** `2026-12-20T20:00` (hora local) → ISO en UTC, como guarda el resto del panel. */
+function localToIso(v: string): string | null {
+  if (!v) return null
+  const d = new Date(v)
+  return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+/** Alta manual de un evento del estacionamiento, sin solicitud: nombre, fechas y descripción. */
+function NewEventModal({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean
+  onClose: () => void
+  onCreated: (event: OrganizerEventRow) => void
+}) {
+  const [name, setName] = useState('')
+  const [startsAt, setStartsAt] = useState('')
+  const [endsAt, setEndsAt] = useState('')
+  const [description, setDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const close = () => {
+    if (saving) return
+    setError('')
+    onClose()
+  }
+
+  const submit = async () => {
+    if (saving) return
+    if (name.trim().length < 2) return setError('Ingresá el nombre del evento')
+    if (!startsAt) return setError('Ingresá cuándo empieza')
+    if (endsAt && endsAt < startsAt) return setError('El fin no puede ser anterior al inicio')
+    setSaving(true)
+    setError('')
+    const r = await createParkingEvent({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      starts_at: localToIso(startsAt),
+      ends_at: localToIso(endsAt),
+    })
+    setSaving(false)
+    if (!r.ok) return setError(r.error)
+    setName('')
+    setStartsAt('')
+    setEndsAt('')
+    setDescription('')
+    onCreated(r.data)
+  }
+
+  const input =
+    'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[14px] text-gray-900 outline-none transition focus:border-gray-400 focus:shadow-[0_0_0_3px_rgba(17,24,39,0.06)]'
+  const label = 'flex flex-col gap-1.5 text-[13px] font-semibold text-gray-700'
+
+  return (
+    <Modal isOpen={open} onClose={close} title="Nuevo evento" className="max-w-lg">
+      <p className="-mt-2 mb-4 text-[13px] text-gray-500">
+        Se crea activo y usa la configuración de tu estacionamiento: vehículos, tienda, equipo y cobros.
+      </p>
+      <form
+        onSubmit={e => {
+          e.preventDefault()
+          void submit()
+        }}
+        className="flex flex-col gap-4"
+      >
+        <label className={label}>
+          Nombre del evento
+          <input className={input} value={name} maxLength={150} autoFocus onChange={e => setName(e.target.value)} />
+        </label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className={label}>
+            Inicio
+            <input className={input} type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} />
+          </label>
+          <label className={label}>
+            <span>
+              Fin <span className="font-normal text-gray-400">(opcional)</span>
+            </span>
+            <input
+              className={input}
+              type="datetime-local"
+              value={endsAt}
+              min={startsAt || undefined}
+              onChange={e => setEndsAt(e.target.value)}
+            />
+          </label>
+        </div>
+        <label className={label}>
+          <span>
+            Descripción <span className="font-normal text-gray-400">(opcional)</span>
+          </span>
+          <textarea className={cn(input, 'resize-none')} rows={3} value={description} onChange={e => setDescription(e.target.value)} />
+        </label>
+        {error && (
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
+          <button type="button" className={btnGhost} disabled={saving} onClick={close}>
+            Cancelar
+          </button>
+          <button type="submit" className={btnPrimary} disabled={saving}>
+            {saving ? 'Creando…' : 'Crear evento'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function ParkingOwnerEventsView() {
   const { account, setAccount } = useParkingOwnerAccount()
   // La vista solo se monta en el cliente (detrás del guard), así que se puede leer la URL al iniciar.
@@ -736,6 +852,9 @@ export function ParkingOwnerEventsView() {
   const [rejecting, setRejecting] = useState<EventSubmission | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [justApproved, setJustApproved] = useState<OrganizerEventRow | null>(null)
+  // El aviso verde sirve para un evento recién aprobado o recién creado a mano.
+  const [justVerb, setJustVerb] = useState<'aprobado' | 'creado'>('aprobado')
+  const [creating, setCreating] = useState(false)
   const { show, ToastPortal } = useToast()
 
   const queryKey = `${tab}:${page}:${reloadToken}`
@@ -782,8 +901,10 @@ export function ParkingOwnerEventsView() {
     setBusyId(s.id)
     const r = await approveSubmission(s.id)
     setBusyId(null)
-    if (r.ok) setJustApproved(r.data.event)
-    else show(r.error, 'error')
+    if (r.ok) {
+      setJustVerb('aprobado')
+      setJustApproved(r.data.event)
+    } else show(r.error, 'error')
     // También tras un error: un 409 significa que la solicitud ya estaba resuelta y hay que refrescar.
     reload()
   }
@@ -810,7 +931,24 @@ export function ParkingOwnerEventsView() {
     <div>
       <OrganizerToolHeading
         title="Eventos"
-        description="Los organizadores piden su evento con el formulario; vos lo aprobás y se crea para gestionarlo."
+        description="Los organizadores piden su evento con el formulario y vos lo aprobás. También podés crearlo vos directamente."
+        actions={
+          <button type="button" onClick={() => setCreating(true)} className={btnPrimary}>
+            <Plus size={15} strokeWidth={2.25} aria-hidden />
+            Nuevo evento
+          </button>
+        }
+      />
+      <NewEventModal
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={ev => {
+          setCreating(false)
+          setJustVerb('creado')
+          setJustApproved(ev)
+          if (tab !== 'approved') changeTab('approved')
+          else reload()
+        }}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
@@ -846,7 +984,7 @@ export function ParkingOwnerEventsView() {
                 <Check size={16} />
               </span>
               <p className="min-w-0 flex-1 text-[13px] text-emerald-900">
-                <span className="font-semibold">&ldquo;{justApproved.name}&rdquo; aprobado:</span> ya podés gestionarlo en
+                <span className="font-semibold">&ldquo;{justApproved.name}&rdquo; {justVerb}:</span> ya podés gestionarlo en
                 Aprobados.
               </p>
               <Link

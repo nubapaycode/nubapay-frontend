@@ -53,7 +53,8 @@ describe('EventRequestForm', () => {
     const body = init?.body as FormData
     expect(body.get('event_name')).toBe('Festival de Verano')
     expect(body.get('organizer_email')).toBe('ana@example.com')
-    expect(body.get('starts_at')).toBe('2099-12-20T20:00')
+    // Se manda en UTC: la base guarda UTC y el panel lo lee como UTC.
+    expect(body.get('starts_at')).toBe(new Date('2099-12-20T20:00').toISOString())
     expect(body.get('ends_at')).toBeNull()
     expect(body.get('cover')).toBeInstanceOf(File)
     // El señuelo viaja vacío cuando lo completa una persona.
@@ -98,7 +99,7 @@ describe('EventRequestForm', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar solicitud' }))
     await screen.findByText('Recibimos tu solicitud')
     const body = jest.mocked(browserFetch).mock.calls[0][1]?.body as FormData
-    expect(body.get('ends_at')).toBe('2099-12-21T04:00')
+    expect(body.get('ends_at')).toBe(new Date('2099-12-21T04:00').toISOString())
   })
 
   it('no acepta una fecha que ya pasó', async () => {

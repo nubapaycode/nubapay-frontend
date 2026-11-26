@@ -306,4 +306,40 @@ describe('ParkingOwnerEventsView', () => {
     await user.click(screen.getByRole('button', { name: 'No tenemos capacidad' }))
     expect(screen.getByPlaceholderText('Motivo (opcional)')).toHaveValue('No tenemos capacidad')
   })
+
+  it('crea un evento a mano: activo, con fechas en UTC, y avisa con el acceso al evento', async () => {
+    const base = mockFetch.getMockImplementation()!
+    mockFetch.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (/\/events$/.test(String(input)) && init?.method === 'POST') {
+        const body = JSON.parse(String(init.body))
+        return json({ event: { ...approvedEvent, id: 'ev-nuevo', name: body.name, status: body.status } }, true, 201)
+      }
+      return base(input, init)
+    })
+    const user = userEvent.setup()
+    renderBare()
+    await user.click(await screen.findByRole('button', { name: /Nuevo evento/ }))
+    await user.type(screen.getByLabelText('Nombre del evento'), 'Recital de verano')
+    fireEvent.change(screen.getByLabelText('Inicio'), { target: { value: '2026-12-20T20:00' } })
+    await user.click(screen.getByRole('button', { name: 'Crear evento' }))
+
+    await waitFor(() => {
+      const call = mockFetch.mock.calls.find(([u, i]) => /\/events$/.test(String(u)) && i?.method === 'POST')
+      expect(call).toBeDefined()
+      const body = JSON.parse(String(call?.[1]?.body))
+      expect(body).toMatchObject({ name: 'Recital de verano', status: 'active' })
+      expect(body.starts_at).toBe(new Date('2026-12-20T20:00').toISOString())
+    })
+    expect(await screen.findByText(/creado:/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Abrir evento/ })).toHaveAttribute('href', expect.stringMatching(/^\/eventos\/ev-nuevo\//))
+  })
+
+  it('no deja crear sin nombre ni fecha', async () => {
+    const user = userEvent.setup()
+    renderBare()
+    await user.click(await screen.findByRole('button', { name: /Nuevo evento/ }))
+    await user.click(screen.getByRole('button', { name: 'Crear evento' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Ingresá el nombre del evento')
+    expect(mockFetch.mock.calls.some(([u, i]) => /\/events$/.test(String(u)) && i?.method === 'POST')).toBe(false)
+  })
 })
