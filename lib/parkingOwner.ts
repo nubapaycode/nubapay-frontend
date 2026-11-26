@@ -32,6 +32,8 @@ export type ParkingOwnerAccount = {
   slug: string
   accepts_event_submissions: boolean
   counts: ParkingOwnerCounts
+  /** Medios de pago conectados del estacionamiento. Ausente en respuestas viejas. */
+  payments?: { mp: boolean; sipago: boolean; mobbex: boolean }
 }
 
 /** Fila de la lista: solicitud (pendientes/rechazados) o evento ya creado con su solicitud de origen (aprobados). */

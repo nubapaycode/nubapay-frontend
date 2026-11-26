@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/components/ui/Toast'
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
 import { getAuthUser } from '@/lib/authSession'
 import { eventRequestPath } from '@/lib/buyerRoutes'
@@ -295,10 +296,10 @@ export function ParkingOwnerEventsView() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-gray-900">Eventos</h1>
-      <p className="mb-5 text-[13px] text-gray-500">
-        Los organizadores piden su evento con el formulario; vos lo aprobás y se crea para gestionarlo.
-      </p>
+      <OrganizerToolHeading
+        title="Eventos"
+        description="Los organizadores piden su evento con el formulario; vos lo aprobás y se crea para gestionarlo."
+      />
 
       <RequestLinkCard
         account={account}

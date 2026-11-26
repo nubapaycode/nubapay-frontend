@@ -294,6 +294,19 @@ type Props = {
   hasMpToken?: boolean
   hasSipagoCredentials?: boolean
   hasMobbexCredentials?: boolean
+  /**
+   * Para un panel que no es de un evento (dueño de estacionamiento): ítems propios en vez de las
+   * herramientas del evento. Sin esto, la barra es la del evento.
+   */
+  navItemsOverride?: NavItem[]
+  /** Tarjeta de arriba (por defecto "Evento · Cambiar de evento" → `mis-eventos`). */
+  switcher?: { href: string; caption: string; hint: string }
+  /** Destino de "Conectar pagos" (por defecto, los métodos de pago del evento). */
+  paymentsHref?: string
+  /** Destino de "Mi cuenta"; `null` lo oculta. */
+  accountHref?: string | null
+  /** El buscador (⌘K) recorre las herramientas del evento; fuera de un evento no se muestra. */
+  showSearch?: boolean
 }
 
 export function EventOrganizerSidebar({
@@ -308,6 +321,11 @@ export function EventOrganizerSidebar({
   hasMpToken = false,
   hasSipagoCredentials = false,
   hasMobbexCredentials = false,
+  navItemsOverride,
+  switcher,
+  paymentsHref,
+  accountHref,
+  showSearch = true,
 }: Props) {
   const pubTheme = useOrganizerPublicTheme()
   const { bg: ORG_ACC, fg: ORG_INK } = useMemo(() => organizerAccentColorsFromTheme(pubTheme), [pubTheme])
@@ -334,8 +352,8 @@ export function EventOrganizerSidebar({
   }, [hasAnyPaymentMethod])
 
   const items = useMemo(
-    () => visibleNavItems(basePath, tools, workspaceMembership, modules),
-    [basePath, tools, workspaceMembership, modules],
+    () => navItemsOverride ?? visibleNavItems(basePath, tools, workspaceMembership, modules),
+    [navItemsOverride, basePath, tools, workspaceMembership, modules],
   )
 
   const desktopItems = useMemo(() => items.filter(item => item.showDesktop), [items])
@@ -655,13 +673,14 @@ export function EventOrganizerSidebar({
 
         {/* Selector de evento: muestra el evento activo y lleva a la lista para cambiarlo. */}
         {(() => {
-          const myEventsHref = `${basePath}/mis-eventos`
+          const myEventsHref = switcher?.href ?? `${basePath}/mis-eventos`
           const myEventsActive = isRouteActive(pathname, myEventsHref)
+          const hint = switcher?.hint ?? 'Cambiar de evento'
           return (
             <Link
               href={myEventsHref}
-              title={collapsed ? `${title ?? 'Mis eventos'} · Cambiar de evento` : 'Cambiar de evento'}
-              aria-label={collapsed ? `${title ?? 'Mis eventos'}, cambiar de evento` : undefined}
+              title={collapsed ? `${title ?? 'Mis eventos'} · ${hint}` : hint}
+              aria-label={collapsed ? `${title ?? 'Mis eventos'}, ${hint.toLowerCase()}` : undefined}
               className={`group mb-2 flex shrink-0 items-center gap-2.5 rounded-xl border bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow] hover:shadow-[0_2px_8px_-2px_rgba(16,24,40,0.12)] ${
                 collapsed ? 'justify-center p-1.5' : 'p-2 pr-2.5'
               } ${myEventsActive ? 'border-gray-300' : 'border-gray-200/80 hover:border-gray-300'}`}
@@ -676,7 +695,7 @@ export function EventOrganizerSidebar({
               {!collapsed && (
                 <>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-semibold text-gray-400">{title ? 'Evento' : 'Organizer'}</span>
+                    <span className="block text-[11px] font-semibold text-gray-400">{switcher?.caption ?? (title ? 'Evento' : 'Organizer')}</span>
                     <span className="block truncate text-[13px] font-semibold text-gray-900">{title ?? 'Mis eventos'}</span>
                   </span>
                   <ChevronsUpDown
@@ -691,6 +710,7 @@ export function EventOrganizerSidebar({
           )
         })()}
 
+        {showSearch && (
         <button
           type="button"
           onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_EVENT))}
@@ -708,6 +728,7 @@ export function EventOrganizerSidebar({
             </>
           )}
         </button>
+        )}
 
         <nav
           ref={navRef}
@@ -836,7 +857,7 @@ export function EventOrganizerSidebar({
             }}
           >
             <Link
-              href={`${basePath}/metodos-pago`}
+              href={paymentsHref ?? `${basePath}/metodos-pago`}
               aria-label={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
               title={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
               className={`flex w-full items-center gap-2.5 rounded-xl border text-[13px] font-semibold transition-colors ${
@@ -919,9 +940,11 @@ export function EventOrganizerSidebar({
               {collapsed && emailLabel && (
                 <p className="truncate px-2.5 pb-1.5 pt-1 text-[11px] text-gray-400" title={emailLabel}>{emailLabel}</p>
               )}
-              <ProfileMenuLink href={`${basePath}/cuenta`} onClick={() => setProfileOpen(false)} icon={<User size={15} strokeWidth={1.75} />}>
-                Mi cuenta
-              </ProfileMenuLink>
+              {accountHref !== null && (
+                <ProfileMenuLink href={accountHref ?? `${basePath}/cuenta`} onClick={() => setProfileOpen(false)} icon={<User size={15} strokeWidth={1.75} />}>
+                  Mi cuenta
+                </ProfileMenuLink>
+              )}
               <ProfileMenuButton
                 icon={<BookOpen size={15} strokeWidth={1.75} />}
                 trailing={<ArrowUpRight size={13} className="text-gray-300" aria-hidden />}

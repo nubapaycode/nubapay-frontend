@@ -1,77 +1,68 @@
 'use client'
 
-import Link from 'next/link'
+import { CalendarDays, Car, CreditCard, Megaphone, QrCode, ReceiptText, Settings, Store, Users } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LogOut, ParkingSquare } from 'lucide-react'
 
-import { clearAuthSession, getAuthUser } from '@/lib/authSession'
+import { EventOrganizerSidebar, type NavItem } from '@/components/organizer/EventOrganizerSidebar'
+import { KeyboardShortcutsDialog } from '@/components/organizer/KeyboardShortcutsDialog'
+import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
+import { clearAuthSession } from '@/lib/authSession'
 import { PARKING_OWNER_HOME } from '@/lib/modules'
-import { cn } from '@/lib/utils'
+import { ORGANIZER_FULL_TOOLS } from '@/lib/organizerStaffTools'
+
+const icon = (Icon: typeof CalendarDays, size = 16) => <Icon size={size} strokeWidth={1.75} aria-hidden />
 
 /**
- * Secciones del panel global. Pedidos, Escáner, Cobros y Avisos muestran todos los eventos juntos;
- * Vehículos, Tienda, Equipo y los métodos de pago se configuran una vez y los heredan todos los eventos.
+ * Secciones del panel del estacionamiento, con los mismos grupos que la barra de un evento.
+ * Pedidos, Escáner, Cobros y Avisos muestran todos los eventos juntos; Vehículos, Tienda y Equipo se
+ * configuran una vez y los heredan todos los eventos. Los atajos (G + tecla) son los mismos que en un evento.
  */
-const NAV = [
-  { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Eventos' },
-  { href: `${PARKING_OWNER_HOME}/pedidos`, label: 'Pedidos' },
-  { href: `${PARKING_OWNER_HOME}/escaner`, label: 'Escáner' },
-  { href: `${PARKING_OWNER_HOME}/cobros`, label: 'Cobros' },
-  { href: `${PARKING_OWNER_HOME}/avisos`, label: 'Avisos' },
-  { href: `${PARKING_OWNER_HOME}/vehiculos`, label: 'Vehículos' },
-  { href: `${PARKING_OWNER_HOME}/tienda`, label: 'Tienda' },
-  { href: `${PARKING_OWNER_HOME}/equipo`, label: 'Equipo' },
-  { href: `${PARKING_OWNER_HOME}/configuracion`, label: 'Configuración' },
+const PARKING_NAV: NavItem[] = [
+  { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Eventos', icon: icon(CalendarDays), group: 'principal', showDesktop: true, mobileTabOrder: 0 },
+  { href: `${PARKING_OWNER_HOME}/escaner`, label: 'Escáner', icon: icon(QrCode, 20), group: 'principal', showDesktop: true, mobileFab: true, shortcut: 's' },
+  { href: `${PARKING_OWNER_HOME}/pedidos`, label: 'Pedidos', icon: icon(ReceiptText), group: 'principal', showDesktop: true, mobileTabOrder: 2, shortcut: 'p' },
+  { href: `${PARKING_OWNER_HOME}/cobros`, label: 'Cobros', icon: icon(CreditCard), group: 'principal', showDesktop: true, shortcut: 'b' },
+  { href: `${PARKING_OWNER_HOME}/vehiculos`, label: 'Vehículos', icon: icon(Car), group: 'venta', showDesktop: true, mobileTabOrder: 1 },
+  { href: `${PARKING_OWNER_HOME}/tienda`, label: 'Tienda', icon: icon(Store), group: 'venta', showDesktop: true },
+  { href: `${PARKING_OWNER_HOME}/avisos`, label: 'Avisos', icon: icon(Megaphone), group: 'clientes', showDesktop: true },
+  { href: `${PARKING_OWNER_HOME}/equipo`, label: 'Equipo', icon: icon(Users), group: 'ajustes', showDesktop: true, shortcut: 'e' },
+  { href: `${PARKING_OWNER_HOME}/configuracion`, label: 'Configuración', icon: icon(Settings), group: 'ajustes', showDesktop: true, shortcut: 'a' },
 ]
 
-/** Marco del panel del dueño de estacionamiento: no pertenece a ningún evento puntual. */
+/** Marco del panel del estacionamiento: el mismo del panel de un evento (barra lateral + contenido). */
 export function ParkingOwnerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-
-  const logout = () => {
-    clearAuthSession()
-    router.replace('/ingresar')
-  }
+  const { account } = useParkingOwnerAccount()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
-          <Link href={PARKING_OWNER_HOME} className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
-            <ParkingSquare size={18} strokeWidth={1.75} aria-hidden />
-            Mi estacionamiento
-          </Link>
-          <nav className="flex flex-1 items-center gap-1 overflow-x-auto" aria-label="Secciones del estacionamiento">
-            {NAV.map(item => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors',
-                    active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
-                  )}
-                >
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
-          <span className="hidden text-[12px] text-gray-500 sm:block">{getAuthUser()?.email}</span>
-          <button
-            type="button"
-            onClick={logout}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <LogOut size={14} strokeWidth={1.75} aria-hidden />
-            Salir
-          </button>
+    <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-row overflow-hidden bg-gray-100">
+      <EventOrganizerSidebar
+        eventTitle={account.name}
+        basePath={PARKING_OWNER_HOME}
+        pathname={pathname}
+        workspaceMembership="owner"
+        tools={ORGANIZER_FULL_TOOLS}
+        navItemsOverride={PARKING_NAV}
+        switcher={{ href: `${PARKING_OWNER_HOME}/configuracion`, caption: 'Estacionamiento', hint: 'Configurar el estacionamiento' }}
+        paymentsHref={`${PARKING_OWNER_HOME}/cobros/metodos-pago`}
+        accountHref={null}
+        showSearch={false}
+        hasMpToken={account.payments?.mp ?? false}
+        hasSipagoCredentials={account.payments?.sipago ?? false}
+        hasMobbexCredentials={account.payments?.mobbex ?? false}
+        onLogout={() => {
+          clearAuthSession()
+          router.replace('/')
+        }}
+      />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 md:pb-0">
+          {/* Mismo margen que las páginas del panel de un evento. */}
+          <main className="w-full min-w-0 max-w-none p-4 pt-10 md:p-6 md:pl-[35px] md:pr-8 md:pt-[64px]">{children}</main>
         </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      </div>
+      <KeyboardShortcutsDialog />
     </div>
   )
 }

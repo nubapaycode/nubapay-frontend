@@ -41,6 +41,7 @@ export function ParkingOwnerAccountProvider({ children }: { children: React.Reac
   if (!account) {
     if (error) {
       return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
         <div role="alert" className="mx-auto max-w-md rounded-2xl border border-red-100 bg-red-50/70 p-6 text-center">
           <p className="text-[14px] text-red-700">{error}</p>
           <button
@@ -54,10 +55,11 @@ export function ParkingOwnerAccountProvider({ children }: { children: React.Reac
             Reintentar
           </button>
         </div>
+        </div>
       )
     }
     return (
-      <div className="flex justify-center py-24">
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <Spinner size="lg" className="text-gray-900" />
       </div>
     )

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAccountContext'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
@@ -34,10 +35,10 @@ export function ParkingOwnerSettingsView() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="mb-1 text-xl font-semibold text-gray-900">Configuración</h1>
-      <p className="mb-6 text-[13px] text-gray-500">
-        Datos generales de tu estacionamiento. Los ven los organizadores en el formulario de solicitud.
-      </p>
+      <OrganizerToolHeading
+        title="Configuración"
+        description="Datos generales de tu estacionamiento. Los ven los organizadores en el formulario de solicitud."
+      />
 
       <form
         onSubmit={e => {

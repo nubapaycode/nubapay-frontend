@@ -6,9 +6,9 @@ import { ParkingOwnerShell } from '@/components/parkingOwner/ParkingOwnerShell'
 export default function ParkingOwnerLayout({ children }: { children: React.ReactNode }) {
   return (
     <ParkingOwnerGuard>
-      <ParkingOwnerShell>
-        <ParkingOwnerAccountProvider>{children}</ParkingOwnerAccountProvider>
-      </ParkingOwnerShell>
+      <ParkingOwnerAccountProvider>
+        <ParkingOwnerShell>{children}</ParkingOwnerShell>
+      </ParkingOwnerAccountProvider>
     </ParkingOwnerGuard>
   )
 }
