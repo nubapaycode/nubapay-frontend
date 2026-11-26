@@ -148,3 +148,8 @@ export async function fetchParkingOwnerEventOptions(): Promise<Result<ParkingOwn
       .map(e => ({ id: e.id, name: e.name, starts_at: e.starts_at })),
   }
 }
+
+/** Mientras se escribe un link: minúsculas y guiones (el backend termina de normalizarlo al guardar). */
+export function draftSlug(v: string): string {
+  return v.toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]/gu, '').replace(/-{2,}/g, '-')
+}

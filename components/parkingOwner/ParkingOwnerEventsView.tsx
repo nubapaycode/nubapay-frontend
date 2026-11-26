@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Calendar, Check, Copy, ExternalLink, Mail, Phone } from 'lucide-react'
+import { Calendar, Check, Copy, ExternalLink, Mail, Pencil, Phone } from 'lucide-react'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +22,7 @@ import {
   type ParkingOwnerCounts,
   type ParkingOwnerEventItem,
   approveSubmission,
+  draftSlug,
   fetchParkingOwnerEvents,
   patchParkingOwnerAccount,
   rejectSubmission,
@@ -52,15 +53,23 @@ function RequestLinkCard({
   onToggle,
   toggling,
   onCopyError,
+  onSaved,
 }: {
   account: ParkingOwnerAccount
   onToggle: (accepts: boolean) => void
   toggling: boolean
   onCopyError: () => void
+  onSaved: (account: ParkingOwnerAccount) => void
 }) {
   const [copied, setCopied] = useState(false)
-  const url = `${window.location.origin}${eventRequestPath(account.slug)}`
+  const [editing, setEditing] = useState(false)
+  const [slug, setSlug] = useState(account.slug)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const origin = window.location.origin
+  const url = `${origin}${eventRequestPath(account.slug)}`
   const accepting = account.accepts_event_submissions
+  const cleanSlug = slug.replace(/^-+|-+$/g, '')
 
   const copy = async () => {
     try {
@@ -72,51 +81,133 @@ function RequestLinkCard({
     }
   }
 
+  const startEdit = () => {
+    setSlug(account.slug)
+    setError('')
+    setEditing(true)
+  }
+
+  const save = async () => {
+    if (saving) return
+    if (cleanSlug.length < 3) {
+      setError('Usá al menos 3 letras o números.')
+      return
+    }
+    if (cleanSlug === account.slug) {
+      setEditing(false)
+      return
+    }
+    setSaving(true)
+    const r = await patchParkingOwnerAccount({ slug: cleanSlug })
+    setSaving(false)
+    if (!r.ok) {
+      setError(r.error)
+      return
+    }
+    if (r.data.slug !== cleanSlug) {
+      // Un backend que todavía no admite cambiar el link responde OK sin cambiarlo.
+      setError('El link no se pudo cambiar. Revisá que el servidor esté actualizado.')
+      return
+    }
+    onSaved(r.data)
+    setEditing(false)
+  }
+
+  const chip =
+    'inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50'
+
   return (
     <section className="mb-6 rounded-2xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold text-gray-500">Link para que los organizadores pidan su evento</p>
-          <p className={cn('mt-0.5 truncate text-[14px] font-semibold', accepting ? 'text-gray-900' : 'text-gray-400')} title={url}>
+      <p className="text-[12px] font-semibold text-gray-500">Link para que los organizadores pidan su evento</p>
+      {editing ? (
+        <form
+          className="mt-2"
+          onSubmit={e => {
+            e.preventDefault()
+            void save()
+          }}
+        >
+          <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200 focus-within:border-gray-400">
+            <span className="hidden shrink-0 items-center bg-gray-50 px-3 text-[13px] text-gray-400 sm:flex">
+              {origin.replace(/^https?:\/\//, '')}/parking/
+            </span>
+            <input
+              aria-label="Link para solicitar eventos"
+              value={slug}
+              maxLength={180}
+              autoFocus
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              onChange={e => {
+                setSlug(draftSlug(e.target.value))
+                setError('')
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Escape') setEditing(false)
+              }}
+              className="min-w-0 flex-1 px-3 py-2 text-[14px] font-semibold text-gray-900 outline-none"
+            />
+            <span className="hidden shrink-0 items-center bg-gray-50 px-3 text-[13px] text-gray-400 sm:flex">
+              /solicitar-evento
+            </span>
+          </div>
+          {error ? (
+            <p role="alert" className="mt-1.5 text-[12px] text-red-600">
+              {error}
+            </p>
+          ) : (
+            <p className="mt-1.5 text-[12px] text-gray-500">El link anterior deja de funcionar: compartí el nuevo.</p>
+          )}
+          <div className="mt-3 flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" disabled={saving} onClick={() => setEditing(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" size="sm" loading={saving} disabled={cleanSlug.length < 3}>
+              Guardar link
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="mt-0.5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <p
+            className={cn('min-w-0 flex-1 truncate text-[14px] font-semibold', accepting ? 'text-gray-900' : 'text-gray-400')}
+            title={url}
+          >
             {url.replace(/^https?:\/\//, '')}
           </p>
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            <button type="button" onClick={startEdit} className={chip}>
+              <Pencil size={14} aria-hidden />
+              Editar
+            </button>
+            <button type="button" onClick={() => void copy()} className={chip}>
+              {copied ? <Check size={14} className="text-emerald-600" aria-hidden /> : <Copy size={14} aria-hidden />}
+              {copied ? 'Copiado' : 'Copiar'}
+            </button>
+            <a href={url} target="_blank" rel="noopener noreferrer" className={chip}>
+              <ExternalLink size={14} aria-hidden />
+              Abrir
+            </a>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={accepting}
+              disabled={toggling}
+              onClick={() => onToggle(!accepting)}
+              className={cn(
+                'inline-flex h-8 items-center rounded-lg border px-2.5 text-[12px] font-semibold transition-colors disabled:opacity-60',
+                accepting
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50',
+              )}
+            >
+              {accepting ? 'Recibiendo solicitudes' : 'Solicitudes pausadas'}
+            </button>
+          </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => void copy()}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            {copied ? <Check size={14} className="text-emerald-600" aria-hidden /> : <Copy size={14} aria-hidden />}
-            {copied ? 'Copiado' : 'Copiar'}
-          </button>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <ExternalLink size={14} aria-hidden />
-            Abrir
-          </a>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={accepting}
-            disabled={toggling}
-            onClick={() => onToggle(!accepting)}
-            className={cn(
-              'inline-flex h-8 items-center rounded-lg border px-2.5 text-[12px] font-semibold transition-colors disabled:opacity-60',
-              accepting
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50',
-            )}
-          >
-            {accepting ? 'Recibiendo solicitudes' : 'Solicitudes pausadas'}
-          </button>
-        </div>
-      </div>
-      {!accepting && (
+      )}
+      {!accepting && !editing && (
         <p className="mt-2 text-[12px] text-gray-500">El link muestra que no estás recibiendo solicitudes hasta que lo vuelvas a activar.</p>
       )}
     </section>
@@ -306,6 +397,10 @@ export function ParkingOwnerEventsView() {
         toggling={toggling}
         onToggle={accepts => void toggleAccepting(accepts)}
         onCopyError={() => show('No se pudo copiar. Copiá el enlace manualmente.', 'error')}
+        onSaved={next => {
+          setAccount(next)
+          show('Link actualizado.', 'success')
+        }}
       />
 
       <div role="tablist" aria-label="Estado de los eventos" className="mb-4 flex gap-1 border-b border-gray-200">

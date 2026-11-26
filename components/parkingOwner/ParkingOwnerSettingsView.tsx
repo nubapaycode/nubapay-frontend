@@ -7,12 +7,7 @@ import { useParkingOwnerAccount } from '@/components/parkingOwner/ParkingOwnerAc
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
-import { patchParkingOwnerAccount } from '@/lib/parkingOwner'
-
-/** Mientras se escribe: minúsculas y guiones (el backend termina de normalizarlo al guardar). */
-function draftSlug(v: string): string {
-  return v.toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]/gu, '').replace(/-{2,}/g, '-')
-}
+import { draftSlug, patchParkingOwnerAccount } from '@/lib/parkingOwner'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3 py-2 text-[14px] outline-none focus:border-gray-400'
@@ -44,7 +39,10 @@ export function ParkingOwnerSettingsView() {
       ...(slugChanged ? { slug: cleanSlug } : {}),
     })
     setSaving(false)
-    if (r.ok) {
+    if (r.ok && slugChanged && r.data.slug !== cleanSlug) {
+      // Un backend que todavía no admite cambiar el link responde OK sin cambiarlo.
+      setError('El link no se pudo cambiar. Revisá que el servidor esté actualizado.')
+    } else if (r.ok) {
       setAccount(r.data)
       setName(r.data.name)
       setSlug(r.data.slug)

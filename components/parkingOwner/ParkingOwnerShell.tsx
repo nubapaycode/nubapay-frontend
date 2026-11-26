@@ -14,7 +14,8 @@ import { ORGANIZER_FULL_TOOLS } from '@/lib/organizerStaffTools'
 const icon = (Icon: typeof CalendarDays, size = 16) => <Icon size={size} strokeWidth={1.75} aria-hidden />
 
 /**
- * Secciones del panel del estacionamiento, con los mismos grupos que la barra de un evento.
+ * Secciones del panel del estacionamiento, con los mismos grupos que la barra de un evento. Vehículos va en
+ * "Operación" junto al escáner (es lo que se usa en la entrada); cada sección muestra su título.
  * Pedidos, Escáner y Cobros muestran todos los eventos juntos; Vehículos, Tienda y Equipo se configuran una
  * vez y los heredan todos los eventos. Vehículos y Tienda solo aparecen con su módulo (parking / catálogo).
  * Los avisos se mandan desde cada evento. Los atajos (G + tecla) son los mismos que en un evento.
@@ -22,9 +23,9 @@ const icon = (Icon: typeof CalendarDays, size = 16) => <Icon size={size} strokeW
 const PARKING_NAV: NavItem[] = [
   { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Eventos', icon: icon(CalendarDays), group: 'principal', showDesktop: true, mobileTabOrder: 0 },
   { href: `${PARKING_OWNER_HOME}/escaner`, label: 'Escáner', icon: icon(QrCode, 20), group: 'principal', showDesktop: true, mobileFab: true, shortcut: 's' },
+  { href: `${PARKING_OWNER_HOME}/vehiculos`, label: 'Vehículos', icon: icon(Car), group: 'principal', showDesktop: true, mobileTabOrder: 1, module: 'parking' },
   { href: `${PARKING_OWNER_HOME}/pedidos`, label: 'Pedidos', icon: icon(ReceiptText), group: 'principal', showDesktop: true, mobileTabOrder: 2, shortcut: 'p' },
   { href: `${PARKING_OWNER_HOME}/cobros`, label: 'Cobros', icon: icon(CreditCard), group: 'principal', showDesktop: true, shortcut: 'b' },
-  { href: `${PARKING_OWNER_HOME}/vehiculos`, label: 'Vehículos', icon: icon(Car), group: 'venta', showDesktop: true, mobileTabOrder: 1, module: 'parking' },
   { href: `${PARKING_OWNER_HOME}/tienda`, label: 'Tienda', icon: icon(Store), group: 'venta', showDesktop: true, module: 'catalogo' },
   { href: `${PARKING_OWNER_HOME}/equipo`, label: 'Equipo', icon: icon(Users), group: 'ajustes', showDesktop: true, shortcut: 'e' },
   { href: `${PARKING_OWNER_HOME}/configuracion`, label: 'Configuración', icon: icon(Settings), group: 'ajustes', showDesktop: true, shortcut: 'a' },
@@ -54,6 +55,8 @@ export function ParkingOwnerShell({ children }: { children: React.ReactNode }) {
         paymentsHref={`${PARKING_OWNER_HOME}/cobros/metodos-pago`}
         accountHref={null}
         showSearch={false}
+        groupLabels={{ principal: 'Operación' }}
+        showGroupTitles
         hasMpToken={account.payments?.mp ?? false}
         hasSipagoCredentials={account.payments?.sipago ?? false}
         hasMobbexCredentials={account.payments?.mobbex ?? false}

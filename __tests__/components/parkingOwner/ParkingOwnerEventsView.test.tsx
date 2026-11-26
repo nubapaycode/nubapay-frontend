@@ -186,4 +186,41 @@ describe('ParkingOwnerEventsView', () => {
     expect(card).toHaveAttribute('href', expect.stringMatching(/^\/eventos\/ev-1\//))
     expect(screen.getByText(/Organiza Ana Pérez/)).toBeInTheDocument()
   })
+
+  it('edita el link desde la tarjeta de Eventos', async () => {
+    const base = mockFetch.getMockImplementation()!
+    mockFetch.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/parking-owner/account') && init?.method === 'PATCH') {
+        return json({ account: { ...account, ...JSON.parse(String(init.body)) } })
+      }
+      return base(input, init)
+    })
+    const user = userEvent.setup()
+    renderView()
+    await screen.findByText('Festival de Verano')
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    const input = screen.getByLabelText('Link para solicitar eventos')
+    await user.clear(input)
+    await user.type(input, 'Playa Sur')
+    await user.click(screen.getByRole('button', { name: 'Guardar link' }))
+    expect(await screen.findByText(/parking\/playa-sur\/solicitar-evento/)).toBeInTheDocument()
+    expect(await screen.findByText('Link actualizado.')).toBeInTheDocument()
+  })
+
+  it('si el servidor responde OK pero no cambia el link, lo avisa en vez de dar por guardado', async () => {
+    const base = mockFetch.getMockImplementation()!
+    mockFetch.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/parking-owner/account') && init?.method === 'PATCH') return json({ account })
+      return base(input, init)
+    })
+    const user = userEvent.setup()
+    renderView()
+    await screen.findByText('Festival de Verano')
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    const input = screen.getByLabelText('Link para solicitar eventos')
+    await user.clear(input)
+    await user.type(input, 'otro-link')
+    await user.click(screen.getByRole('button', { name: 'Guardar link' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('servidor esté actualizado')
+  })
 })

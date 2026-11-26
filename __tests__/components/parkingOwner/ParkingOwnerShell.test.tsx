@@ -89,4 +89,17 @@ describe('ParkingOwnerShell', () => {
     expect(hrefs).not.toContain('/estacionamiento/vehiculos')
     expect(hrefs).not.toContain('/estacionamiento/tienda')
   })
+
+  it('Vehículos va en la sección del escáner, que tiene título', async () => {
+    renderShell()
+    const sidebar = await screen.findByRole('complementary', { name: 'Barra lateral' })
+    const operacion = within(sidebar).getByRole('group', { name: 'Operación' })
+    expect(within(operacion).getByText('Operación')).toBeInTheDocument()
+    const links = within(operacion).getAllByRole('link').map(a => a.getAttribute('href'))
+    expect(links).toEqual(
+      expect.arrayContaining(['/estacionamiento/escaner', '/estacionamiento/vehiculos', '/estacionamiento/pedidos']),
+    )
+    // Vehículos justo después del Escáner
+    expect(links.indexOf('/estacionamiento/vehiculos')).toBe(links.indexOf('/estacionamiento/escaner') + 1)
+  })
 })

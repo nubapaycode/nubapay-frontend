@@ -307,6 +307,10 @@ type Props = {
   accountHref?: string | null
   /** El buscador (⌘K) recorre las herramientas del evento; fuera de un evento no se muestra. */
   showSearch?: boolean
+  /** Nombres propios para las secciones (ej. "Operación" en vez de "Principal"). */
+  groupLabels?: Partial<Record<NavGroup, string>>
+  /** Muestra el título de cada sección aunque no sea acordeón (por defecto solo lo tienen los acordeones). */
+  showGroupTitles?: boolean
 }
 
 export function EventOrganizerSidebar({
@@ -326,6 +330,8 @@ export function EventOrganizerSidebar({
   paymentsHref,
   accountHref,
   showSearch = true,
+  groupLabels,
+  showGroupTitles = false,
 }: Props) {
   const pubTheme = useOrganizerPublicTheme()
   const { bg: ORG_ACC, fg: ORG_INK } = useMemo(() => organizerAccentColorsFromTheme(pubTheme), [pubTheme])
@@ -517,12 +523,12 @@ export function EventOrganizerSidebar({
   const desktopGroups = useMemo(
     () =>
       NAV_GROUPS.map(group => ({
-        group,
+        group: { ...group, label: groupLabels?.[group.key] ?? group.label },
         groupItems: desktopItems
           .map((item, index) => ({ item, index }))
           .filter(({ item }) => item.group === group.key),
       })).filter(g => g.groupItems.length > 0),
-    [desktopItems],
+    [desktopItems, groupLabels],
   )
 
   /**
@@ -801,6 +807,9 @@ export function EventOrganizerSidebar({
                     aria-label={group.label}
                     className={groupIndex > 0 ? (collapsed ? 'mt-2 border-t border-gray-200/70 pt-2' : 'mt-3') : ''}
                   >
+                    {showGroupTitles && !collapsed && (
+                      <p className="flex h-7 items-center pl-[10px] text-[11px] font-semibold text-gray-400">{group.label}</p>
+                    )}
                     {links}
                   </div>
                 )
