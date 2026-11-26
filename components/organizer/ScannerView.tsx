@@ -9,7 +9,9 @@ import type { LucideIcon } from 'lucide-react'
 import { OrganizerToolHeading } from '@/components/organizer/OrganizerToolHeading'
 import { organizerAccentFilledButtonStyle } from '@/lib/organizerAccentCss'
 import { confirmCashPayment, previewQr, scanQr } from '@/lib/organizerWorkspace'
+import { unlockBeep } from '@/lib/scanner/beep'
 import { extractOrderId } from '@/lib/scanner/extractOrderId'
+import { ContinuousReader } from '@/components/organizer/scanner/ContinuousReader'
 import { cn, formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
 
@@ -224,7 +226,6 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const streamRef = useRef<MediaStream | null>(null)
-  const readerInputRef = useRef<HTMLInputElement>(null)
   const modeRef = useRef<ScanMode>('camera')
 
   const [state, setState] = useState<ScanState>('idle')
@@ -233,7 +234,6 @@ export function ScannerView({ eventId }: { eventId: string }) {
   const [selectedQty, setSelectedQty] = useState<Record<string, number>>({})
   const [errorMsg, setErrorMsg] = useState('')
   const [cameraError, setCameraError] = useState('')
-  const [readerValue, setReaderValue] = useState('')
   const kind = scanKind(order)
   const copy = SCAN_COPY[kind]
   const isParking = kind === 'parking'
@@ -378,11 +378,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
   }, [scan])
 
   const startReader = useCallback(() => {
+    // El clic que abre el lector habilita el sonido de los pitidos.
+    unlockBeep()
     stopCamera()
     modeRef.current = 'reader'
     saveScanMode('reader')
     setCameraError('')
-    setReaderValue('')
     setState('reader')
   }, [stopCamera])
 
@@ -394,7 +395,6 @@ export function ScannerView({ eventId }: { eventId: string }) {
     setSelectedQty({})
     setErrorMsg('')
     setCameraError('')
-    setReaderValue('')
     setState('idle')
   }, [stopCamera])
 
@@ -405,7 +405,6 @@ export function ScannerView({ eventId }: { eventId: string }) {
       setPendingOrderId(null)
       setSelectedQty({})
       setErrorMsg('')
-      setReaderValue('')
       setState('reader')
     } else {
       reset()
@@ -420,24 +419,12 @@ export function ScannerView({ eventId }: { eventId: string }) {
     else startCamera()
   }, [startCamera, startReader])
 
-  const submitReader = useCallback(() => {
-    const value = readerValue.trim()
-    setReaderValue('')
-    if (!value) return
-    void handleQrData(value)
-  }, [readerValue, handleQrData])
-
   useEffect(() => () => stopCamera(), [stopCamera])
 
   // Recordar el modo elegido la última vez (el lector físico suele quedar fijo en una PC de acceso).
   useEffect(() => {
     modeRef.current = loadScanMode()
   }, [])
-
-  // En modo lector el input debe tener el foco siempre: el lector "teclea" donde esté el cursor.
-  useEffect(() => {
-    if (state === 'reader') readerInputRef.current?.focus()
-  }, [state])
 
   const selectedCount = Object.values(selectedQty).reduce((sum, qty) => sum + qty, 0)
 
@@ -497,58 +484,8 @@ export function ScannerView({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Reader — lector físico (USB/Bluetooth): escribe el código y envía Enter */}
-        {state === 'reader' && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center gap-5 text-center">
-            <div className="relative flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-900">
-              <ScanLine size={30} strokeWidth={1.75} className="shrink-0" aria-hidden />
-              <span
-                className="absolute -right-1 -top-1 size-3 animate-pulse rounded-full"
-                style={{ background: 'var(--organizer-accent, #C6FF00)' }}
-                aria-hidden
-              />
-            </div>
-            <div>
-              <p className="text-base font-semibold text-gray-900">Listo para escanear</p>
-              <p className="text-sm text-gray-400 mt-1">Apuntá el lector al QR del comprador y disparalo</p>
-            </div>
-            <input
-              ref={readerInputRef}
-              type="text"
-              value={readerValue}
-              onChange={e => setReaderValue(e.target.value)}
-              onKeyDown={e => {
-                // La mayoría de los lectores cierran con Enter; algunos con Tab.
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                  e.preventDefault()
-                  submitReader()
-                }
-              }}
-              onBlur={e => {
-                // Si el foco se pierde sin ir a otro control, recuperarlo para no perder lecturas.
-                if (!e.relatedTarget) window.setTimeout(() => readerInputRef.current?.focus(), 0)
-              }}
-              autoFocus
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              aria-label="Código leído por el lector de QR"
-              placeholder="El código aparece acá"
-              className="w-full rounded-xl border border-gray-200 px-3.5 py-3 text-center text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition"
-            />
-            <p className="text-xs text-gray-400">
-              Si el lector no funciona, hacé clic en el campo y probá de nuevo. El lector debe estar en modo teclado (HID).
-            </p>
-            <button
-              type="button"
-              onClick={reset}
-              className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
-            >
-              Cambiar a cámara
-            </button>
-          </div>
-        )}
+        {/* Reader — lector físico (USB/Bluetooth): escaneo continuo, cada lectura entra a una lista y se valida sola */}
+        {state === 'reader' && <ContinuousReader eventId={eventId} onExit={reset} />}
 
         {/* Scanning */}
         {state === 'scanning' && (

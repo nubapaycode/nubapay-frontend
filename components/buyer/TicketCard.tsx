@@ -110,7 +110,7 @@ export function TicketCard({ ticket, quantity, onAdd, onUpdateQuantity, cartDisa
       >
         <div className={cn('min-w-0', !available && 'opacity-55')}>
           <p className={cn('text-lg font-semibold tabular-nums tracking-tight', !available && 'line-through')}>
-            {formatPrice(ticket.price)}
+            {Number(ticket.price) === 0 ? 'Sin cargo' : formatPrice(ticket.price)}
           </p>
         </div>
 

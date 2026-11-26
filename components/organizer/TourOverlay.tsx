@@ -1,5 +1,6 @@
 'use client'
 
+import { SCANNER_DISPLAY_PATH } from '@/lib/scanner/displayChannel'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -126,7 +127,8 @@ export function TourOverlay() {
     return () => window.removeEventListener('resize', onResize)
   }, [active])
 
-  if (!active || !currentStep) return null
+  // La pantalla para el público del escáner va en un monitor a la vista de todos: sin tour encima.
+  if (!active || !currentStep || pathname === SCANNER_DISPLAY_PATH) return null
 
   const isLast = step === tourSteps.length - 1
   const onCurrentPage = currentStep.matchPath(pathname)

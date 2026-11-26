@@ -200,11 +200,17 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
   const precreateRef = useRef<Promise<string | null> | null>(null)
 
   const selectionKey = cartItemsKey(lines.map(line => ({ productId: line.ticketId, quantity: line.quantity })))
+  // Todo lo elegido es sin cargo (precio 0): no se elige medio de pago y la reserva se confirma de una.
+  const catalogItems = itemsOf(event, kind)
+  const isFree =
+    lines.length > 0 &&
+    lines.every(line => Number(catalogItems.find(t => t.id === line.ticketId)?.price ?? 1) === 0)
 
   // La orden queda pendiente apenas hay entradas elegidas, para que el cobro
   // se arme mientras el comprador escribe sus datos.
   useEffect(() => {
-    if (!ready || lines.length === 0 || !paymentMethod || !paymentsEnabled) {
+    // Sin cargo no se pre-crea: el pedido nace confirmado y tiene que llevar los datos del comprador (el QR va por mail).
+    if (!ready || lines.length === 0 || !paymentMethod || !paymentsEnabled || isFree) {
       precreateRef.current = null
       return
     }
@@ -248,7 +254,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
     return () => {
       cancelled = true
     }
-  }, [ready, lines, selectionKey, paymentMethod, paymentsEnabled, catalogSlug])
+  }, [ready, lines, selectionKey, paymentMethod, paymentsEnabled, catalogSlug, isFree])
 
   // Entrada directa a esta página (sin pasar por "Comprar"): arranca el tiempo acá.
   useEffect(() => {
@@ -316,10 +322,11 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
       document.getElementById(`buyer-${firstInvalid.id}`)?.focus()
       return
     }
-    if (!paymentMethod) {
+    if (!isFree && !paymentMethod) {
       setSubmitError('Elegí un medio de pago')
       return
     }
+    const method = isFree ? 'free' : paymentMethod
 
     setLoading(true)
     setSubmitError('')
@@ -331,8 +338,8 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
         : {}
       // El backend exige el flag para guardar el teléfono y mandar el QR.
       const whatsappData = whatsappEnabled ? { whatsapp_opt_in: true } : {}
-      let orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
-      if (!orderId && precreateRef.current) {
+      let orderId = isFree ? null : loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
+      if (!orderId && !isFree && precreateRef.current) {
         await precreateRef.current
         orderId = loadPendingOrder(catalogSlug, selectionKey, paymentMethod)?.orderId ?? null
       }
@@ -373,7 +380,7 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             customer_phone: values.phone.trim(),
             ...vehicleData,
             ...whatsappData,
-            payment_method: paymentMethod,
+            payment_method: method,
             items,
           }),
         })
@@ -632,7 +639,12 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
         )}
 
         <Section title="Datos de pago">
-          {methods.length === 0 ? (
+          {isFree ? (
+            <p className="text-sm" style={{ color: MUTED }}>
+              {isParking ? 'Este lugar es sin cargo: no hay que pagar nada.' : 'Es sin cargo: no hay que pagar nada.'} Al
+              confirmar, te llega el QR al instante.
+            </p>
+          ) : methods.length === 0 ? (
             <p className="text-sm" style={{ color: MUTED }}>
               {copy.noPaymentMethods}
             </p>
@@ -700,17 +712,17 @@ export function TicketCheckoutView({ event, catalogSlug, availablePaymentMethods
             <div>
               <p className="text-[13px]" style={{ color: MUTED }}>Total</p>
               <p className="text-xl font-semibold tabular-nums tracking-tight" style={{ color: BUYER_COLORS.text }}>
-                {formatPrice(total)}
+                {isFree ? 'Sin cargo' : formatPrice(total)}
               </p>
             </div>
             <button
               type="button"
               onClick={handlePay}
-              disabled={loading || !paymentsEnabled || methods.length === 0}
+              disabled={loading || !paymentsEnabled || (!isFree && methods.length === 0)}
               className="h-[52px] flex-shrink-0 rounded-full px-10 text-base font-semibold tracking-tight transition-opacity active:opacity-85 disabled:opacity-40 md:px-14"
               style={{ background: BUYER_COLORS.accent, color: BUYER_COLORS.accentText }}
             >
-              Pagar
+              {isFree ? 'Confirmar reserva' : 'Pagar'}
             </button>
           </div>
         </div>
