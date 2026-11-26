@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import type { OrganizerStaffTools } from '@/lib/authSession'
 import { ORGANIZER_ACCENT_BACKGROUND, ORGANIZER_ACCENT_FOREGROUND } from '@/lib/organizerAccentCss'
 import { ORGANIZER_ZERO_TOOLS } from '@/lib/organizerStaffTools'
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 import {
   deleteEventStaff,
   fetchEventStaffList,
@@ -100,7 +101,7 @@ type ToolOpt = {
   Icon: React.FC<IconProps>
 }
 
-const TOOL_OPTS: ToolOpt[] = [
+const ALL_TOOL_OPTS: ToolOpt[] = [
   { key: 'dashboard',     label: 'Dashboard / métricas', short: 'Dashboard',  Icon: IcDashboard     },
   { key: 'products',      label: 'Catálogo y promos',     short: 'Catálogo',   Icon: IcProducts      },
   { key: 'scanner',       label: 'Escáner QR',            short: 'Escáner',    Icon: IcScanner       },
@@ -109,6 +110,9 @@ const TOOL_OPTS: ToolOpt[] = [
   { key: 'regrets',       label: 'Arrepentimientos',      short: 'Arrepent.',  Icon: IcOrders        },
   { key: 'payments',      label: 'Pagos',                 short: 'Pagos',      Icon: IcPayments      },
 ]
+
+/** Herramientas que se pueden asignar (sin las apagadas en `lib/features.ts`). */
+const TOOL_OPTS = ALL_TOOL_OPTS.filter(t => PICKUP_POINTS_ENABLED || t.key !== 'pickup_points')
 
 const AVATAR_PALETTES = [
   { bg: '#E8F4FD', fg: '#2E7BAA' },

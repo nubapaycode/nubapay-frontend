@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 import { TicketsView } from '@/components/organizer/TicketsView'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
@@ -105,5 +106,39 @@ describe('TicketsView · parking heredado', () => {
     expect(getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
     // Sin el texto del DNI en la ayuda de parking.
     expect(queryByText(/DNI del titular/)).not.toBeInTheDocument()
+  })
+
+  it('en un evento de un estacionamiento no se pueden crear tipos de vehículo', async () => {
+    jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
+      ok: true,
+      event: { slug: 'fiesta', cover_image_url: 'x', parking_maps_url: null, parking_maps_resolved_url: null, parent_event_id: 'base-1' },
+    } as never)
+    jest.mocked(fetchTickets).mockResolvedValue({
+      ok: true,
+      tickets: [ticket({ id: 'inh', name: 'Auto', inherited: true }), ticket({ id: 'viejo', name: 'Propio viejo' })],
+    })
+    const user = userEvent.setup()
+    render(<TicketsView eventId="ev-1" kind="parking" />)
+    expect(await screen.findByText('Propio viejo')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Nuevo vehículo' })).not.toBeInTheDocument())
+    // El tipo propio que ya existía se puede editar o borrar, pero no duplicar.
+    await user.click(screen.getByRole('button', { name: 'Opciones de Propio viejo' }))
+    expect(screen.getByRole('menuitem', { name: /Editar/ })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Duplicar/ })).not.toBeInTheDocument()
+  })
+
+  it('evento de un estacionamiento sin tipos propios: aviso y nada de plantillas', async () => {
+    localStorage.setItem('nubapay_token', 't')
+    localStorage.setItem('nubapay_user', JSON.stringify({ id: 'u', name: 'U', email: 'u@x.com', role: 'ORGANIZER', modules: ['parking', 'parking_owner'] }))
+    jest.mocked(fetchOrganizerEventDetail).mockResolvedValue({
+      ok: true,
+      event: { slug: 'fiesta', cover_image_url: 'x', parking_maps_url: null, parking_maps_resolved_url: null, parent_event_id: 'base-1' },
+    } as never)
+    jest.mocked(fetchTickets).mockResolvedValue({ ok: true, tickets: [] })
+    render(<TicketsView eventId="ev-1" kind="parking" />)
+    expect(await screen.findByRole('link', { name: 'Ir a Vehículos del estacionamiento' })).toHaveAttribute('href', '/estacionamiento/vehiculos')
+    expect(screen.queryByRole('button', { name: 'Moto' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Todavía no hay vehículos')).not.toBeInTheDocument()
+    localStorage.clear()
   })
 })

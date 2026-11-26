@@ -47,7 +47,7 @@ function CardMenu({
 }: {
   name: string
   onEdit: () => void
-  onDuplicate: () => void
+  onDuplicate?: () => void
   onMoveUp?: () => void
   onMoveDown?: () => void
   onDelete: () => void
@@ -101,7 +101,7 @@ function CardMenu({
       {open && (
         <div role="menu" className="nb-pop absolute right-0 top-[calc(100%+4px)] z-20 w-48 rounded-xl border border-gray-200 bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.18)]">
           {item('Editar', <Pencil size={14} strokeWidth={1.75} />, onEdit)}
-          {item('Duplicar', <Copy size={14} strokeWidth={1.75} />, onDuplicate)}
+          {onDuplicate && item('Duplicar', <Copy size={14} strokeWidth={1.75} />, onDuplicate)}
           {onMoveUp && item('Subir', <ArrowUp size={14} strokeWidth={1.75} />, onMoveUp)}
           {onMoveDown && item('Bajar', <ArrowDown size={14} strokeWidth={1.75} />, onMoveDown)}
           <div className="my-1 h-px bg-gray-100" />
@@ -134,7 +134,7 @@ export function TicketCard({
     toggling: boolean
     onToggle: () => void
     onEdit: () => void
-    onDuplicate: () => void
+    onDuplicate?: () => void
     onMoveUp?: () => void
     onMoveDown?: () => void
     onDelete: () => void

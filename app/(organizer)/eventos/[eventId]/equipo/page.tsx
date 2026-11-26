@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { InheritedTeamNotice } from '@/components/organizer/InheritedTeamNotice'
 import { StaffView } from '@/components/organizer/StaffView'
 import { organizerEventSectionMeta } from '@/lib/seo'
 
@@ -16,6 +17,7 @@ export default async function EventStaffPage({ params }: { params: Promise<{ eve
   const { eventId } = await params
   return (
     <main className="p-4 pt-10 md:p-6 md:px-8 md:pt-[64px] min-w-0">
+      <InheritedTeamNotice eventId={eventId} />
       <StaffView eventId={eventId} />
     </main>
   )

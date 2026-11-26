@@ -1,5 +1,6 @@
 'use client'
 
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 import { useEffect, useState } from 'react'
 
 import { Modal } from '@/components/ui/Modal'
@@ -25,7 +26,7 @@ function shortcutGroups(mod: string): { title: string; items: { keys: string[]; 
         { keys: ['G', 'P'], label: 'Ir a Pedidos' },
         { keys: ['G', 'C'], label: 'Ir al Catálogo' },
         { keys: ['G', 'T'], label: 'Ir a Tickets' },
-        { keys: ['G', 'R'], label: 'Ir a Puntos de retiro' },
+        ...(PICKUP_POINTS_ENABLED ? [{ keys: ['G', 'R'], label: 'Ir a Puntos de retiro' }] : []),
         { keys: ['G', 'B'], label: 'Ir a Cobros' },
         { keys: ['G', 'S'], label: 'Abrir el escáner' },
         { keys: ['G', 'E'], label: 'Ir a Equipo' },

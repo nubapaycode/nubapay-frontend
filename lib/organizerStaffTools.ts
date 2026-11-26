@@ -1,3 +1,4 @@
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 import type { OrganizerStaffTools, StaffMembership } from '@/lib/authSession'
 import { hasModule, type ModuleKey } from '@/lib/modules'
 
@@ -63,7 +64,7 @@ const FIRST_ROUTE_FOR_TOOL: { key: keyof OrganizerStaffTools; segment: string; m
   { key: 'products', segment: 'parking', module: 'parking' },
   { key: 'scanner', segment: 'escaner' },
   { key: 'orders', segment: 'pedidos' },
-  { key: 'pickup_points', segment: 'puntos-de-retiro' },
+  ...(PICKUP_POINTS_ENABLED ? [{ key: 'pickup_points' as const, segment: 'puntos-de-retiro' }] : []),
   { key: 'payments', segment: 'pagos' },
 ]
 

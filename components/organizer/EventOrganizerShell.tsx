@@ -1,6 +1,6 @@
 'use client'
 
-import { hasModule, type ModuleKey } from '@/lib/modules'
+import { PARKING_OWNER_HOME, hasModule, isParkingOwner, type ModuleKey } from '@/lib/modules'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -31,6 +31,8 @@ export function EventOrganizerShell({
     title: string
     slug: string
     membership: 'owner' | 'staff'
+    /** Evento de un estacionamiento: su evento base. */
+    parentEventId: string | null
     hasMpToken: boolean
     hasSipagoCredentials: boolean
     hasMobbexCredentials: boolean
@@ -60,6 +62,7 @@ export function EventOrganizerShell({
           title: body.event.name,
           slug: body.event.slug ?? '',
           membership: body.event.membership === 'staff' ? 'staff' : 'owner',
+          parentEventId: body.event.parent_event_id ?? null,
           hasMpToken: body.event.has_mp_token ?? false,
           hasSipagoCredentials: body.event.has_sipago_credentials ?? false,
           hasMobbexCredentials: body.event.has_mobbex_credentials ?? false,
@@ -268,6 +271,12 @@ export function EventOrganizerShell({
         hasMpToken={eventMeta.hasMpToken}
         hasSipagoCredentials={eventMeta.hasSipagoCredentials}
         hasMobbexCredentials={eventMeta.hasMobbexCredentials}
+        backLink={
+          // El dueño que entra a uno de sus eventos desde el panel del estacionamiento vuelve con esto.
+          eventMeta.parentEventId && isParkingOwner(getAuthUser())
+            ? { href: `${PARKING_OWNER_HOME}/eventos`, label: 'Volver al panel del estacionamiento' }
+            : undefined
+        }
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-tl-3xl md:rounded-bl-3xl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 md:pb-0">

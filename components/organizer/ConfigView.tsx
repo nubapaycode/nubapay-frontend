@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast'
 import { parseApiDate } from '@/lib/dateTime'
 import { fetchOrganizerEventDetail, patchOrganizerEvent } from '@/lib/organizerEvents'
 import type { OrganizerEventDetail } from '@/lib/types/organizer'
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 
 const inputClass =
   'w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition'
@@ -301,7 +302,8 @@ export function ConfigView({ eventId }: { eventId: string }) {
             </button>
           </div>
 
-          {/* Toggle notify_pickup_point */}
+          {/* Toggle notify_pickup_point (solo con Puntos de retiro encendido) */}
+          {PICKUP_POINTS_ENABLED && (
           <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-gray-900">Avisar punto de retiro en email</p>
@@ -325,6 +327,7 @@ export function ConfigView({ eventId }: { eventId: string }) {
               />
             </button>
           </div>
+          )}
 
           <button
             type="button"

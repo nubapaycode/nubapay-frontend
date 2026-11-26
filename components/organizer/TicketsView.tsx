@@ -1,6 +1,7 @@
 'use client'
 
 import { AlertTriangle, Bike, Car, Crown, Info, Motorbike, Plus, Ticket, Timer, Van } from 'lucide-react'
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Money, formatCount } from '@/components/organizer/dashboard/AnimatedNumber'
@@ -15,7 +16,9 @@ import {
   type TicketPayload,
 } from '@/components/organizer/tickets/TicketFormModal'
 import { Modal } from '@/components/ui/Modal'
+import { getAuthUser } from '@/lib/authSession'
 import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
+import { isParkingOwner } from '@/lib/modules'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
 import { fetchOrganizerEventDetail } from '@/lib/organizerEvents'
 import {
@@ -169,6 +172,26 @@ function ParkingOccupancy({
 
 type ParkingTab = 'vehicles' | 'reservations'
 
+/** En un evento de un estacionamiento, los tipos de vehículo se cargan en el panel del estacionamiento. */
+function InheritedParkingNotice() {
+  const owner = isParkingOwner(getAuthUser())
+  return (
+    <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-6 text-center">
+      <p className="text-[13px] text-gray-500">
+        Este evento usa los tipos de vehículo de tu estacionamiento. Se cargan y se editan en el panel del estacionamiento.
+      </p>
+      {owner && (
+        <Link
+          href="/estacionamiento/vehiculos"
+          className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl bg-gray-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800"
+        >
+          Ir a Vehículos del estacionamiento
+        </Link>
+      )}
+    </div>
+  )
+}
+
 export function TicketsView({
   eventId,
   kind = 'ticket',
@@ -196,6 +219,8 @@ export function TicketsView({
   const [tickets, setTickets] = useState<WorkspaceTicket[]>([])
   // Tipos heredados del estacionamiento (solo en un evento): se muestran aparte y no se editan acá.
   const [inheritedTickets, setInheritedTickets] = useState<WorkspaceTicket[]>([])
+  // Evento de un estacionamiento: los tipos de vehículo se cargan en el panel del estacionamiento, no acá.
+  const [inheritsParking, setInheritsParking] = useState(false)
   const [eventSlug, setEventSlug] = useState('')
   const [hasCover, setHasCover] = useState(true)
   const [mapsUrl, setMapsUrl] = useState<string | null>(null)
@@ -224,6 +249,7 @@ export function TicketsView({
     void fetchOrganizerEventDetail(eventId).then(res => {
       if (cancelled || !res.ok) return
       setEventSlug(res.event.slug)
+      setInheritsParking(Boolean(res.event.parent_event_id))
       setHasCover(Boolean(res.event.cover_image_url))
       setMapsUrl(res.event.parking_maps_url ?? null)
       setMapsResolved(res.event.parking_maps_resolved_url ?? null)
@@ -347,6 +373,9 @@ export function TicketsView({
     return { sold, revenue, redeemed, capacity }
   }, [tickets, inheritedTickets])
 
+  /** En un evento de un estacionamiento no se crean tipos de vehículo propios. */
+  const noOwnParking = isParking && !isAccount && inheritsParking
+
   // El estacionamiento (evento base) no se vende en un link propio: sus eventos sí.
   const publicUrl =
     !isAccount && eventSlug && origin ? `${origin}${(isParking ? parkingPath : ticketsPath)(eventSlug)}` : ''
@@ -374,10 +403,9 @@ export function TicketsView({
 
   const renderList = () =>
     tickets.length === 0 && inheritedTickets.length > 0 ? (
-      <p className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-5 py-6 text-center text-[13px] text-gray-500">
-        Este evento usa los tipos de vehículo de tu estacionamiento. Si necesitás uno solo para este evento, creá uno
-        propio con “{copy.newButton}”.
-      </p>
+      <InheritedParkingNotice />
+    ) : tickets.length === 0 && noOwnParking ? (
+      <InheritedParkingNotice />
     ) : tickets.length === 0 ? (
       <div className="nb-rise rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
         <div className="mx-auto mb-5 flex h-14 w-24 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 [mask:radial-gradient(circle_at_50%_0,transparent_7px,#000_7.5px)_top/100%_51%_no-repeat,radial-gradient(circle_at_50%_100%,transparent_7px,#000_7.5px)_bottom/100%_51%_no-repeat]">
@@ -493,7 +521,7 @@ export function TicketsView({
                   toggling: togglePending.has(t.id),
                   onToggle: () => void toggleActive(t),
                   onEdit: () => openEdit(t),
-                  onDuplicate: () => void duplicate(t),
+                  onDuplicate: noOwnParking ? undefined : () => void duplicate(t),
                   onMoveUp: i > 0 ? () => move(i, -1) : undefined,
                   onMoveDown: i < tickets.length - 1 ? () => move(i, 1) : undefined,
                   onDelete: () => setDeleteTarget(t),
@@ -523,15 +551,17 @@ export function TicketsView({
           <h1 className="text-[26px] font-semibold tracking-tight text-gray-900">{copy.title}</h1>
           <p className="mt-1 text-[13px] text-gray-500">{copy.intro}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => openCreate()}
-          style={organizerAccentFilledButtonStyle()}
-          className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
-        >
-          <Plus size={16} strokeWidth={2.25} aria-hidden />
-          {copy.newButton}
-        </button>
+        {!noOwnParking && (
+          <button
+            type="button"
+            onClick={() => openCreate()}
+            style={organizerAccentFilledButtonStyle()}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[14px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.08)] transition-[filter] hover:brightness-95"
+          >
+            <Plus size={16} strokeWidth={2.25} aria-hidden />
+            {copy.newButton}
+          </button>
+        )}
       </header>
 
       {isParking && (

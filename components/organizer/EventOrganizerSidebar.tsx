@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  ArrowLeft,
   ArrowUpRight,
   BookOpen,
   Check,
@@ -42,6 +43,7 @@ import type { OrganizerStaffTools } from '@/lib/authSession'
 import { getAuthUser } from '@/lib/authSession'
 import { parkingPath, ticketsPath } from '@/lib/buyerRoutes'
 import { hasModule, type ModuleKey } from '@/lib/modules'
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 import { usePublicOrigin } from '@/lib/hooks/usePublicOrigin'
 import { organizerAccentColorsFromTheme } from '@/lib/organizerAccentCss'
 import { catalogPublicPath } from '@/lib/siteOrigin'
@@ -192,15 +194,19 @@ function navItems(basePath: string): NavItem[] {
       showDesktop: true,
       ownerOnly: true,
     },
-    {
-      href: `${basePath}/puntos-de-retiro`,
-      shortcut: 'r',
-      label: 'Puntos de retiro',
-      group: 'venta',
-      icon: pickupIcon,
-      showDesktop: true,
-      tool: 'pickup_points',
-    },
+    ...(PICKUP_POINTS_ENABLED
+      ? [
+          {
+            href: `${basePath}/puntos-de-retiro`,
+            shortcut: 'r',
+            label: 'Puntos de retiro',
+            group: 'venta' as const,
+            icon: pickupIcon,
+            showDesktop: true,
+            tool: 'pickup_points' as const,
+          },
+        ]
+      : []),
     {
       href: `${basePath}/pagos`,
       shortcut: 'b',
@@ -311,6 +317,8 @@ type Props = {
   groupLabels?: Partial<Record<NavGroup, string>>
   /** Muestra el título de cada sección aunque no sea acordeón (por defecto solo lo tienen los acordeones). */
   showGroupTitles?: boolean
+  /** Acceso para volver a un panel superior (ej. el del estacionamiento, desde uno de sus eventos). */
+  backLink?: { href: string; label: string }
 }
 
 export function EventOrganizerSidebar({
@@ -332,6 +340,7 @@ export function EventOrganizerSidebar({
   showSearch = true,
   groupLabels,
   showGroupTitles = false,
+  backLink,
 }: Props) {
   const pubTheme = useOrganizerPublicTheme()
   const { bg: ORG_ACC, fg: ORG_INK } = useMemo(() => organizerAccentColorsFromTheme(pubTheme), [pubTheme])
@@ -676,6 +685,20 @@ export function EventOrganizerSidebar({
             {collapsed ? <PanelLeftOpen size={16} strokeWidth={1.75} /> : <PanelLeftClose size={16} strokeWidth={1.75} />}
           </button>
         </div>
+
+        {backLink && (
+          <Link
+            href={backLink.href}
+            title={collapsed ? backLink.label : undefined}
+            aria-label={collapsed ? backLink.label : undefined}
+            className={`mb-2 flex h-9 shrink-0 items-center gap-2 rounded-[10px] text-[13px] font-semibold text-gray-600 transition-colors hover:bg-white/70 hover:text-gray-900 ${
+              collapsed ? 'justify-center' : 'pl-[11px] pr-2'
+            }`}
+          >
+            <ArrowLeft size={15} strokeWidth={2} aria-hidden />
+            {!collapsed && <span className="truncate">{backLink.label}</span>}
+          </Link>
+        )}
 
         {/* Selector de evento: muestra el evento activo y lleva a la lista para cambiarlo. */}
         {(() => {
@@ -1274,6 +1297,18 @@ export function EventOrganizerSidebar({
             </div>
             <nav className="overflow-y-auto px-2 py-2">
               <ul className="flex flex-col gap-0.5">
+                {backLink && (
+                  <li className="mb-1 border-b border-gray-100 pb-1">
+                    <Link
+                      href={backLink.href}
+                      onClick={() => { setMoreOpen(false); setSheetDragY(0) }}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      <span className="text-gray-400"><ArrowLeft size={16} strokeWidth={2} aria-hidden /></span>
+                      {backLink.label}
+                    </Link>
+                  </li>
+                )}
                 {items.map(item => {
                   const active = isItemActive(pathname, item)
                   return (

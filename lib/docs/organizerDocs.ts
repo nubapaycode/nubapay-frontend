@@ -1,3 +1,4 @@
+import { PICKUP_POINTS_ENABLED } from '@/lib/features'
 /**
  * Contenido de la documentación del panel del organizador (`/documentacion`).
  *
@@ -113,7 +114,7 @@ function atScanner(x: number, y: number) {
   return at(x - 507, y - 10, 720, 660)
 }
 
-export const DOC_ARTICLES: DocArticle[] = [
+const ALL_DOC_ARTICLES: DocArticle[] = [
   {
     slug: 'primeros-pasos',
     group: 'inicio',
@@ -682,7 +683,7 @@ export const DOC_ARTICLES: DocArticle[] = [
       },
       {
         title: 'Elegí sus herramientas',
-        body: 'Marcá a qué tiene acceso: dashboard, catálogo, escáner, pedidos, puntos de retiro o pagos. Tiene que haber al menos una.',
+        body: 'Marcá a qué tiene acceso: dashboard, catálogo, escáner, pedidos o pagos. Tiene que haber al menos una.',
         image: img.equipoInvitar,
         spot: at(735, 563),
       },
@@ -818,6 +819,15 @@ export const DOC_ARTICLES: DocArticle[] = [
     related: ['link-catalogo', 'escaner'],
   },
 ]
+
+/** Guías de herramientas apagadas en `lib/features.ts`: no se listan ni se enlazan. */
+const HIDDEN_DOC_SLUGS = new Set<string>(PICKUP_POINTS_ENABLED ? [] : ['puntos-retiro'])
+
+export const DOC_ARTICLES: DocArticle[] = ALL_DOC_ARTICLES.filter(a => !HIDDEN_DOC_SLUGS.has(a.slug)).map(a => ({
+  ...a,
+  related: a.related?.filter(s => !HIDDEN_DOC_SLUGS.has(s)),
+  steps: PICKUP_POINTS_ENABLED ? a.steps : a.steps.filter(st => st.title !== 'Avisá el punto de retiro'),
+}))
 
 export function getDocArticle(slug: string): DocArticle | undefined {
   return DOC_ARTICLES.find(a => a.slug === slug)
