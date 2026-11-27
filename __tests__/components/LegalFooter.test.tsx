@@ -23,8 +23,8 @@ describe('Datos personales del titular fuera de footers y Términos', () => {
     expect(footer).not.toHaveTextContent('Los Andes')
   })
 
-  it('los Términos no los mencionan y siguen dando un contacto', () => {
-    const text = readFileSync(join(process.cwd(), 'app/terminos/page.tsx'), 'utf8')
+  it.each(['app/terminos/page.tsx', 'app/privacidad/page.tsx'])('%s no los menciona y sigue dando un contacto', file => {
+    const text = readFileSync(join(process.cwd(), file), 'utf8')
     expect(text).not.toContain('Alejo Vaquero')
     expect(text).not.toContain('23-46971353-9')
     expect(text).not.toContain('Bv. Los Andes')
