@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRef, useSyncExternalStore } from 'react'
 import { ArrowUp, ArrowUpRight } from 'lucide-react'
 
+import { LEGAL_ENTITY, LEGAL_OPERATOR_LINE } from '@/lib/legalEntity'
+
 import { gsap, MOTION_OK, useGSAP } from './gsap'
 
 const CONTACT_EMAIL = 'contacto@nubapay.app'
@@ -121,6 +123,15 @@ export default function Footer({ base = '' }: { base?: string }) {
               </div>
             ))}
           </nav>
+        </div>
+
+        {/* Datos de quien opera la plataforma (Meta pide titular y domicilio visibles) */}
+        <div className="lv2-f-legal">
+          <address className="lv2-f-legal-id">
+            <span className="lv2-f-legal-name">{LEGAL_OPERATOR_LINE}</span>
+            <span>{LEGAL_ENTITY.address}</span>
+          </address>
+          <p className="lv2-f-legal-copy">© {new Date().getFullYear()} {LEGAL_ENTITY.brand} · Argentina</p>
         </div>
 
       </div>

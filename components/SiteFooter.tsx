@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 
+import { LEGAL_ENTITY, LEGAL_OPERATOR_LINE } from '@/lib/legalEntity'
+
 const CSS = `
   .nb-footer { padding: 72px 40px 0; }
   .nb-footer-top { display: grid; grid-template-columns: 1.2fr 2fr; gap: 80px; }
@@ -150,7 +152,11 @@ export default function SiteFooter() {
         {/* Bottom bar */}
         <div style={{ padding: '20px 0' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', fontWeight: 400 }}>© 2026 Nubapay · Argentina</span>
+            <address style={{ fontStyle: 'normal', display: 'grid', gap: '2px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+              <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{LEGAL_OPERATOR_LINE}</span>
+              <span>{LEGAL_ENTITY.address}</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>© {new Date().getFullYear()} {LEGAL_ENTITY.brand} · Argentina</span>
+            </address>
             <a
               href="https://www.instagram.com/nubapay.app"
               target="_blank"
