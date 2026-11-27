@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   BookOpen,
   Check,
@@ -903,7 +904,7 @@ export function EventOrganizerSidebar({
               href={paymentsHref ?? `${basePath}/metodos-pago`}
               aria-label={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
               title={collapsed ? (mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos') : undefined}
-              className={`flex w-full items-center gap-2.5 rounded-xl border text-[13px] font-semibold transition-colors ${
+              className={`group flex w-full items-center gap-2.5 rounded-xl border text-[13px] font-semibold transition-colors ${
                 collapsed ? 'h-9 justify-center' : 'px-3 py-2'
               } ${
                 mpState === 'connected'
@@ -931,7 +932,14 @@ export function EventOrganizerSidebar({
               {!collapsed && (
                 <>
                   <span className="flex-1">{mpState === 'connected' ? 'Pagos conectados' : 'Conectar pagos'}</span>
-                  {mpState !== 'connected' && <span className="text-[11px] font-semibold opacity-60" aria-hidden>→</span>}
+                  {mpState !== 'connected' && (
+                    <ArrowRight
+                      size={14}
+                      strokeWidth={2}
+                      className="shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  )}
                 </>
               )}
             </Link>

@@ -8,8 +8,11 @@ export const SCANNER_DISPLAY_CHANNEL = 'nubapay-scanner-display'
 export const SCANNER_DISPLAY_PATH = '/pantalla-escaner'
 
 export type ScanDisplayMessage = {
-  /** `ok`: pasó (verde). `error`: no pasó, por el motivo que sea (rojo). */
-  result: 'ok' | 'error'
+  /**
+   * `ok`: pasó (verde). `pending`: no pasa todavía pero se resuelve ahí mismo, como cobrar el efectivo
+   * (naranja). `error`: no pasa (rojo).
+   */
+  result: 'ok' | 'pending' | 'error'
   /** Texto grande principal: la patente o, si no hay, el número de pedido. */
   headline: string
   /** Debajo: tipo de vehículo / lo que retira. */

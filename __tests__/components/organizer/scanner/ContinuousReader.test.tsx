@@ -97,6 +97,8 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(A)
     const row = (await screen.findByText('Falta cobrar el efectivo')).closest('li') as HTMLElement
+    // En la pantalla del público, el efectivo pendiente va en naranja.
+    expect(publishScan).toHaveBeenCalledWith(expect.objectContaining({ result: 'pending', reason: 'Falta pagar en efectivo' }))
     fireEvent.click(within(row).getByRole('button', { name: 'Cobré el efectivo' }))
     await waitFor(() => expect(screen.getByText('Ingresó')).toBeInTheDocument())
     expect(confirmCashPayment).toHaveBeenCalledWith('ev', A)
@@ -162,7 +164,7 @@ describe('ContinuousReader (lector físico, escaneo continuo)', () => {
     expect(screen.getByText(/pertenece a otro evento/)).toBeInTheDocument()
   })
 
-  it('muestra la patente como chapa en la fila', async () => {
+  it('muestra la patente en la fila', async () => {
     render(<ContinuousReader eventId="ev" onExit={() => {}} />)
     scan(A)
     expect(await screen.findByText('AA111BB')).toBeInTheDocument()

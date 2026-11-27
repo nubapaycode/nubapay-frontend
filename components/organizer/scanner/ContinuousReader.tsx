@@ -7,7 +7,6 @@ import { beepError, beepOk } from '@/lib/scanner/beep'
 import { type ScanDisplayMessage, openScannerDisplay, publishScan } from '@/lib/scanner/displayChannel'
 import { extractOrderIds } from '@/lib/scanner/extractOrderIds'
 import { confirmCashPayment, scanQrAll } from '@/lib/organizerWorkspace'
-import { PlateBadge } from '@/components/organizer/scanner/PlateBadge'
 import { PaginationBar } from '@/components/ui/PaginationBar'
 import { cn } from '@/lib/utils'
 import type { Order } from '@/types'
@@ -30,7 +29,7 @@ const DUPLICATE_WINDOW_MS = 4000
 
 function rowTitle(row: Row): string {
   const o = row.order
-  if (!o) return row.orderId ? `#${row.orderId.slice(0, 8).toUpperCase()}` : 'Código no reconocido'
+  if (!o) return row.orderId ? `#${row.orderId.slice(0, 8).toUpperCase()}` : '—'
   return o.orderNumber != null ? `#${o.orderNumber}` : `#${o.id.slice(0, 8).toUpperCase()}`
 }
 
@@ -41,7 +40,7 @@ function displayMessage(status: RowStatus, order: Order | undefined, message: st
   const reason =
     status === 'already' ? 'Este QR ya se usó' : status === 'cash' ? 'Falta pagar en efectivo' : ok ? undefined : message || 'No se pudo validar'
   return {
-    result: ok ? 'ok' : 'error',
+    result: ok ? 'ok' : status === 'cash' ? 'pending' : 'error',
     headline,
     detail: order?.items.map(i => i.name).join(' · ') || undefined,
     name: order?.customerName?.trim() || undefined,
@@ -55,14 +54,15 @@ type ListFilter = 'all' | 'ok' | 'issues'
 /** Lecturas por página en la lista. */
 const PAGE_SIZE = 10
 
-const STATUS_UI: Record<RowStatus, { label: string; bar: string; pill: string; icon: React.ReactNode }> = {
-  checking: { label: 'Validando…', bar: 'bg-gray-200', pill: 'bg-gray-100 text-gray-500', icon: <Loader2 size={16} className="animate-spin text-gray-400" /> },
-  ok: { label: 'Ingresó', bar: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700', icon: <Check size={16} strokeWidth={2.5} className="text-emerald-600" /> },
-  partial: { label: 'Entrega parcial', bar: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700', icon: <Check size={16} strokeWidth={2.5} className="text-emerald-600" /> },
-  already: { label: 'Ya estaba escaneado', bar: 'bg-amber-400', pill: 'bg-amber-50 text-amber-800', icon: <AlertTriangle size={16} className="text-amber-600" /> },
-  duplicate: { label: 'Lectura repetida', bar: 'bg-gray-200', pill: 'bg-gray-100 text-gray-500', icon: <AlertTriangle size={16} className="text-gray-400" /> },
-  cash: { label: 'Falta cobrar el efectivo', bar: 'bg-amber-400', pill: 'bg-amber-50 text-amber-800', icon: <CircleAlert size={16} className="text-amber-600" /> },
-  error: { label: 'Error', bar: 'bg-red-500', pill: 'bg-red-50 text-red-700', icon: <CircleAlert size={16} className="text-red-600" /> },
+/** Un solo código de color por estado: el ícono en un círculo y el texto del estado. */
+const STATUS_UI: Record<RowStatus, { label: string; text: string; circle: string; icon: React.ReactNode }> = {
+  checking: { label: 'Validando…', text: 'text-gray-500', circle: 'bg-gray-100 text-gray-400', icon: <Loader2 size={15} className="animate-spin" /> },
+  ok: { label: 'Ingresó', text: 'text-emerald-700', circle: 'bg-emerald-50 text-emerald-600', icon: <Check size={15} strokeWidth={2.75} /> },
+  partial: { label: 'Entrega parcial', text: 'text-emerald-700', circle: 'bg-emerald-50 text-emerald-600', icon: <Check size={15} strokeWidth={2.75} /> },
+  already: { label: 'Ya estaba escaneado', text: 'text-amber-700', circle: 'bg-amber-50 text-amber-600', icon: <AlertTriangle size={15} strokeWidth={2.25} /> },
+  duplicate: { label: 'Lectura repetida', text: 'text-gray-500', circle: 'bg-gray-100 text-gray-400', icon: <AlertTriangle size={15} strokeWidth={2.25} /> },
+  cash: { label: 'Falta cobrar el efectivo', text: 'text-amber-700', circle: 'bg-amber-50 text-amber-600', icon: <CircleAlert size={15} strokeWidth={2.25} /> },
+  error: { label: 'Error', text: 'text-red-700', circle: 'bg-red-50 text-red-600', icon: <CircleAlert size={15} strokeWidth={2.25} /> },
 }
 
 function SummaryTile({ label, value, tone }: { label: string; value: number; tone: 'ok' | 'issue' | 'neutral' }) {
@@ -112,7 +112,7 @@ export function ContinuousReader({ eventId, onExit }: { eventId: string; onExit:
         update(key, { status: result.order.status === 'delivered' ? 'ok' : 'partial', message: '', order: result.order })
         beepOk()
       } else if (result.alreadyScanned) {
-        update(key, { status: 'already', message: 'Ese QR ya se usó.', order: result.order })
+        update(key, { status: 'already', message: '', order: result.order })
         beepError()
       } else if (result.cashPending) {
         update(key, { status: 'cash', message: 'Cobrá el efectivo y confirmalo para que ingrese.', order: result.order })
@@ -277,57 +277,48 @@ export function ContinuousReader({ eventId, onExit }: { eventId: string; onExit:
           </div>
 
           {pageRows.length === 0 ? (
-            <p className="px-4 py-8 text-center text-[13px] text-gray-400">Nada por acá.</p>
+            <p className="px-4 py-8 text-center text-[13px] text-gray-400">No hay lecturas con este filtro.</p>
           ) : (
             <ol aria-label="Lecturas" className="divide-y divide-gray-100">
               {pageRows.map(row => {
                 const ui = STATUS_UI[row.status]
                 const o = row.order
                 const latest = row.key === latestKey
-                const vehicle = o?.items.map(i => i.name).join(' · ')
+                const details = [
+                  o?.customerName?.trim(),
+                  o?.items.map(i => i.name).join(' · '),
+                  o?.vehiclePlate && o.orderNumber != null ? `#${o.orderNumber}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
                 return (
-                  <li
-                    key={row.key}
-                    className={cn(
-                      'relative flex items-center gap-3 px-4 py-3 transition-colors',
-                      latest && 'nb-row-in bg-gray-50/80',
-                    )}
-                  >
-                    <span aria-hidden className={cn('absolute inset-y-0 left-0 w-1', ui.bar)} />
-                    <span className="shrink-0" aria-hidden>
+                  <li key={row.key} className={cn('flex items-center gap-3 px-4 py-3.5', latest && 'nb-row-in bg-gray-50')}>
+                    <span aria-hidden className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', ui.circle)}>
                       {ui.icon}
                     </span>
-                    <div className="w-[104px] shrink-0">
-                      {o?.vehiclePlate ? (
-                        <PlateBadge plate={o.vehiclePlate} />
-                      ) : (
-                        <span className="text-[14px] font-semibold tabular-nums text-gray-900">{rowTitle(row)}</span>
-                      )}
-                    </div>
+                    <p className="w-[96px] shrink-0 truncate text-[15px] font-semibold uppercase tabular-nums tracking-wide text-gray-900">
+                      {o?.vehiclePlate?.trim() || rowTitle(row)}
+                    </p>
                     <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 truncate text-[13px] font-semibold text-gray-900">
-                        <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', ui.pill)}>{ui.label}</span>
-                        {latest && <span className="text-[11px] font-semibold text-gray-400">Última</span>}
-                      </p>
-                      <p className="mt-0.5 truncate text-[12px] text-gray-500">
-                        {[vehicle, o?.customerName?.trim(), o?.vehiclePlate && o.orderNumber != null ? `#${o.orderNumber}` : null]
-                          .filter(Boolean)
-                          .join(' · ') || (row.orderId ? `Pedido ${rowTitle(row)}` : '')}
-                      </p>
-                      {row.message && <p className="mt-0.5 text-[12px] text-gray-600">{row.message}</p>}
+                      <p className={cn('truncate text-[14px] font-semibold', ui.text)}>{ui.label}</p>
+                      {details && <p className="mt-0.5 truncate text-[13px] text-gray-500">{details}</p>}
+                      {row.message && <p className="mt-0.5 text-[13px] text-gray-700">{row.message}</p>}
                       {row.status === 'cash' && (
                         <button
                           type="button"
                           onClick={() => void confirmCash(row)}
-                          className="mt-1.5 inline-flex h-8 items-center rounded-lg bg-gray-900 px-3 text-[12px] font-semibold text-white transition-colors hover:bg-gray-800"
+                          className="mt-2 inline-flex h-8 items-center rounded-lg bg-gray-900 px-3 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800"
                         >
                           Cobré el efectivo
                         </button>
                       )}
                     </div>
-                    <span className="shrink-0 text-[11px] tabular-nums text-gray-400">
-                      {row.at.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
+                    <div className="shrink-0 self-start pt-1 text-right">
+                      <p className="text-[12px] tabular-nums text-gray-400">
+                        {row.at.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                      </p>
+                      {latest && <p className="mt-0.5 text-[11px] font-semibold text-gray-900">Última</p>}
+                    </div>
                   </li>
                 )
               })}

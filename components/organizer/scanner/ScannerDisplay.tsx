@@ -1,9 +1,8 @@
 'use client'
 
-import { Check, Maximize, QrCode, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Maximize, QrCode } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { PlateBadge } from '@/components/organizer/scanner/PlateBadge'
 import { type ScanDisplayMessage, subscribeScans } from '@/lib/scanner/displayChannel'
 import { cn } from '@/lib/utils'
 
@@ -16,11 +15,10 @@ const INK = '#0A0A0F'
 const ACCENT = 'var(--organizer-accent, #C6FF00)'
 const ACCENT_INK = 'var(--organizer-accent-ink, #0A0F00)'
 const DANGER = '#E5484D'
+const WARNING = '#F76B15'
 
-/** Patente si la hay; si no, el número de pedido u OK/ERROR (lo que viene en `headline`). */
-function isPlate(headline: string): boolean {
-  return /^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{5,8}$/.test(headline)
-}
+/** Color de fondo de cada resultado (y del punto en la tira de últimas). */
+const RESULT_BG: Record<ScanDisplayMessage['result'], string> = { ok: ACCENT, pending: WARNING, error: DANGER }
 
 function useClock(): string {
   const [now, setNow] = useState(() => new Date())
@@ -28,13 +26,13 @@ function useClock(): string {
     const t = window.setInterval(() => setNow(new Date()), 15000)
     return () => window.clearInterval(t)
   }, [])
-  return now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 /**
  * Pantalla para el público, conectada al escáner de la misma compu (ver `lib/scanner/displayChannel.ts`).
- * Con el estilo de nubapay: en espera, negro con el acento; con cada lectura, verde (acento de la marca) si
- * pasa o rojo si no, con la patente como una chapa bien grande. Pensada para un segundo monitor.
+ * En espera, negra con "Mostrá tu QR"; con cada lectura, todo el fondo verde (acento de la marca) si pasa o
+ * naranja si falta algo que se resuelve ahí (cobrar el efectivo) o rojo si no, con la patente (o el nº de pedido) bien grande. Pensada para un segundo monitor.
  */
 export function ScannerDisplay() {
   const [msg, setMsg] = useState<ScanDisplayMessage | null>(null)
@@ -42,14 +40,12 @@ export function ScannerDisplay() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const clock = useClock()
 
-  useEffect(
-    () =>
-      subscribeScans(m => {
-        setMsg(m)
-        setHistory(h => [m, ...h].slice(0, HISTORY_SIZE))
-      }),
-    [],
-  )
+  const show = useCallback((m: ScanDisplayMessage) => {
+    setMsg(m)
+    setHistory(h => [m, ...h].slice(0, HISTORY_SIZE))
+  }, [])
+
+  useEffect(() => subscribeScans(show), [show])
 
   // Vuelve a la espera un rato después de la última lectura (una nueva reinicia el tiempo).
   useEffect(() => {
@@ -69,7 +65,7 @@ export function ScannerDisplay() {
   }
 
   const ok = msg?.result === 'ok'
-  const background = !msg ? INK : ok ? ACCENT : DANGER
+  const background = msg ? RESULT_BG[msg.result] : INK
   const color = !msg ? '#FFFFFF' : ok ? ACCENT_INK : '#FFFFFF'
 
   return (
@@ -80,56 +76,32 @@ export function ScannerDisplay() {
       aria-live="assertive"
       data-result={msg ? msg.result : 'idle'}
     >
-      {/* Marca + en vivo */}
       <header className="flex items-center justify-between px-[3vw] pt-[2.4vw]">
         {/* eslint-disable-next-line @next/next/no-img-element -- SVG estático del logo */}
         <img
           src="/logo-nubapay.svg"
           alt="nubapay"
-          className="h-[2.4vw] min-h-[20px] w-auto"
+          className="h-[2.2vw] min-h-[20px] w-auto"
           style={{ filter: !msg || !ok ? 'invert(1)' : undefined }}
         />
-        <span className="flex items-center gap-[1vw] text-[1.4vw] font-semibold tabular-nums opacity-80">
-          <span className="flex items-center gap-[0.6vw] rounded-full bg-current/10 px-[1vw] py-[0.4vw]">
-            <span className="size-[0.8vw] min-h-2 min-w-2 animate-pulse rounded-full" style={{ background: msg ? 'currentColor' : ACCENT }} aria-hidden />
-            En vivo
-          </span>
-          {clock}
-        </span>
+        <span className="text-[1.6vw] font-semibold tabular-nums opacity-60">{clock}</span>
       </header>
 
-      {/* Resultado */}
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-[4vw] text-center">
         {!msg ? (
           <div className="nb-display-in flex flex-col items-center">
-            <span className="relative mb-[3vw] flex size-[14vw] items-center justify-center" aria-hidden>
-              <span className="absolute inset-0 animate-ping rounded-full opacity-20" style={{ background: ACCENT }} />
-              <span className="relative flex size-full items-center justify-center rounded-full" style={{ background: ACCENT, color: ACCENT_INK }}>
-                <QrCode className="size-[6.5vw]" strokeWidth={1.75} />
-              </span>
-            </span>
+            <QrCode className="mb-[2.4vw] size-[8vw]" strokeWidth={1.5} style={{ color: ACCENT }} aria-hidden />
             <p className="text-[6vw] font-semibold leading-none tracking-tight">Mostrá tu QR</p>
-            <p className="mt-[1.4vw] text-[2vw] text-white/50">Acercalo al lector para ingresar · Esperando lectura…</p>
+            <p className="mt-[1.6vw] text-[2.2vw] text-white/50">Acercalo al lector para ingresar</p>
           </div>
         ) : (
           <div key={msg.at} className="nb-display-in flex max-w-full flex-col items-center">
-            <span
-              className="mb-[2.4vw] inline-flex items-center gap-[1vw] rounded-full px-[2.2vw] py-[0.8vw] text-[3vw] font-bold uppercase tracking-wide"
-              style={{ background: ok ? ACCENT_INK : '#FFFFFF', color: ok ? ACCENT : DANGER }}
-            >
-              {ok ? <Check className="size-[3vw]" strokeWidth={3} aria-hidden /> : <X className="size-[3vw]" strokeWidth={3} aria-hidden />}
-              {ok ? 'Puede pasar' : 'No pasa'}
-            </span>
-
-            {isPlate(msg.headline) ? (
-              <PlateBadge plate={msg.headline} size="xl" />
-            ) : (
-              <p className="max-w-full truncate text-[13vw] font-black leading-none tracking-tight">{msg.headline}</p>
-            )}
-
-            {!ok && msg.reason && <p className="mt-[2.4vw] text-[3.6vw] font-semibold leading-tight">{msg.reason}</p>}
+            <p className="max-w-full truncate text-[14vw] font-black uppercase leading-none tracking-wide tabular-nums">
+              {msg.headline}
+            </p>
+            {!ok && msg.reason && <p className="mt-[2.4vw] text-[3.4vw] font-semibold leading-tight">{msg.reason}</p>}
             {(msg.detail || msg.name) && (
-              <p className={cn('max-w-full truncate text-[2.4vw] font-medium opacity-80', ok ? 'mt-[2.4vw]' : 'mt-[1vw]')}>
+              <p className={cn('max-w-full truncate text-[2.4vw] font-medium opacity-75', ok ? 'mt-[2.4vw]' : 'mt-[1vw]')}>
                 {[msg.detail, msg.name].filter(Boolean).join(' · ')}
               </p>
             )}
@@ -137,38 +109,26 @@ export function ScannerDisplay() {
         )}
       </main>
 
-      {/* Últimas lecturas */}
-      <footer className="flex items-center gap-[1vw] overflow-hidden px-[3vw] pb-[2.4vw]">
+      <footer className="flex items-center gap-[2vw] overflow-hidden px-[3vw] pb-[2.4vw]">
         {history.length > 0 && (
-          <>
-            <span className="shrink-0 text-[1.2vw] font-semibold uppercase tracking-wider opacity-50">Últimas</span>
-            <ol aria-label="Últimas lecturas" className="flex min-w-0 gap-[0.8vw]">
-              {history.map(h => (
-                <li
-                  key={h.at}
-                  className="flex shrink-0 items-center gap-[0.5vw] rounded-full px-[1.2vw] py-[0.5vw] text-[1.3vw] font-semibold tabular-nums"
-                  style={{
-                    background: msg ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <span
-                    className="flex size-[1.4vw] min-h-3 min-w-3 items-center justify-center rounded-full"
-                    style={{ background: h.result === 'ok' ? ACCENT : DANGER, color: h.result === 'ok' ? ACCENT_INK : '#FFFFFF' }}
-                    aria-hidden
-                  >
-                    {h.result === 'ok' ? <Check className="size-[1vw]" strokeWidth={3.5} /> : <X className="size-[1vw]" strokeWidth={3.5} />}
-                  </span>
-                  {h.headline}
-                </li>
-              ))}
-            </ol>
-          </>
+          <ol aria-label="Últimas lecturas" className="flex min-w-0 gap-[2vw] opacity-60">
+            {history.map(h => (
+              <li key={h.at} className="flex shrink-0 items-center gap-[0.6vw] text-[1.5vw] font-semibold uppercase tabular-nums">
+                <span
+                  className="size-[0.9vw] min-h-2 min-w-2 rounded-full"
+                  style={{ background: msg?.result === h.result ? 'currentColor' : RESULT_BG[h.result] }}
+                  aria-hidden
+                />
+                {h.headline}
+              </li>
+            ))}
+          </ol>
         )}
         {!isFullscreen && (
           <button
             type="button"
             onClick={goFullscreen}
-            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/25"
+            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-white/25"
           >
             <Maximize size={16} aria-hidden />
             Pantalla completa
@@ -177,9 +137,9 @@ export function ScannerDisplay() {
       </footer>
 
       <style>{`
-        @keyframes nb-display-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
-        .nb-display-in { animation: nb-display-in 220ms cubic-bezier(0.22,1,0.36,1) both; }
-        @media (prefers-reduced-motion: reduce) { .nb-display-in { animation: none; } .animate-ping { animation: none; } }
+        @keyframes nb-display-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+        .nb-display-in { animation: nb-display-in 200ms cubic-bezier(0.22,1,0.36,1) both; }
+        @media (prefers-reduced-motion: reduce) { .nb-display-in { animation: none; } }
       `}</style>
     </div>
   )

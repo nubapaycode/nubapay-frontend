@@ -18,7 +18,7 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers())
 
 describe('ScannerDisplay (pantalla para el público)', () => {
-  it('espera con la marca, pasa a verde con la chapa gigante y vuelve a esperar', () => {
+  it('espera con la marca, pasa a verde con la patente grande y vuelve a esperar', () => {
     render(<ScannerDisplay />)
     expect(screen.getByRole('img', { name: 'nubapay' })).toBeInTheDocument()
     expect(screen.getByText('Mostrá tu QR')).toBeInTheDocument()
@@ -27,9 +27,7 @@ describe('ScannerDisplay (pantalla para el público)', () => {
     act(() => emit({ result: 'ok', headline: 'AB123CD', detail: 'Auto', name: 'Ana Pérez', at: 1 }))
     expect(screen.getByRole('status')).toHaveAttribute('data-result', 'ok')
     const main = screen.getByRole('main')
-    expect(within(main).getByText('Puede pasar')).toBeInTheDocument()
     expect(within(main).getByText('AB123CD')).toBeInTheDocument()
-    expect(within(main).getByText('Argentina')).toBeInTheDocument() // chapa Mercosur
     expect(within(main).getByText('Auto · Ana Pérez')).toBeInTheDocument()
 
     act(() => jest.advanceTimersByTime(6500))
@@ -43,7 +41,6 @@ describe('ScannerDisplay (pantalla para el público)', () => {
     act(() => emit({ result: 'error', headline: 'CD456EF', reason: 'Este QR ya se usó', at: 1 }))
     expect(screen.getByRole('status')).toHaveAttribute('data-result', 'error')
     const main = screen.getByRole('main')
-    expect(within(main).getByText('No pasa')).toBeInTheDocument()
     expect(within(main).getByText('Este QR ya se usó')).toBeInTheDocument()
     expect(within(main).getByText('CD456EF')).toBeInTheDocument()
   })
@@ -64,6 +61,12 @@ describe('ScannerDisplay (pantalla para el público)', () => {
     render(<ScannerDisplay />)
     act(() => emit({ result: 'ok', headline: '#57', at: 1 }))
     expect(within(screen.getByRole('main')).getByText('#57')).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).queryByText('Argentina')).not.toBeInTheDocument()
+  })
+
+  it('el efectivo pendiente la pone naranja con el motivo', () => {
+    render(<ScannerDisplay />)
+    act(() => emit({ result: 'pending', headline: 'AF456GH', reason: 'Falta pagar en efectivo', at: 1 }))
+    expect(screen.getByRole('status')).toHaveAttribute('data-result', 'pending')
+    expect(within(screen.getByRole('main')).getByText('Falta pagar en efectivo')).toBeInTheDocument()
   })
 })
