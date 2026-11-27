@@ -4,7 +4,6 @@ import { join } from 'path'
 
 import SiteFooter from '@/components/SiteFooter'
 import Footer from '@/components/landing-v2/Footer'
-import { LEGAL_ENTITY, LEGAL_OPERATOR_LINE } from '@/lib/legalEntity'
 
 jest.mock('@/components/landing-v2/gsap', () => ({
   gsap: { matchMedia: () => ({ add: () => {} }), timeline: () => ({ from: () => ({ from: () => ({ fromTo: () => ({}) }) }) }) },
@@ -12,30 +11,23 @@ jest.mock('@/components/landing-v2/gsap', () => ({
   useGSAP: () => {},
 }))
 
-describe('Datos del operador en el pie de página', () => {
-  it('el footer de la landing muestra titular, CUIT y domicilio', () => {
-    render(<Footer />)
+describe('Datos personales del titular fuera de footers y Términos', () => {
+  it.each([
+    ['footer de la landing', () => render(<Footer />)],
+    ['footer anterior', () => render(<SiteFooter />)],
+  ])('el %s no muestra nombre, CUIT ni domicilio', (_name, doRender) => {
+    doRender()
     const footer = screen.getByRole('contentinfo')
-    expect(footer).toHaveTextContent('Nubapay es operada por Alejo Vaquero')
-    expect(footer).toHaveTextContent('CUIT 23-46971353-9')
-    expect(footer).toHaveTextContent('Bv. Los Andes 665, Piso 2, Dpto. S:E, Barrio Ducasse, 5000 Córdoba, Argentina')
-    expect(footer).toHaveTextContent(`© ${new Date().getFullYear()} Nubapay`)
+    expect(footer).not.toHaveTextContent('Alejo Vaquero')
+    expect(footer).not.toHaveTextContent('23-46971353-9')
+    expect(footer).not.toHaveTextContent('Los Andes')
   })
 
-  it('el footer anterior también', () => {
-    render(<SiteFooter />)
-    const footer = screen.getByRole('contentinfo')
-    expect(footer).toHaveTextContent(LEGAL_OPERATOR_LINE)
-    expect(footer).toHaveTextContent(LEGAL_ENTITY.address)
+  it('los Términos no los mencionan y siguen dando un contacto', () => {
+    const text = readFileSync(join(process.cwd(), 'app/terminos/page.tsx'), 'utf8')
+    expect(text).not.toContain('Alejo Vaquero')
+    expect(text).not.toContain('23-46971353-9')
+    expect(text).not.toContain('Bv. Los Andes')
+    expect(text).toContain('contacto@nubapay.app')
   })
-
-  it.each(['app/terminos/page.tsx', 'app/privacidad/page.tsx'])(
-    'coincide con lo que dice %s (si cambia uno, hay que cambiar el otro)',
-    file => {
-      const text = readFileSync(join(process.cwd(), file), 'utf8')
-      expect(text).toContain(LEGAL_ENTITY.holder)
-      expect(text).toContain(LEGAL_ENTITY.cuit)
-      expect(text).toContain(LEGAL_ENTITY.address)
-    },
-  )
 })

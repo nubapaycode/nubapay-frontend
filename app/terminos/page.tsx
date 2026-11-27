@@ -17,7 +17,7 @@ const sections: LegalSection[] = [
   {
     num: '1',
     title: 'Aceptación de los Términos',
-    body: `Al acceder o utilizar la plataforma Nubapay ("Plataforma"), ya sea como organizador de eventos, vendedor, o comprador/asistente, usted acepta quedar vinculado por estos Términos y Condiciones ("Términos"). Si no está de acuerdo con estos Términos, no utilice la Plataforma. Nubapay se reserva el derecho de modificar estos Términos en cualquier momento, notificando a los usuarios registrados con un mínimo de 15 días de anticipación.\n\nLa Plataforma es operada por Alejo Vaquero, CUIT 23-46971353-9, con domicilio legal en Bv. Los Andes 665, Piso 2, Dpto. S:E, Barrio Ducasse, 5000 Córdoba, Argentina (en adelante, "Nubapay").`,
+    body: `Al acceder o utilizar la plataforma Nubapay ("Plataforma"), ya sea como organizador de eventos, vendedor, o comprador/asistente, usted acepta quedar vinculado por estos Términos y Condiciones ("Términos"). Si no está de acuerdo con estos Términos, no utilice la Plataforma. Nubapay se reserva el derecho de modificar estos Términos en cualquier momento, notificando a los usuarios registrados con un mínimo de 15 días de anticipación.\n\nLa Plataforma es operada por Nubapay (en adelante, "Nubapay"). Para cualquier consulta podés escribir a contacto@nubapay.app.`,
   },
   {
     num: '2',
@@ -252,7 +252,7 @@ const sections: LegalSection[] = [
   {
     num: '48',
     title: 'Contacto',
-    body: `Para cualquier consulta, reclamo o notificación relacionada con estos Términos, puede contactarnos en:\n\nNubapay\nTitular: Alejo Vaquero\nCUIT: 23-46971353-9\nDomicilio legal: Bv. Los Andes 665, Piso 2, Dpto. S:E, Barrio Ducasse, 5000 Córdoba, Argentina\nEmail: contacto@nubapay.app\nSitio web: www.nubapay.app\n\nÚltima actualización: Noviembre 2026`,
+    body: `Para cualquier consulta, reclamo o notificación relacionada con estos Términos, puede contactarnos en:\n\nNubapay\nEmail: contacto@nubapay.app\nSitio web: www.nubapay.app\n\nÚltima actualización: Noviembre 2026`,
   },
 ]
 
